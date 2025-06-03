@@ -9,7 +9,7 @@
         <meta name="description" content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.">
       
       
-        <meta name="author" content="Seu Nome">
+        <meta name="author" content="Léo Ivan">
       
       
         <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/01-rotinas-manutencao/">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Rotinas de Manutenção - Meu Guia de Servidor Doméstico</title>
+        <title>Rotinas de Manutenção - Wiki do Servidor do Léo Ivan</title>
       
     
     
@@ -80,13 +80,18 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#rotinas-de-manutencao-essenciais" class="md-skip">
+          Ir para o conteúdo
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -102,7 +107,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-header__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +121,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Meu Guia de Servidor Doméstico
+            Wiki do Servidor do Léo Ivan
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -135,20 +140,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
       </label>
     
   
@@ -241,7 +246,7 @@
   
     
   
-  Início
+  Introdução
 
       </a>
     </li>
@@ -260,7 +265,7 @@
           
   
   
-  🚀 Manual de Implementação
+  🚀 Implementação
 
         </a>
       </li>
@@ -280,7 +285,7 @@
           
   
   
-  💡 Visão Geral da Arquitetura
+  💡 Arquitetura
 
         </a>
       </li>
@@ -300,7 +305,7 @@
           
   
   
-  🛠️ Guias de Sustentação
+  🛠️ Sustentação
 
         </a>
       </li>
@@ -322,7 +327,47 @@
           
   
   
-  ⚙️ Manutenção e Recuperação
+  ⚙️ Manutenção
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../05-guia-estudos/" class="md-tabs__link">
+          
+  
+  
+  📚 Guia de Estudos
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../06-solucoes-alternativas/" class="md-tabs__link">
+          
+  
+  
+  🔄 Soluções Alternativas
 
         </a>
       </li>
@@ -352,13 +397,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegação" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-nav__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    Meu Guia de Servidor Doméstico
+    Wiki do Servidor do Léo Ivan
   </label>
   
     <div class="md-nav__source">
@@ -387,7 +432,7 @@
   
   
   <span class="md-ellipsis">
-    Início
+    Introdução
     
   </span>
   
@@ -427,7 +472,7 @@
   
   
   <span class="md-ellipsis">
-    🚀 Manual de Implementação
+    🚀 Implementação
     
   </span>
   
@@ -438,7 +483,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            🚀 Manual de Implementação
+            🚀 Implementação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -755,7 +800,7 @@
   
   
   <span class="md-ellipsis">
-    💡 Visão Geral da Arquitetura
+    💡 Arquitetura
     
   </span>
   
@@ -766,7 +811,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            💡 Visão Geral da Arquitetura
+            💡 Arquitetura
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -968,7 +1013,7 @@
   
   
   <span class="md-ellipsis">
-    🛠️ Guias de Sustentação
+    🛠️ Sustentação
     
   </span>
   
@@ -979,7 +1024,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            🛠️ Guias de Sustentação
+            🛠️ Sustentação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1121,6 +1166,144 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Gerenciando Recursos de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Cenários Específicos de Criação de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Compartilhando Recursos entre VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Integrando Novos Serviços a Stacks Existentes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    10. Atualização Segura de Componentes Críticos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    11. Hospedando Aplicação Pública no Domínio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1161,7 +1344,7 @@
   
   
   <span class="md-ellipsis">
-    ⚙️ Manutenção e Recuperação
+    ⚙️ Manutenção
     
   </span>
   
@@ -1172,7 +1355,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção e Recuperação
+            ⚙️ Manutenção
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1212,6 +1395,21 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Rotinas de Manutenção
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -1224,6 +1422,127 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-atualizacoes-de-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Atualizações de Sistema
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Atualizações de Sistema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#host-proxmox-ve" class="md-nav__link">
+    <span class="md-ellipsis">
+      Host Proxmox VE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maquinas-virtuais-vms-ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      Máquinas Virtuais (VMs Ubuntu)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-atualizacoes-de-imagens-docker-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Atualizações de Imagens Docker (Containers)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Atualizações de Imagens Docker (Containers)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usando-watchtower-recomendado-para-automacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usando Watchtower (Recomendado para Automação)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atualizacao-manual-via-portainer-ou-linha-de-comando" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atualização Manual via Portainer ou Linha de Comando
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-revisao-de-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Revisão de Logs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-monitoramento-da-saude-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Monitoramento da Saúde do Sistema
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-verificacao-da-saude-do-zfs-host-proxmox" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Verificação da Saúde do ZFS (Host Proxmox)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-verificacao-de-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Verificação de Backups
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1329,6 +1648,547 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    📚 Guia de Estudos
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            📚 Guia de Estudos
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Aprofundamento em Proxmox VE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/02-aprofundamento-zfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Aprofundamento em ZFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/03-aprofundamento-ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Aprofundamento em Ansible
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/04-aprofundamento-docker-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Aprofundamento em Docker Networking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Aprofundamento em Traefik e Authelia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/06-seguranca-avancada-homelab/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Aprofundamento em Segurança Avançada para Homelab
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/07-introducao-kubernetes-k3s/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Aprofundamento em Kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Gerenciamento Avançado de Segredos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    🔄 Soluções Alternativas
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            🔄 Soluções Alternativas
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/01-hypervisors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Hypervisors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/02-automacao-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Automação de Configurações
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/03-gerenciamento-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Gerenciamento de Containers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/04-proxy-reverso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Proxy Reverso
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/05-acesso-externo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Acesso Externo
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/06-autenticacao-sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Autenticação SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/07-servidores-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Servidores de Mídia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Sincronização de Arquivos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/09-monitoramento-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Monitoramento e Logs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1346,6 +2206,118 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-atualizacoes-de-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Atualizações de Sistema
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Atualizações de Sistema">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#host-proxmox-ve" class="md-nav__link">
+    <span class="md-ellipsis">
+      Host Proxmox VE
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maquinas-virtuais-vms-ubuntu" class="md-nav__link">
+    <span class="md-ellipsis">
+      Máquinas Virtuais (VMs Ubuntu)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-atualizacoes-de-imagens-docker-containers" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Atualizações de Imagens Docker (Containers)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Atualizações de Imagens Docker (Containers)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usando-watchtower-recomendado-para-automacao" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usando Watchtower (Recomendado para Automação)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atualizacao-manual-via-portainer-ou-linha-de-comando" class="md-nav__link">
+    <span class="md-ellipsis">
+      Atualização Manual via Portainer ou Linha de Comando
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-revisao-de-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Revisão de Logs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-monitoramento-da-saude-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Monitoramento da Saúde do Sistema
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-verificacao-da-saude-do-zfs-host-proxmox" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Verificação da Saúde do ZFS (Host Proxmox)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-verificacao-de-backups" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Verificação de Backups
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1364,7 +2336,210 @@
   
 
 
-  <h1>Rotinas de Manutenção</h1>
+<h1 id="rotinas-de-manutencao-essenciais">Rotinas de Manutenção Essenciais<a class="headerlink" href="#rotinas-de-manutencao-essenciais" title="Permanent link">&para;</a></h1>
+<p>Manutenção preventiva é a chave para um servidor doméstico estável, seguro e com bom desempenho a longo prazo. Estabelecer rotinas regulares para as tarefas abaixo ajudará a evitar problemas e a manter seu sistema saudável.</p>
+<h2 id="1-atualizacoes-de-sistema">1. Atualizações de Sistema<a class="headerlink" href="#1-atualizacoes-de-sistema" title="Permanent link">&para;</a></h2>
+<p>Manter o software atualizado é crucial para segurança (patches de vulnerabilidade) e para obter novas features e correções de bugs.</p>
+<h3 id="host-proxmox-ve">Host Proxmox VE<a class="headerlink" href="#host-proxmox-ve" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Frequência:</strong> Mensalmente (ou conforme alertas de segurança críticos).</li>
+<li><strong>Comando (no shell do host Proxmox, como <code>root</code>):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt<span class="w"> </span>full-upgrade<span class="w"> </span>-y
+</span></code></pre></div></li>
+<li><strong>Pontos de Atenção:</strong><ul>
+<li><strong>Leia as Notas de Release:</strong> Antes de grandes atualizações do Proxmox, verifique o fórum do Proxmox ou as notas de release para quaisquer problemas conhecidos ou mudanças significativas.</li>
+<li><strong>Backups:</strong> Certifique-se de que seus backups de VMs estão em dia antes de uma atualização do host.</li>
+<li><strong>Reboot:</strong> Atualizações de kernel ou do próprio Proxmox geralmente requerem um reboot do host. Planeje um momento de baixa utilização.</li>
+<li><strong>Repositórios:</strong> As atualizações virão do repositório <code>pve-no-subscription</code> (configurado pelo Ansible).</li>
+</ul>
+</li>
+</ul>
+<h3 id="maquinas-virtuais-vms-ubuntu">Máquinas Virtuais (VMs Ubuntu)<a class="headerlink" href="#maquinas-virtuais-vms-ubuntu" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>unattended-upgrades</code>:</strong> Este pacote, instalado e configurado pelo role Ansible <code>common</code>, deve cuidar da aplicação automática de atualizações de segurança.</li>
+<li><strong>Verificação de Logs (na VM):</strong><ul>
+<li>Verifique os logs de <code>unattended-upgrades</code> para garantir que estão funcionando:
+    <code>/var/log/unattended-upgrades/unattended-upgrades-dpkg.log</code></li>
+</ul>
+</li>
+<li><strong>Atualizações Manuais (Opcional, para outros pacotes):</strong><ul>
+<li>Se você quiser atualizar todos os pacotes (não apenas os de segurança) ou se <code>unattended-upgrades</code> não estiver configurado para tudo:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Dentro da VM</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>full-upgrade<span class="w"> </span>-y
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>sudo<span class="w"> </span>apt<span class="w"> </span>autoremove<span class="w"> </span>-y<span class="w"> </span><span class="c1"># Remove pacotes órfãos</span>
+</span></code></pre></div></li>
+<li>Um reboot da VM pode ser necessário após atualizações de kernel.</li>
+</ul>
+</li>
+</ul>
+<h2 id="2-atualizacoes-de-imagens-docker-containers">2. Atualizações de Imagens Docker (Containers)<a class="headerlink" href="#2-atualizacoes-de-imagens-docker-containers" title="Permanent link">&para;</a></h2>
+<p>Manter suas imagens Docker atualizadas é tão importante quanto atualizar o SO.</p>
+<h3 id="usando-watchtower-recomendado-para-automacao">Usando Watchtower (Recomendado para Automação)<a class="headerlink" href="#usando-watchtower-recomendado-para-automacao" title="Permanent link">&para;</a></h3>
+<p>Watchtower é um container que monitora seus outros containers em execução e os atualiza automaticamente para a versão mais recente da imagem (respeitando a tag que você usou, e.g., <code>latest</code> ou uma tag de versão específica como <code>v2.1.0</code>).</p>
+<ul>
+<li><strong>Deploy do Watchtower:</strong><ul>
+<li>Foi incluído um <code>docker-compose.yml</code> para Watchtower em <code>infra-servidor-domestico/docker/stacks/watchtower/docker-compose.yml</code>.</li>
+<li>Implante esta stack na <code>core-services-vm</code> via Portainer.
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># docker/stacks/watchtower/docker-compose.yml</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.9&quot;</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nt">services</span><span class="p">:</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="nt">watchtower</span><span class="p">:</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">containrrr/watchtower:1.7.1</span><span class="w"> </span><span class="c1"># Verifique a tag estável mais recente</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">watchtower</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">restart</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unless-stopped</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/run/docker.sock:/var/run/docker.sock</span><span class="w"> </span><span class="c1"># Para Watchtower interagir com o Docker daemon</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">      </span><span class="c1"># - /etc/localtime:/etc/localtime:ro # Para logs com fuso horário correto</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WATCHTOWER_CLEANUP=true</span><span class="w"> </span><span class="c1"># Remove imagens antigas após a atualização</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WATCHTOWER_SCHEDULE=&quot;0 0 4 * * *&quot;</span><span class="w"> </span><span class="c1"># Agenda para rodar todo dia às 4 AM (formato cron)</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">      </span><span class="c1"># Apenas atualiza containers que tenham a label &quot;com.centurylinklabs.watchtower.enable=true&quot;</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WATCHTOWER_LABEL_ENABLE=true</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">      </span><span class="c1"># Opcional: Configurar notificações (e.g., Shoutrrr para Discord, Telegram, Email)</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">      </span><span class="c1"># - WATCHTOWER_NOTIFICATIONS=shoutrrr</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">      </span><span class="c1"># - WATCHTOWER_NOTIFICATION_URL=&quot;discord://TOKEN@ID/ OutrosFormatos...&quot;</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">      </span><span class="c1"># - WATCHTOWER_NOTIFICATION_TEMPLATE=&quot;{{ . serviço }} atualizado para {{ .ImagemNova }}&quot; # Exemplo</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">    </span><span class="c1"># Labels para que o próprio Watchtower se auto-atualize (se WATCHTOWER_LABEL_ENABLE=true)</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">    </span><span class="c1"># labels:</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="c1">#   - &quot;com.centurylinklabs.watchtower.enable=true&quot;</span>
+</span></code></pre></div></li>
+</ul>
+</li>
+<li><strong>Habilitando Atualizações para Containers Específicos:</strong><ul>
+<li>Para cada serviço no seu <code>docker-compose.yml</code> que você quer que o Watchtower atualize, adicione a label:
+    <div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">services</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">meu_servico</span><span class="p">:</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="c1"># ... outras configs ...</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;com.centurylinklabs.watchtower.enable=true&quot;</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="c1"># ... outras labels (e.g., Traefik) ...</span>
+</span></code></pre></div></li>
+<li>Atualize a stack no Portainer para aplicar a nova label.</li>
+</ul>
+</li>
+<li><strong>Logs do Watchtower:</strong> Verifique os logs do container <code>watchtower</code> para ver quais containers foram atualizados.</li>
+</ul>
+<h3 id="atualizacao-manual-via-portainer-ou-linha-de-comando">Atualização Manual via Portainer ou Linha de Comando<a class="headerlink" href="#atualizacao-manual-via-portainer-ou-linha-de-comando" title="Permanent link">&para;</a></h3>
+<p>Se preferir mais controle ou se usar tags de versão específicas que não quer que mudem para <code>latest</code>:</p>
+<ol>
+<li><strong>Verifique Novas Versões:</strong> Monitore os sites dos projetos ou Docker Hub para novas tags de versão das imagens que você usa.</li>
+<li><strong>No Portainer:</strong><ul>
+<li>Vá para a Stack -&gt; Editor.</li>
+<li>Altere a tag da imagem no <code>docker-compose.yml</code> (e.g., de <code>app:v1.0</code> para <code>app:v1.1</code>).</li>
+<li>Clique em "Update the stack". Marque a opção "Re-pull image and redeploy".</li>
+</ul>
+</li>
+<li><strong>Via Linha de Comando (na VM):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Para uma stack específica</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">cd</span><span class="w"> </span>/caminho/para/docker/stacks/minha_stack/
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Edite o docker-compose.yml com a nova tag da imagem</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>docker<span class="w"> </span>compose<span class="w"> </span>pull<span class="w"> </span><span class="c1"># Puxa as imagens mais recentes definidas no compose</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d<span class="w"> </span>--remove-orphans<span class="w"> </span><span class="c1"># Recria os containers com as novas imagens</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>docker<span class="w"> </span>image<span class="w"> </span>prune<span class="w"> </span>-f<span class="w"> </span><span class="c1"># Remove imagens antigas não utilizadas</span>
+</span></code></pre></div></li>
+</ol>
+<h2 id="3-revisao-de-logs">3. Revisão de Logs<a class="headerlink" href="#3-revisao-de-logs" title="Permanent link">&para;</a></h2>
+<p>Logs são seus olhos para o que está acontecendo no sistema.</p>
+<ul>
+<li><strong>Onde Encontrar:</strong><ul>
+<li><strong>Containers Docker:</strong> Via Portainer (selecione container -&gt; Logs) ou <code>docker logs &lt;container&gt;</code>.</li>
+<li><strong>Traefik:</strong> Logs do container <code>traefik</code> (especialmente <code>traefik.log</code> e <code>access.log</code> se mapeados para volumes).</li>
+<li><strong>Authelia:</strong> Logs do container <code>authelia</code>.</li>
+<li><strong>Serviços de Aplicação:</strong> Muitas aplicações têm seus próprios arquivos de log dentro dos seus volumes de configuração.</li>
+<li><strong>VMs (System Logs):</strong> <code>journalctl -xe</code>, <code>/var/log/syslog</code>, <code>/var/log/auth.log</code>.</li>
+<li><strong>Host Proxmox:</strong> UI web do Proxmox (Syslog, Tasks), ou no shell (<code>journalctl</code>, <code>/var/log/...</code>).</li>
+<li><strong>Loki/Grafana:</strong> Se a stack de monitoramento estiver configurada, use Grafana para consultar logs centralizados de Promtail.</li>
+</ul>
+</li>
+<li><strong>O Que Procurar:</strong><ul>
+<li>Mensagens de <code>ERROR</code>, <code>WARN</code>, <code>FATAL</code>, <code>CRITICAL</code>.</li>
+<li>Tentativas de login falhas (Authelia, SSH, UIs de apps).</li>
+<li>Padrões incomuns de tráfego ou atividade.</li>
+<li>Erros de disco ou sistema de arquivos (ZFS, <code>dmesg</code>).</li>
+</ul>
+</li>
+<li><strong>Frequência:</strong> Diariamente para sistemas críticos, semanalmente para uma visão geral.</li>
+</ul>
+<h2 id="4-monitoramento-da-saude-do-sistema">4. Monitoramento da Saúde do Sistema<a class="headerlink" href="#4-monitoramento-da-saude-do-sistema" title="Permanent link">&para;</a></h2>
+<p>Use sua <a href="../../01-manual-implementacao/10-stack-monitoramento/">Stack de Monitoramento</a> (Prometheus, Grafana, Glances).</p>
+<ul>
+<li><strong>Dashboards Grafana:</strong> Crie ou importe dashboards para visualizar:<ul>
+<li>Uso de CPU, RAM, Disco (Host Proxmox e VMs).</li>
+<li>Tráfego de Rede.</li>
+<li>Status do Pool ZFS (saúde, capacidade, IOPS).</li>
+<li>Métricas do Node Exporter, Glances.</li>
+<li>Métricas de containers (se usar cAdvisor).</li>
+<li>Métricas do Cloudflare Tunnel.</li>
+</ul>
+</li>
+<li><strong>Alertas:</strong> Configure alertas no Prometheus (via Alertmanager, não coberto em detalhe neste guia) ou no Grafana para ser notificado de condições críticas (e.g., disco cheio, CPU alta por muito tempo, serviço offline).</li>
+<li><strong>Glances WebUI:</strong> Para uma visão rápida em tempo real (<code>https://glances.{{ base_domain }}</code>).</li>
+<li><strong>Frequência:</strong> Verifique dashboards diariamente ou configure alertas para problemas urgentes.</li>
+</ul>
+<h2 id="5-verificacao-da-saude-do-zfs-host-proxmox">5. Verificação da Saúde do ZFS (Host Proxmox)<a class="headerlink" href="#5-verificacao-da-saude-do-zfs-host-proxmox" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Status Regular:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>zpool<span class="w"> </span>status<span class="w"> </span>-v<span class="w"> </span>data
+</span></code></pre></div>
+    Verifique se o pool está <code>ONLINE</code> e se não há erros de leitura/escrita/checksum.</li>
+<li><strong>Scrub Agendado:</strong> ZFS scrub verifica a integridade de todos os dados no pool. É recomendado rodá-lo mensalmente.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Iniciar um scrub manualmente</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>sudo<span class="w"> </span>zpool<span class="w"> </span>scrub<span class="w"> </span>data
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># Verificar o status do scrub</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>sudo<span class="w"> </span>zpool<span class="w"> </span>status<span class="w"> </span>data
+</span></code></pre></div>
+    Você pode agendar isso com <code>cron</code>. Exemplo de entrada cron (e.g., <code>sudo crontab -e</code>):
+    <code>0 2 1 * * /sbin/zpool scrub data</code> (Roda às 2 AM no primeiro dia de cada mês).</li>
+<li><strong>Alertas por Email (Script <code>check_zfs.sh</code>):</strong>
+    O script <code>check_zfs.sh</code> (mencionado na Seção 11.2 do documento original) pode ser agendado para verificar o status do pool e enviar um email se houver problemas.
+    Certifique-se que o host Proxmox pode enviar emails (e.g., <code>mailutils</code> instalado e configurado com <code>ssmtp</code> ou <code>postfix</code>).
+    <strong>Conteúdo do Script (exemplo):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># /usr/local/sbin/check_zfs.sh</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nv">POOL_NAME</span><span class="o">=</span><span class="s2">&quot;data&quot;</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nv">ADMIN_EMAIL</span><span class="o">=</span><span class="s2">&quot;{{ letsencrypt_email }}&quot;</span><span class="w"> </span><span class="c1"># Substitua pelo seu email</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nv">STATUS</span><span class="o">=</span><span class="k">$(</span>/sbin/zpool<span class="w"> </span>status<span class="w"> </span>-vx<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$POOL_NAME</span><span class="s2">&quot;</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="k">)</span><span class="w"> </span><span class="c1"># Captura stdout e stderr</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="nv">HEALTH</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$STATUS</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;state: ONLINE&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l<span class="k">)</span><span class="w"> </span><span class="c1"># Conta linhas com &quot;state: ONLINE&quot;</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$HEALTH</span><span class="s2">&quot;</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="c1"># Se não for exatamente 1 (ou seja, não está ONLINE ou há múltiplas linhas)</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="c1"># Tenta pegar a linha de status real</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span><span class="nv">POOL_STATUS_LINE</span><span class="o">=</span><span class="k">$(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$STATUS</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;^\s*pool: </span><span class="nv">$POOL_NAME</span><span class="s2">&quot;</span><span class="w"> </span>-A<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tail<span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $2}&#39;</span><span class="k">)</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;ALERTA ZFS: Pool &#39;</span><span class="nv">$POOL_NAME</span><span class="s2">&#39; no host </span><span class="k">$(</span>hostname<span class="k">)</span><span class="s2"> está em estado: </span><span class="nv">$POOL_STATUS_LINE</span><span class="s2">\n\n</span><span class="nv">$STATUS</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>mail<span class="w"> </span>-s<span class="w"> </span><span class="s2">&quot;ALERTA ZFS: Problema no Pool </span><span class="nv">$POOL_NAME</span><span class="s2"> em </span><span class="k">$(</span>hostname<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$ADMIN_EMAIL</span><span class="s2">&quot;</span>
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="k">else</span>
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="w">  </span><span class="c1"># Opcional: log de status OK se desejar</span>
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="w">  </span><span class="c1"># echo &quot;ZFS Pool &#39;$POOL_NAME&#39; está ONLINE em $(date)&quot; &gt;&gt; /var/log/zfs_health.log</span>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span>:<span class="w"> </span><span class="c1"># No operation, ZFS is fine</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a><span class="k">fi</span>
+</span></code></pre></div>
+    Agende com <code>cron</code>: <code>0 */6 * * * /usr/local/sbin/check_zfs.sh</code> (a cada 6 horas).</li>
+</ul>
+<h2 id="6-verificacao-de-backups">6. Verificação de Backups<a class="headerlink" href="#6-verificacao-de-backups" title="Permanent link">&para;</a></h2>
+<div class="admonition critical">
+<p class="admonition-title">A Rotina Mais Importante!</p>
+<p>Backups são inúteis se não funcionarem. <strong>TESTE SEUS BACKUPS REGULARMENTE!</strong></p>
+</div>
+<ul>
+<li><strong>Verificar Conclusão:</strong><ul>
+<li><strong>Proxmox VM Backups:</strong> Verifique a aba "Tasks" na UI do Proxmox para o status dos jobs de backup agendados.</li>
+<li><strong>Dumps de Banco de Dados:</strong> Verifique os logs dos seus scripts de backup de DB. Certifique-se que os arquivos de dump estão sendo criados e não estão vazios.</li>
+<li><strong>Backups de Volumes (Borg, rsync):</strong> Verifique os logs da ferramenta de backup.</li>
+</ul>
+</li>
+<li><strong>Testes de Restauração:</strong><ul>
+<li><strong>Frequência:</strong> Pelo menos trimestralmente, ou após mudanças significativas na sua estratégia de backup.</li>
+<li><strong>O que testar:</strong><ul>
+<li>Restaure uma VM de teste a partir de um backup do Proxmox.</li>
+<li>Restaure um banco de dados de um dump para uma instância de teste.</li>
+<li>Restaure alguns arquivos aleatórios de um backup de volume (Borg/rsync).</li>
+<li>Tente restaurar um arquivo de um snapshot ZFS.</li>
+</ul>
+</li>
+<li>Documente seu processo de restauração para que você saiba o que fazer em uma emergência real.</li>
+</ul>
+</li>
+</ul>
+<p>Estabelecer e seguir estas rotinas de manutenção ajudará a garantir que seu servidor doméstico permaneça uma plataforma confiável e segura para seus serviços.</p>
 
 
 
@@ -1372,8 +2547,27 @@
 
 
 
+  
+    
+  
+  
 
 
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Última atualização">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
 
 
 
@@ -1422,6 +2616,17 @@
     
     <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"/></svg>
     </a>
   
 </div>

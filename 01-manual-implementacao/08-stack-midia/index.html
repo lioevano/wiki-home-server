@@ -9,7 +9,7 @@
         <meta name="description" content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.">
       
       
-        <meta name="author" content="Seu Nome">
+        <meta name="author" content="Léo Ivan">
       
       
         <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/01-manual-implementacao/08-stack-midia/">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Stack de Mídia - Meu Guia de Servidor Doméstico</title>
+        <title>Stack de Mídia - Wiki do Servidor do Léo Ivan</title>
       
     
     
@@ -80,13 +80,18 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#secao-8-stack-de-midia-plexjellyfin-arrs" class="md-skip">
+          Ir para o conteúdo
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -102,7 +107,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-header__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +121,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Meu Guia de Servidor Doméstico
+            Wiki do Servidor do Léo Ivan
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -135,20 +140,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
       </label>
     
   
@@ -241,7 +246,7 @@
   
     
   
-  Início
+  Introdução
 
       </a>
     </li>
@@ -262,7 +267,7 @@
           
   
   
-  🚀 Manual de Implementação
+  🚀 Implementação
 
         </a>
       </li>
@@ -282,7 +287,7 @@
           
   
   
-  💡 Visão Geral da Arquitetura
+  💡 Arquitetura
 
         </a>
       </li>
@@ -302,7 +307,7 @@
           
   
   
-  🛠️ Guias de Sustentação
+  🛠️ Sustentação
 
         </a>
       </li>
@@ -322,7 +327,47 @@
           
   
   
-  ⚙️ Manutenção e Recuperação
+  ⚙️ Manutenção
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../05-guia-estudos/" class="md-tabs__link">
+          
+  
+  
+  📚 Guia de Estudos
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../06-solucoes-alternativas/" class="md-tabs__link">
+          
+  
+  
+  🔄 Soluções Alternativas
 
         </a>
       </li>
@@ -352,13 +397,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegação" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-nav__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    Meu Guia de Servidor Doméstico
+    Wiki do Servidor do Léo Ivan
   </label>
   
     <div class="md-nav__source">
@@ -387,7 +432,7 @@
   
   
   <span class="md-ellipsis">
-    Início
+    Introdução
     
   </span>
   
@@ -430,7 +475,7 @@
   
   
   <span class="md-ellipsis">
-    🚀 Manual de Implementação
+    🚀 Implementação
     
   </span>
   
@@ -441,7 +486,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            🚀 Manual de Implementação
+            🚀 Implementação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -665,6 +710,21 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Stack de Mídia
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -677,6 +737,58 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#81-preparacao-com-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.1. Preparação com Ansible
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8.1. Preparação com Ansible">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#playbook-setup-media-stack-volumesyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      Playbook setup-media-stack-volumes.yml
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#82-deploy-da-stack-de-midia-via-portainer-dockerstacksmediadocker-composeyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.2. Deploy da Stack de Mídia via Portainer (docker/stacks/media/docker-compose.yml)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -766,7 +878,7 @@
   
   
   <span class="md-ellipsis">
-    💡 Visão Geral da Arquitetura
+    💡 Arquitetura
     
   </span>
   
@@ -777,7 +889,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            💡 Visão Geral da Arquitetura
+            💡 Arquitetura
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -979,7 +1091,7 @@
   
   
   <span class="md-ellipsis">
-    🛠️ Guias de Sustentação
+    🛠️ Sustentação
     
   </span>
   
@@ -990,7 +1102,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            🛠️ Guias de Sustentação
+            🛠️ Sustentação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1132,6 +1244,144 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Gerenciando Recursos de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Cenários Específicos de Criação de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Compartilhando Recursos entre VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Integrando Novos Serviços a Stacks Existentes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    10. Atualização Segura de Componentes Críticos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    11. Hospedando Aplicação Pública no Domínio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1169,7 +1419,7 @@
   
   
   <span class="md-ellipsis">
-    ⚙️ Manutenção e Recuperação
+    ⚙️ Manutenção
     
   </span>
   
@@ -1180,7 +1430,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção e Recuperação
+            ⚙️ Manutenção
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1329,6 +1579,547 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    📚 Guia de Estudos
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            📚 Guia de Estudos
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Aprofundamento em Proxmox VE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/02-aprofundamento-zfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Aprofundamento em ZFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/03-aprofundamento-ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Aprofundamento em Ansible
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/04-aprofundamento-docker-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Aprofundamento em Docker Networking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Aprofundamento em Traefik e Authelia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/06-seguranca-avancada-homelab/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Aprofundamento em Segurança Avançada para Homelab
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/07-introducao-kubernetes-k3s/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Aprofundamento em Kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Gerenciamento Avançado de Segredos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    🔄 Soluções Alternativas
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            🔄 Soluções Alternativas
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/01-hypervisors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Hypervisors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/02-automacao-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Automação de Configurações
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/03-gerenciamento-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Gerenciamento de Containers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/04-proxy-reverso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Proxy Reverso
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/05-acesso-externo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Acesso Externo
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/06-autenticacao-sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Autenticação SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/07-servidores-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Servidores de Mídia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Sincronização de Arquivos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/09-monitoramento-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Monitoramento e Logs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1346,6 +2137,49 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#81-preparacao-com-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.1. Preparação com Ansible
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8.1. Preparação com Ansible">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#playbook-setup-media-stack-volumesyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      Playbook setup-media-stack-volumes.yml
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#82-deploy-da-stack-de-midia-via-portainer-dockerstacksmediadocker-composeyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      8.2. Deploy da Stack de Mídia via Portainer (docker/stacks/media/docker-compose.yml)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1364,7 +2198,328 @@
   
 
 
-  <h1>Stack de Mídia</h1>
+<h1 id="secao-8-stack-de-midia-plexjellyfin-arrs">Seção 8: Stack de Mídia (Plex/Jellyfin, *arrs)<a class="headerlink" href="#secao-8-stack-de-midia-plexjellyfin-arrs" title="Permanent link">&para;</a></h1>
+<p>Esta seção aborda a implementação da sua stack de mídia, que incluirá um servidor de mídia como Plex ou Jellyfin, e o conjunto de aplicações "*arr" (Sonarr, Radarr, etc.) para gerenciamento e automação de downloads de mídia. Todos esses serviços rodarão como containers Docker na <code>core-services-vm</code>, com seus dados e configurações persistidos nos volumes NFS (pool de ~500GB).</p>
+<div class="admonition warning">
+<p class="admonition-title">Limitação de Armazenamento e Transcoding</p>
+<ul>
+<li><strong>Armazenamento:</strong> O pool ZFS <code>/data</code> de aproximadamente 500GB será o principal limitador para a quantidade de mídia que você pode armazenar. Gerencie este espaço com cuidado.</li>
+<li><strong>Transcoding:</strong> Com 16GB de RAM total no host e o CPU Ryzen 5 5600G, o transcoding de vídeo pesado (especialmente 4K para múltiplos streams) será um desafio.<ul>
+<li><strong>Plex/Jellyfin:</strong> Priorize o "Direct Play" ou "Direct Stream" sempre que possível, configurando seus clientes para suportar os formatos de mídia originais.</li>
+<li><strong>Hardware Transcoding (iGPU):</strong> A iGPU Vega do Ryzen 5 5600G pode ser usada para hardware transcoding no Jellyfin se configurada corretamente (passando <code>/dev/dri</code> para o container). Para Plex, o hardware transcoding com iGPUs AMD no Linux pode ser mais complexo de configurar e pode exigir Plex Pass.</li>
+<li><strong>GPU Dedicada (RX 5600XT):</strong> Se a RX 5600XT não estiver sendo usada pela <code>ai-desktop-vm</code>, ela <em>poderia</em> ser passada para a <code>core-services-vm</code> para transcoding, mas isso aumenta a complexidade do setup e pode não ser o melhor uso dado o foco na IA.</li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="81-preparacao-com-ansible">8.1. Preparação com Ansible<a class="headerlink" href="#81-preparacao-com-ansible" title="Permanent link">&para;</a></h2>
+<p>Antes de implantar a stack de mídia no Portainer, o Ansible preparará os diretórios NFS e o arquivo <code>.env</code> necessário.</p>
+<h3 id="playbook-setup-media-stack-volumesyml">Playbook <code>setup-media-stack-volumes.yml</code><a class="headerlink" href="#playbook-setup-media-stack-volumesyml" title="Permanent link">&para;</a></h3>
+<p>Este playbook, executado contra a <code>core-services-vm</code>, irá:
+*   Criar os subdiretórios necessários no dataset ZFS <code>docker-volumes</code> (montado em <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/</code>) para as configurações de cada aplicação da stack de mídia (Plex, Jellyfin, Sonarr, Radarr, qBittorrent, etc.).
+*   Criar os subdiretórios para a mídia em si no dataset ZFS <code>media</code> (montado em <code>{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/</code>), como <code>movies</code>, <code>tvshows</code>, <code>music</code>.
+*   Garantir que o diretório de downloads exista no dataset ZFS <code>downloads</code>.
+*   Preparar o arquivo <code>/opt/portainer_stack_envs/media.env</code> na <code>core-services-vm</code> com os caminhos e variáveis PUID/PGID, TZ, etc.</p>
+<p><strong>Ação:</strong> Execute o playbook a partir da sua máquina de controle Ansible:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/setup-media-stack-volumes.yml<span class="w"> </span>--ask-vault-pass
+</span></code></pre></div>
+Este playbook utilizará o template <code>ansible/templates/portainer_stack_env.j2</code> (detalhado na Seção 6.2), passando <code>stack_name: "media"</code> para gerar os caminhos corretos no arquivo <code>.env</code>.</p>
+<h2 id="82-deploy-da-stack-de-midia-via-portainer-dockerstacksmediadocker-composeyml">8.2. Deploy da Stack de Mídia via Portainer (<code>docker/stacks/media/docker-compose.yml</code>)<a class="headerlink" href="#82-deploy-da-stack-de-midia-via-portainer-dockerstacksmediadocker-composeyml" title="Permanent link">&para;</a></h2>
+<p>Com os volumes preparados, vamos implantar a stack de mídia.</p>
+<p><strong>Ação:</strong>
+1.  No Portainer, certifique-se de que está conectado ao endpoint <code>local</code> (correspondente à <code>core-services-vm</code>).
+2.  Vá para "Stacks" -&gt; "+ Add stack".
+3.  <strong>Nome:</strong> <code>media-services</code>.
+4.  <strong>Web editor:</strong> Cole o conteúdo do arquivo <code>infra-servidor-domestico/docker/stacks/media/docker-compose.yml</code>:</p>
+<div class="language-text highlight"><pre><span></span><code>```yaml
+# docker/stacks/media/docker-compose.yml
+version: &#39;3.9&#39;
+
+networks:
+  proxy: # Para serviços expostos via Traefik (Jellyfin, *arrs, qBit WebUI)
+    name: proxy
+    external: true
+  internal_services: # Para comunicação interna entre *arrs e qBittorrent
+    name: internal_services
+    external: true
+
+services:
+  # --- Servidor de Mídia: Plex OU Jellyfin (escolha um ou rode ambos com cuidado com os recursos) ---
+
+  plex:
+    image: plexinc/pms-docker:1.40.2.8395-c67dce28e # Verifique a tag mais recente/estável
+    container_name: plex
+    restart: unless-stopped
+    # network_mode: host # Plex geralmente funciona melhor com network_mode: host para descoberta e relay.
+                          # No entanto, para integração com Cloudflare Tunnel (sem expor IP) e Traefik,
+                          # é preferível NÃO usar host mode e expor as portas necessárias.
+                          # Se você ABSOLUTAMENTE precisa de host mode, o acesso externo terá que ser
+                          # configurado no Cloudflare Tunnel apontando diretamente para IP_VM:32400,
+                          # e Traefik não seria usado para Plex.
+    ports: # Apenas necessário se NÃO usar network_mode: host.
+           # As variáveis (e.g., CORE_SERVICES_VM_IP_VAR) virão do .env.
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:32400:32400/tcp&quot; # UI Web e API principal
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:3005:3005/tcp&quot;   # Plex Home Theater via Plex Companion
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:8324:8324/tcp&quot;   # Plex Companion player control
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:32469:32469/tcp&quot; # Plex DLNA Server
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:1900:1900/udp&quot;   # Plex DLNA Server (discovery)
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:32410:32410/udp&quot; # GDM network discovery
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:32412:32412/udp&quot; # GDM network discovery
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:32413:32413/udp&quot; # GDM network discovery
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:32414:32414/udp&quot; # GDM network discovery
+    # Se não usar network_mode: host, conecte à rede proxy para Traefik (opcional para Plex)
+    # networks:
+    #   - proxy
+    volumes: # Caminhos NFS definidos no .env carregado no Portainer
+      - &quot;${MEDIA_STACK_PLEX_CONFIG_PATH}:/config&quot; # Configuração do Plex
+      # Para transcoding, um SSD local na VM seria ideal. Se usar NFS, pode ser lento.
+      # /tmp do container (RAM da VM) é uma opção para transcode se houver MUITA RAM livre.
+      - &quot;${MEDIA_STACK_PLEX_TRANSCODE_PATH}:/transcode&quot; # Diretório para arquivos de transcodificação temporários
+      # Mapeia as bibliotecas de mídia (somente leitura para segurança, Plex só precisa ler)
+      - &quot;${MEDIA_STACK_MOVIES_PATH}:/data/movies:ro&quot;
+      - &quot;${MEDIA_STACK_TVSHOWS_PATH}:/data/tvshows:ro&quot;
+      - &quot;${MEDIA_STACK_MUSIC_PATH}:/data/music:ro&quot;
+      # Adicione outros mapeamentos de mídia conforme necessário (e.g., /data/photos)
+    environment:
+      - PLEX_UID=${DOCKER_PUID} # Do .env
+      - PLEX_GID=${DOCKER_PGID} # Do .env
+      - TZ=${SYSTEM_TIMEZONE}   # Do .env
+      # PLEX_CLAIM_TOKEN: Obtenha um token de plex.tv/claim e defina esta variável no Portainer.
+      # É usado para vincular o servidor à sua conta Plex na primeira execução.
+      - PLEX_CLAIM=${PLEX_CLAIM_TOKEN_FROM_PORTAINER_ENV}
+      # - PLEX_ADVERTISE_IP=https://plex.{{ base_domain }}:443 # Se exposto via Traefik/Tunnel
+    # Labels Traefik se for expor via Traefik (NÃO recomendado para a UI principal do Plex devido a possíveis problemas com clientes)
+    # Acesso externo ao Plex é geralmente melhor via Plex Relay ou configurando Cloudflare Tunnel
+    # para apontar diretamente para IP_DA_VM_CORE_SERVICES:32400/tcp.
+    # Se ainda quiser tentar com Traefik:
+    # labels:
+    #   traefik.enable: &quot;true&quot;
+    #   traefik.http.routers.plex.rule: &quot;Host(`plex.${BASE_DOMAIN_FROM_VAULT}`)&quot;
+    #   traefik.http.routers.plex.entrypoints: &quot;websecure&quot;
+    #   traefik.http.routers.plex.tls.certresolver: &quot;letsencrypt&quot;
+    #   traefik.http.routers.plex.service: &quot;plex-svc&quot;
+    #   traefik.http.services.plex-svc.loadbalancer.server.port: &quot;32400&quot;
+    #   # Plex com Authelia é complicado e geralmente não é feito.
+
+  jellyfin:
+    image: jellyfin/jellyfin:10.8.13 # Verifique a tag mais recente/estável
+    container_name: jellyfin
+    restart: unless-stopped
+    networks:
+      - proxy # Para ser exposto via Traefik
+    # user: &quot;${DOCKER_PUID}:${DOCKER_PGID}&quot; # Jellyfin pode rodar como não-root. Garanta permissões nos volumes.
+    volumes: # Caminhos NFS do .env
+      - &quot;${MEDIA_STACK_JELLYFIN_CONFIG_PATH}:/config&quot; # Configuração do Jellyfin
+      - &quot;${MEDIA_STACK_MOVIES_PATH}:/data/movies:ro&quot;
+      - &quot;${MEDIA_STACK_TVSHOWS_PATH}:/data/tvshows:ro&quot;
+      - &quot;${MEDIA_STACK_MUSIC_PATH}:/data/music:ro&quot;
+      # Para Hardware Transcoding com iGPU Intel/AMD no Linux (se Proxmox host permitir acesso da VM ao /dev/dri)
+      # 1. Proxmox host: `chmod o+rw /dev/dri/*` (menos seguro) ou adicione usuário da VM ao grupo &#39;render&#39;/&#39;video&#39;.
+      # 2. VM config: Passe o dispositivo /dev/dri para a VM (e.g., cgroup permissions ou lxc.cgroup2.devices.allow).
+      # 3. Docker compose: Mapeie /dev/dri.
+      - &quot;/dev/dri:/dev/dri&quot;
+    environment:
+      - PUID=${DOCKER_PUID} # Do .env
+      - PGID=${DOCKER_PGID} # Do .env
+      - TZ=${SYSTEM_TIMEZONE} # Do .env
+      # JELLYFIN_PublishedServerUrl é importante se Jellyfin estiver atrás de um proxy reverso.
+      - JELLYFIN_PublishedServerUrl=https://jellyfin.${BASE_DOMAIN_FROM_VAULT} # BASE_DOMAIN_FROM_VAULT do .env
+    labels: # Labels para Traefik
+      traefik.enable: &quot;true&quot;
+      traefik.http.routers.jellyfin.rule: &quot;Host(`jellyfin.${BASE_DOMAIN_FROM_VAULT}`)&quot;
+      traefik.http.routers.jellyfin.entrypoints: &quot;websecure&quot;
+      traefik.http.routers.jellyfin.tls.certresolver: &quot;letsencrypt&quot;
+      traefik.http.routers.jellyfin.service: &quot;jellyfin-svc&quot;
+      traefik.http.services.jellyfin-svc.loadbalancer.server.port: &quot;8096&quot; # Porta HTTP interna padrão do Jellyfin
+      traefik.http.routers.jellyfin.middlewares: &quot;authelia@docker&quot; # Protegido por Authelia
+
+  # --- *arr Suite (Sonarr, Radarr, etc.) ---
+  # Usam imagens da linuxserver.io que são populares e bem mantidas.
+
+  sonarr: # Gerenciador de séries de TV
+    image: lscr.io/linuxserver/sonarr:v3.0.10 # Ou :latest para v4 se estável. Verifique a versão.
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - proxy # Para acesso à UI via Traefik
+      - internal_services # Para comunicação com qBittorrent
+    volumes: # Caminhos NFS do .env
+      - &quot;${MEDIA_STACK_SONARR_CONFIG_PATH}:/config&quot; # Configuração do Sonarr
+      - &quot;${MEDIA_STACK_TVSHOWS_PATH}:/tv&quot; # Onde Sonarr gerencia os arquivos finais de séries
+      # Diretório de downloads (onde qBittorrent baixa os arquivos).
+      # Sonarr precisa de acesso para importar após o download.
+      # A variável ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH é construída no .env:
+      # {{ vm_nfs_mount_base_path }}/{{ zfs_downloads_dataset_name }}
+      - &quot;${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads&quot;
+    environment:
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+    labels: # Labels para Traefik
+      traefik.enable: &quot;true&quot;
+      traefik.http.routers.sonarr.rule: &quot;Host(`sonarr.${BASE_DOMAIN_FROM_VAULT}`)&quot;
+      traefik.http.routers.sonarr.entrypoints: &quot;websecure&quot;
+      traefik.http.routers.sonarr.tls.certresolver: &quot;letsencrypt&quot;
+      traefik.http.routers.sonarr.service: &quot;sonarr-svc&quot;
+      traefik.http.services.sonarr-svc.loadbalancer.server.port: &quot;8989&quot; # Porta interna do Sonarr
+      traefik.http.routers.sonarr.middlewares: &quot;authelia@docker&quot;
+    depends_on: # Opcional, para influenciar a ordem de inicialização
+      - qbittorrent
+
+  radarr: # Gerenciador de filmes (similar ao Sonarr)
+    image: lscr.io/linuxserver/radarr:v5.2.6 # Verifique a versão mais recente/estável.
+    container_name: radarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - &quot;${MEDIA_STACK_RADARR_CONFIG_PATH}:/config&quot;
+      - &quot;${MEDIA_STACK_MOVIES_PATH}:/movies&quot; # Onde Radarr gerencia os arquivos finais de filmes
+      - &quot;${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads&quot;
+    environment:
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: &quot;true&quot;
+      traefik.http.routers.radarr.rule: &quot;Host(`radarr.${BASE_DOMAIN_FROM_VAULT}`)&quot;
+      traefik.http.routers.radarr.entrypoints: &quot;websecure&quot;
+      traefik.http.routers.radarr.tls.certresolver: &quot;letsencrypt&quot;
+      traefik.http.routers.radarr.service: &quot;radarr-svc&quot;
+      traefik.http.services.radarr-svc.loadbalancer.server.port: &quot;7878&quot; # Porta interna do Radarr
+      traefik.http.routers.radarr.middlewares: &quot;authelia@docker&quot;
+    depends_on:
+      - qbittorrent
+
+  # --- Cliente de Torrent ---
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:4.6.5 # Verifique a versão mais recente/estável.
+    container_name: qbittorrent
+    restart: unless-stopped
+    networks:
+      - proxy # Para acesso à WebUI via Traefik
+      - internal_services # Para ser alcançado pelos *arrs
+    ports: # Portas para conexões P2P.
+           # Mapear no IP da VM se não usar VPN dentro do container.
+           # Se usar VPN no container, estas portas podem não precisar ser expostas no host.
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:6881:6881/tcp&quot;
+      - &quot;${CORE_SERVICES_VM_IP_VAR}:6881:6881/udp&quot;
+    volumes: # Caminhos NFS do .env
+      - &quot;${MEDIA_STACK_QBITTORRENT_CONFIG_PATH}:/config&quot; # Configuração do qBittorrent
+      - &quot;${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads&quot; # Diretório padrão de downloads
+    environment:
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+      - WEBUI_PORT=8088 # Porta interna para a WebUI do qBittorrent (Traefik apontará para esta)
+      # - VPN_ENABLED=false # Se usar um container VPN separado ou VPN no host
+      # - LAN_NETWORK=192.168.1.0/24 # Se precisar especificar sua LAN
+    labels:
+      traefik.enable: &quot;true&quot;
+      traefik.http.routers.qbittorrent.rule: &quot;Host(`qbittorrent.${BASE_DOMAIN_FROM_VAULT}`)&quot;
+      traefik.http.routers.qbittorrent.entrypoints: &quot;websecure&quot;
+      traefik.http.routers.qbittorrent.tls.certresolver: &quot;letsencrypt&quot;
+      traefik.http.routers.qbittorrent.service: &quot;qbittorrent-svc&quot;
+      traefik.http.services.qbittorrent-svc.loadbalancer.server.port: &quot;8088&quot; # Porta WEBUI_PORT definida acima
+      traefik.http.routers.qbittorrent.middlewares: &quot;authelia@docker&quot;
+
+  # --- Opcionais Adicionais (Prowlarr, Bazarr, Lidarr) ---
+  # Prowlarr: Gerenciador de indexadores para os *arrs
+  # prowlarr:
+  #   image: lscr.io/linuxserver/prowlarr:develop # Ou :latest
+  #   container_name: prowlarr
+  #   (...) # Configs similares a Sonarr/Radarr
+
+  # Bazarr: Gerenciador de legendas
+  # bazarr:
+  #   image: lscr.io/linuxserver/bazarr:latest
+  #   container_name: bazarr
+  #   (...)
+
+  # Lidarr: Gerenciador de músicas (se você tem uma grande coleção e quer automação)
+  # lidarr:
+  #   image: lscr.io/linuxserver/lidarr:latest
+  #   container_name: lidarr
+  #   (...)
+```
+
+!!! tip &quot;Escolha Plex ou Jellyfin (ou ambos com cautela)&quot;
+    Se você tem recursos limitados, pode ser melhor escolher um servidor de mídia principal (Plex ou Jellyfin) em vez de rodar ambos. Plex é conhecido por sua facilidade de uso e compatibilidade de clientes, enquanto Jellyfin é totalmente open-source e oferece mais opções de personalização.
+
+!!! note &quot;Hardware Transcoding para Jellyfin com iGPU AMD&quot;
+    Para habilitar o hardware transcoding no Jellyfin usando a iGPU Vega do Ryzen 5 5600G:
+    1.  **No Host Proxmox:**
+        *   Certifique-se que os drivers de kernel para a iGPU AMD estão carregados.
+        *   O dispositivo `/dev/dri` deve existir.
+        *   O usuário dentro da VM `core-services-vm` que o Docker usa (ou root) precisa de permissão para acessar `/dev/dri`. Uma forma é adicionar o usuário `kvm` (ou o usuário que roda a VM) aos grupos `render` e `video` no host Proxmox: `sudo usermod -aG render kvm` e `sudo usermod -aG video kvm`. Isso é para LXC, para VMs KVM é mais sobre passar o dispositivo.
+    2.  **Na Configuração da VM `core-services-vm` (Proxmox):**
+        *   Você precisa garantir que a VM tenha acesso ao dispositivo `/dev/dri` do host. Isso pode envolver editar a configuração da VM (`/etc/pve/qemu-server/VMID.conf`) para adicionar linhas como:
+            ```
+            lxc.cgroup2.devices.allow: c 226:0 rwm  # /dev/dri/card0
+            lxc.cgroup2.devices.allow: c 226:128 rwm # /dev/dri/renderD128
+            lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
+            ```
+            (Isto é mais para LXC, para KVM você pode precisar de um passthrough de dispositivo PCI para a iGPU, o que é complexo e pode conflitar com o console do Proxmox, ou configurar o kernel da VM para carregar os módulos corretos).
+        *   Uma abordagem mais simples para KVM pode ser garantir que o kernel da VM carregue os módulos `amdgpu`.
+    3.  **No Docker Compose do Jellyfin:**
+        *   O mapeamento `- &quot;/dev/dri:/dev/dri&quot;` já está presente.
+    4.  **Dentro do Jellyfin:**
+        *   Vá para Dashboard -&gt; Playback -&gt; Transcoding.
+        *   Selecione &quot;AMD AMF&quot; ou &quot;VAAPI&quot; como acelerador de hardware.
+        *   Selecione o dispositivo VAAPI correto (geralmente `/dev/dri/renderD128`).
+    O hardware transcoding pode ser temperamental. Verifique os logs do Jellyfin para erros.
+</code></pre></div>
+<ol>
+<li>
+<p><strong>Variáveis de Ambiente e Secrets no Portainer:</strong></p>
+<ul>
+<li><strong>Carregue o arquivo <code>.env</code>:</strong><ul>
+<li>Path on disk: <code>/opt/portainer_stack_envs/media.env</code>.</li>
+<li>Isso fornecerá <code>CORE_SERVICES_VM_IP_VAR</code>, <code>DOCKER_PUID</code>, <code>DOCKER_PGID</code>, <code>SYSTEM_TIMEZONE</code>, <code>BASE_DOMAIN_FROM_VAULT</code>, e todos os caminhos <code>MEDIA_STACK_*_PATH</code> e <code>ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH</code>.</li>
+</ul>
+</li>
+<li><strong>Adicione Secrets Manualmente:</strong><ul>
+<li><code>PLEX_CLAIM_TOKEN_FROM_PORTAINER_ENV</code>: Obtenha um token de <a href="https://www.plex.tv/claim">plex.tv/claim</a> e cole o valor aqui. Este token é de uso único e expira rapidamente, então obtenha-o pouco antes de fazer o deploy do Plex.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Deploy da Stack:</strong></p>
+<ul>
+<li>Clique em "Deploy the stack".</li>
+</ul>
+</li>
+<li>
+<p><strong>Configuração Pós-Deploy (Dentro de cada Aplicação):</strong></p>
+<ul>
+<li><strong>Plex/Jellyfin:</strong><ul>
+<li>Acesse a UI web (e.g., <code>IP_DA_VM_CORE_SERVICES:32400</code> para Plex localmente, ou <code>https://jellyfin.{{ base_domain }}</code> via Traefik).</li>
+<li>Siga o assistente de configuração inicial.</li>
+<li>Adicione suas bibliotecas de mídia, apontando para os caminhos mapeados dentro do container (e.g., <code>/data/movies</code>, <code>/data/tvshows</code>).</li>
+</ul>
+</li>
+<li><strong>Sonarr/Radarr:</strong><ul>
+<li>Acesse suas UIs (e.g., <code>https://sonarr.{{ base_domain }}</code>).</li>
+<li>Configure indexadores (Prowlarr pode ajudar a centralizar isso).</li>
+<li>Configure clientes de download (aponte para qBittorrent, usando o nome do serviço <code>qbittorrent</code> e a porta <code>8088</code> se estiverem na mesma rede <code>internal_services</code>).</li>
+<li>Configure Root Folders (e.g., <code>/tv</code> para Sonarr, <code>/movies</code> para Radarr).</li>
+<li>Configure mapeamento de caminhos se Sonarr/Radarr e qBittorrent veem o diretório de downloads com caminhos diferentes (geralmente não é necessário se ambos usam <code>/downloads</code> internamente).</li>
+</ul>
+</li>
+<li><strong>qBittorrent:</strong><ul>
+<li>Acesse a WebUI (e.g., <code>https://qbittorrent.{{ base_domain }}</code>).</li>
+<li>Senha padrão (usuário: <code>admin</code>, senha: <code>adminadmin</code> - <strong>MUDE IMEDIATAMENTE!</strong>).</li>
+<li>Configure o diretório de downloads padrão para <code>/downloads</code> (se não for o padrão).</li>
+<li>Configure portas de escuta (se não usar VPN no container).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<p>Gerenciar sua mídia pode ser muito gratificante. Aproveite sua nova stack!</p>
+<p>Próximo passo: <a href="../09-stack-produtividade-automacao/">Stack de Produtividade e Automação (Nextcloud, Home Assistant)</a>.</p>
 
 
 
@@ -1372,8 +2527,27 @@
 
 
 
+  
+    
+  
+  
 
 
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Última atualização">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
 
 
 
@@ -1422,6 +2596,17 @@
     
     <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"/></svg>
     </a>
   
 </div>

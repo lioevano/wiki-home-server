@@ -9,7 +9,7 @@
         <meta name="description" content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.">
       
       
-        <meta name="author" content="Seu Nome">
+        <meta name="author" content="Léo Ivan">
       
       
         <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/01-manual-implementacao/00-preparacao-planejamento/">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Preparação e Planejamento - Meu Guia de Servidor Doméstico</title>
+        <title>Preparação e Planejamento - Wiki do Servidor do Léo Ivan</title>
       
     
     
@@ -80,7 +80,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
@@ -107,7 +107,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-header__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -121,7 +121,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Meu Guia de Servidor Doméstico
+            Wiki do Servidor do Léo Ivan
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -140,20 +140,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
       </label>
     
   
@@ -246,7 +246,7 @@
   
     
   
-  Início
+  Introdução
 
       </a>
     </li>
@@ -267,7 +267,7 @@
           
   
   
-  🚀 Manual de Implementação
+  🚀 Implementação
 
         </a>
       </li>
@@ -287,7 +287,7 @@
           
   
   
-  💡 Visão Geral da Arquitetura
+  💡 Arquitetura
 
         </a>
       </li>
@@ -307,7 +307,7 @@
           
   
   
-  🛠️ Guias de Sustentação
+  🛠️ Sustentação
 
         </a>
       </li>
@@ -327,7 +327,47 @@
           
   
   
-  ⚙️ Manutenção e Recuperação
+  ⚙️ Manutenção
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../05-guia-estudos/" class="md-tabs__link">
+          
+  
+  
+  📚 Guia de Estudos
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../06-solucoes-alternativas/" class="md-tabs__link">
+          
+  
+  
+  🔄 Soluções Alternativas
 
         </a>
       </li>
@@ -357,13 +397,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegação" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-nav__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    Meu Guia de Servidor Doméstico
+    Wiki do Servidor do Léo Ivan
   </label>
   
     <div class="md-nav__source">
@@ -392,7 +432,7 @@
   
   
   <span class="md-ellipsis">
-    Início
+    Introdução
     
   </span>
   
@@ -435,7 +475,7 @@
   
   
   <span class="md-ellipsis">
-    🚀 Manual de Implementação
+    🚀 Implementação
     
   </span>
   
@@ -446,7 +486,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            🚀 Manual de Implementação
+            🚀 Implementação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -590,13 +630,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#02-estrutura-do-repositorio-git-do-projeto-infra-servidor-domestico" class="md-nav__link">
+  <a href="#02-estrutura-do-repositorio-git-do-projeto-home-server" class="md-nav__link">
     <span class="md-ellipsis">
-      0.2. Estrutura do Repositório Git do Projeto (infra-servidor-domestico)
+      0.2. Estrutura do Repositório Git do Projeto (home-server)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="0.2. Estrutura do Repositório Git do Projeto (infra-servidor-domestico)">
+    <nav class="md-nav" aria-label="0.2. Estrutura do Repositório Git do Projeto (home-server)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -907,7 +947,7 @@
   
   
   <span class="md-ellipsis">
-    💡 Visão Geral da Arquitetura
+    💡 Arquitetura
     
   </span>
   
@@ -918,7 +958,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            💡 Visão Geral da Arquitetura
+            💡 Arquitetura
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1120,7 +1160,7 @@
   
   
   <span class="md-ellipsis">
-    🛠️ Guias de Sustentação
+    🛠️ Sustentação
     
   </span>
   
@@ -1131,7 +1171,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            🛠️ Guias de Sustentação
+            🛠️ Sustentação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1273,6 +1313,144 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Gerenciando Recursos de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Cenários Específicos de Criação de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Compartilhando Recursos entre VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Integrando Novos Serviços a Stacks Existentes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    10. Atualização Segura de Componentes Críticos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    11. Hospedando Aplicação Pública no Domínio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1310,7 +1488,7 @@
   
   
   <span class="md-ellipsis">
-    ⚙️ Manutenção e Recuperação
+    ⚙️ Manutenção
     
   </span>
   
@@ -1321,7 +1499,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção e Recuperação
+            ⚙️ Manutenção
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1470,6 +1648,547 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    📚 Guia de Estudos
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            📚 Guia de Estudos
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Aprofundamento em Proxmox VE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/02-aprofundamento-zfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Aprofundamento em ZFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/03-aprofundamento-ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Aprofundamento em Ansible
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/04-aprofundamento-docker-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Aprofundamento em Docker Networking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Aprofundamento em Traefik e Authelia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/06-seguranca-avancada-homelab/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Aprofundamento em Segurança Avançada para Homelab
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/07-introducao-kubernetes-k3s/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Aprofundamento em Kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Gerenciamento Avançado de Segredos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    🔄 Soluções Alternativas
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            🔄 Soluções Alternativas
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/01-hypervisors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Hypervisors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/02-automacao-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Automação de Configurações
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/03-gerenciamento-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Gerenciamento de Containers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/04-proxy-reverso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Proxy Reverso
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/05-acesso-externo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Acesso Externo
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/06-autenticacao-sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Autenticação SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/07-servidores-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Servidores de Mídia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Sincronização de Arquivos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/09-monitoramento-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Monitoramento e Logs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1557,13 +2276,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#02-estrutura-do-repositorio-git-do-projeto-infra-servidor-domestico" class="md-nav__link">
+  <a href="#02-estrutura-do-repositorio-git-do-projeto-home-server" class="md-nav__link">
     <span class="md-ellipsis">
-      0.2. Estrutura do Repositório Git do Projeto (infra-servidor-domestico)
+      0.2. Estrutura do Repositório Git do Projeto (home-server)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="0.2. Estrutura do Repositório Git do Projeto (infra-servidor-domestico)">
+    <nav class="md-nav" aria-label="0.2. Estrutura do Repositório Git do Projeto (home-server)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1618,45 +2337,51 @@
 
 
 <h1 id="secao-0-preparacao-e-planejamento">Seção 0: Preparação e Planejamento<a class="headerlink" href="#secao-0-preparacao-e-planejamento" title="Permanent link">&para;</a></h1>
-<p>Antes de mergulhar na instalação e configuração, um planejamento cuidadoso e a preparação do ambiente são fundamentais para o sucesso do seu servidor doméstico. Esta seção aborda os pré-requisitos, a organização do projeto e considerações iniciais de segurança e resiliência.</p>
+<p>Antes de sair apertando botão, um planejamento cuidadoso e a preparação do ambiente são fundamentais para o sucesso do seu servidor doméstico, <del>tipo eu que elaborei esta wiki antes mesmo de começar a implementar</del>. Esta seção aborda os pré-requisitos, a organização do projeto e considerações iniciais de segurança e resiliência.</p>
 <h2 id="00-glossario-de-termos-essenciais">0.0. Glossário de Termos Essenciais<a class="headerlink" href="#00-glossario-de-termos-essenciais" title="Permanent link">&para;</a></h2>
-<p>Familiarize-se com estes termos chave que serão usados ao longo do guia:</p>
+<p>Aqui estão algumas palavras difíceis que vão aparecer frequentemente durante a implementação:</p>
 <ul>
-<li><strong>Ansible:</strong> Ferramenta de automação de TI de código aberto para tarefas como gerenciamento de configuração, provisionamento de software e orquestração de implantações.</li>
-<li><strong>Ansible Vault:</strong> Recurso do Ansible que permite criptografar arquivos YAML inteiros ou variáveis específicas que contêm dados sensíveis, como senhas e chaves de API.</li>
+<li><strong><a href="05-guia-estudos/03-aprofundamento-ansible.md">Ansible</a>:</strong> É a nossa grande ferramenta de automação, ela automatiza configurações e instalações inteiras, criando todo o contexto para o uso a partir de código (IaC).</li>
+<li><strong><a href="05-guia-estudos/03-aprofundamento-ansible.md">Ansible Vault</a>:</strong> Recurso do Ansible que permite criptografar arquivos YAML inteiros ou variáveis específicas que contêm dados sensíveis, como senhas e chaves de API.</li>
 <li><strong>Cloudflare Tunnel:</strong> Serviço da Cloudflare que cria um túnel seguro e criptografado de saída da sua rede local para a rede global da Cloudflare, permitindo que você exponha serviços internos à internet sem abrir portas no seu roteador e sem expor seu IP público.</li>
-<li><strong>Container (Docker):</strong> Unidade padrão de software que empacota código e todas as suas dependências para que a aplicação rode de forma rápida e confiável de um ambiente computacional para outro.</li>
-<li><strong>Docker Compose:</strong> Ferramenta para definir e executar aplicações Docker multi-container. Usa arquivos YAML para configurar os serviços da aplicação, redes e volumes.</li>
-<li><strong>Proxmox VE (Virtual Environment):</strong> Plataforma de virtualização de servidor de código aberto. Permite gerenciar máquinas virtuais (KVM) e containers (LXC).</li>
-<li><strong>Portainer:</strong> Interface gráfica de usuário leve para gerenciar ambientes Docker.</li>
-<li><strong>Traefik:</strong> Proxy reverso moderno e dinâmico e balanceador de carga.</li>
-<li><strong>ZFS:</strong> Sistema de arquivos avançado e gerenciador de volumes lógicos.</li>
-<li><strong>NFS (Network File System):</strong> Protocolo para compartilhar diretórios através de uma rede. Usaremos para compartilhar datasets ZFS do host Proxmox com as VMs para os volumes Docker.</li>
+<li><strong><a href="05-guia-estudos/04-aprofundamento-docker-networking.md">Container (Docker)</a>:</strong> Empacota uma aplicação para rodar isolada do sistema, atribui a ela um endereço de IP e configurações de rede, se comportando como se fosse uma máquina virtual <del>mas é só uma aplicação</del>.</li>
+<li><strong>Docker Compose:</strong> Um arquivo no formato YAML que configura um container ou uma stack inteira, que é um conjunto de containers, atribui redes (onde os containers interagem apenas com quem você definir), stacks e volumes (locais que os dados dos containers ficam armazenados).</li>
+<li><strong><a href="05-guia-estudos/01-aprofundamento-proxmox-ve.md">Proxmox VE</a>:</strong> É um sistema operacional feito para rodar máquinas virtuais e containers, minha escolha para esse projeto que visa a experimentação de diversas ferramentas.</li>
+<li><strong>Portainer:</strong> Gerenciador de containers com interface gráfica.</li>
+<li><strong><a href="05-guia-estudos/05-aprofundamento-traefik-authelia.md">Traefik</a>:</strong> Proxy reverso e balanceamento de carga.</li>
+<li><strong><a href="05-guia-estudos/02-aprofundamento-zfs.md">ZFS</a>:</strong> Sistema de arquivos avançado e gerenciador de volumes lógicos.</li>
+<li><strong>NFS:</strong> Protocolo para compartilhar diretórios através de uma rede. Usaremos para compartilhar datasets ZFS do host Proxmox com as VMs para os volumes Docker.</li>
 <li><strong>Ollama:</strong> Plataforma para rodar modelos de linguagem grandes (LLMs) localmente.</li>
 <li><strong>VM (Máquina Virtual):</strong> Emulação de um sistema de computador completo.</li>
 <li><strong>RAG (Retrieval Augmented Generation):</strong> Técnica de IA que combina LLMs com busca de informação externa.</li>
-<li><strong>Authelia:</strong> Servidor de autenticação e autorização (1FA/2FA).</li>
+<li><strong><a href="(05-guia-estudos/05-aprofundamento-traefik-authelia.md)">Authelia</a>:</strong> Servidor de autenticação e autorização (1FA/2FA).</li>
 </ul>
 <h2 id="01-hardware-e-software-necessarios">0.1. Hardware e Software Necessários<a class="headerlink" href="#01-hardware-e-software-necessarios" title="Permanent link">&para;</a></h2>
-<p>Certifique-se de que você possui o seguinte:</p>
+<p>Para essa implementação aqui, eu vou usar o seguinte:</p>
 <h3 id="hardware-do-servidor-fisico-host-proxmox">Hardware do Servidor Físico (Host Proxmox)<a class="headerlink" href="#hardware-do-servidor-fisico-host-proxmox" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>CPU:</strong> AMD Ryzen 5 5600G (com iGPU Vega e suporte a virtualização AMD-V).</li>
-<li><strong>GPU (para passthrough, se usar a Stack de IA):</strong> AMD RX 5600XT.</li>
-<li><strong>RAM:</strong> <strong>16GB DDR4</strong>.
-    !!! warning "Atenção: Limitação de RAM (16GB)"
-        Esta quantidade de RAM é o principal gargalo e influenciará o número e o tamanho das VMs e serviços que podem rodar simultaneamente. Este guia é otimizado para esta restrição, priorizando a estabilidade. Gerenciamento cuidadoso da memória será essencial.</li>
-<li><strong>Armazenamento Primário (Proxmox OS e Discos das VMs):</strong> SSD NVMe 1TB.</li>
-<li><strong>Armazenamento Secundário (Pool de Dados ZFS <code>/data</code>):</strong> 2x HDDs de 500GB. Estes serão configurados em um pool ZFS espelhado (RAID 1).
-    !!! note "Espaço Útil ZFS para Dados"
-        Com 2x HDDs de 500GB em espelho (RAID 1), você terá aproximadamente <strong>500GB de espaço útil</strong> para os dados das suas aplicações Docker (configs, mídia, downloads, etc.). Gerencie este espaço com atenção.</li>
-<li><strong>Rede:</strong> Pelo menos uma porta Ethernet Gigabit.</li>
+<li><strong>GPU (com passthrough):</strong> AMD RX 5600XT.</li>
+<li><strong>RAM:</strong> <strong>16GB DDR4</strong>.</li>
 </ul>
+<div class="admonition warning">
+<p class="admonition-title">Limitação de RAM (16GB)</p>
+<p>Esta quantidade de RAM é o principal gargalo do projeto e influenciará o número e o tamanho das VMs e serviços que podem rodar simultaneamente. Este guia é otimizado para esta restrição, priorizando a estabilidade. Gerenciamento cuidadoso da memória será essencial.</p>
+</div>
+<ul>
+<li><strong>Armazenamento Primário (Proxmox OS e Discos das VMs):</strong> SSD NVMe 1TB.</li>
+<li><strong>Armazenamento Secundário (Pool de Dados ZFS <code>/data</code>):</strong> 2x HDDs de 500GB. Estes serão configurados em um pool ZFS espelhado (RAID 1), que é uma configuração que mantém os dois em redundância, diminuindo o risco de perdas.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Espaço Útil ZFS para Dados</p>
+<p>Com 2x HDDs de 500GB em espelho (RAID 1), você terá aproximadamente <strong>500GB de espaço útil</strong> para os dados das suas aplicações Docker (configs, mídia, downloads, etc.).</p>
+</div>
 <h3 id="maquina-de-controle-ansible">Máquina de Controle Ansible<a class="headerlink" href="#maquina-de-controle-ansible" title="Permanent link">&para;</a></h3>
+<p>Para esse cenário, precisaremos de uma máquina secundária que irá servir para fazer as configurações iniciais do nosso ambiente remotamente (não é um limitante, apenas um facilitador).</p>
 <ul>
 <li>Um computador pessoal ou notebook.</li>
 <li><strong>Sistema Operacional Suportado:</strong><ul>
-<li>Linux (Ubuntu, Fedora, etc.)</li>
+<li>Linux</li>
 <li>macOS</li>
 <li>Windows com WSL2 (Windows Subsystem for Linux 2)</li>
 </ul>
@@ -1665,13 +2390,12 @@
 <h3 id="rede-domestica">Rede Doméstica<a class="headerlink" href="#rede-domestica" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Roteador com servidor DHCP habilitado (para atribuição inicial de IPs).</li>
-<li>Portas Ethernet disponíveis no roteador ou switch.</li>
-<li>Conexão estável com a Internet.</li>
 </ul>
 <h3 id="software-e-contas-antes-de-iniciar">Software e Contas (Antes de Iniciar)<a class="headerlink" href="#software-e-contas-antes-de-iniciar" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>ISO do Proxmox VE:</strong> Baixe a versão estável mais recente do <a href="https://www.proxmox.com/en/downloads">site oficial do Proxmox</a>.</li>
 <li><strong>Ferramenta para Pendrive Bootável:</strong><ul>
+<li><a href="https://www.ventoy.net/en/download.html">Ventoy</a> (Windows, macOS, Linux) <em>&lt;- minha escolha</em></li>
 <li><a href="https://rufus.ie/">Rufus</a> (Windows)</li>
 <li><a href="https://www.balena.io/etcher/">Balena Etcher</a> (Windows, macOS, Linux)</li>
 </ul>
@@ -1681,19 +2405,23 @@
 <li>PuTTY (popular para Windows).</li>
 </ul>
 </li>
-<li><strong>Domínio Próprio Registrado:</strong> (e.g., <code>meudominio.com</code>)
-    !!! important "Domínio Próprio é Essencial"
-        Você precisará de um domínio que você possa gerenciar os registros DNS. Este guia depende disso para acesso externo seguro via Cloudflare.</li>
+<li><strong>Domínio Próprio Registrado:</strong> (e.g., <code>meudominio.com</code>)</li>
+</ul>
+<div class="admonition important">
+<p class="admonition-title">Domínio Próprio é Essencial</p>
+<p>Este guia depende disso para acesso externo seguro via Cloudflare.</p>
+</div>
+<ul>
 <li><strong>Conta Cloudflare:</strong> Crie uma <a href="https://www.cloudflare.com/">conta gratuita na Cloudflare</a>.<ul>
 <li>Configure seu domínio para usar os <strong>nameservers da Cloudflare</strong>. Isso é necessário para que o Cloudflare Tunnel e o gerenciamento de certificados SSL/TLS funcionem corretamente.</li>
 </ul>
 </li>
 </ul>
-<h2 id="02-estrutura-do-repositorio-git-do-projeto-infra-servidor-domestico">0.2. Estrutura do Repositório Git do Projeto (<code>infra-servidor-domestico</code>)<a class="headerlink" href="#02-estrutura-do-repositorio-git-do-projeto-infra-servidor-domestico" title="Permanent link">&para;</a></h2>
-<p>Adotaremos a prática de Infraestrutura como Código (IaC), gerenciando todas as configurações e scripts em um repositório Git.</p>
+<h2 id="02-estrutura-do-repositorio-git-do-projeto-home-server">0.2. Estrutura do Repositório Git do Projeto (<code>home-server</code>)<a class="headerlink" href="#02-estrutura-do-repositorio-git-do-projeto-home-server" title="Permanent link">&para;</a></h2>
+<p>Graças ao Ansible, vamos usar a técnica de Infraestrutura como Código (IaC), gerenciando todas as configurações e scripts em um repositório Git.</p>
 <h3 id="estrutura-de-diretorios-proposta">Estrutura de Diretórios Proposta<a class="headerlink" href="#estrutura-de-diretorios-proposta" title="Permanent link">&para;</a></h3>
 <p>Crie a seguinte estrutura de diretórios e arquivos na sua máquina de controle Ansible:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>infra-servidor-domestico/
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>home-server/
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── ansible/
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   ├── inventories/
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   │   └── home/
@@ -1738,33 +2466,28 @@
 </span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>├── scripts/                             # Scripts auxiliares
 </span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>│   ├── bootstrap.sh                     # Configura a máquina de controle Ansible
 </span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>│   └── restore.sh                       # Script para executar o deploy completo
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>├── homelab-wiki/                        # Esta documentação MkDocs
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>│   ├── docs/
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>│   │   ├── index.md
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>│   │   └── ... (outros arquivos da wiki)
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>│   └── mkdocs.yml
-</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>├── .gitignore                           # Especifica arquivos não versionados pelo Git
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>└── README.md                            # Descrição geral do projeto no repositório
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>├── .gitignore                           # Especifica arquivos não versionados pelo Git
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>└── README.md                            # Descrição geral do projeto no repositório
 </span></code></pre></div>
 <h3 id="acoes-imediatas-para-estruturacao-do-projeto">Ações Imediatas para Estruturação do Projeto<a class="headerlink" href="#acoes-imediatas-para-estruturacao-do-projeto" title="Permanent link">&para;</a></h3>
-<p>Siga estes passos na sua máquina de controle Ansible:</p>
+<p>Etapas na máquina de controle:</p>
 <ol>
 <li>
 <p><strong>Crie o diretório raiz do projeto e navegue até ele:</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mkdir<span class="w"> </span>infra-servidor-domestico<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>infra-servidor-domestico
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>mkdir<span class="w"> </span>home-server<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>home-server
 </span></code></pre></div></p>
 </li>
 <li>
-<p><strong>Inicialize o repositório Git:</strong>
+<p><strong>Inicialize o repositório:</strong>
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>git<span class="w"> </span>init
 </span></code></pre></div></p>
 </li>
 <li>
-<p><strong>Crie a estrutura de diretórios detalhada acima.</strong> Você pode usar <code>mkdir -p</code> para criar diretórios aninhados de uma vez.
+<p><strong>Crie a estrutura de diretórios detalhada acima.</strong> Você pode usar <code>mkdir -p</code> para criar vários diretórios de uma vez.
     Exemplo:
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>ansible/inventories/home/group_vars/all<span class="w"> </span>ansible/playbooks<span class="w"> </span>ansible/roles/common<span class="w"> </span>ansible/roles/infra<span class="w"> </span>ansible/roles/apps<span class="w"> </span>docker/stacks/core<span class="w"> </span>scripts<span class="w"> </span>homelab-wiki/docs
 </span></code></pre></div>
-    E continue para os demais diretórios.</p>
+    E assim para toda a estrutura de diretórios. <del>Você também pode copiar a estrutura de diretórios proposta e pedir para o ChatGPT gerar um arquivo .zip daquela estrutura para um commit inicial.</del></p>
 </li>
 <li>
 <p><strong>Crie o arquivo <code>.gitignore</code> com o seguinte conteúdo:</strong>
@@ -1782,7 +2505,7 @@
 </span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
 </span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a># Ansible
 </span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>*.retry
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>*.సురక్షితం # Ansible vault backup files (se o nome do vault for &quot;सुरक्षित&quot;)
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>*.safe  # Arquivos de backup do Ansible Vault (nome padrão se não customizado)
 </span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>ansible/cp/ # Ansible control path directory
 </span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>.ansible/ # Ansible temp files and logs
 </span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a># Embora o vault.yml deva ser commitado criptografado,
@@ -1822,20 +2545,21 @@
 </span><span id="__span-4-52"><a id="__codelineno-4-52" name="__codelineno-4-52" href="#__codelineno-4-52"></a>*.exe
 </span><span id="__span-4-53"><a id="__codelineno-4-53" name="__codelineno-4-53" href="#__codelineno-4-53"></a>*.dll
 </span><span id="__span-4-54"><a id="__codelineno-4-54" name="__codelineno-4-54" href="#__codelineno-4-54"></a>*.so
-</span><span id="__span-4-55"><a id="__codelineno-4-55" name="__codelineno-4-55" href="#__codelineno-4-55"></a>
-</span><span id="__span-4-56"><a id="__codelineno-4-56" name="__codelineno-4-56" href="#__codelineno-4-56"></a># MkDocs build
-</span><span id="__span-4-57"><a id="__codelineno-4-57" name="__codelineno-4-57" href="#__codelineno-4-57"></a>site/
-</span></code></pre></div>
-    !!! important "Segurança de Segredos"
-        O arquivo <code>ansible/inventories/home/group_vars/all/vault.yml</code> conterá segredos e será criptografado pelo Ansible Vault. Mesmo assim, é uma boa prática adicioná-lo ao <code>.gitignore</code> para evitar que ele seja commitado acidentalmente se você o descriptografar localmente para edição e esquecer de criptografá-lo novamente. Os arquivos <code>.env</code> reais usados pelas stacks Docker <strong>NUNCA</strong> devem ser commitados.</p>
+</span></code></pre></div></p>
 </li>
+</ol>
+<div class="admonition important">
+<p class="admonition-title">Segurança de Segredos</p>
+<p>O arquivo <code>ansible/inventories/home/group_vars/all/vault.yml</code> conterá segredos e será criptografado pelo Ansible Vault. Mesmo assim, é uma boa prática adicioná-lo ao <code>.gitignore</code> para evitar que ele seja commitado acidentalmente se você o descriptografar localmente para edição e esquecer de criptografá-lo novamente. Os arquivos <code>.env</code> reais usados pelas stacks Docker <strong>NUNCA</strong> devem ser commitados.</p>
+</div>
+<ol>
 <li>
-<p><strong>Crie um arquivo <code>README.md</code> inicial</strong> na raiz do projeto com uma breve descrição.</p>
+<p><strong>Crie um arquivo <code>README.md</code> inicial</strong> com uma breve descrição do que planeja pro seu projeto.</p>
 </li>
 <li>
 <p><strong>Adicione todos os arquivos criados e faça o primeiro commit:</strong>
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>add<span class="w"> </span>.
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Initial project structure, .gitignore, and basic README&quot;</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Primeiro commit da estrutura do projeto =]&quot;</span>
 </span></code></pre></div></p>
 </li>
 <li>
@@ -1843,25 +2567,25 @@
 </li>
 </ol>
 <h2 id="03-consideracoes-de-seguranca-e-resiliencia">0.3. Considerações de Segurança e Resiliência<a class="headerlink" href="#03-consideracoes-de-seguranca-e-resiliencia" title="Permanent link">&para;</a></h2>
-<p>Estes são princípios fundamentais que nortearão a construção da sua infraestrutura:</p>
+<p>Os pilares de segurança e resiliência que o projeto se fundamenta são:</p>
 <ul>
 <li><strong>Segurança:</strong><ul>
-<li><strong>Princípio do Menor Privilégio:</strong> Cada componente e usuário deve ter apenas as permissões estritamente necessárias para realizar suas funções.</li>
-<li><strong>Atualizações Constantes:</strong> Manter todos os softwares (Proxmox VE, sistema operacional das VMs, imagens Docker, aplicações) atualizados é crucial para corrigir vulnerabilidades.</li>
-<li><strong>Senhas Fortes e Únicas:</strong> Use senhas complexas para todas as contas. O Ansible Vault será usado para gerenciar senhas da infraestrutura, e você deve usar um gerenciador de senhas pessoal para suas contas de usuário nos serviços.</li>
+<li><strong>Princípio do Menor Privilégio:</strong> Cada componente e usuário deve ter apenas as permissões necessárias.</li>
+<li><strong>Atualizações Constantes:</strong> Manter tudo constantemente atualizado para evitar vulnerabilidades.</li>
+<li><strong>Senhas Fortes e Únicas:</strong> Use senhas complexas para todas as contas.</li>
 <li><strong>Autenticação de Dois Fatores (2FA):</strong> Será implementada com Authelia para proteger o acesso aos seus serviços.</li>
 <li><strong>Isolamento de Rede e Firewall:</strong> Uso de redes Docker distintas e firewalls (Proxmox PVE Firewall e UFW nas VMs) para controlar o tráfego.</li>
 </ul>
 </li>
 <li><strong>Resiliência:</strong><ul>
 <li><strong>Estratégia de Backup 3-2-1:</strong> Manter pelo menos <strong>3 cópias</strong> dos seus dados importantes, em <strong>2 mídias diferentes</strong>, com <strong>1 cópia off-site</strong> (fora da sua residência). Este tópico será detalhado na <a href="TODO-criar-link-para-secao-11-quando-existir">Seção 11: Manutenção e Backups</a>.</li>
-<li><strong>ZFS para Proteção de Dados Local:</strong> O pool <code>/data</code> configurado com ZFS em espelho (RAID 1) protegerá contra a falha de um dos HDDs. Snapshots ZFS também permitirão reversões rápidas.</li>
-<li><strong>Monitoramento:</strong> Acompanhar a saúde e o desempenho do sistema através de ferramentas como Glances, Prometheus e Grafana para identificar e resolver problemas proativamente.</li>
+<li><strong>ZFS para Proteção de Dados Local:</strong> O pool <code>/data</code> configurado com ZFS em RAID 1 protegerá contra a falha de um dos HDDs. Snapshots ZFS também permitirão reversões rápidas.</li>
+<li><strong>Monitoramento:</strong> Acompanhar a saúde e o desempenho do sistema através de ferramentas como Glances, Prometheus e Grafana para identificar e resolver problemas.</li>
 <li><strong>Infraestrutura como Código (IaC):</strong> Usar Ansible permite reconstruir a infraestrutura de forma consistente e rápida em caso de falha.</li>
 </ul>
 </li>
 </ul>
-<p>Com este planejamento e estrutura inicial, você está pronto para avançar para a configuração da sua <a href="../01-maquina-controle-ansible/">Máquina de Controle Ansible</a>.</p>
+<p>Dito isso, já podemos começar a configurar a <a href="../01-maquina-controle-ansible/">Máquina de Controle Ansible</a>.</p>
 
 
 
@@ -1869,6 +2593,27 @@
 
 
 
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Última atualização">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 11:33:25 -03">3 de junho de 2025</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
 
 
 
@@ -1917,6 +2662,17 @@
     
     <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"/></svg>
     </a>
   
 </div>
