@@ -53,6 +53,7 @@ plugins:
   # - tags # Se quiser adicionar tags às páginas
   - glightbox # Para visualização de imagens
   - mermaid2 # Para diagramas (muito útil para a Visão Geral da Arquitetura)
+  - git-revision-date-localized
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -80,7 +81,7 @@ markdown_extensions:
 # Mas o controle manual dá mais flexibilidade na ordem e nos títulos.
 nav:
   - 'Início': 'index.md'
-  - '🚀 Manual de Implementação':
+  - '🚀 Implementação':
     - 'Visão Geral': '01-manual-implementacao/index.md'
     - 'Preparação e Planejamento': '01-manual-implementacao/00-preparacao-planejamento.md'
     - 'Máquina de Controle Ansible': '01-manual-implementacao/01-maquina-controle-ansible.md'
@@ -93,7 +94,7 @@ nav:
     - 'Stack de Mídia': '01-manual-implementacao/08-stack-midia.md'
     - 'Stack de Produtividade & Automação': '01-manual-implementacao/09-stack-produtividade-automacao.md'
     - 'Stack de Monitoramento': '01-manual-implementacao/10-stack-monitoramento.md'
-  - '💡 Visão Geral da Arquitetura':
+  - '💡 Arquitetura':
     - 'Visão Geral': '02-visao-geral-arquitetura/index.md'
     - 'Fluxo de Rede e Acesso Externo': '02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md'
     - 'Virtualização (Proxmox)': '02-visao-geral-arquitetura/02-virtualizacao-proxmox.md'
@@ -101,7 +102,7 @@ nav:
     - 'Automação (Ansible)': '02-visao-geral-arquitetura/04-automacao-ansible.md'
     - 'Gerenciamento de Containers (Docker)': '02-visao-geral-arquitetura/05-gerenciamento-containers.md'
     - 'Princípios de Segurança Aplicados': '02-visao-geral-arquitetura/06-principios-seguranca.md'
-  - '🛠️ Guias de Sustentação':
+  - '🛠️ Sustentação':
     - 'Visão Geral': '03-guias-sustentacao/index.md'
     - 'Adicionando Novo Serviço Docker': '03-guias-sustentacao/01-adicionando-novo-servico-docker.md'
     - 'Modificando Configurações': '03-guias-sustentacao/02-modificando-configuracoes-existentes.md'
@@ -114,14 +115,14 @@ nav:
     - '9. Integrando Novos Serviços a Stacks Existentes': '03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md'
     - '10. Atualização Segura de Componentes Críticos': '03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md'
     - '11. Hospedando Aplicação Pública no Domínio': '03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md'
-  - '⚙️ Manutenção e Recuperação':
+  - '⚙️ Manutenção':
     - 'Visão Geral': '04-manutencao-recuperacao/index.md'
     - 'Rotinas de Manutenção': '04-manutencao-recuperacao/01-rotinas-manutencao.md'
     - 'Backup e Restore': '04-manutencao-recuperacao/02-backup-restore-estrategia.md'
     - 'CI/CD Básico Ansible': '04-manutencao-recuperacao/03-cicd-basico-ansible.md'
     - 'Reconstruindo a Infraestrutura': '04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md'
     - 'Migrando Hardware/Rede': '04-manutencao-recuperacao/05-migrando-hardware-rede.md'
-  - '📚 Guia de Estudos e Aprofundamento':
+  - '📚 Guia de Estudos':
     - 'Visão Geral': '05-guia-estudos/index.md'
     - '1. Aprofundamento em Proxmox VE': '05-guia-estudos/01-aprofundamento-proxmox-ve.md'
     - '2. Aprofundamento em ZFS': '05-guia-estudos/02-aprofundamento-zfs.md'
@@ -131,7 +132,7 @@ nav:
     - '6. Aprofundamento em Segurança Avançada para Homelab': '05-guia-estudos/06-seguranca-avancada-homelab.md'
     - '7. Aprofundamento em Kubernetes': '05-guia-estudos/07-introducao-kubernetes-k3s.md'
     - '8. Gerenciamento Avançado de Segredos': '05-guia-estudos/08-gerenciamento-segredos-avancado.md'
-  - '🔄 Soluções Alternativas e Comparativos':
+  - '🔄 Soluções Alternativas':
     - 'Visão Geral': '06-solucoes-alternativas/index.md'
     - '1. Hypervisors': '06-solucoes-alternativas/01-hypervisors.md'
     - '2. Automação de Configurações': '06-solucoes-alternativas/02-automacao-config.md'
