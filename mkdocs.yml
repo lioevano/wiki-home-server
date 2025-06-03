@@ -108,6 +108,12 @@ nav:
     - 'Troubleshooting Comum': '03-guias-sustentacao/03-troubleshooting-comum.md'
     - 'Gerenciando Redes Docker': '03-guias-sustentacao/04-gerenciando-redes-docker.md'
     - 'Passthrough de Hardware Adicional': '03-guias-sustentacao/05-passthrough-hardware-adicional.md'
+    - '6. Gerenciando Recursos de VMs': '03-guias-sustentacao/06-gerenciando-recursos-vms.md'
+    - '7. Cenários Específicos de Criação de VMs': '03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md'
+    - '8. Compartilhando Recursos entre VMs': '03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md'
+    - '9. Integrando Novos Serviços a Stacks Existentes': '03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md'
+    - '10. Atualização Segura de Componentes Críticos': '03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md'
+    - '11. Hospedando Aplicação Pública no Domínio': '03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md'
   - '⚙️ Manutenção e Recuperação':
     - 'Visão Geral': '04-manutencao-recuperacao/index.md'
     - 'Rotinas de Manutenção': '04-manutencao-recuperacao/01-rotinas-manutencao.md'
@@ -115,6 +121,27 @@ nav:
     - 'CI/CD Básico Ansible': '04-manutencao-recuperacao/03-cicd-basico-ansible.md'
     - 'Reconstruindo a Infraestrutura': '04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md'
     - 'Migrando Hardware/Rede': '04-manutencao-recuperacao/05-migrando-hardware-rede.md'
+  - '📚 Guia de Estudos e Aprofundamento':
+    - 'Visão Geral': '05-guia-estudos/index.md'
+    - '1. Aprofundamento em Proxmox VE': '05-guia-estudos/01-aprofundamento-proxmox-ve.md'
+    - '2. Aprofundamento em ZFS': '05-guia-estudos/02-aprofundamento-zfs.md'
+    - '3. Aprofundamento em Ansible': '05-guia-estudos/03-aprofundamento-ansible.md'
+    - '4. Aprofundamento em Docker Networking': '05-guia-estudos/04-aprofundamento-docker-networking.md'
+    - '5. Aprofundamento em Traefik e Authelia': '05-guia-estudos/05-aprofundamento-traefik-authelia.md'
+    - '6. Aprofundamento em Segurança Avançada para Homelab': '05-guia-estudos/06-seguranca-avancada-homelab.md'
+    - '7. Aprofundamento em Kubernetes': '05-guia-estudos/07-introducao-kubernetes-k3s.md'
+    - '8. Gerenciamento Avançado de Segredos': '05-guia-estudos/08-gerenciamento-segredos-avancado.md'
+  - '🔄 Soluções Alternativas e Comparativos':
+    - 'Visão Geral': '06-solucoes-alternativas/index.md'
+    - '1. Hypervisors': '06-solucoes-alternativas/01-hypervisors.md'
+    - '2. Automação de Configurações': '06-solucoes-alternativas/02-automacao-config.md'
+    - '3. Gerenciamento de Containers': '06-solucoes-alternativas/03-gerenciamento-containers.md'
+    - '4. Proxy Reverso': '06-solucoes-alternativas/04-proxy-reverso.md'
+    - '5. Acesso Externo': '06-solucoes-alternativas/05-acesso-externo.md'
+    - '6. Autenticação SSO': '06-solucoes-alternativas/06-autenticacao-sso.md'
+    - '7. Servidores de Mídia': '06-solucoes-alternativas/07-servidores-midia.md'
+    - '8. Sincronização de Arquivos': '06-solucoes-alternativas/08-sincronizacao-arquivos.md'
+    - '9. Monitoramento e Logs': '06-solucoes-alternativas/09-monitoramento-logs.md'
 
 extra_css:
   - stylesheets/extra.css # Crie este arquivo se precisar de CSS customizado

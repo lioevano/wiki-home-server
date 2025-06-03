@@ -1,50 +1,64 @@
 import os
+import yaml
 import zipfile
 
-# Nome do arquivo zip final
-zip_filename = "homelab-wiki-inicial.zip"
+MKDOCS_FILE = 'mkdocs.yml'
+DOCS_DIR = 'docs'
+ZIP_FILE = 'documentacao-vazia.zip'
 
-# Estrutura do repositório
-files = [
-    "homelab-wiki/docs/index.md",
-    "homelab-wiki/docs/01-manual-implementacao/index.md",
-    "homelab-wiki/docs/01-manual-implementacao/00-preparacao-planejamento.md",
-    "homelab-wiki/docs/01-manual-implementacao/01-maquina-controle-ansible.md",
-    "homelab-wiki/docs/01-manual-implementacao/02-proxmox-ve-host.md",
-    "homelab-wiki/docs/01-manual-implementacao/03-provisionamento-vms.md",
-    "homelab-wiki/docs/01-manual-implementacao/04-configuracao-base-vms-ubuntu.md",
-    "homelab-wiki/docs/01-manual-implementacao/05-rede-segura.md",
-    "homelab-wiki/docs/01-manual-implementacao/06-deploy-portainer-geral.md",
-    "homelab-wiki/docs/01-manual-implementacao/07-stack-ia-rag.md",
-    "homelab-wiki/docs/01-manual-implementacao/08-stack-midia.md",
-    "homelab-wiki/docs/01-manual-implementacao/09-stack-produtividade-automacao.md",
-    "homelab-wiki/docs/01-manual-implementacao/10-stack-monitoramento.md",
-    "homelab-wiki/docs/02-visao-geral-arquitetura/index.md",
-    "homelab-wiki/docs/02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md",
-    "homelab-wiki/docs/02-visao-geral-arquitetura/02-virtualizacao-proxmox.md",
-    "homelab-wiki/docs/02-visao-geral-arquitetura/03-armazenamento-zfs-nfs.md",
-    "homelab-wiki/docs/02-visao-geral-arquitetura/04-automacao-ansible.md",
-    "homelab-wiki/docs/02-visao-geral-arquitetura/05-gerenciamento-containers.md",
-    "homelab-wiki/docs/02-visao-geral-arquitetura/06-principios-seguranca.md",
-    "homelab-wiki/docs/03-guias-sustentacao/index.md",
-    "homelab-wiki/docs/03-guias-sustentacao/01-adicionando-novo-servico-docker.md",
-    "homelab-wiki/docs/03-guias-sustentacao/02-modificando-configuracoes-existentes.md",
-    "homelab-wiki/docs/03-guias-sustentacao/03-troubleshooting-comum.md",
-    "homelab-wiki/docs/03-guias-sustentacao/04-gerenciando-redes-docker.md",
-    "homelab-wiki/docs/03-guias-sustentacao/05-passthrough-hardware-adicional.md",
-    "homelab-wiki/docs/04-manutencao-recuperacao/index.md",
-    "homelab-wiki/docs/04-manutencao-recuperacao/01-rotinas-manutencao.md",
-    "homelab-wiki/docs/04-manutencao-recuperacao/02-backup-restore-estrategia.md",
-    "homelab-wiki/docs/04-manutencao-recuperacao/03-cicd-basico-ansible.md",
-    "homelab-wiki/docs/04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md",
-    "homelab-wiki/docs/04-manutencao-recuperacao/05-migrando-hardware-rede.md",
-    "homelab-wiki/docs/assets/images/.keep",  # marcador de pasta
-    "homelab-wiki/mkdocs.yml"
-]
+def parse_nav(nav_section):
+    paths = []
 
-# Criar o ZIP
-with zipfile.ZipFile(zip_filename, 'w') as zipf:
-    for filepath in files:
-        zipf.writestr(filepath, "")  # arquivos vazios
+    def walk(node):
+        if isinstance(node, list):
+            for item in node:
+                walk(item)
+        elif isinstance(node, dict):
+            for _, value in node.items():
+                walk(value)
+        elif isinstance(node, str):
+            paths.append(node)  # Aqui usamos node, não "value"
+    
+    walk(nav_section)
+    return paths
 
-print(f"Arquivo '{zip_filename}' criado com sucesso!")
+def ensure_docs_exist(md_paths):
+    for rel_path in md_paths:
+        full_path = os.path.join(DOCS_DIR, rel_path)
+        dir_path = os.path.dirname(full_path)
+
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+
+        if not os.path.isfile(full_path):
+            with open(full_path, 'w', encoding='utf-8') as f:
+                title = os.path.basename(full_path).replace('-', ' ').replace('.md', '').capitalize()
+                f.write(f'# {title}\n\n')
+                print(f'[novo] Criado: {rel_path}')
+        else:
+            print(f'[ok] Já existe: {rel_path}')
+
+def criar_zip(md_paths):
+    with zipfile.ZipFile(ZIP_FILE, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for rel_path in md_paths:
+            full_path = os.path.join(DOCS_DIR, rel_path)
+            if os.path.isfile(full_path):
+                zipf.write(full_path, arcname=os.path.join('docs', rel_path))
+                print(f'[zip] Incluído: {rel_path}')
+    print(f'\n✅ ZIP gerado: {ZIP_FILE}')
+
+def main():
+    with open(MKDOCS_FILE, 'r', encoding='utf-8') as f:
+        try:
+            config = yaml.safe_load(f)
+        except yaml.constructor.ConstructorError:
+            f.seek(0)
+            config = yaml.unsafe_load(f)
+
+    nav_section = config.get('nav', [])
+    md_paths = parse_nav(nav_section)
+    ensure_docs_exist(md_paths)
+    criar_zip(md_paths)
+
+if __name__ == '__main__':
+    main()

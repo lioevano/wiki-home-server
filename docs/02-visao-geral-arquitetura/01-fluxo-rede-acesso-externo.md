@@ -1,85 +1,114 @@
 # Fluxo de Rede e Acesso Externo Seguro
 
-Compreender como o tráfego de usuários externos alcança seus serviços auto-hospedados é fundamental. Esta arquitetura utiliza Cloudflare Tunnel, Traefik e Authelia para fornecer acesso seguro e simplificado.
+A capacidade de acessar seus serviços auto-hospedados de qualquer lugar, de forma segura, é uma das principais funcionalidades desta arquitetura. Utilizamos uma combinação de Cloudflare Tunnel, Traefik como proxy reverso e Authelia para autenticação de dois fatores (2FA) para alcançar este objetivo.
 
-## Diagrama de Fluxo de Rede
+## Diagrama de Fluxo Detalhado
+
+Este diagrama ilustra o caminho que uma requisição de um usuário externo percorre até alcançar um serviço Docker hospedado na sua `core-services-vm`.
 
 ```mermaid
-graph TD
-    subgraph "Internet (Usuário Externo)"
-        U[💻 Usuário Acessa app.seudominio.com]
+sequenceDiagram
+    participant U as Usuário Externo
+    participant CF_DNS as Cloudflare DNS
+    participant CF_Edge as Cloudflare Edge Network
+    participant CFT_Agent as Cloudflared Agent (Container na core-services-vm)
+    participant Traefik_Proxy as Traefik (Container na core-services-vm)
+    participant Authelia_Auth as Authelia (Container na core-services-vm)
+    participant App_Service as Serviço Docker (e.g., Nextcloud)
+
+    U->>CF_DNS: 1. Requisição DNS para app.seudominio.com
+    CF_DNS-->>U: 2. Resolve para IP da Cloudflare (associado ao Túnel)
+
+    U->>CF_Edge: 3. Conexão HTTPS para app.seudominio.com
+    CF_Edge->>CFT_Agent: 4. Tráfego encaminhado via Túnel Seguro (conexão de saída)
+    Note over CF_Edge, CFT_Agent: Seu IP doméstico NUNCA é exposto!
+
+    CFT_Agent->>Traefik_Proxy: 5. Encaminha requisição HTTP para Traefik (porta 80 interna)
+    Note over CFT_Agent, Traefik_Proxy: Traefik escuta em 80/443 na VM, CFT direciona para ele.
+
+    Traefik_Proxy->>Traefik_Proxy: 6. Roteamento baseado em Host (app.seudominio.com)
+    Traefik_Proxy->>Authelia_Auth: 7. Verifica Autenticação (Middleware Authelia)
+    alt Usuário Não Autenticado
+        Authelia_Auth-->>Traefik_Proxy: 8a. Redirecionar para Login
+        Traefik_Proxy-->>U: 9a. Redireciona para auth.seudominio.com
+        U->>Authelia_Auth: 10a. Usuário faz Login + 2FA
+        Authelia_Auth-->>U: 11a. Sessão Autenticada Estabelecida (cookie)
+        Note over U,Authelia_Auth: Usuário é redirecionado de volta para app.seudominio.com
+        U->>Traefik_Proxy: (Nova requisição para app.seudominio.com com cookie de sessão)
+        Traefik_Proxy->>Authelia_Auth: (Verifica Autenticação novamente)
+        Authelia_Auth-->>Traefik_Proxy: (Usuário Autenticado!)
+    else Usuário Autenticado
+        Authelia_Auth-->>Traefik_Proxy: 8b. Autenticação OK
     end
 
-    subgraph "Cloudflare Network"
-        DNS[🌐 Cloudflare DNS]
-        EDGE[🛡️ Cloudflare Edge Network (Proxy/WAF/DDoS Protection)]
-    end
+    Traefik_Proxy->>App_Service: 12. Roteia para o Container do Serviço (e.g., Nextcloud porta 80)
+    Note over Traefik_Proxy,App_Service: Traefik usa labels Docker para encontrar o serviço.
 
-    subgraph "Sua Rede Doméstica (Sem Portas Abertas no Roteador!)"
-        Roteador[🚪 Roteador Doméstico]
-        subgraph "Proxmox Host (IP: {{ proxmox_host_ip_var }})"
-            VM_CS[🐧 VM: core-services-vm (IP: {{ core_services_vm_ip_var }})]
-        end
-    end
-
-    subgraph "Dentro da VM core-services-vm (Rede Docker 'proxy')"
-        CFT[☁️ Container: cloudflared (Cloudflare Tunnel)]
-        TRFK[🚦 Container: Traefik (Reverse Proxy)]
-        AUTH[🔐 Container: Authelia (Serviço de Autenticação)]
-        APP_X[🐳 Container: Serviço X (e.g., Nextcloud)]
-        APP_Y[🐳 Container: Serviço Y (e.g., Grafana)]
-    end
-
-    U -->|1. Requisição DNS| DNS
-    DNS -->|2. Resolve para IP Cloudflare| EDGE
-    EDGE -->|3. Tráfego via Túnel Seguro| CFT
-    CFT -->|4. Encaminha para Traefik (http://traefik:80)| TRFK
-
-    TRFK -->|5a. Se rota protegida, verifica com Authelia| AUTH
-    AUTH -->|5b. Redireciona para Login ou Confirma Autenticação| TRFK
-
-    TRFK -->|6. Roteia para Serviço Docker Apropriado| APP_X
-    TRFK -->|6. Roteia para Serviço Docker Apropriado| APP_Y
-
-    style Roteador fill:#f9f,stroke:#333,stroke-width:2px
-    style CFT fill:#f80,stroke:#333,stroke-width:2px
+    App_Service-->>Traefik_Proxy: 13. Resposta do Serviço
+    Traefik_Proxy-->>CFT_Agent: 14. Resposta via Traefik
+    CFT_Agent-->>CF_Edge: 15. Resposta via Túnel Seguro
+    CF_Edge-->>U: 16. Resposta final para o Usuário (HTTPS)
 ```
 
-## Explicação Detalhada do Fluxo
+## Componentes Chave e Suas Funções
 
-1.  **Requisição do Usuário e DNS Cloudflare:**
-    *   O usuário digita `app.seudominio.com` no navegador.
-    *   A requisição DNS é resolvida pelos nameservers da Cloudflare. Em vez de apontar para o seu IP doméstico, o registro CNAME (ou a configuração do Túnel) aponta para a rede da Cloudflare.
+### 1. Cloudflare DNS e Edge Network
 
-2.  **Cloudflare Edge Network:**
-    *   A requisição do usuário chega à borda da rede global da Cloudflare.
-    *   Aqui, seu tráfego se beneficia da proteção contra DDoS, WAF (Web Application Firewall, se configurado) e do cache da Cloudflare (se aplicável). Seu IP doméstico real permanece oculto.
+*   **Gerenciamento DNS:** Seu domínio (`{{ base_domain }}`) utiliza os nameservers da Cloudflare.
+*   **Ocultação de IP:** Os registros DNS para seus serviços não apontam para o seu IP doméstico, mas para a rede da Cloudflare. Isso protege seu IP de ser exposto diretamente na internet.
+*   **Proteção DDoS e WAF:** O tráfego passa pela infraestrutura da Cloudflare, que oferece mitigação de ataques DDoS e um Web Application Firewall (WAF) básico (configurações mais avançadas podem estar disponíveis em planos pagos).
+*   **Cache (Opcional):** Cloudflare pode armazenar em cache conteúdo estático dos seus sites, acelerando o carregamento para os usuários e reduzindo a carga no seu servidor.
 
-3.  **Cloudflare Tunnel (`cloudflared`):**
-    *   O container `cloudflared`, rodando na sua `core-services-vm`, estabelece uma **conexão de SAÍDA** persistente e segura com a rede da Cloudflare mais próxima.
-    *   **Nenhuma porta precisa ser aberta no seu roteador doméstico.** Isso é uma grande vantagem de segurança.
-    *   A Cloudflare Edge encaminha o tráfego destinado ao seu domínio (e subdomínios configurados no túnel) através desta conexão segura para o container `cloudflared`.
+### 2. Cloudflare Tunnel (`cloudflared` Agent)
 
-4.  **`cloudflared` para Traefik:**
-    *   O container `cloudflared` recebe o tráfego e o encaminha para o Traefik.
-    *   No nosso `docker-compose.yml` para `cloudflared`, o comando `tunnel ... --url http://traefik:80 ...` instrui o túnel a enviar todo o tráfego para o serviço Docker chamado `traefik` na porta `80` (dentro da rede Docker `proxy`).
+*   **Conexão de Saída Segura:** O container `cloudflared` (rodando na `core-services-vm`) estabelece uma conexão criptografada de **saída** para a rede da Cloudflare.
+*   **Sem Abertura de Portas no Roteador:** Como a conexão é iniciada de dentro da sua rede local para fora, você **não precisa configurar nenhum encaminhamento de porta (port forwarding)** no seu roteador doméstico. Isso aumenta significativamente a segurança da sua rede local.
+*   **Ingress Rules ou `--hostname`:**
+    *   Você pode definir "Public Hostnames" (Ingress Rules) no dashboard Cloudflare Zero Trust para especificar quais subdomínios são expostos através do túnel e para qual serviço interno eles devem ser encaminhados (neste caso, para o Traefik).
+    *   Alternativamente, a flag `--hostname` no comando `cloudflared` pode registrar automaticamente um ou mais hostnames para o túnel.
+*   **Encaminhamento para Traefik:** O `cloudflared` é configurado para encaminhar todo o tráfego recebido do túnel para o serviço Traefik na rede Docker interna (e.g., `http://traefik:80`).
 
-5.  **Traefik (Reverse Proxy) e Authelia:**
-    *   Traefik escuta nas portas `80` (HTTP) e `443` (HTTPS) na `core-services-vm`.
-    *   **Redirecionamento HTTP para HTTPS:** Traefik está configurado para redirecionar automaticamente todo o tráfego HTTP para HTTPS.
-    *   **Roteamento Baseado em Host:** Traefik inspeciona o cabeçalho `Host` da requisição (e.g., `app.seudominio.com`).
-    *   **Middleware de Autenticação:**
-        *   Se a rota do Traefik para `app.seudominio.com` estiver configurada com o middleware Authelia (`traefik.http.routers.app.middlewares: "authelia@docker"`), Traefik primeiro encaminha a requisição (ou informações sobre ela) para o container Authelia.
-        *   Authelia verifica se o usuário possui uma sessão válida.
-        *   Se não, Authelia instrui Traefik a redirecionar o usuário para o portal de login de Authelia (`auth.seudominio.com`).
-        *   Após o login bem-sucedido (incluindo 2FA), Authelia cria uma sessão e informa ao Traefik que o usuário está autenticado.
-    *   **Gerenciamento de SSL/TLS:** Traefik obtém e renova automaticamente certificados SSL/TLS de Let's Encrypt para todos os seus serviços. Ele usa o desafio `DNS-01` com a API da Cloudflare, o que significa que Traefik pode provar a propriedade do domínio criando temporariamente registros DNS via API. O `acme.json` armazena esses certificados.
+### 3. Traefik (Proxy Reverso)
 
-6.  **Traefik para o Serviço Docker de Destino:**
-    *   Uma vez que o tráfego é HTTPS e o usuário está autenticado (se necessário), Traefik usa as *labels* definidas no `docker-compose.yml` do serviço de destino (e.g., Nextcloud) para saber para qual container e porta interna encaminhar a requisição.
-    *   Por exemplo, para o Nextcloud, a label `traefik.http.services.nextcloud-svc.loadbalancer.server.port: "80"` diz ao Traefik para enviar o tráfego para a porta 80 do container `nextcloud_app`.
+Traefik é um componente central para gerenciar o tráfego interno para seus containers.
 
-!!! success "Principais Vantagens Deste Fluxo"
-    *   **Segurança Aprimorada:** Nenhum IP doméstico exposto, nenhuma porta aberta no roteador, HTTPS em todos os lugares, 2FA centralizado.
-    *   **Simplicidade:** Gerenciamento de certificados automatizado, configuração de proxy reverso centralizada no Traefik.
-    *   **Flexibilidade:** Fácil adicionar novos serviços e protegê-los.
+*   **Entrypoints:** Traefik escuta em pontos de entrada definidos, como a porta `80` (HTTP) e `443` (HTTPS) na `core-services-vm`.
+*   **Redirecionamento HTTP para HTTPS:** Todo o tráfego chegando na porta `80` é automaticamente redirecionado para `HTTPS` na porta `443`.
+*   **Roteamento Baseado em Host:** Traefik examina o cabeçalho `Host` da requisição HTTP (e.g., `nextcloud.{{ base_domain }}`) para determinar para qual serviço interno a requisição deve ser encaminhada.
+*   **Descoberta de Serviços Docker:** Traefik monitora o socket Docker e automaticamente descobre novos containers que possuem *labels* específicas do Traefik. Essas labels definem como o tráfego deve ser roteado para aquele container (e.g., qual subdomínio, qual porta interna do container).
+*   **Provedor de Arquivos (File Provider):** Além da descoberta Docker, Traefik pode carregar configurações de roteamento de arquivos YAML. Isso é usado para rotear tráfego para serviços que não estão na mesma instância Docker que o Traefik (como o OpenWebUI rodando na `ai-desktop-vm`).
+*   **Gerenciamento de Certificados SSL/TLS (Let's Encrypt):**
+    *   Traefik automaticamente solicita, renova e gerencia certificados SSL/TLS da Let's Encrypt para todos os seus subdomínios expostos.
+    *   Ele utiliza o **desafio DNS-01** com a API da Cloudflare. Isso significa que Traefik (usando o token API da Cloudflare que você forneceu) cria temporariamente um registro TXT no DNS do seu domínio para provar à Let's Encrypt que ele controla o domínio. Este método é robusto e não requer que portas HTTP estejam abertas para o mundo.
+    *   Os certificados são armazenados no arquivo `acme.json` (mapeado para um volume NFS).
+*   **Middlewares:** Traefik usa middlewares para processar requisições antes de encaminhá-las aos serviços. Exemplos:
+    *   Middleware de redirecionamento HTTP para HTTPS.
+    *   Middleware para adicionar headers de segurança (como os em `security_headers.yml`).
+    *   **Middleware de Forward Authentication para Authelia.**
+
+### 4. Authelia (Servidor de Autenticação e Autorização)
+
+Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e opcionalmente 2FA) antes que os usuários possam acessar os serviços protegidos.
+
+*   **Integração com Traefik:** Traefik é configurado para usar Authelia como um [middleware de forward authentication](https://doc.traefik.io/traefik/middlewares/http/forwardauth/).
+    *   Quando uma requisição chega para um serviço protegido, Traefik envia informações sobre a requisição para o endpoint `/api/verify` do Authelia.
+    *   Authelia verifica se o usuário tem uma sessão válida (através de um cookie).
+*   **Portal de Login:** Se o usuário não estiver autenticado, Authelia instrui Traefik a redirecionar o navegador do usuário para o portal de login do Authelia (e.g., `https://auth.{{ base_domain }}`).
+*   **Autenticação de Múltiplos Fatores (MFA):** Após fornecer credenciais válidas (usuário/senha), Authelia pode exigir um segundo fator (e.g., código TOTP de um app autenticador).
+*   **Políticas de Acesso:** Authelia permite definir políticas granulares em seu arquivo `configuration.yml` para determinar qual nível de autenticação é necessário para diferentes domínios ou redes.
+*   **Single Sign-On (SSO) Básico:** Uma vez que o usuário está logado no Authelia, ele pode acessar outros serviços protegidos pelo mesmo Authelia sem precisar logar novamente (dentro da validade da sessão Authelia).
+
+## Vantagens desta Abordagem
+
+*   **Segurança Aprimorada:**
+    *   Nenhum IP doméstico exposto.
+    *   Nenhuma porta aberta no roteador.
+    *   Todo o tráfego externo é HTTPS.
+    *   Proteção centralizada com 2FA via Authelia.
+    *   Benefícios da rede Cloudflare (DDoS, WAF).
+*   **Simplicidade de Gerenciamento:**
+    *   Gerenciamento de certificados SSL automatizado por Traefik.
+    *   Configuração de proxy reverso centralizada no Traefik.
+    *   Fácil adicionar novos serviços e protegê-los com labels Docker e regras Authelia.
+*   **Flexibilidade:**
+    *   Suporte para diversos tipos de aplicações e protocolos.
