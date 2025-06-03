@@ -1,0 +1,31 @@
+site_name: Lioevano Home Server Wiki # Ex: Minha Wiki do Servidor Doméstico
+site_url: https://lioevano.github.io/wiki-home-server/ # MUITO IMPORTANTE: Substitua pelo seu usuário e nome do repositório!
+theme:
+  name: material
+  palette:
+    scheme: slate # Ou 'slate' para tema escuro
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - search.highlight
+    - search.share
+    - toc.integrate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+repo_url: https://github.com/lioevano/wiki-home-server/ # Opcional, mas bom para linkar o código-fonte
+
+plugins:
+  - search # Habilita a busca
+
+nav:
+  - Home: index.md
