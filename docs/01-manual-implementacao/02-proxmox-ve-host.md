@@ -1,14 +1,12 @@
 # Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS)
 
-Nesta seção, instalaremos o Proxmox VE no seu servidor físico e realizaremos as configurações base essenciais, incluindo a criação de um pool ZFS para dados e a configuração de um servidor NFS para compartilhar esses dados com as futuras máquinas virtuais.
+Nesta seção, instalaremos o Proxmox VE no servidor físico e realizaremos as configurações base essenciais, incluindo a criação de um pool ZFS para dados e a configuração de um servidor NFS para compartilhar esses dados com as futuras máquinas virtuais.
 
 ## 2.1. Instalação do Proxmox VE no Servidor Físico
 
-Siga estes passos para instalar o Proxmox VE:
-
 1.  **Download e Preparação do Mídia de Instalação:**
     *   Baixe a ISO mais recente do Proxmox VE do [site oficial](https://www.proxmox.com/en/downloads).
-    *   Use uma ferramenta como [Rufus](https://rufus.ie/) ou [Balena Etcher](https://www.balena.io/etcher/) para gravar a imagem ISO em um pendrive USB, tornando-o bootável.
+    *   Use uma ferramenta como [Ventoy](https://www.ventoy.net/en/download.html), [Rufus](https://rufus.ie/) ou [Balena Etcher](https://www.balena.io/etcher/) para gravar a imagem ISO em um pendrive USB.
 
 2.  **Configuração da BIOS/UEFI do Servidor:**
     *   Acesse a BIOS/UEFI do seu servidor físico ao iniciar.
@@ -25,12 +23,12 @@ Siga estes passos para instalar o Proxmox VE:
         *   **Localização e Fuso Horário:** Configure de acordo com sua localidade.
         *   **Senha `root` e Email:** Defina uma senha forte para o usuário `root` do Proxmox e forneça um email para notificações do sistema.
             !!! important "Anote a Senha Root!"
-            Esta senha `root` será usada para o primeiro login na interface web do Proxmox e para acesso SSH inicial.
+            Esta senha `root` será usada para o primeiro login na interface web do Proxmox e para acesso SSH inicial, também deverá ser a mesma definida no **vault.yml**.
         *   **Configuração de Rede (Management Network):**
             *   Selecione a interface de rede correta (sua porta Ethernet Gigabit).
             *   **Hostname (FQDN):** e.g., `proxmox.meudominio.com` (use seu domínio).
             *   **IP Address (CIDR):** Defina um **IP estático** para o seu host Proxmox (e.g., `192.168.1.10/24`). **Anote este IP!**
-            *   **Gateway:** O IP do seu roteador (e.g., `192.168.1.1`).
+            *   **Gateway:** O IP do seu roteador (e.g., `192.168.15.1`).
             *   **DNS Server:** Um servidor DNS público (e.g., `1.1.1.1` ou `8.8.8.8`) ou o seu DNS local (e.g., Pi-hole).
 
 4.  **Primeiro Boot e Acesso:**
@@ -57,6 +55,7 @@ Execute os seguintes comandos no **shell do host Proxmox VE** (acessível via "S
     ```bash
     root@proxmox:~# lsblk -o NAME,SIZE,FSTYPE,MODEL,SERIAL,WWN
     ```
+!!! note "IDs dos HDDs"
     Anote os caminhos `/dev/disk/by-id/ata-DISK_MODEL_AND_SERIAL_ID` para cada um dos seus HDDs de 500GB. Usar `by-id` é mais robusto do que `/dev/sda`, `/dev/sdb`, etc., pois os IDs persistem entre reboots.
 
 2.  **Crie o Pool ZFS (`data`) em Modo Espelhado (RAID 1):**
@@ -90,13 +89,13 @@ Execute os seguintes comandos no **shell do host Proxmox VE** (acessível via "S
     root@proxmox:~# zfs create data/docker-volumes
     root@proxmox:~# zfs create data/media
     root@proxmox:~# zfs create data/downloads
-    root@proxmox:~# zfs create data/rag_sources  # Se for usar a VM de IA
+    root@proxmox:~# zfs create data/rag_sources
     root@proxmox:~# zfs create data/backups
     ```
     Estes datasets serão automaticamente montados em `/data/docker-volumes`, `/data/media`, etc.
 
     !!! tip "Vantagens dos Datasets ZFS"
-        *   **Snapshots Individuais:** Você pode tirar snapshots de `data/media` sem afetar `data/docker-volumes`.
+        *   **[Snapshots Individuais](../03-guias-sustentacao/12-guia-snapshots-zfs.md):** Você pode tirar snapshots de `data/media` sem afetar `data/docker-volumes`.
         *   **Propriedades por Dataset:** Pode-se definir compressão, cotas, etc., por dataset.
         *   **Compartilhamento Granular:** Facilita o compartilhamento de diretórios específicos via NFS.
 
@@ -485,7 +484,7 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
 ### Executando o Playbook
 
 1.  **Certifique-se de que o role `infra/proxmox-host-config` está criado** com os arquivos `tasks/main.yml`, `templates/node_exporter_host.service.j2`, `templates/etc_exports.j2`, e `handlers/main.yml` conforme detalhado acima.
-2.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `infra-servidor-domestico/`.
+2.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `home-server/`.
 3.  Execute o playbook:
     ```bash
     ansible-playbook ansible/playbooks/setup-proxmox-host.yml --ask-vault-pass
@@ -494,4 +493,4 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
 
 Após a execução bem-sucedida, seu host Proxmox VE estará com as configurações base aplicadas, incluindo o servidor NFS pronto para compartilhar os datasets ZFS.
 
-Próximo passo: [Provisionamento das Máquinas Virtuais (VMs) com Ansible](03-provisionamento-vms.md).
+E agora: [Provisionamento das Máquinas Virtuais (VMs) com Ansible](03-provisionamento-vms.md).

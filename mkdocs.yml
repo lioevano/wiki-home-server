@@ -1,7 +1,7 @@
 # mkdocs.yml
-site_name: Meu Guia de Servidor Doméstico
+site_name: Wiki do Servidor do Léo Ivan
 site_url: https://lioevano.github.io/wiki-home-server/  # Ou seu domínio customizado
-site_author: Seu Nome
+site_author: Léo Ivan
 site_description: >-
   Guia completo para implementação e manutenção de um servidor doméstico
   otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.
@@ -14,15 +14,7 @@ theme:
   name: material
   language: 'pt' # Ou 'en' se preferir
   palette:
-    # Palette toggle for light mode
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: 'blue'
-      accent: 'indigo'
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to dark mode
-    # Palette toggle for dark mode
+    # dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: 'blue'
@@ -30,6 +22,14 @@ theme:
       toggle:
         icon: material/weather-night
         name: Switch to light mode
+    # light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: 'blue'
+      accent: 'indigo'
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
   features:
     - navigation.tabs
     - navigation.sections
@@ -53,7 +53,9 @@ plugins:
   # - tags # Se quiser adicionar tags às páginas
   - glightbox # Para visualização de imagens
   - mermaid2 # Para diagramas (muito útil para a Visão Geral da Arquitetura)
-  - git-revision-date-localized
+  - git-revision-date-localized:
+      timezone: "America/Sao_Paulo"
+      custom_format: "%d/%m/%Y"
 
 markdown_extensions:
   - pymdownx.highlight:
@@ -61,6 +63,8 @@ markdown_extensions:
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
+  - pymdownx.extra
+  - pymdownx.tilde
   - pymdownx.snippets # Para incluir trechos de arquivos (útil para código Ansible/Docker)
   - pymdownx.superfences:
       custom_fences:
@@ -80,7 +84,7 @@ markdown_extensions:
 # Se usar o plugin awesome-pages, você pode omitir/simplificar esta seção.
 # Mas o controle manual dá mais flexibilidade na ordem e nos títulos.
 nav:
-  - 'Início': 'index.md'
+  - 'Introdução': 'index.md'
   - '🚀 Implementação':
     - 'Visão Geral': '01-manual-implementacao/index.md'
     - 'Preparação e Planejamento': '01-manual-implementacao/00-preparacao-planejamento.md'
@@ -109,12 +113,13 @@ nav:
     - 'Troubleshooting Comum': '03-guias-sustentacao/03-troubleshooting-comum.md'
     - 'Gerenciando Redes Docker': '03-guias-sustentacao/04-gerenciando-redes-docker.md'
     - 'Passthrough de Hardware Adicional': '03-guias-sustentacao/05-passthrough-hardware-adicional.md'
-    - '6. Gerenciando Recursos de VMs': '03-guias-sustentacao/06-gerenciando-recursos-vms.md'
-    - '7. Cenários Específicos de Criação de VMs': '03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md'
-    - '8. Compartilhando Recursos entre VMs': '03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md'
-    - '9. Integrando Novos Serviços a Stacks Existentes': '03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md'
-    - '10. Atualização Segura de Componentes Críticos': '03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md'
-    - '11. Hospedando Aplicação Pública no Domínio': '03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md'
+    - 'Gerenciando Recursos de VMs': '03-guias-sustentacao/06-gerenciando-recursos-vms.md'
+    - 'Cenários Específicos de Criação de VMs': '03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md'
+    - 'Compartilhando Recursos entre VMs': '03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md'
+    - 'Integrando Novos Serviços a Stacks Existentes': '03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md'
+    - 'Atualização Segura de Componentes Críticos': '03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md'
+    - 'Hospedando Aplicação Pública no Domínio': '03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md'
+    - 'Guia de Snapshots ZFS': '03-guias-sustentacao/12-guia-snapshots-zfs.md'
   - '⚙️ Manutenção':
     - 'Visão Geral': '04-manutencao-recuperacao/index.md'
     - 'Rotinas de Manutenção': '04-manutencao-recuperacao/01-rotinas-manutencao.md'
@@ -124,25 +129,25 @@ nav:
     - 'Migrando Hardware/Rede': '04-manutencao-recuperacao/05-migrando-hardware-rede.md'
   - '📚 Guia de Estudos':
     - 'Visão Geral': '05-guia-estudos/index.md'
-    - '1. Aprofundamento em Proxmox VE': '05-guia-estudos/01-aprofundamento-proxmox-ve.md'
-    - '2. Aprofundamento em ZFS': '05-guia-estudos/02-aprofundamento-zfs.md'
-    - '3. Aprofundamento em Ansible': '05-guia-estudos/03-aprofundamento-ansible.md'
-    - '4. Aprofundamento em Docker Networking': '05-guia-estudos/04-aprofundamento-docker-networking.md'
-    - '5. Aprofundamento em Traefik e Authelia': '05-guia-estudos/05-aprofundamento-traefik-authelia.md'
-    - '6. Aprofundamento em Segurança Avançada para Homelab': '05-guia-estudos/06-seguranca-avancada-homelab.md'
-    - '7. Aprofundamento em Kubernetes': '05-guia-estudos/07-introducao-kubernetes-k3s.md'
-    - '8. Gerenciamento Avançado de Segredos': '05-guia-estudos/08-gerenciamento-segredos-avancado.md'
+    - 'Aprofundamento em Proxmox VE': '05-guia-estudos/01-aprofundamento-proxmox-ve.md'
+    - 'Aprofundamento em ZFS': '05-guia-estudos/02-aprofundamento-zfs.md'
+    - 'Aprofundamento em Ansible': '05-guia-estudos/03-aprofundamento-ansible.md'
+    - 'Aprofundamento em Docker Networking': '05-guia-estudos/04-aprofundamento-docker-networking.md'
+    - 'Aprofundamento em Traefik e Authelia': '05-guia-estudos/05-aprofundamento-traefik-authelia.md'
+    - 'Aprofundamento em Segurança Avançada para Homelab': '05-guia-estudos/06-seguranca-avancada-homelab.md'
+    - 'Aprofundamento em Kubernetes': '05-guia-estudos/07-introducao-kubernetes-k3s.md'
+    - 'Gerenciamento Avançado de Segredos': '05-guia-estudos/08-gerenciamento-segredos-avancado.md'
   - '🔄 Soluções Alternativas':
     - 'Visão Geral': '06-solucoes-alternativas/index.md'
-    - '1. Hypervisors': '06-solucoes-alternativas/01-hypervisors.md'
-    - '2. Automação de Configurações': '06-solucoes-alternativas/02-automacao-config.md'
-    - '3. Gerenciamento de Containers': '06-solucoes-alternativas/03-gerenciamento-containers.md'
-    - '4. Proxy Reverso': '06-solucoes-alternativas/04-proxy-reverso.md'
-    - '5. Acesso Externo': '06-solucoes-alternativas/05-acesso-externo.md'
-    - '6. Autenticação SSO': '06-solucoes-alternativas/06-autenticacao-sso.md'
-    - '7. Servidores de Mídia': '06-solucoes-alternativas/07-servidores-midia.md'
-    - '8. Sincronização de Arquivos': '06-solucoes-alternativas/08-sincronizacao-arquivos.md'
-    - '9. Monitoramento e Logs': '06-solucoes-alternativas/09-monitoramento-logs.md'
+    - 'Hypervisors': '06-solucoes-alternativas/01-hypervisors.md'
+    - 'Automação de Configurações': '06-solucoes-alternativas/02-automacao-config.md'
+    - 'Gerenciamento de Containers': '06-solucoes-alternativas/03-gerenciamento-containers.md'
+    - 'Proxy Reverso': '06-solucoes-alternativas/04-proxy-reverso.md'
+    - 'Acesso Externo': '06-solucoes-alternativas/05-acesso-externo.md'
+    - 'Autenticação SSO': '06-solucoes-alternativas/06-autenticacao-sso.md'
+    - 'Servidores de Mídia': '06-solucoes-alternativas/07-servidores-midia.md'
+    - 'Sincronização de Arquivos': '06-solucoes-alternativas/08-sincronizacao-arquivos.md'
+    - 'Monitoramento e Logs': '06-solucoes-alternativas/09-monitoramento-logs.md'
 
 extra_css:
   - stylesheets/extra.css # Crie este arquivo se precisar de CSS customizado
@@ -151,7 +156,7 @@ extra:
   social: # Opcional
     - icon: fontawesome/brands/github
       link: https://github.com/lioevano
-    # - icon: fontawesome/brands/twitter
-    #   link: https://twitter.com/seu_usuario
+    - icon: fontawesome/brands/instagram
+      link: https://instagram.com/lioevano
   version:
     provider: mike # Para versionamento de documentação com mike, se necessário

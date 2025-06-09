@@ -1,12 +1,12 @@
 # Seção 1: Configuração da Máquina de Controle Ansible
 
-A máquina de controle Ansible é o cérebro da sua automação. É a partir dela que você executará os playbooks para provisionar, configurar e gerenciar toda a sua infraestrutura de servidor doméstico.
+A máquina de controle é o passo inicial a operação. É a partir dela que você executará os playbooks para provisionar, configurar e gerenciar toda a sua infraestrutura de servidor doméstico.
 
 ## Pré-requisitos
 
 *   Uma máquina (PC/Notebook) com Linux, macOS ou Windows (usando WSL2).
 *   Acesso à Internet para baixar pacotes.
-*   O projeto `infra-servidor-domestico` clonado ou com a estrutura de diretórios criada conforme a [Seção 0.2](00-preparacao-planejamento.md#02-estrutura-do-repositório-git-infra-servidor-domestico).
+*   O projeto `home-server` clonado ou com a estrutura de diretórios criada conforme a [Seção 0.2](00-preparacao-planejamento.md).
 
 ## 1.1. Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)
 
@@ -14,7 +14,7 @@ Para simplificar a configuração inicial da sua máquina de controle, utilizare
 
 ### Conteúdo do Script `scripts/bootstrap.sh`
 
-Crie o arquivo `infra-servidor-domestico/scripts/bootstrap.sh` com o seguinte conteúdo:
+Crie o arquivo `home-server/scripts/bootstrap.sh` com o seguinte conteúdo:
 
 ```bash
 #!/bin/bash
@@ -42,7 +42,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     echo -e "${YELLOW}Detectado Linux (Debian/Ubuntu based). Atualizando apt...${NC}"
     sudo apt update && sudo apt upgrade -y
 else
-    echo -e "${RED}Sistema operacional não suportado por este script (apenas macOS e Linux baseados em Debian/Ubuntu).${NC}"
+    echo -e "${RED}Sistema operacional não suportado por este script (apenas macOS e Linux).${NC}"
     exit 1
 fi
 
@@ -106,7 +106,7 @@ echo -e "${YELLOW}--------------------------------------------------------------
 ### Executando o Script
 
 1.  **Torne o script executável:**
-    Na raiz do seu projeto `infra-servidor-domestico/`:
+    Na raiz do seu projeto `home-server/`:
     ```bash
     chmod +x scripts/bootstrap.sh
     ```
@@ -135,9 +135,9 @@ O Ansible se conectará aos seus servidores (Proxmox host e VMs) via SSH. É alt
     *   `-C "homelab_ansible_key"`: Um comentário para identificar a chave.
 
 2.  **Passphrase da Chave:**
-    *   **Sem Passphrase (Mais fácil para automação total):** Pressione Enter quando solicitado pela passphrase. A chave privada não será protegida por senha.
-        !!! warning "Segurança da Chave Privada sem Passphrase"
-            Se você não definir uma passphrase, qualquer pessoa com acesso ao arquivo da chave privada (`~/.ssh/id_ed25519_homelab`) poderá acessar seus servidores. Proteja bem este arquivo!
+    *   **Sem Passphrase (Mais fácil para automação):** Pressione Enter quando solicitado pela passphrase. A chave privada não será protegida por senha.
+    !!! warning "Segurança da Chave Privada sem Passphrase"
+        Se você não definir uma passphrase, qualquer pessoa com acesso ao arquivo da chave privada (`~/.ssh/id_ed25519_homelab`) poderá acessar seus servidores. Proteja bem este arquivo!
     *   **Com Passphrase (Mais seguro, requer `ssh-agent`):** Digite uma passphrase forte. Você precisará usar o `ssh-agent` para evitar digitar a passphrase toda vez que o Ansible se conectar.
         Para usar `ssh-agent`:
         ```bash
@@ -152,7 +152,7 @@ A chave pública (`~/.ssh/id_ed25519_homelab.pub`) será copiada para os servido
 Dados sensíveis como senhas, tokens de API, etc., não devem ser armazenados em texto plano no seu repositório Git. O Ansible Vault permite criptografar esses dados.
 
 1.  **Crie o arquivo Vault:**
-    Na raiz do seu projeto `infra-servidor-domestico/`, execute:
+    Na raiz do seu projeto `home-server/`, execute:
     ```bash
     ansible-vault create ansible/inventories/home/group_vars/all/vault.yml
     ```
@@ -194,7 +194,7 @@ Dados sensíveis como senhas, tokens de API, etc., não devem ser armazenados em
     # cloudflare_tunnel_id: "ID_ALFANUMERICO_DO_TUNNEL_CLOUDFLARE_EX_AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"
 
     # --- Authelia ---
-    # Segredos para JWT e Sessão. Gere com: openssl rand -base64 64
+    # Segredos para JWT e Sessão. Gere com: openssl rand -base64 64 (senha forte)
     authelia_jwt_secret: "SEU_SECRET_JWT_GERADO_ALEATORIAMENTE_PARA_AUTHELIA"
     authelia_session_secret: "SEU_SECRET_DE_SESSAO_GERADO_ALEATORIAMENTE_PARA_AUTHELIA"
     # Usuário administrador inicial do Authelia
@@ -244,7 +244,7 @@ O inventário Ansible define os hosts que o Ansible gerenciará e como se conect
 
 ### Arquivo de Hosts (`ansible/inventories/home/hosts.ini`)
 
-Crie o arquivo `infra-servidor-domestico/ansible/inventories/home/hosts.ini` com o seguinte conteúdo, **ajustando os IPs e nomes conforme sua rede e escolhas:**
+Crie o arquivo `home-server/ansible/inventories/home/hosts.ini` com o seguinte conteúdo, **ajustando os IPs e nomes conforme sua rede e escolhas:**
 
 ```ini
 # ansible/inventories/home/hosts.ini
@@ -253,7 +253,7 @@ Crie o arquivo `infra-servidor-domestico/ansible/inventories/home/hosts.ini` com
 [proxmox_hosts]
 # 'proxmox_main_host' é um nome lógico que você usará nos playbooks.
 # 'ansible_host' é o IP real ou hostname DNS do seu host Proxmox.
-# 'ansible_user' é o usuário que o Ansible usará para se conectar (criado na Seção 2).
+# 'ansible_user' é o usuário que o Ansible usará para se conectar (criaremos logo em seguida).
 proxmox_main_host ansible_host=192.168.1.10 ansible_user={{ proxmox_ansible_user_on_host }} # {{ proxmox_ansible_user_on_host }} virá de group_vars
 
 # Grupo para suas máquinas virtuais
@@ -267,7 +267,7 @@ ai-desktop-vm ansible_host=192.168.1.12 GUI_ENABLED=true # 'GUI_ENABLED' é uma 
 # Grupo 'filho' que inclui todas as VMs que rodam Ubuntu (para aplicar roles comuns)
 [ubuntu_vms:children]
 core-services-vm
-ai-desktop-vm # Inclua aqui se for criar esta VM
+ai-desktop-vm
 
 # Variáveis globais aplicadas a TODOS os hosts (all)
 [all:vars]
@@ -297,7 +297,7 @@ ai_desktop_vm_ip_var: 192.168.1.12
 
 ### Variáveis Globais Não Sensíveis (`ansible/inventories/home/group_vars/all/main.yml`)
 
-Crie o arquivo `infra-servidor-domestico/ansible/inventories/home/group_vars/all/main.yml` para variáveis que se aplicam a todos os hosts e não são secretas.
+Crie o arquivo `home-server/ansible/inventories/home/group_vars/all/main.yml` para variáveis que se aplicam a todos os hosts e não são secretas.
 
 ```yaml
 # ansible/inventories/home/group_vars/all/main.yml
@@ -306,8 +306,8 @@ Crie o arquivo `infra-servidor-domestico/ansible/inventories/home/group_vars/all
 # Nome do usuário Ansible a ser criado no host Proxmox (diferente do root)
 proxmox_ansible_user_on_host: "proxmox_ansible_user"
 # CIDRs permitidos para SSH e Web UI no firewall do Proxmox Host
-proxmox_ssh_allowed_cidrs: "192.168.1.0/24"     # AJUSTE PARA SUA REDE LOCAL
-proxmox_web_ui_allowed_cidrs: "192.168.1.0/24"  # AJUSTE PARA SUA REDE LOCAL
+proxmox_ssh_allowed_cidrs: "192.168.15.0/24"    # AJUSTE PARA SUA REDE LOCAL
+proxmox_web_ui_allowed_cidrs: "192.168.15.0/24" # AJUSTE PARA SUA REDE LOCAL
 # Bridge de rede padrão no Proxmox (geralmente vmbr0)
 proxmox_default_bridge: "vmbr0"
 # Storage no Proxmox onde os discos das VMs serão armazenados (geralmente local-lvm no NVMe)
@@ -321,7 +321,7 @@ proxmox_ubuntu_template_name: "ubuntu-2204-cloudinit-template-v1"
 # Nome do usuário Ansible a ser criado nas VMs via Cloud-Init
 vm_ansible_user_name: "vm_ansible_user"
 # Gateway padrão para as VMs (IP do seu roteador)
-vm_cloud_init_gateway: "192.168.1.1" # AJUSTE PARA SEU GATEWAY
+vm_cloud_init_gateway: "192.168.15.1" # AJUSTE PARA SEU GATEWAY
 # Servidores DNS para as VMs
 vm_cloud_init_nameservers: "1.1.1.1,8.8.8.8" # Ou seu DNS preferido (e.g., Pi-hole)
 # Defaults conservadores de recursos para VMs devido aos 16GB de RAM no host.
@@ -354,7 +354,7 @@ vm_nfs_mount_base_path: "/mnt/pve_data_zfs"
 # --- Configuração NFS ---
 # IPs ou CIDRs das VMs que terão permissão para montar os compartilhamentos NFS do Proxmox Host.
 # Deve cobrir os IPs de todas as suas VMs.
-vm_nfs_allowed_clients_cidr: "192.168.1.0/24" # AJUSTE PARA SUA SUB-REDE DE VMs
+vm_nfs_allowed_clients_cidr: "192.168.15.0/24" # AJUSTE PARA SUA SUB-REDE DE VMs
 
 # --- Caminhos para Templates `.env` para Stacks Portainer ---
 # Usado por playbooks para preparar arquivos .env para as stacks Docker.
@@ -365,4 +365,4 @@ portainer_env_template_src: "templates/portainer_stack_env.j2" # Caminho relativ
 portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
 ```
 
-Com a máquina de controle Ansible configurada e o inventário pronto, você pode prosseguir para a [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).
+Com a máquina de controle configurada e o inventário pronto, pode seguir para a [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).

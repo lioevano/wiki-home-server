@@ -2,7 +2,7 @@
 
 Com o host Proxmox VE configurado, o próximo passo é provisionar as máquinas virtuais (VMs) que hospedarão seus serviços. Utilizaremos Ansible para automatizar a criação e configuração inicial dessas VMs a partir de um template Ubuntu Server Cloud-Init.
 
-Nesta arquitetura, devido à limitação de 16GB de RAM, planejamos duas VMs principais:
+Nesta arquitetura, com 48GB de RAM disponíveis, podemos planejar VMs com recursos mais generosos ou um número maior de VMs especializadas. Inicialmente, manteremos as duas VMs principais, mas com alocações de recursos mais confortáveis:
 *   `core-services-vm`: Hospedará a maioria dos serviços Docker (Traefik, Portainer, Nextcloud, mídia, monitoramento, etc.).
 *   `ai-desktop-vm`: Opcional, dedicada a tarefas de IA/LLM que podem exigir GPU passthrough e mais recursos.
 
@@ -307,8 +307,8 @@ Crie o arquivo `ansible/playbooks/vm-deploy.yml`:
       vars:
         vm_id: 100 # Escolha um ID único para esta VM
         vm_name: "core-services-vm" # DEVE corresponder ao nome no seu hosts.ini
-        vm_cores: 4 # Ryzen 5 5600G tem 6 cores. Ajuste conforme sua necessidade.
-        vm_memory: 6144 # 6GB RAM. (16GB Total - 6GB VM1 - 2GB Host = 8GB para VM2 ou folga)
+        vm_cores: 6 # Ajustado para 48GB RAM. Ryzen 5 5600G tem 6 cores/12 threads..
+        vm_memory: 16384 # 16GB RAM. Ajustado para 48GB RAM no host. Deixa espaço para outras VMs e host.
         vm_disk_gb: 80 # Tamanho do disco em GB
         # IP estático para a VM, usando o IP definido no inventário (hosts.ini)
         vm_ipconfig: "ip={{ hostvars['core-services-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
@@ -321,7 +321,7 @@ Crie o arquivo `ansible/playbooks/vm-deploy.yml`:
         vm_id: 101 # ID único
         vm_name: "ai-desktop-vm" # DEVE corresponder ao nome no hosts.ini
         vm_cores: 4 # Se for usar intensivamente, pode precisar de mais, mas cuidado com a RAM total do host
-        vm_memory: 8192 # 8GB RAM. Máximo possível deixando ~2GB para o Proxmox host.
+        vm_memory: 16384 # 16GB RAM. Ajustado para 48GB RAM no host. Pode ser aumentada se necessário.
         vm_disk_gb: 150 # Para modelos LLM e SO
         vm_ipconfig: "ip={{ hostvars['ai-desktop-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
         vm_tags: "llm,rag,ai_gpu,desktop,homelab,ansible_managed"
@@ -358,16 +358,11 @@ Crie o arquivo `ansible/playbooks/vm-deploy.yml`:
     - name: "Atualizar inventário Ansible em memória para refletir novas VMs"
       ansible.builtin.meta: refresh_inventory
 ```
-!!! warning "Alocação de RAM e IDs PCI"
-    *   **RAM Total:** A soma da RAM alocada para `core-services-vm` (6GB) + `ai-desktop-vm` (8GB) é 14GB. Isso deixa apenas 2GB para o Proxmox host, o que é **extremamente apertado**. Considere:
-        *   Reduzir a memória de uma das VMs (e.g., `ai-desktop-vm` para 6GB, ou `core-services-vm` para 4GB se seus serviços permitirem).
-        *   Não rodar ambas as VMs com carga máxima simultaneamente.
-        *   Para uso intensivo de LLMs na `ai-desktop-vm`, pode ser necessário desligar a `core-services-vm` temporariamente ou reduzir drasticamente os serviços nela.
-    *   **IDs PCI para GPU:** Use `lspci -nn` no shell do host Proxmox para encontrar os IDs corretos da sua RX 5600XT (a parte de vídeo e a parte de áudio, e.g., `09:00.0` e `09:00.1`). Substitua os valores de exemplo em `vm_host_pci_devices` pelos seus IDs reais.
+
 
 ### Executando o Playbook de Deploy das VMs
 
-1.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `infra-servidor-domestico/`.
+1.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `home-server/`.
 2.  Execute o playbook:
     ```bash
     ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass

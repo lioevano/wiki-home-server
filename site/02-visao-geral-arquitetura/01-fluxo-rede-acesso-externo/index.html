@@ -6,13 +6,13 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <meta content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare." name="description"/>
-<meta content="Seu Nome" name="author"/>
+<meta content="Léo Ivan" name="author"/>
 <link href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/" rel="canonical"/>
 <link href="../" rel="prev"/>
 <link href="../02-virtualizacao-proxmox/" rel="next"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.6.14" name="generator"/>
-<title>Fluxo de Rede e Acesso Externo - Meu Guia de Servidor Doméstico</title>
+<title>Fluxo de Rede e Acesso Externo - Wiki do Servidor do Léo Ivan</title>
 <link href="../../assets/stylesheets/main.342714a4.min.css" rel="stylesheet"/>
 <link href="../../assets/stylesheets/palette.06af60db.min.css" rel="stylesheet"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -30,7 +30,7 @@
     body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
     body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
     body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></link></head>
-<body data-md-color-accent="indigo" data-md-color-primary="blue" data-md-color-scheme="default" dir="ltr">
+<body data-md-color-accent="indigo" data-md-color-primary="blue" data-md-color-scheme="slate" dir="ltr">
 <input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
@@ -45,7 +45,7 @@
 </div>
 <header class="md-header" data-md-component="header">
 <nav aria-label="Cabeçalho" class="md-header__inner md-grid">
-<a aria-label="Meu Guia de Servidor Doméstico" class="md-header__button md-logo" data-md-component="logo" href="../.." title="Meu Guia de Servidor Doméstico">
+<a aria-label="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" data-md-component="logo" href="../.." title="Wiki do Servidor do Léo Ivan">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 </a>
 <label class="md-header__button md-icon" for="__drawer">
@@ -55,7 +55,7 @@
 <div class="md-header__ellipsis">
 <div class="md-header__topic">
 <span class="md-ellipsis">
-            Meu Guia de Servidor Doméstico
+            Wiki do Servidor do Léo Ivan
           </span>
 </div>
 <div class="md-header__topic" data-md-component="header-topic">
@@ -68,13 +68,13 @@
 </div>
 </div>
 <form class="md-header__option" data-md-component="palette">
-<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: light)" data-md-color-primary="blue" data-md-color-scheme="default" id="__palette_0" name="__palette" type="radio"/>
-<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to dark mode">
-<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
-</label>
-<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-primary="blue" data-md-color-scheme="slate" id="__palette_1" name="__palette" type="radio"/>
-<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to light mode">
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-primary="blue" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to light mode">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: light)" data-md-color-primary="blue" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
 </label>
 </form>
 <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
@@ -132,7 +132,7 @@
   
     
   
-  Início
+  Introdução
 
       </a>
 </li>
@@ -141,7 +141,7 @@
           
   
   
-  🚀 Manual de Implementação
+  🚀 Implementação
 
         </a>
 </li>
@@ -150,7 +150,7 @@
           
   
   
-  💡 Visão Geral da Arquitetura
+  💡 Arquitetura
 
         </a>
 </li>
@@ -159,7 +159,7 @@
           
   
   
-  🛠️ Guias de Sustentação
+  🛠️ Sustentação
 
         </a>
 </li>
@@ -168,7 +168,25 @@
           
   
   
-  ⚙️ Manutenção e Recuperação
+  ⚙️ Manutenção
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../05-guia-estudos/">
+          
+  
+  
+  📚 Guia de Estudos
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../06-solucoes-alternativas/">
+          
+  
+  
+  🔄 Soluções Alternativas
 
         </a>
 </li>
@@ -182,10 +200,10 @@
 <div class="md-sidebar__inner">
 <nav aria-label="Navegação" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
 <label class="md-nav__title" for="__drawer">
-<a aria-label="Meu Guia de Servidor Doméstico" class="md-nav__button md-logo" data-md-component="logo" href="../.." title="Meu Guia de Servidor Doméstico">
+<a aria-label="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" data-md-component="logo" href="../.." title="Wiki do Servidor do Léo Ivan">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 </a>
-    Meu Guia de Servidor Doméstico
+    Wiki do Servidor do Léo Ivan
   </label>
 <div class="md-nav__source">
 <a class="md-source" data-md-component="source" href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório">
@@ -201,7 +219,7 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../..">
 <span class="md-ellipsis">
-    Início
+    Introdução
     
   </span>
 </a>
@@ -210,7 +228,7 @@
 <input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_2" type="checkbox"/>
 <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
 <span class="md-ellipsis">
-    🚀 Manual de Implementação
+    🚀 Implementação
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -218,7 +236,7 @@
 <nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_2">
 <span class="md-nav__icon md-icon"></span>
-            🚀 Manual de Implementação
+            🚀 Implementação
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
@@ -324,7 +342,7 @@
 <input checked="" class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
 <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
 <span class="md-ellipsis">
-    💡 Visão Geral da Arquitetura
+    💡 Arquitetura
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -332,7 +350,7 @@
 <nav aria-expanded="true" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_3">
 <span class="md-nav__icon md-icon"></span>
-            💡 Visão Geral da Arquitetura
+            💡 Arquitetura
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
@@ -365,16 +383,55 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#diagrama-de-fluxo-de-rede">
+<a class="md-nav__link" href="#diagrama-de-fluxo-detalhado">
 <span class="md-ellipsis">
-      Diagrama de Fluxo de Rede
+      Diagrama de Fluxo Detalhado
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#explicacao-detalhada-do-fluxo">
+<a class="md-nav__link" href="#componentes-chave-e-suas-funcoes">
 <span class="md-ellipsis">
-      Explicação Detalhada do Fluxo
+      Componentes Chave e Suas Funções
+    </span>
+</a>
+<nav aria-label="Componentes Chave e Suas Funções" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-cloudflare-dns-e-edge-network">
+<span class="md-ellipsis">
+      1. Cloudflare DNS e Edge Network
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-cloudflare-tunnel-cloudflared-agent">
+<span class="md-ellipsis">
+      2. Cloudflare Tunnel (cloudflared Agent)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-traefik-proxy-reverso">
+<span class="md-ellipsis">
+      3. Traefik (Proxy Reverso)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-authelia-servidor-de-autenticacao-e-autorizacao">
+<span class="md-ellipsis">
+      4. Authelia (Servidor de Autenticação e Autorização)
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#vantagens-desta-abordagem">
+<span class="md-ellipsis">
+      Vantagens desta Abordagem
     </span>
 </a>
 </li>
@@ -428,7 +485,7 @@
 <input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_4" type="checkbox"/>
 <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
 <span class="md-ellipsis">
-    🛠️ Guias de Sustentação
+    🛠️ Sustentação
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -436,7 +493,7 @@
 <nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_4">
 <span class="md-nav__icon md-icon"></span>
-            🛠️ Guias de Sustentação
+            🛠️ Sustentação
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
@@ -487,6 +544,54 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/">
+<span class="md-ellipsis">
+    6. Gerenciando Recursos de VMs
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/">
+<span class="md-ellipsis">
+    7. Cenários Específicos de Criação de VMs
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/">
+<span class="md-ellipsis">
+    8. Compartilhando Recursos entre VMs
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/">
+<span class="md-ellipsis">
+    9. Integrando Novos Serviços a Stacks Existentes
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/">
+<span class="md-ellipsis">
+    10. Atualização Segura de Componentes Críticos
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/">
+<span class="md-ellipsis">
+    11. Hospedando Aplicação Pública no Domínio
+    
+  </span>
+</a>
+</li>
 </ul>
 </nav>
 </li>
@@ -494,7 +599,7 @@
 <input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
 <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
 <span class="md-ellipsis">
-    ⚙️ Manutenção e Recuperação
+    ⚙️ Manutenção
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -502,7 +607,7 @@
 <nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_5">
 <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção e Recuperação
+            ⚙️ Manutenção
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
@@ -556,6 +661,194 @@
 </ul>
 </nav>
 </li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
+<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+<span class="md-ellipsis">
+    📚 Guia de Estudos
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_6">
+<span class="md-nav__icon md-icon"></span>
+            📚 Guia de Estudos
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/">
+<span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/">
+<span class="md-ellipsis">
+    1. Aprofundamento em Proxmox VE
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/02-aprofundamento-zfs/">
+<span class="md-ellipsis">
+    2. Aprofundamento em ZFS
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/03-aprofundamento-ansible/">
+<span class="md-ellipsis">
+    3. Aprofundamento em Ansible
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/04-aprofundamento-docker-networking/">
+<span class="md-ellipsis">
+    4. Aprofundamento em Docker Networking
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/">
+<span class="md-ellipsis">
+    5. Aprofundamento em Traefik e Authelia
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/06-seguranca-avancada-homelab/">
+<span class="md-ellipsis">
+    6. Aprofundamento em Segurança Avançada para Homelab
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/07-introducao-kubernetes-k3s/">
+<span class="md-ellipsis">
+    7. Aprofundamento em Kubernetes
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/">
+<span class="md-ellipsis">
+    8. Gerenciamento Avançado de Segredos
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
+<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+<span class="md-ellipsis">
+    🔄 Soluções Alternativas
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_7">
+<span class="md-nav__icon md-icon"></span>
+            🔄 Soluções Alternativas
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/">
+<span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/01-hypervisors/">
+<span class="md-ellipsis">
+    1. Hypervisors
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/02-automacao-config/">
+<span class="md-ellipsis">
+    2. Automação de Configurações
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/03-gerenciamento-containers/">
+<span class="md-ellipsis">
+    3. Gerenciamento de Containers
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/04-proxy-reverso/">
+<span class="md-ellipsis">
+    4. Proxy Reverso
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/05-acesso-externo/">
+<span class="md-ellipsis">
+    5. Acesso Externo
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/06-autenticacao-sso/">
+<span class="md-ellipsis">
+    6. Autenticação SSO
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/07-servidores-midia/">
+<span class="md-ellipsis">
+    7. Servidores de Mídia
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/">
+<span class="md-ellipsis">
+    8. Sincronização de Arquivos
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../06-solucoes-alternativas/09-monitoramento-logs/">
+<span class="md-ellipsis">
+    9. Monitoramento e Logs
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
 </ul>
 </nav>
 </div>
@@ -571,16 +864,55 @@
     </label>
 <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#diagrama-de-fluxo-de-rede">
+<a class="md-nav__link" href="#diagrama-de-fluxo-detalhado">
 <span class="md-ellipsis">
-      Diagrama de Fluxo de Rede
+      Diagrama de Fluxo Detalhado
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#explicacao-detalhada-do-fluxo">
+<a class="md-nav__link" href="#componentes-chave-e-suas-funcoes">
 <span class="md-ellipsis">
-      Explicação Detalhada do Fluxo
+      Componentes Chave e Suas Funções
+    </span>
+</a>
+<nav aria-label="Componentes Chave e Suas Funções" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-cloudflare-dns-e-edge-network">
+<span class="md-ellipsis">
+      1. Cloudflare DNS e Edge Network
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-cloudflare-tunnel-cloudflared-agent">
+<span class="md-ellipsis">
+      2. Cloudflare Tunnel (cloudflared Agent)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-traefik-proxy-reverso">
+<span class="md-ellipsis">
+      3. Traefik (Proxy Reverso)
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-authelia-servidor-de-autenticacao-e-autorizacao">
+<span class="md-ellipsis">
+      4. Authelia (Servidor de Autenticação e Autorização)
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#vantagens-desta-abordagem">
+<span class="md-ellipsis">
+      Vantagens desta Abordagem
     </span>
 </a>
 </li>
@@ -592,109 +924,132 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h1 id="fluxo-de-rede-e-acesso-externo-seguro">Fluxo de Rede e Acesso Externo Seguro<a class="headerlink" href="#fluxo-de-rede-e-acesso-externo-seguro" title="Permanent link">¶</a></h1>
-<p>Compreender como o tráfego de usuários externos alcança seus serviços auto-hospedados é fundamental. Esta arquitetura utiliza Cloudflare Tunnel, Traefik e Authelia para fornecer acesso seguro e simplificado.</p>
-<h2 id="diagrama-de-fluxo-de-rede">Diagrama de Fluxo de Rede<a class="headerlink" href="#diagrama-de-fluxo-de-rede" title="Permanent link">¶</a></h2>
-<pre class="mermaid"><code>graph TD
-    subgraph "Internet (Usuário Externo)"
-        U[💻 Usuário Acessa app.seudominio.com]
+<p>A capacidade de acessar seus serviços auto-hospedados de qualquer lugar, de forma segura, é uma das principais funcionalidades desta arquitetura. Utilizamos uma combinação de Cloudflare Tunnel, Traefik como proxy reverso e Authelia para autenticação de dois fatores (2FA) para alcançar este objetivo.</p>
+<h2 id="diagrama-de-fluxo-detalhado">Diagrama de Fluxo Detalhado<a class="headerlink" href="#diagrama-de-fluxo-detalhado" title="Permanent link">¶</a></h2>
+<p>Este diagrama ilustra o caminho que uma requisição de um usuário externo percorre até alcançar um serviço Docker hospedado na sua <code>core-services-vm</code>.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as Usuário Externo
+    participant CF_DNS as Cloudflare DNS
+    participant CF_Edge as Cloudflare Edge Network
+    participant CFT_Agent as Cloudflared Agent (Container na core-services-vm)
+    participant Traefik_Proxy as Traefik (Container na core-services-vm)
+    participant Authelia_Auth as Authelia (Container na core-services-vm)
+    participant App_Service as Serviço Docker (e.g., Nextcloud)
+
+    U-&gt;&gt;CF_DNS: 1. Requisição DNS para app.seudominio.com
+    CF_DNS--&gt;&gt;U: 2. Resolve para IP da Cloudflare (associado ao Túnel)
+
+    U-&gt;&gt;CF_Edge: 3. Conexão HTTPS para app.seudominio.com
+    CF_Edge-&gt;&gt;CFT_Agent: 4. Tráfego encaminhado via Túnel Seguro (conexão de saída)
+    Note over CF_Edge, CFT_Agent: Seu IP doméstico NUNCA é exposto!
+
+    CFT_Agent-&gt;&gt;Traefik_Proxy: 5. Encaminha requisição HTTP para Traefik (porta 80 interna)
+    Note over CFT_Agent, Traefik_Proxy: Traefik escuta em 80/443 na VM, CFT direciona para ele.
+
+    Traefik_Proxy-&gt;&gt;Traefik_Proxy: 6. Roteamento baseado em Host (app.seudominio.com)
+    Traefik_Proxy-&gt;&gt;Authelia_Auth: 7. Verifica Autenticação (Middleware Authelia)
+    alt Usuário Não Autenticado
+        Authelia_Auth--&gt;&gt;Traefik_Proxy: 8a. Redirecionar para Login
+        Traefik_Proxy--&gt;&gt;U: 9a. Redireciona para auth.seudominio.com
+        U-&gt;&gt;Authelia_Auth: 10a. Usuário faz Login + 2FA
+        Authelia_Auth--&gt;&gt;U: 11a. Sessão Autenticada Estabelecida (cookie)
+        Note over U,Authelia_Auth: Usuário é redirecionado de volta para app.seudominio.com
+        U-&gt;&gt;Traefik_Proxy: (Nova requisição para app.seudominio.com com cookie de sessão)
+        Traefik_Proxy-&gt;&gt;Authelia_Auth: (Verifica Autenticação novamente)
+        Authelia_Auth--&gt;&gt;Traefik_Proxy: (Usuário Autenticado!)
+    else Usuário Autenticado
+        Authelia_Auth--&gt;&gt;Traefik_Proxy: 8b. Autenticação OK
     end
 
-    subgraph "Cloudflare Network"
-        DNS[🌐 Cloudflare DNS]
-        EDGE[🛡️ Cloudflare Edge Network (Proxy/WAF/DDoS Protection)]
-    end
+    Traefik_Proxy-&gt;&gt;App_Service: 12. Roteia para o Container do Serviço (e.g., Nextcloud porta 80)
+    Note over Traefik_Proxy,App_Service: Traefik usa labels Docker para encontrar o serviço.
 
-    subgraph "Sua Rede Doméstica (Sem Portas Abertas no Roteador!)"
-        Roteador[🚪 Roteador Doméstico]
-        subgraph "Proxmox Host (IP: {{ proxmox_host_ip_var }})"
-            VM_CS[🐧 VM: core-services-vm (IP: {{ core_services_vm_ip_var }})]
-        end
-    end
-
-    subgraph "Dentro da VM core-services-vm (Rede Docker 'proxy')"
-        CFT[☁️ Container: cloudflared (Cloudflare Tunnel)]
-        TRFK[🚦 Container: Traefik (Reverse Proxy)]
-        AUTH[🔐 Container: Authelia (Serviço de Autenticação)]
-        APP_X[🐳 Container: Serviço X (e.g., Nextcloud)]
-        APP_Y[🐳 Container: Serviço Y (e.g., Grafana)]
-    end
-
-    U --&gt;|1. Requisição DNS| DNS
-    DNS --&gt;|2. Resolve para IP Cloudflare| EDGE
-    EDGE --&gt;|3. Tráfego via Túnel Seguro| CFT
-    CFT --&gt;|4. Encaminha para Traefik (http://traefik:80)| TRFK
-
-    TRFK --&gt;|5a. Se rota protegida, verifica com Authelia| AUTH
-    AUTH --&gt;|5b. Redireciona para Login ou Confirma Autenticação| TRFK
-
-    TRFK --&gt;|6. Roteia para Serviço Docker Apropriado| APP_X
-    TRFK --&gt;|6. Roteia para Serviço Docker Apropriado| APP_Y
-
-    style Roteador fill:#f9f,stroke:#333,stroke-width:2px
-    style CFT fill:#f80,stroke:#333,stroke-width:2px</code></pre>
-<h2 id="explicacao-detalhada-do-fluxo">Explicação Detalhada do Fluxo<a class="headerlink" href="#explicacao-detalhada-do-fluxo" title="Permanent link">¶</a></h2>
-<ol>
-<li>
-<p><strong>Requisição do Usuário e DNS Cloudflare:</strong></p>
+    App_Service--&gt;&gt;Traefik_Proxy: 13. Resposta do Serviço
+    Traefik_Proxy--&gt;&gt;CFT_Agent: 14. Resposta via Traefik
+    CFT_Agent--&gt;&gt;CF_Edge: 15. Resposta via Túnel Seguro
+    CF_Edge--&gt;&gt;U: 16. Resposta final para o Usuário (HTTPS)</code></pre>
+<h2 id="componentes-chave-e-suas-funcoes">Componentes Chave e Suas Funções<a class="headerlink" href="#componentes-chave-e-suas-funcoes" title="Permanent link">¶</a></h2>
+<h3 id="1-cloudflare-dns-e-edge-network">1. Cloudflare DNS e Edge Network<a class="headerlink" href="#1-cloudflare-dns-e-edge-network" title="Permanent link">¶</a></h3>
 <ul>
-<li>O usuário digita <code>app.seudominio.com</code> no navegador.</li>
-<li>A requisição DNS é resolvida pelos nameservers da Cloudflare. Em vez de apontar para o seu IP doméstico, o registro CNAME (ou a configuração do Túnel) aponta para a rede da Cloudflare.</li>
+<li><strong>Gerenciamento DNS:</strong> Seu domínio (<code>{{ base_domain }}</code>) utiliza os nameservers da Cloudflare.</li>
+<li><strong>Ocultação de IP:</strong> Os registros DNS para seus serviços não apontam para o seu IP doméstico, mas para a rede da Cloudflare. Isso protege seu IP de ser exposto diretamente na internet.</li>
+<li><strong>Proteção DDoS e WAF:</strong> O tráfego passa pela infraestrutura da Cloudflare, que oferece mitigação de ataques DDoS e um Web Application Firewall (WAF) básico (configurações mais avançadas podem estar disponíveis em planos pagos).</li>
+<li><strong>Cache (Opcional):</strong> Cloudflare pode armazenar em cache conteúdo estático dos seus sites, acelerando o carregamento para os usuários e reduzindo a carga no seu servidor.</li>
+</ul>
+<h3 id="2-cloudflare-tunnel-cloudflared-agent">2. Cloudflare Tunnel (<code>cloudflared</code> Agent)<a class="headerlink" href="#2-cloudflare-tunnel-cloudflared-agent" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Conexão de Saída Segura:</strong> O container <code>cloudflared</code> (rodando na <code>core-services-vm</code>) estabelece uma conexão criptografada de <strong>saída</strong> para a rede da Cloudflare.</li>
+<li><strong>Sem Abertura de Portas no Roteador:</strong> Como a conexão é iniciada de dentro da sua rede local para fora, você <strong>não precisa configurar nenhum encaminhamento de porta (port forwarding)</strong> no seu roteador doméstico. Isso aumenta significativamente a segurança da sua rede local.</li>
+<li><strong>Ingress Rules ou <code>--hostname</code>:</strong><ul>
+<li>Você pode definir "Public Hostnames" (Ingress Rules) no dashboard Cloudflare Zero Trust para especificar quais subdomínios são expostos através do túnel e para qual serviço interno eles devem ser encaminhados (neste caso, para o Traefik).</li>
+<li>Alternativamente, a flag <code>--hostname</code> no comando <code>cloudflared</code> pode registrar automaticamente um ou mais hostnames para o túnel.</li>
 </ul>
 </li>
-<li>
-<p><strong>Cloudflare Edge Network:</strong></p>
+<li><strong>Encaminhamento para Traefik:</strong> O <code>cloudflared</code> é configurado para encaminhar todo o tráfego recebido do túnel para o serviço Traefik na rede Docker interna (e.g., <code>http://traefik:80</code>).</li>
+</ul>
+<h3 id="3-traefik-proxy-reverso">3. Traefik (Proxy Reverso)<a class="headerlink" href="#3-traefik-proxy-reverso" title="Permanent link">¶</a></h3>
+<p>Traefik é um componente central para gerenciar o tráfego interno para seus containers.</p>
 <ul>
-<li>A requisição do usuário chega à borda da rede global da Cloudflare.</li>
-<li>Aqui, seu tráfego se beneficia da proteção contra DDoS, WAF (Web Application Firewall, se configurado) e do cache da Cloudflare (se aplicável). Seu IP doméstico real permanece oculto.</li>
+<li><strong>Entrypoints:</strong> Traefik escuta em pontos de entrada definidos, como a porta <code>80</code> (HTTP) e <code>443</code> (HTTPS) na <code>core-services-vm</code>.</li>
+<li><strong>Redirecionamento HTTP para HTTPS:</strong> Todo o tráfego chegando na porta <code>80</code> é automaticamente redirecionado para <code>HTTPS</code> na porta <code>443</code>.</li>
+<li><strong>Roteamento Baseado em Host:</strong> Traefik examina o cabeçalho <code>Host</code> da requisição HTTP (e.g., <code>nextcloud.{{ base_domain }}</code>) para determinar para qual serviço interno a requisição deve ser encaminhada.</li>
+<li><strong>Descoberta de Serviços Docker:</strong> Traefik monitora o socket Docker e automaticamente descobre novos containers que possuem <em>labels</em> específicas do Traefik. Essas labels definem como o tráfego deve ser roteado para aquele container (e.g., qual subdomínio, qual porta interna do container).</li>
+<li><strong>Provedor de Arquivos (File Provider):</strong> Além da descoberta Docker, Traefik pode carregar configurações de roteamento de arquivos YAML. Isso é usado para rotear tráfego para serviços que não estão na mesma instância Docker que o Traefik (como o OpenWebUI rodando na <code>ai-desktop-vm</code>).</li>
+<li><strong>Gerenciamento de Certificados SSL/TLS (Let's Encrypt):</strong><ul>
+<li>Traefik automaticamente solicita, renova e gerencia certificados SSL/TLS da Let's Encrypt para todos os seus subdomínios expostos.</li>
+<li>Ele utiliza o <strong>desafio DNS-01</strong> com a API da Cloudflare. Isso significa que Traefik (usando o token API da Cloudflare que você forneceu) cria temporariamente um registro TXT no DNS do seu domínio para provar à Let's Encrypt que ele controla o domínio. Este método é robusto e não requer que portas HTTP estejam abertas para o mundo.</li>
+<li>Os certificados são armazenados no arquivo <code>acme.json</code> (mapeado para um volume NFS).</li>
 </ul>
 </li>
-<li>
-<p><strong>Cloudflare Tunnel (<code>cloudflared</code>):</strong></p>
-<ul>
-<li>O container <code>cloudflared</code>, rodando na sua <code>core-services-vm</code>, estabelece uma <strong>conexão de SAÍDA</strong> persistente e segura com a rede da Cloudflare mais próxima.</li>
-<li><strong>Nenhuma porta precisa ser aberta no seu roteador doméstico.</strong> Isso é uma grande vantagem de segurança.</li>
-<li>A Cloudflare Edge encaminha o tráfego destinado ao seu domínio (e subdomínios configurados no túnel) através desta conexão segura para o container <code>cloudflared</code>.</li>
+<li><strong>Middlewares:</strong> Traefik usa middlewares para processar requisições antes de encaminhá-las aos serviços. Exemplos:<ul>
+<li>Middleware de redirecionamento HTTP para HTTPS.</li>
+<li>Middleware para adicionar headers de segurança (como os em <code>security_headers.yml</code>).</li>
+<li><strong>Middleware de Forward Authentication para Authelia.</strong></li>
 </ul>
 </li>
-<li>
-<p><strong><code>cloudflared</code> para Traefik:</strong></p>
+</ul>
+<h3 id="4-authelia-servidor-de-autenticacao-e-autorizacao">4. Authelia (Servidor de Autenticação e Autorização)<a class="headerlink" href="#4-authelia-servidor-de-autenticacao-e-autorizacao" title="Permanent link">¶</a></h3>
+<p>Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e opcionalmente 2FA) antes que os usuários possam acessar os serviços protegidos.</p>
 <ul>
-<li>O container <code>cloudflared</code> recebe o tráfego e o encaminha para o Traefik.</li>
-<li>No nosso <code>docker-compose.yml</code> para <code>cloudflared</code>, o comando <code>tunnel ... --url http://traefik:80 ...</code> instrui o túnel a enviar todo o tráfego para o serviço Docker chamado <code>traefik</code> na porta <code>80</code> (dentro da rede Docker <code>proxy</code>).</li>
+<li><strong>Integração com Traefik:</strong> Traefik é configurado para usar Authelia como um <a href="https://doc.traefik.io/traefik/middlewares/http/forwardauth/">middleware de forward authentication</a>.<ul>
+<li>Quando uma requisição chega para um serviço protegido, Traefik envia informações sobre a requisição para o endpoint <code>/api/verify</code> do Authelia.</li>
+<li>Authelia verifica se o usuário tem uma sessão válida (através de um cookie).</li>
 </ul>
 </li>
-<li>
-<p><strong>Traefik (Reverse Proxy) e Authelia:</strong></p>
+<li><strong>Portal de Login:</strong> Se o usuário não estiver autenticado, Authelia instrui Traefik a redirecionar o navegador do usuário para o portal de login do Authelia (e.g., <code>https://auth.{{ base_domain }}</code>).</li>
+<li><strong>Autenticação de Múltiplos Fatores (MFA):</strong> Após fornecer credenciais válidas (usuário/senha), Authelia pode exigir um segundo fator (e.g., código TOTP de um app autenticador).</li>
+<li><strong>Políticas de Acesso:</strong> Authelia permite definir políticas granulares em seu arquivo <code>configuration.yml</code> para determinar qual nível de autenticação é necessário para diferentes domínios ou redes.</li>
+<li><strong>Single Sign-On (SSO) Básico:</strong> Uma vez que o usuário está logado no Authelia, ele pode acessar outros serviços protegidos pelo mesmo Authelia sem precisar logar novamente (dentro da validade da sessão Authelia).</li>
+</ul>
+<h2 id="vantagens-desta-abordagem">Vantagens desta Abordagem<a class="headerlink" href="#vantagens-desta-abordagem" title="Permanent link">¶</a></h2>
 <ul>
-<li>Traefik escuta nas portas <code>80</code> (HTTP) e <code>443</code> (HTTPS) na <code>core-services-vm</code>.</li>
-<li><strong>Redirecionamento HTTP para HTTPS:</strong> Traefik está configurado para redirecionar automaticamente todo o tráfego HTTP para HTTPS.</li>
-<li><strong>Roteamento Baseado em Host:</strong> Traefik inspeciona o cabeçalho <code>Host</code> da requisição (e.g., <code>app.seudominio.com</code>).</li>
-<li><strong>Middleware de Autenticação:</strong><ul>
-<li>Se a rota do Traefik para <code>app.seudominio.com</code> estiver configurada com o middleware Authelia (<code>traefik.http.routers.app.middlewares: "authelia@docker"</code>), Traefik primeiro encaminha a requisição (ou informações sobre ela) para o container Authelia.</li>
-<li>Authelia verifica se o usuário possui uma sessão válida.</li>
-<li>Se não, Authelia instrui Traefik a redirecionar o usuário para o portal de login de Authelia (<code>auth.seudominio.com</code>).</li>
-<li>Após o login bem-sucedido (incluindo 2FA), Authelia cria uma sessão e informa ao Traefik que o usuário está autenticado.</li>
+<li><strong>Segurança Aprimorada:</strong><ul>
+<li>Nenhum IP doméstico exposto.</li>
+<li>Nenhuma porta aberta no roteador.</li>
+<li>Todo o tráfego externo é HTTPS.</li>
+<li>Proteção centralizada com 2FA via Authelia.</li>
+<li>Benefícios da rede Cloudflare (DDoS, WAF).</li>
 </ul>
 </li>
-<li><strong>Gerenciamento de SSL/TLS:</strong> Traefik obtém e renova automaticamente certificados SSL/TLS de Let's Encrypt para todos os seus serviços. Ele usa o desafio <code>DNS-01</code> com a API da Cloudflare, o que significa que Traefik pode provar a propriedade do domínio criando temporariamente registros DNS via API. O <code>acme.json</code> armazena esses certificados.</li>
+<li><strong>Simplicidade de Gerenciamento:</strong><ul>
+<li>Gerenciamento de certificados SSL automatizado por Traefik.</li>
+<li>Configuração de proxy reverso centralizada no Traefik.</li>
+<li>Fácil adicionar novos serviços e protegê-los com labels Docker e regras Authelia.</li>
 </ul>
 </li>
-<li>
-<p><strong>Traefik para o Serviço Docker de Destino:</strong></p>
-<ul>
-<li>Uma vez que o tráfego é HTTPS e o usuário está autenticado (se necessário), Traefik usa as <em>labels</em> definidas no <code>docker-compose.yml</code> do serviço de destino (e.g., Nextcloud) para saber para qual container e porta interna encaminhar a requisição.</li>
-<li>Por exemplo, para o Nextcloud, a label <code>traefik.http.services.nextcloud-svc.loadbalancer.server.port: "80"</code> diz ao Traefik para enviar o tráfego para a porta 80 do container <code>nextcloud_app</code>.</li>
+<li><strong>Flexibilidade:</strong><ul>
+<li>Suporte para diversos tipos de aplicações e protocolos.</li>
 </ul>
 </li>
-</ol>
-<div class="admonition success">
-<p class="admonition-title">Principais Vantagens Deste Fluxo</p>
-<ul>
-<li><strong>Segurança Aprimorada:</strong> Nenhum IP doméstico exposto, nenhuma porta aberta no roteador, HTTPS em todos os lugares, 2FA centralizado.</li>
-<li><strong>Simplicidade:</strong> Gerenciamento de certificados automatizado, configuração de proxy reverso centralizada no Traefik.</li>
-<li><strong>Flexibilidade:</strong> Fácil adicionar novos serviços e protegê-los.</li>
 </ul>
-</div>
+<aside class="md-source-file">
+<span class="md-source-file__fact">
+<span class="md-icon" title="Última atualização">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+</span>
+</aside>
 </article>
 </div>
 <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
@@ -719,6 +1074,9 @@
 <div class="md-social">
 <a class="md-social__link" href="https://github.com/lioevano" rel="noopener" target="_blank" title="github.com">
 <svg viewbox="0 0 496 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/lioevano" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
 </a>
 </div>
 </div>

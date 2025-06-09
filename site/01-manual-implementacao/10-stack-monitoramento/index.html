@@ -9,7 +9,7 @@
         <meta name="description" content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.">
       
       
-        <meta name="author" content="Seu Nome">
+        <meta name="author" content="Léo Ivan">
       
       
         <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/01-manual-implementacao/10-stack-monitoramento/">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Stack de Monitoramento - Meu Guia de Servidor Doméstico</title>
+        <title>Stack de Monitoramento - Wiki do Servidor do Léo Ivan</title>
       
     
     
@@ -80,13 +80,18 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo">
   
     
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
+      
+        
+        <a href="#secao-10-stack-de-monitoramento-glances-prometheus-grafana-loki" class="md-skip">
+          Ir para o conteúdo
+        </a>
       
     </div>
     <div data-md-component="announce">
@@ -102,7 +107,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-header__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +121,7 @@
       <div class="md-header__ellipsis">
         <div class="md-header__topic">
           <span class="md-ellipsis">
-            Meu Guia de Servidor Doméstico
+            Wiki do Servidor do Léo Ivan
           </span>
         </div>
         <div class="md-header__topic" data-md-component="header-topic">
@@ -135,20 +140,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
       </label>
     
   
@@ -241,7 +246,7 @@
   
     
   
-  Início
+  Introdução
 
       </a>
     </li>
@@ -262,7 +267,7 @@
           
   
   
-  🚀 Manual de Implementação
+  🚀 Implementação
 
         </a>
       </li>
@@ -282,7 +287,7 @@
           
   
   
-  💡 Visão Geral da Arquitetura
+  💡 Arquitetura
 
         </a>
       </li>
@@ -302,7 +307,7 @@
           
   
   
-  🛠️ Guias de Sustentação
+  🛠️ Sustentação
 
         </a>
       </li>
@@ -322,7 +327,47 @@
           
   
   
-  ⚙️ Manutenção e Recuperação
+  ⚙️ Manutenção
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../05-guia-estudos/" class="md-tabs__link">
+          
+  
+  
+  📚 Guia de Estudos
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../06-solucoes-alternativas/" class="md-tabs__link">
+          
+  
+  
+  🔄 Soluções Alternativas
 
         </a>
       </li>
@@ -352,13 +397,13 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegação" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="Meu Guia de Servidor Doméstico" class="md-nav__button md-logo" aria-label="Meu Guia de Servidor Doméstico" data-md-component="logo">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
 
     </a>
-    Meu Guia de Servidor Doméstico
+    Wiki do Servidor do Léo Ivan
   </label>
   
     <div class="md-nav__source">
@@ -387,7 +432,7 @@
   
   
   <span class="md-ellipsis">
-    Início
+    Introdução
     
   </span>
   
@@ -430,7 +475,7 @@
   
   
   <span class="md-ellipsis">
-    🚀 Manual de Implementação
+    🚀 Implementação
     
   </span>
   
@@ -441,7 +486,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            🚀 Manual de Implementação
+            🚀 Implementação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -711,6 +756,21 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Stack de Monitoramento
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
@@ -723,6 +783,67 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#101-preparacao-com-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      10.1. Preparação com Ansible
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10.1. Preparação com Ansible">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#playbook-setup-monitoring-stack-volumesyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      Playbook setup-monitoring-stack-volumes.yml
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detalhes-dos-arquivos-de-configuracao-gerados-por-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detalhes dos Arquivos de Configuração Gerados por Ansible
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#102-deploy-da-stack-de-monitoramento-via-portainer-dockerstacksmonitoringdocker-composeyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      10.2. Deploy da Stack de Monitoramento via Portainer (docker/stacks/monitoring/docker-compose.yml)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -766,7 +887,7 @@
   
   
   <span class="md-ellipsis">
-    💡 Visão Geral da Arquitetura
+    💡 Arquitetura
     
   </span>
   
@@ -777,7 +898,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            💡 Visão Geral da Arquitetura
+            💡 Arquitetura
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -979,7 +1100,7 @@
   
   
   <span class="md-ellipsis">
-    🛠️ Guias de Sustentação
+    🛠️ Sustentação
     
   </span>
   
@@ -990,7 +1111,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            🛠️ Guias de Sustentação
+            🛠️ Sustentação
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1132,6 +1253,144 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Gerenciando Recursos de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Cenários Específicos de Criação de VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Compartilhando Recursos entre VMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Integrando Novos Serviços a Stacks Existentes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    10. Atualização Segura de Componentes Críticos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    11. Hospedando Aplicação Pública no Domínio
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1169,7 +1428,7 @@
   
   
   <span class="md-ellipsis">
-    ⚙️ Manutenção e Recuperação
+    ⚙️ Manutenção
     
   </span>
   
@@ -1180,7 +1439,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção e Recuperação
+            ⚙️ Manutenção
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1329,6 +1588,547 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    📚 Guia de Estudos
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            📚 Guia de Estudos
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Aprofundamento em Proxmox VE
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/02-aprofundamento-zfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Aprofundamento em ZFS
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/03-aprofundamento-ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Aprofundamento em Ansible
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/04-aprofundamento-docker-networking/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Aprofundamento em Docker Networking
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Aprofundamento em Traefik e Authelia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/06-seguranca-avancada-homelab/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Aprofundamento em Segurança Avançada para Homelab
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/07-introducao-kubernetes-k3s/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Aprofundamento em Kubernetes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Gerenciamento Avançado de Segredos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    🔄 Soluções Alternativas
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            🔄 Soluções Alternativas
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Visão Geral
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/01-hypervisors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    1. Hypervisors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/02-automacao-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    2. Automação de Configurações
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/03-gerenciamento-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    3. Gerenciamento de Containers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/04-proxy-reverso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    4. Proxy Reverso
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/05-acesso-externo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    5. Acesso Externo
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/06-autenticacao-sso/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    6. Autenticação SSO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/07-servidores-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    7. Servidores de Mídia
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    8. Sincronização de Arquivos
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../06-solucoes-alternativas/09-monitoramento-logs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    9. Monitoramento e Logs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1346,6 +2146,58 @@
   
   
   
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#101-preparacao-com-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      10.1. Preparação com Ansible
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10.1. Preparação com Ansible">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#playbook-setup-monitoring-stack-volumesyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      Playbook setup-monitoring-stack-volumes.yml
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#detalhes-dos-arquivos-de-configuracao-gerados-por-ansible" class="md-nav__link">
+    <span class="md-ellipsis">
+      Detalhes dos Arquivos de Configuração Gerados por Ansible
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#102-deploy-da-stack-de-monitoramento-via-portainer-dockerstacksmonitoringdocker-composeyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      10.2. Deploy da Stack de Monitoramento via Portainer (docker/stacks/monitoring/docker-compose.yml)
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -1364,7 +2216,430 @@
   
 
 
-  <h1>Stack de Monitoramento</h1>
+<h1 id="secao-10-stack-de-monitoramento-glances-prometheus-grafana-loki">Seção 10: Stack de Monitoramento (Glances, Prometheus, Grafana, Loki)<a class="headerlink" href="#secao-10-stack-de-monitoramento-glances-prometheus-grafana-loki" title="Permanent link">&para;</a></h1>
+<p>Uma stack de monitoramento robusta é essencial para entender a performance, identificar gargalos e solucionar problemas no seu servidor doméstico. Esta seção detalha a implementação de:
+*   <strong>Node Exporter:</strong> Instalado no host Proxmox e em cada VM para coletar métricas do sistema.
+*   <strong>Glances:</strong> Um monitor de sistema abrangente com uma interface web e exportador de métricas para Prometheus.
+*   <strong>Prometheus:</strong> Um sistema de monitoramento e alerta que coleta e armazena métricas como séries temporais.
+*   <strong>Grafana:</strong> Uma plataforma de visualização e análise para criar dashboards a partir dos dados do Prometheus (e Loki).
+*   <strong>Loki:</strong> Um sistema de agregação de logs horizontalmente escalável, altamente disponível e multi-tenant, inspirado no Prometheus.
+*   <strong>Promtail:</strong> Um agente que coleta logs locais e os envia para Loki.</p>
+<p>Todos os componentes principais da stack de monitoramento (Prometheus, Grafana, Loki, Promtail, Glances) rodarão como containers Docker na <code>core-services-vm</code>. O Node Exporter já foi instalado no host Proxmox e nas VMs pelos playbooks Ansible anteriores.</p>
+<h2 id="101-preparacao-com-ansible">10.1. Preparação com Ansible<a class="headerlink" href="#101-preparacao-com-ansible" title="Permanent link">&para;</a></h2>
+<p>Antes de implantar a stack no Portainer, o Ansible preparará os diretórios NFS, os arquivos de configuração para Prometheus, Grafana, Loki e Promtail, e o arquivo <code>.env</code> para a stack.</p>
+<h3 id="playbook-setup-monitoring-stack-volumesyml">Playbook <code>setup-monitoring-stack-volumes.yml</code><a class="headerlink" href="#playbook-setup-monitoring-stack-volumesyml" title="Permanent link">&para;</a></h3>
+<p>Este playbook, executado contra a <code>core-services-vm</code>, irá:
+*   Criar os subdiretórios necessários no dataset ZFS <code>docker-volumes</code> (montado em <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/</code>) para as configurações e dados de Prometheus, Grafana (dados, DB, provisioning), Loki (dados, config), Promtail (config, positions) e Glances (config opcional).
+*   Copiar os arquivos de configuração templateados para seus respectivos diretórios NFS:
+    *   <code>prometheus.yml</code> para Prometheus.
+    *   Arquivos de provisionamento de datasources (Prometheus, Loki) e dashboards para Grafana.
+    *   <code>loki-local-config.yaml</code> para Loki.
+    *   <code>promtail-config.yml</code> para Promtail.
+*   Preparar o arquivo <code>/opt/portainer_stack_envs/monitoring.env</code> na <code>core-services-vm</code>.</p>
+<p><strong>Ação:</strong> Execute o playbook a partir da sua máquina de controle Ansible:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/setup-monitoring-stack-volumes.yml<span class="w"> </span>--ask-vault-pass
+</span></code></pre></div></p>
+<h3 id="detalhes-dos-arquivos-de-configuracao-gerados-por-ansible">Detalhes dos Arquivos de Configuração Gerados por Ansible<a class="headerlink" href="#detalhes-dos-arquivos-de-configuracao-gerados-por-ansible" title="Permanent link">&para;</a></h3>
+<h4 id="configuracao-do-prometheus-prometheusymlj2">Configuração do Prometheus (<code>prometheus.yml.j2</code>)<a class="headerlink" href="#configuracao-do-prometheus-prometheusymlj2" title="Permanent link">&para;</a></h4>
+<p>O Ansible usará um template (e.g., <code>ansible/roles/infra/prometheus-config/templates/prometheus.yml.j2</code>) para gerar o arquivo de configuração do Prometheus, que será copiado para <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/prometheus/config/prometheus.yml</code>.</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Exemplo de ansible/roles/infra/prometheus-config/templates/prometheus.yml.j2</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">global</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15s</span><span class="w"> </span><span class="c1"># Com que frequência buscar métricas por padrão</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">evaluation_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15s</span><span class="w"> </span><span class="c1"># Com que frequência avaliar regras de alerta</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nt">scrape_configs</span><span class="p">:</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;prometheus&#39;</span><span class="w"> </span><span class="c1"># Monitora o próprio Prometheus</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:9090&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Prometheus escuta em localhost:9090 dentro do seu container</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;node_exporter_proxmox_host&#39;</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;{{</span><span class="nv"> </span><span class="s">proxmox_host_ip_var</span><span class="nv"> </span><span class="s">}}:9100&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># IP do host Proxmox (de hosts.ini)</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">          </span><span class="nt">instance</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;proxmox_main_host&#39;</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;node_exporter_core_services_vm&#39;</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;{{</span><span class="nv"> </span><span class="s">core_services_vm_ip_var</span><span class="nv"> </span><span class="s">}}:9100&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># IP da core-services-vm</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">          </span><span class="nt">instance</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;core-services-vm&#39;</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">  </span><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">if &#39;ai-desktop-vm&#39; in groups</span><span class="p p-Indicator">[</span><span class="s">&#39;virtual_machines&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="err">%</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;node_exporter_ai_desktop_vm&#39;</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;{{</span><span class="nv"> </span><span class="s">ai_desktop_vm_ip_var</span><span class="nv"> </span><span class="s">}}:9100&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># IP da ai-desktop-vm</span>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">          </span><span class="nt">instance</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;ai-desktop-vm&#39;</span>
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">  </span><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">endif %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;cloudflared_tunnel&#39;</span><span class="w"> </span><span class="c1"># Métricas do Cloudflare Tunnel</span>
+</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">      </span><span class="c1"># &#39;cloudflared&#39; é o nome do serviço Docker do container cloudflared.</span>
+</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">      </span><span class="c1"># Prometheus, rodando na mesma rede Docker &#39;proxy&#39;, pode resolvê-lo.</span>
+</span><span id="__span-1-35"><a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;cloudflared:2000&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Porta de métricas do cloudflared</span>
+</span><span id="__span-1-36"><a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">          </span><span class="nt">instance</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;cloudflared_tunnel_metrics&#39;</span>
+</span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a>
+</span><span id="__span-1-39"><a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;glances&#39;</span><span class="w"> </span><span class="c1"># Métricas do Glances</span>
+</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">      </span><span class="c1"># &#39;glances&#39; é o nome do serviço Docker do container Glances.</span>
+</span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;glances:61208&#39;</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="c1"># Porta web do Glances</span>
+</span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">        </span><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/api/3/metrics</span><span class="w"> </span><span class="c1"># Endpoint de métricas Prometheus do Glances</span>
+</span><span id="__span-1-44"><a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-1-45"><a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a><span class="w">          </span><span class="nt">instance</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;glances_core_services_vm&#39;</span>
+</span><span id="__span-1-46"><a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a>
+</span><span id="__span-1-47"><a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">  </span><span class="c1"># Adicione aqui jobs para cAdvisor (monitoramento de containers Docker) se decidir usá-lo.</span>
+</span><span id="__span-1-48"><a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">  </span><span class="c1"># - job_name: &#39;cadvisor&#39;</span>
+</span><span id="__span-1-49"><a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a><span class="w">  </span><span class="c1">#   static_configs:</span>
+</span><span id="__span-1-50"><a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="w">  </span><span class="c1">#     - targets: [&#39;cadvisor:8080&#39;] # Se cAdvisor estiver rodando como um serviço &#39;cadvisor&#39;</span>
+</span><span id="__span-1-51"><a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a>
+</span><span id="__span-1-52"><a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a><span class="w">  </span><span class="c1"># Adicione aqui jobs para monitorar aplicações específicas que expõem métricas Prometheus.</span>
+</span></code></pre></div>
+<h4 id="provisionamento-do-grafana-datasources-e-dashboards">Provisionamento do Grafana (Datasources e Dashboards)<a class="headerlink" href="#provisionamento-do-grafana-datasources-e-dashboards" title="Permanent link">&para;</a></h4>
+<p>O Ansible criará arquivos na <code>core-services-vm</code> em <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/</code> que o Grafana usará para configurar automaticamente datasources e dashboards ao iniciar.</p>
+<ul>
+<li><strong>Datasources:</strong><ul>
+<li><code>.../grafana/provisioning/datasources/prometheus.yml</code>:
+    <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">#apiVersion: 1 # Desnecessário se o arquivo for nomeado com .yaml e no diretório correto</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">datasources</span><span class="p">:</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Prometheus</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">proxy</span><span class="w"> </span><span class="c1"># Grafana acessa Prometheus através do seu backend</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://prometheus:9090</span><span class="w"> </span><span class="c1"># Nome do serviço Docker do Prometheus</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">isDefault</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">jsonData</span><span class="p">:</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">      </span><span class="nt">timeInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;15s&quot;</span><span class="w"> </span><span class="c1"># Sugestão de intervalo para queries</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">editable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Permite editar na UI do Grafana</span>
+</span></code></pre></div></li>
+<li><code>.../grafana/provisioning/datasources/loki.yml</code>:
+    <div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">#apiVersion: 1</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">datasources</span><span class="p">:</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Loki</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">loki</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">proxy</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://loki:3100</span><span class="w"> </span><span class="c1"># Nome do serviço Docker do Loki</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">jsonData</span><span class="p">:</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="nt">maxLines</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span><span class="w"> </span><span class="c1"># Limite de linhas para queries de log</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">editable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span></code></pre></div></li>
+</ul>
+</li>
+<li><strong>Dashboards:</strong><ul>
+<li>Você pode colocar arquivos JSON de dashboards (exportados de outras instâncias Grafana ou baixados de grafana.com/dashboards) em <code>.../grafana/provisioning/dashboards/</code>.</li>
+<li>O Ansible também pode criar um arquivo <code>.../grafana/provisioning/dashboards/dashboards.yml</code> para definir como esses dashboards JSON são carregados:
+    <div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1">#apiVersion: 1</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nt">providers</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;default&#39;</span><span class="w"> </span><span class="c1"># Nome do provedor de dashboards</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">orgId</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w"> </span><span class="c1"># Pasta no Grafana onde os dashboards serão importados (vazio para Geral)</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nt">disableDeletion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Se true, dashboards removidos do disco não são removidos do Grafana</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nt">editable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/grafana/provisioning/dashboards</span><span class="w"> </span><span class="c1"># Caminho DENTRO do container Grafana</span>
+</span></code></pre></div></li>
+</ul>
+</li>
+</ul>
+<h4 id="configuracao-do-loki-loki-local-configyamlj2">Configuração do Loki (<code>loki-local-config.yaml.j2</code>)<a class="headerlink" href="#configuracao-do-loki-loki-local-configyamlj2" title="Permanent link">&para;</a></h4>
+<p>Local: <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/config/loki-local-config.yaml</code>
+Um exemplo básico para rodar Loki em modo single-binary:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Exemplo de ansible/roles/infra/loki-config/templates/loki-local-config.yaml.j2</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">auth_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># Autenticação desabilitada para simplicidade interna. Grafana acessa.</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nt">server</span><span class="p">:</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="nt">http_listen_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3100</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="nt">grpc_listen_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9096</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="nt">common</span><span class="p">:</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">  </span><span class="nt">path_prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/loki</span><span class="w"> </span><span class="c1"># Onde Loki armazena seus dados (índice, chunks)</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span><span class="nt">storage</span><span class="p">:</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nt">filesystem</span><span class="p">:</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">      </span><span class="nt">chunks_directory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/loki/chunks</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">      </span><span class="nt">rules_directory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/loki/rules</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span><span class="nt">replication_factor</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"> </span><span class="c1"># Single instance, sem replicação</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="nt">ring</span><span class="p">:</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="nt">instance_addr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">127.0.0.1</span><span class="w"> </span><span class="c1"># Para modo single-binary</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="nt">kvstore</span><span class="p">:</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">      </span><span class="nt">store</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inmemory</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="nt">schema_config</span><span class="p">:</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">  </span><span class="nt">configs</span><span class="p">:</span>
+</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">from</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2020-10-24</span>
+</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">      </span><span class="nt">store</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">boltdb-shipper</span><span class="w"> </span><span class="c1"># Armazena índice e chunks no sistema de arquivos</span>
+</span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">      </span><span class="nt">object_store</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">filesystem</span>
+</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">      </span><span class="nt">schema</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v11</span>
+</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">      </span><span class="nt">index</span><span class="p">:</span>
+</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">        </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">index_</span>
+</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">        </span><span class="nt">period</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">24h</span>
+</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>
+</span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="nt">ruler</span><span class="p">:</span>
+</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">  </span><span class="nt">alertmanager_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:9093</span><span class="w"> </span><span class="c1"># Se usar Alertmanager com Loki (não coberto em detalhe aqui)</span>
+</span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>
+</span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="c1"># Se usar Table Manager para retenção (opcional para setup simples)</span>
+</span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="c1"># table_manager:</span>
+</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="c1">#   retention_deletes_enabled: true</span>
+</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="c1">#   retention_period: 336h # Ex: 14 dias (336h)</span>
+</span></code></pre></div>
+<h4 id="configuracao-do-promtail-promtail-configymlj2">Configuração do Promtail (<code>promtail-config.yml.j2</code>)<a class="headerlink" href="#configuracao-do-promtail-promtail-configymlj2" title="Permanent link">&para;</a></h4>
+<p>Local: <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/config/config.yml</code></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Exemplo de ansible/roles/infra/promtail-config/templates/promtail-config.yml.j2</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nt">server</span><span class="p">:</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="nt">http_listen_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">9080</span><span class="w"> </span><span class="c1"># Porta para a API do Promtail (métrica, etc.)</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="nt">grpc_listen_port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"> </span><span class="c1"># Desabilita gRPC se não for necessário</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nt">positions</span><span class="p">:</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">  </span><span class="nt">filename</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/tmp/positions/positions.yaml</span><span class="w"> </span><span class="c1"># Onde Promtail armazena a última posição lida nos arquivos de log</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nt">clients</span><span class="p">:</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://loki:3100/loki/api/v1/push</span><span class="w"> </span><span class="c1"># Endpoint do Loki para enviar logs</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nt">scrape_configs</span><span class="p">:</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system_journal</span><span class="w"> </span><span class="c1"># Coleta logs do journald da VM core-services-vm</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">    </span><span class="nt">journal</span><span class="p">:</span>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">      </span><span class="nt">max_age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12h</span><span class="w"> </span><span class="c1"># Tempo máximo para buscar logs antigos</span>
+</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/log/journal</span><span class="w"> </span><span class="c1"># Se journald estiver configurado para persistir aqui</span>
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">      </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">        </span><span class="nt">job</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system_journal</span>
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">        </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">core_services_vm_ip_var</span><span class="nv"> </span><span class="s">}}&quot;</span><span class="w"> </span><span class="c1"># Ou inventory_hostname</span>
+</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">    </span><span class="nt">relabel_configs</span><span class="p">:</span>
+</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">source_labels</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;__journal__systemd_unit&#39;</span><span class="p p-Indicator">]</span>
+</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a><span class="w">        </span><span class="nt">target_label</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;unit&#39;</span>
+</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
+</span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker_logs</span><span class="w"> </span><span class="c1"># Coleta logs de todos os containers Docker na VM</span>
+</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span>
+</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span><span class="w"> </span><span class="c1"># Promtail precisa saber onde encontrar os logs Docker</span>
+</span><span id="__span-6-28"><a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-6-29"><a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="w">          </span><span class="nt">job</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker_logs</span>
+</span><span id="__span-6-30"><a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">          </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">core_services_vm_ip_var</span><span class="nv"> </span><span class="s">}}&quot;</span><span class="w"> </span><span class="c1"># Ou inventory_hostname</span>
+</span><span id="__span-6-31"><a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="w">          </span><span class="nt">__path__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/docker/containers/*/*-json.log</span><span class="w"> </span><span class="c1"># Caminho para os arquivos de log JSON dos containers</span>
+</span><span id="__span-6-32"><a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a><span class="w">          </span><span class="c1"># (Este __path__ é um padrão que o Docker log driver usa)</span>
+</span><span id="__span-6-33"><a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="w">    </span><span class="nt">pipeline_stages</span><span class="p">:</span>
+</span><span id="__span-6-34"><a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">docker</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"> </span><span class="c1"># Processa logs no formato Docker JSON</span>
+</span><span id="__span-6-35"><a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="w">      </span><span class="c1"># Extrai &#39;app&#39; e &#39;container_name&#39; como labels se existirem no log Docker</span>
+</span><span id="__span-6-36"><a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">json</span><span class="p">:</span>
+</span><span id="__span-6-37"><a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a><span class="w">          </span><span class="nt">expressions</span><span class="p">:</span>
+</span><span id="__span-6-38"><a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a><span class="w">            </span><span class="nt">app</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">log.attrs.container_name</span><span class="w"> </span><span class="c1"># Pode variar dependendo da config do log driver</span>
+</span><span id="__span-6-39"><a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a><span class="w">            </span><span class="c1"># output: log_message</span>
+</span><span id="__span-6-40"><a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-6-41"><a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a><span class="w">          </span><span class="nt">app</span><span class="p">:</span>
+</span><span id="__span-6-42"><a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a><span class="w">          </span><span class="c1"># container_name: # O Docker log driver já pode adicionar &#39;container_name&#39;</span>
+</span><span id="__span-6-43"><a id="__codelineno-6-43" name="__codelineno-6-43" href="#__codelineno-6-43"></a>
+</span><span id="__span-6-44"><a id="__codelineno-6-44" name="__codelineno-6-44" href="#__codelineno-6-44"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var_log_messages</span><span class="w"> </span><span class="c1"># Coleta logs de /var/log/messages ou syslog</span>
+</span><span id="__span-6-45"><a id="__codelineno-6-45" name="__codelineno-6-45" href="#__codelineno-6-45"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
+</span><span id="__span-6-46"><a id="__codelineno-6-46" name="__codelineno-6-46" href="#__codelineno-6-46"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span>
+</span><span id="__span-6-47"><a id="__codelineno-6-47" name="__codelineno-6-47" href="#__codelineno-6-47"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+</span><span id="__span-6-48"><a id="__codelineno-6-48" name="__codelineno-6-48" href="#__codelineno-6-48"></a><span class="w">        </span><span class="nt">labels</span><span class="p">:</span>
+</span><span id="__span-6-49"><a id="__codelineno-6-49" name="__codelineno-6-49" href="#__codelineno-6-49"></a><span class="w">          </span><span class="nt">job</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">var_log</span>
+</span><span id="__span-6-50"><a id="__codelineno-6-50" name="__codelineno-6-50" href="#__codelineno-6-50"></a><span class="w">          </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;{{</span><span class="nv"> </span><span class="s">core_services_vm_ip_var</span><span class="nv"> </span><span class="s">}}&quot;</span>
+</span><span id="__span-6-51"><a id="__codelineno-6-51" name="__codelineno-6-51" href="#__codelineno-6-51"></a><span class="w">          </span><span class="nt">__path__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/log/{messages,syslog,auth.log,kern.log}</span><span class="w"> </span><span class="c1"># Vários arquivos de log comuns</span>
+</span></code></pre></div>
+<h2 id="102-deploy-da-stack-de-monitoramento-via-portainer-dockerstacksmonitoringdocker-composeyml">10.2. Deploy da Stack de Monitoramento via Portainer (<code>docker/stacks/monitoring/docker-compose.yml</code>)<a class="headerlink" href="#102-deploy-da-stack-de-monitoramento-via-portainer-dockerstacksmonitoringdocker-composeyml" title="Permanent link">&para;</a></h2>
+<p>Com os volumes e configurações preparados, vamos implantar a stack de monitoramento.</p>
+<p><strong>Ação:</strong>
+1.  No Portainer, certifique-se de que está conectado ao endpoint <code>local</code> (<code>core-services-vm</code>).
+2.  Vá para "Stacks" -&gt; "+ Add stack".
+3.  <strong>Nome:</strong> <code>monitoring-services</code>.
+4.  <strong>Web editor:</strong> Cole o conteúdo do arquivo <code>infra-servidor-domestico/docker/stacks/monitoring/docker-compose.yml</code>:</p>
+<div class="language-text highlight"><pre><span></span><code>```yaml
+# docker/stacks/monitoring/docker-compose.yml
+version: &#39;3.9&#39;
+
+networks:
+  proxy: # Para expor UIs (Prometheus, Grafana, Glances) via Traefik
+    name: proxy
+    external: true
+  internal_services: # Para comunicação interna entre componentes (e.g., Grafana -&gt; Prometheus/Loki)
+    name: internal_services
+    external: true
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.51.2 # Verifique a tag da versão estável mais recente
+    container_name: prometheus
+    restart: unless-stopped
+    # user: &quot;${DOCKER_PUID}:${DOCKER_PGID}&quot; # Prometheus geralmente roda como &#39;nobody&#39;.
+                                          # Certifique-se que o diretório de dados NFS tem permissões apropriadas.
+                                          # Pode ser mais simples deixar Prometheus rodar como root dentro do container
+                                          # e confiar nas permissões do volume NFS (que squasha para PUID/PGID).
+    networks:
+      - proxy # Para a UI do Prometheus ser acessível via Traefik
+      - internal_services # Para Grafana e outros poderem acessá-lo
+    volumes: # Caminhos NFS do .env
+      - &quot;${MONITORING_PROMETHEUS_DATA_PATH}:/prometheus&quot; # Dados TSDB do Prometheus
+      - &quot;${MONITORING_PROMETHEUS_CONFIG_PATH}/prometheus.yml:/etc/prometheus/prometheus.yml:ro&quot; # Config principal
+      # - &quot;${MONITORING_PROMETHEUS_CONFIG_PATH}/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro&quot; # Opcional, se usar regras de alerta
+    command:
+      - &#39;--config.file=/etc/prometheus/prometheus.yml&#39;
+      - &#39;--storage.tsdb.path=/prometheus&#39;
+      - &#39;--web.console.libraries=/usr/share/prometheus/console_libraries&#39;
+      - &#39;--web.console.templates=/usr/share/prometheus/consoles&#39;
+      - &#39;--web.enable-lifecycle&#39; # Permite recarregar config via API POST /-/reload (útil)
+      - &#39;--web.listen-address=:9090&#39; # Prometheus escuta nesta porta internamente
+    labels: # Labels para Traefik expor a UI do Prometheus
+      traefik.enable: &quot;true&quot;
+      traefik.http.routers.prometheus.rule: &quot;Host(`prometheus.{{ base_domain }}`)&quot;
+      traefik.http.routers.prometheus.entrypoints: &quot;websecure&quot;
+      traefik.http.routers.prometheus.tls.certresolver: &quot;letsencrypt&quot;
+      traefik.http.routers.prometheus.service: &quot;prometheus-svc&quot;
+      traefik.http.services.prometheus-svc.loadbalancer.server.port: &quot;9090&quot;
+      traefik.http.routers.prometheus.middlewares: &quot;authelia@docker&quot;
+
+  grafana_db: # Banco de dados PostgreSQL para Grafana (alternativa ao SQLite padrão)
+    image: postgres:15.6-alpine
+    container_name: grafana_db
+    restart: unless-stopped
+    volumes:
+      - &quot;${MONITORING_GRAFANA_DB_PATH}:/var/lib/postgresql/data&quot; # Dados do DB Grafana
+    environment:
+      - POSTGRES_DB=grafana
+      - POSTGRES_USER=grafana
+      - POSTGRES_PASSWORD=${GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV} # Definir no Portainer
+      - TZ=${SYSTEM_TIMEZONE}
+    networks:
+      - internal_services # Apenas na rede interna
+    healthcheck:
+      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U grafana -d grafana&quot;]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana-oss:10.4.2 # Verifique a tag da versão estável mais recente
+    container_name: grafana
+    restart: unless-stopped
+    user: &quot;${DOCKER_PUID}:${DOCKER_PGID}&quot; # Grafana suporta rodar como não-root.
+                                         # Garanta que o PUID/PGID tem permissão de escrita no volume de dados.
+    networks:
+      - proxy # Para a UI do Grafana ser acessível via Traefik
+      - internal_services # Para Grafana acessar Prometheus, Loki, e seu DB
+    volumes: # Caminhos NFS do .env
+      - &quot;${MONITORING_GRAFANA_DATA_PATH}:/var/lib/grafana&quot; # Dados do Grafana (dashboards, configs, plugins)
+      # Provisionamento automático de datasources e dashboards
+      - &quot;${MONITORING_GRAFANA_PROVISIONING_PATH}/datasources:/etc/grafana/provisioning/datasources:ro&quot;
+      - &quot;${MONITORING_GRAFANA_PROVISIONING_PATH}/dashboards:/etc/grafana/provisioning/dashboards:ro&quot;
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin # Usuário admin padrão do Grafana
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV} # Definir no Portainer
+      # Configuração do Banco de Dados Externo (PostgreSQL)
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=grafana_db # Nome do serviço do container grafana_db
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=${GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV} # Definir no Portainer
+      - GF_DATABASE_SSL_MODE=disable # Ou &#39;require&#39; se o DB estiver configurado com SSL
+      - TZ=${SYSTEM_TIMEZONE}
+      # - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel # Exemplo para instalar plugins
+    depends_on:
+      grafana_db: # Garante que o DB esteja saudável antes de iniciar Grafana
+        condition: service_healthy
+    labels: # Labels para Traefik expor a UI do Grafana
+      traefik.enable: &quot;true&quot;
+      traefik.http.routers.grafana.rule: &quot;Host(`grafana.{{ base_domain }}`)&quot;
+      traefik.http.routers.grafana.entrypoints: &quot;websecure&quot;
+      traefik.http.routers.grafana.tls.certresolver: &quot;letsencrypt&quot;
+      traefik.http.routers.grafana.service: &quot;grafana-svc&quot;
+      traefik.http.services.grafana-svc.loadbalancer.server.port: &quot;3000&quot; # Porta interna do Grafana
+      traefik.http.routers.grafana.middlewares: &quot;authelia@docker&quot;
+
+  loki:
+    image: grafana/loki:2.9.5 # Verifique a tag da versão estável mais recente
+    container_name: loki
+    restart: unless-stopped
+    # user: &quot;${DOCKER_PUID}:${DOCKER_PGID}&quot; # Loki também pode rodar como não-root.
+    networks:
+      - internal_services # Acessado por Promtail e Grafana, não precisa de acesso externo direto
+    volumes: # Caminhos NFS do .env
+      - &quot;${MONITORING_LOKI_CONFIG_PATH}/loki-local-config.yaml:/etc/loki/config.yaml:ro&quot; # Config do Loki
+      - &quot;${MONITORING_LOKI_DATA_PATH}:/loki&quot; # Para chunks de log e índice
+    command: -config.file=/etc/loki/config.yaml
+    # Não precisa de labels Traefik, pois Grafana acessa Loki internamente.
+
+  promtail:
+    image: grafana/promtail:2.9.5 # Verifique a tag da versão estável mais recente
+    container_name: promtail
+    restart: unless-stopped
+    # user: root # Promtail frequentemente precisa de acesso root para ler logs do sistema e de outros containers.
+    networks:
+      - internal_services # Para enviar logs para Loki
+    volumes:
+      # Mapeia diretórios de log da VM core-services-vm para dentro do Promtail.
+      - &quot;/var/log:/var/log:ro&quot; # Logs do sistema da VM (e.g., syslog, auth.log)
+      - &quot;/var/lib/docker/containers:/var/lib/docker/containers:ro&quot; # Logs de todos os containers Docker na VM
+      - &quot;${MONITORING_PROMTAIL_CONFIG_PATH}/config.yml:/etc/promtail/config.yml:ro&quot; # Config do Promtail
+      - &quot;${MONITORING_PROMTAIL_POSITIONS_PATH}:/tmp/positions&quot; # Para Promtail rastrear a última posição lida
+    command: -config.file=/etc/promtail/config.yml
+    # Não precisa de labels Traefik.
+
+  glances:
+    image: nicolargo/glances:v4.0.7 # Verifique a tag com modo webserver e exportador Prometheus.
+    container_name: glances
+    restart: unless-stopped
+    pid: host # Necessário para Glances monitorar processos do host (VM core-services-vm)
+    networks:
+      - proxy # Para ser acessado via Traefik (UI Web e endpoint de métricas)
+    # ports: # Não precisa mapear portas diretamente se usar Traefik, mas útil para Prometheus acessar diretamente.
+    #   - &quot;${CORE_SERVICES_VM_IP_VAR}:61208:61208&quot; # Porta da UI Web e API do Glances
+    volumes:
+      - &quot;/var/run/docker.sock:/var/run/docker.sock:ro&quot; # Para Glances monitorar containers Docker
+      - &quot;/etc/os-release:/etc/os-release:ro&quot; # Para Glances identificar o SO
+      # - &quot;${MONITORING_GLANCES_CONFIG_PATH}/glances.conf:/glances/conf/glances.conf:ro&quot; # Opcional, para config customizada
+    environment:
+      # GLANCES_OPT para rodar em modo webserver e habilitar exportador Prometheus (geralmente habilitado por padrão em versões recentes).
+      - GLANCES_OPT=--webserver --quiet --export-prometheus
+      - TZ=${SYSTEM_TIMEZONE}
+    labels: # Labels para Traefik expor a UI Web do Glances
+      traefik.enable: &quot;true&quot;
+      traefik.http.routers.glances.rule: &quot;Host(`glances.{{ base_domain }}`)&quot;
+      traefik.http.routers.glances.entrypoints: &quot;websecure&quot;
+      traefik.http.routers.glances.tls.certresolver: &quot;letsencrypt&quot;
+      traefik.http.routers.glances.service: &quot;glances-svc&quot;
+      traefik.http.services.glances-svc.loadbalancer.server.port: &quot;61208&quot; # Porta interna do Glances
+      traefik.http.routers.glances.middlewares: &quot;authelia@docker&quot;
+```
+</code></pre></div>
+<ol>
+<li>
+<p><strong>Variáveis de Ambiente e Secrets no Portainer:</strong></p>
+<ul>
+<li><strong>Carregue o arquivo <code>.env</code>:</strong><ul>
+<li>Path on disk: <code>/opt/portainer_stack_envs/monitoring.env</code>.</li>
+<li>Isso fornecerá <code>CORE_SERVICES_VM_IP_VAR</code>, <code>DOCKER_PUID</code>, <code>DOCKER_PGID</code>, <code>SYSTEM_TIMEZONE</code>, <code>base_domain</code>, e todos os caminhos <code>MONITORING_*_PATH</code>.</li>
+</ul>
+</li>
+<li><strong>Adicione Secrets Manualmente:</strong><ul>
+<li><code>GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV</code>: A senha que você definiu para o usuário <code>grafana</code> no PostgreSQL (variável <code>grafana_db_password</code> do seu Ansible Vault).</li>
+<li><code>GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV</code>: A senha para o usuário administrador inicial do Grafana (variável <code>grafana_admin_initial_password</code> do seu Ansible Vault).</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Deploy da Stack:</strong></p>
+<ul>
+<li>Clique em "Deploy the stack".</li>
+<li>Monitore os logs dos containers.</li>
+</ul>
+</li>
+<li>
+<p><strong>Configuração Pós-Deploy e Acesso às UIs:</strong></p>
+<ul>
+<li><strong>Prometheus:</strong> Acesse <code>https://prometheus.{{ base_domain }}</code>. Verifique a seção "Status" -&gt; "Targets" para ver se todos os seus alvos (Node Exporters, Glances, etc.) estão "UP".</li>
+<li><strong>Grafana:</strong> Acesse <code>https://grafana.{{ base_domain }}</code>.<ul>
+<li>Faça login com <code>admin</code> e a senha <code>GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV</code>. Mude a senha no primeiro login.</li>
+<li>Os datasources para Prometheus e Loki já devem estar configurados via provisioning. Verifique em "Configuration" -&gt; "Data Sources".</li>
+<li>Comece a criar dashboards ou importe dashboards existentes para Node Exporter, Docker, etc. (e.g., IDs de dashboards populares do grafana.com).</li>
+</ul>
+</li>
+<li><strong>Glances:</strong> Acesse <code>https://glances.{{ base_domain }}</code> para ver a interface web do Glances.</li>
+<li><strong>Loki/Promtail:</strong> Verifique os logs do Promtail para garantir que ele está enviando logs para Loki. No Grafana, use o datasource Loki na seção "Explore" para consultar seus logs.</li>
+</ul>
+</li>
+</ol>
+<p>Com a stack de monitoramento funcionando, você terá uma visão muito melhor da saúde e do desempenho do seu servidor doméstico!</p>
+<p>Isso conclui a Seção 10 e, portanto, a implementação inicial da infraestrutura e dos serviços principais. As próximas seções da wiki (Visão Geral da Arquitetura, Guias de Sustentação, Manutenção e Recuperação) se basearão nesta implementação.</p>
+<p>Próximo passo: <a href="TODO-criar-link-para-secao-11-quando-existir-ou-ir-para-a-proxima-categoria-da-wiki">Seção 11: Manutenção e Backups</a>.</p>
 
 
 
@@ -1372,8 +2647,27 @@
 
 
 
+  
+    
+  
+  
 
 
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Última atualização">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
 
 
 
@@ -1422,6 +2716,17 @@
     
     <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"/></svg>
     </a>
   
 </div>

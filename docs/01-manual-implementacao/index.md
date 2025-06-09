@@ -1,6 +1,6 @@
 # 🚀 Manual de Implementação Passo a Passo
 
-Bem-vindo ao manual de implementação! Esta seção é o seu guia detalhado para construir a infraestrutura do servidor doméstico do zero, seguindo a arquitetura idealizada.
+E aqui começa a jornada, aqui tem o guia completo para a implementação idêntica ao que eu elaborei para o meu servidor do zero! Se você quiser alguma alteração ou explicação, tentarei ao máximo deixar linkado a explicação de cada decisão junto com alternativas para cada aplicação escolhida, lembrando que se alguma aplicação não for do seu agrado, poderá pular, mas prestando atenção se não há integração com alguma outra.
 
 ## Objetivo
 
@@ -45,4 +45,4 @@ Este manual está dividido nas seguintes seções, que devem ser seguidas sequen
 11. **[Stack de Monitoramento (Glances, Prometheus, Grafana, Loki)](10-stack-monitoramento.md):**
     Configurando ferramentas para monitorar a saúde e performance do seu servidor.
 
-Pronto para começar? Avance para a [Preparação e Planejamento](00-preparacao-planejamento.md).
+Para começar, avance para a [Preparação e Planejamento](00-preparacao-planejamento.md).

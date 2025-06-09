@@ -147,7 +147,7 @@ Aumentar o tamanho de um disco virtual existente é possível. Diminuir é muito
     *   Alocar mais RAM total para as VMs do que a RAM física disponível no host (descontando a RAM do host) é **arriscado** e pode levar a uso intenso de swap (no host ou nas VMs), degradando severamente a performance.
     *   **Ballooning:** Permite que as VMs devolvam memória não utilizada ao host, mas pode ter overhead.
     *   **KSM (Kernel Samepage Merging):** Pode economizar RAM deduplicando páginas idênticas. Habilitado no Proxmox, pode ser monitorado.
-    *   **Nossa Limitação de 16GB:** Com 16GB RAM no host, é crucial não sobrealocar a RAM significativamente. Mantenha uma reserva para o host Proxmox (pelo menos 1-2GB).
+    *   **Gerenciamento de RAM com 48GB:** Com 48GB de RAM no host, há consideravelmente mais flexibilidade. No entanto, ainda é importante não sobrealocar a RAM de forma excessiva. Mantenha uma reserva adequada para o host Proxmox (recomenda-se 2-4GB ou mais, dependendo do uso do ZFS ARC e outros serviços do host) para garantir estabilidade.
 
 ## 5. Quando Criar uma Nova VM vs. Adicionar Recursos?
 
