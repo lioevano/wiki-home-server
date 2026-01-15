@@ -1,12 +1,24 @@
 # Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS)
 
-Agora que as máquinas virtuais (`core-services-vm` e, opcionalmente, `ai-desktop-vm`) foram provisionadas, esta seção foca na configuração base delas. Isso inclui a instalação de pacotes essenciais, configuração do cliente NFS para acessar os volumes ZFS do host Proxmox, instalação do Docker Engine, e deploy do Portainer para gerenciamento de containers.
+Com as máquinas virtuais (`core-services-vm` e, opcionalmente, `ai-desktop-vm`) devidamente provisionadas ([Seção 3](03-provisionamento-vms.md)), o próximo passo é realizar a configuração base essencial dentro delas. Este processo é automatizado pelo Ansible e inclui:
 
-Utilizaremos o playbook Ansible `setup-base-ubuntu.yml`, que por sua vez aplicará os roles `common` (para todas as VMs Ubuntu) e `docker` (especificamente na `core-services-vm`).
+* Instalação de pacotes comuns e utilitários.
+* Configuração do cliente NFS para montar os volumes de dados ZFS compartilhados pelo host Proxmox.
+* Criação de um usuário e grupo dedicados (`dockeruser`, `dockergroup`) para possuir os arquivos nos volumes NFS e para os containers Docker utilizarem (via PUID/PGID).
+* Configuração do firewall UFW (Uncomplicated Firewall).
+* Instalação do Node Exporter para monitoramento.
+* Instalação do Docker Engine e Docker Compose na `core-services-vm`.
+* Deploy do container Portainer na `core-services-vm` para gerenciamento gráfico do Docker.
+* (Opcional) Instalação de um ambiente desktop na `ai-desktop-vm` se `GUI_ENABLED=true`.
+
+Utilizaremos o playbook Ansible `setup-base-ubuntu.yml`. Este playbook orquestra a aplicação de dois roles principais:
+1. `common`: Aplicado a todas as VMs no grupo `ubuntu_vms`.
+2. `infra/docker`: Aplicado especificamente à `core-services-vm`.
+E, condicionalmente, o role `apps/desktop-environment`.
 
 ## 4.1. Role Ansible `common` (`ansible/roles/common/`)
 
-Este role aplica configurações e instala pacotes comuns a todas as VMs Ubuntu.
+Este role é fundamental, pois aplica configurações e instala pacotes que são comuns e necessários para todas as nossas VMs baseadas em Ubuntu.
 
 ### `tasks/main.yml`
 
@@ -278,9 +290,34 @@ Handlers para o role `common`.
   #     mode: '0644'
 ```
 
+* **Principais Tarefas do Role `common`:**
+  * Aguardar a finalização completa do `cloud-init`.
+  * Atualizar o cache APT e instalar pacotes essenciais como `git`, `curl`, `htop`, `ufw`, `nfs-common`, `unattended-upgrades`, `qemu-guest-agent`.
+  * Garantir que o serviço `qemu-guest-agent` esteja ativo.
+  * Configurar o fuso horário da VM usando a variável `{{ system_timezone }}`.
+  * **Configurar Cliente NFS:**
+    * Criar o ponto de montagem base na VM (e.g., `/mnt/pve_data_zfs`, definido por `{{ vm_nfs_mount_base_path }}`).
+    * Montar os datasets ZFS compartilhados pelo host Proxmox (e.g., `docker-volumes`, `media`, `downloads`, `rag_sources`) nos subdiretórios correspondentes, adicionando entradas ao `/etc/fstab` para persistência.
+  * **Criar Usuário e Grupo Docker:**
+    * Criar o grupo `{{ docker_group_name_on_vm }}` com o GID `{{ docker_pgid }}`.
+    * Criar o usuário `{{ docker_user_name_on_vm }}` com o UID `{{ docker_puid }}`, associado ao grupo acima, e com uma senha definida.
+    * Adicionar o usuário Ansible da VM (`{{ vm_ansible_user_name }}`) também ao grupo `{{ docker_group_name_on_vm }}`.
+  * **Configurar Firewall UFW:** Habilitar UFW com política padrão `deny` e permitir portas essenciais (SSH, HTTP/S para Traefik, Node Exporter, Glances, VNC se GUI habilitada).
+  * **Instalar Node Exporter (VM):** Baixar, instalar e configurar o serviço systemd para o Node Exporter, usando o template `node_exporter_vm.service.j2`.
+
 ## 4.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)
 
-Este role é responsável por instalar o Docker Engine e o Docker Compose, e por fazer o deploy inicial do container Portainer. Ele será aplicado **apenas à `core-services-vm`**.
+Este role é específico para a `core-services-vm` (ou qualquer outra VM que você designar para rodar a maioria dos seus containers Docker e o Portainer). Suas principais responsabilidades são:
+
+* Instalar o Docker Engine e o plugin Docker Compose.
+* Adicionar os usuários relevantes (`{{ vm_ansible_user_name }}`, `{{ docker_user_name_on_vm }}`) ao grupo `docker` do sistema para permitir a execução de comandos Docker sem `sudo`.
+* Criar o diretório NFS para os dados persistentes do Portainer.
+* Criar a rede Docker `proxy` (que será usada pelo Traefik e outros serviços expostos).
+* Fazer o deploy do container Portainer CE, configurando-o com:
+  * Mapeamento do socket Docker.
+  * Volume persistente para seus dados (no diretório NFS preparado).
+  * Conexão à rede `proxy`.
+  * Labels Traefik para que o Portainer seja automaticamente descoberto e exposto via `https://portainer.{{ base_domain }}` e protegido por Authelia.
 
 ### `tasks/main.yml`
 
@@ -402,9 +439,10 @@ Handler para o role `docker`.
 
 ## 4.3. Playbook `ansible/playbooks/setup-base-ubuntu.yml`
 
-Este playbook orquestra a aplicação dos roles `common` e `docker` às VMs apropriadas.
+Este playbook orquestra a aplicação dos roles `common` e `docker` (e `apps/desktop-environment` condicionalmente) às VMs apropriadas.
 
-Crie o arquivo `ansible/playbooks/setup-base-ubuntu.yml`:
+Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista com o seguinte conteúdo:
+
 ```yaml
 # ansible/playbooks/setup-base-ubuntu.yml
 # Configura a base para todas as VMs Ubuntu e instala Docker/Portainer na VM de containers.
@@ -428,31 +466,38 @@ Crie o arquivo `ansible/playbooks/setup-base-ubuntu.yml`:
 # Opcional: Instalar ambiente gráfico em VMs específicas
 # A variável GUI_ENABLED deve ser definida no inventário para os hosts desejados.
 # Exemplo em ansible/inventories/home/hosts.ini:
-# ai-desktop-vm ansible_host=192.168.1.12 GUI_ENABLED=true
-- hosts: ubuntu_vms # Verifica todas as VMs Ubuntu
+# ai-desktop-vm ansible_host=192.168.15.12 GUI_ENABLED=true
+- hosts: ubuntu_vms # Verifica todas as VMs Ubuntu que podem ter a flag
   become: yes
   tasks:
     - name: "Incluir role para ambiente desktop (se GUI_ENABLED for true para o host)"
       ansible.builtin.include_role:
         name: apps/desktop-environment # Role definido na Seção 3.5
       vars:
-        # Passa a flag para o role, convertendo para booleano e tratando ausência
+        # Passa a flag para o role, convertendo para booleano e tratando ausência da variável
         install_gui_flag: "{{ hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool }}"
       when: hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool # Só executa se a flag for true
 ```
 
-### Executando o Playbook
+### Executando o Playbook `setup-base-ubuntu.yml`
 
-1.  Certifique-se de que os roles `common` e `infra/docker` (e `apps/desktop-environment` se for usar GUI) estão criados com os arquivos detalhados.
-2.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `infra-servidor-domestico/`.
-3.  Execute o playbook:
+1. **Verifique os Roles:** Certifique-se de que os roles `common`, `infra/docker`, e `apps/desktop-environment` (se for usar a funcionalidade de GUI) estão criados e preenchidos com o código correto nos seus respectivos diretórios dentro de `ansible/roles/`.
+2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, navegue até a raiz do seu projeto `home-server/`.
+3. **Execute o Playbook:**
+
     ```bash
     ansible-playbook ansible/playbooks/setup-base-ubuntu.yml --ask-vault-pass
     ```
 
+    Você será solicitado a fornecer a senha do Ansible Vault.
+
 !!! note "Possível Reinício das VMs"
-    Se o usuário Ansible (`vm_ansible_user`) ou o `dockeruser` forem adicionados ao grupo `docker` pela primeira vez, a VM correspondente será reiniciada para que as novas associações de grupo tenham efeito imediato.
+    O role `infra/docker` inclui um handler que reiniciará a VM (`core-services-vm`) se o usuário Ansible (`{{ vm_ansible_user_name }}`) ou o `{{ docker_user_name_on_vm }}` forem adicionados ao grupo `docker` do sistema pela primeira vez. Isso é para garantir que as novas associações de grupo tenham efeito imediato para esses usuários em sessões SSH subsequentes, permitindo que eles executem comandos `docker` sem `sudo`.
 
-Após a execução bem-sucedida, suas VMs Ubuntu estarão com a base configurada, prontas para hospedar serviços Docker, e a `core-services-vm` terá o Portainer rodando e acessível via Traefik (após a configuração da rede na próxima seção).
+Após a execução bem-sucedida deste playbook:
 
-Próximo passo: [Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia)](05-rede-segura.md).
+* Todas as suas VMs Ubuntu terão as configurações base (NFS client, UFW, Node Exporter, etc.).
+* A `core-services-vm` terá o Docker Engine instalado e o container Portainer CE rodando.
+* A `ai-desktop-vm`, se `GUI_ENABLED=true` foi definido para ela no inventário, terá o ambiente XFCE e TightVNCServer instalados.
+
+Com esta base sólida, suas VMs estão prontas para o próximo passo crucial: a [Implementação da Rede Segura](05-rede-segura.md), que configurará Traefik, Cloudflare Tunnel e Authelia.

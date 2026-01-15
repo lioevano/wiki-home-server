@@ -1,147 +1,195 @@
 # Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS)
 
-Nesta seção, instalaremos o Proxmox VE no servidor físico e realizaremos as configurações base essenciais, incluindo a criação de um pool ZFS para dados e a configuração de um servidor NFS para compartilhar esses dados com as futuras máquinas virtuais.
+Nesta seção crucial, instalaremos o Proxmox VE no seu servidor físico. Em seguida, realizaremos as configurações base essenciais, incluindo a criação de um pool ZFS resiliente para armazenamento de dados e a configuração de um servidor NFS para compartilhar esses dados com as futuras máquinas virtuais que hospedarão nossos containers Docker.
 
 ## 2.1. Instalação do Proxmox VE no Servidor Físico
 
-1.  **Download e Preparação do Mídia de Instalação:**
-    *   Baixe a ISO mais recente do Proxmox VE do [site oficial](https://www.proxmox.com/en/downloads).
-    *   Use uma ferramenta como [Ventoy](https://www.ventoy.net/en/download.html), [Rufus](https://rufus.ie/) ou [Balena Etcher](https://www.balena.io/etcher/) para gravar a imagem ISO em um pendrive USB.
+Siga estes passos cuidadosamente para instalar o Proxmox VE:
 
-2.  **Configuração da BIOS/UEFI do Servidor:**
-    *   Acesse a BIOS/UEFI do seu servidor físico ao iniciar.
-    *   Configure a ordem de boot para iniciar pelo pendrive USB.
-    *   !!! critical "Habilite a Virtualização e IOMMU"
-        É **essencial** habilitar as seguintes opções na BIOS/UEFI:
-        *   **AMD-V** (para processadores AMD, também conhecido como SVM - Secure Virtual Machine) ou **Intel VT-x** (para processadores Intel).
-        *   **IOMMU** (Input-Output Memory Management Unit) - AMD-Vi ou Intel VT-d. Isso é crucial para passthrough de dispositivos PCI, como a GPU.
+1. **Download da ISO e Preparação da Mídia de Instalação:**
+    * Acesse o [site oficial do Proxmox](https://www.proxmox.com/en/downloads) e baixe a **ISO mais recente e estável** do Proxmox VE.
+    * Utilize uma ferramenta para criar um pendrive USB bootável a partir da imagem ISO. Minha recomendação pessoal é o [Ventoy](https://www.ventoy.net/en/download.html) pela sua flexibilidade (permite copiar múltiplas ISOs para o mesmo pendrive), mas [Rufus](https://rufus.ie/) (para Windows) ou [Balena Etcher](https://www.balena.io/etcher/) (multiplataforma) também são excelentes opções.
 
-3.  **Processo de Instalação do Proxmox VE:**
-    *   Inicie o servidor pelo pendrive bootável.
-    *   Siga o assistente de instalação do Proxmox VE:
-        *   **Target Harddisk:** Selecione seu **SSD NVMe de 1TB** como o disco de destino para a instalação do Proxmox OS.
-        *   **Localização e Fuso Horário:** Configure de acordo com sua localidade.
-        *   **Senha `root` e Email:** Defina uma senha forte para o usuário `root` do Proxmox e forneça um email para notificações do sistema.
-            !!! important "Anote a Senha Root!"
-            Esta senha `root` será usada para o primeiro login na interface web do Proxmox e para acesso SSH inicial, também deverá ser a mesma definida no **vault.yml**.
-        *   **Configuração de Rede (Management Network):**
-            *   Selecione a interface de rede correta (sua porta Ethernet Gigabit).
-            *   **Hostname (FQDN):** e.g., `proxmox.meudominio.com` (use seu domínio).
-            *   **IP Address (CIDR):** Defina um **IP estático** para o seu host Proxmox (e.g., `192.168.1.10/24`). **Anote este IP!**
-            *   **Gateway:** O IP do seu roteador (e.g., `192.168.15.1`).
-            *   **DNS Server:** Um servidor DNS público (e.g., `1.1.1.1` ou `8.8.8.8`) ou o seu DNS local (e.g., Pi-hole).
+2. **Configuração da BIOS/UEFI do Servidor Físico:**
+    * Conecte o pendrive bootável ao seu servidor.
+    * Ao ligar o servidor, acesse a configuração da BIOS/UEFI (geralmente pressionando `DEL`, `F2`, `F10`, `F12` ou `ESC` durante o boot inicial – a tecla varia conforme o fabricante da placa-mãe).
+    * **Defina a Ordem de Boot:** Configure o sistema para iniciar (boot) a partir do pendrive USB que contém a ISO do Proxmox.
+    * !!! critical "Habilite a Virtualização e IOMMU na BIOS/UEFI"
+        Este é um passo **absolutamente essencial** para que a virtualização funcione corretamente e para permitir o passthrough de dispositivos PCI (como sua GPU RX 5600XT) para as VMs. Procure e habilite as seguintes opções (os nomes podem variar um pouco dependendo do fabricante da BIOS):
+        * **Para processadores AMD (como o Ryzen 5 5600G):**
+            * `AMD-V` ou `SVM Mode` (Secure Virtual Machine) - **Habilitar**.
+            * `IOMMU` ou `AMD IOMMU` ou `AMD-Vi` - **Habilitar**.
+        * **Para processadores Intel:**
+            * `Intel VT-x` ou `Intel Virtualization Technology` - **Habilitar**.
+            * `Intel VT-d` ou `Intel Directed I/O Virtualization` - **Habilitar**.
+    * Salve as alterações na BIOS/UEFI e reinicie o servidor.
 
-4.  **Primeiro Boot e Acesso:**
-    *   Após a instalação, remova o pendrive USB e reinicie o servidor.
-    *   Em outra máquina na mesma rede, abra um navegador e acesse a interface web do Proxmox VE:
-        `https://IP_DO_PROXMOX:8006` (e.g., `https://192.168.1.10:8006`)
-    *   Você pode receber um aviso de certificado autoassinado; prossiga com segurança.
-    *   **Login:**
-        *   **Username:** `root`
-        *   **Password:** A senha `root` que você definiu durante a instalação.
-        *   **Realm:** `Linux PAM standard authentication`
+3. **Processo de Instalação do Proxmox VE:**
+    * O servidor deve iniciar a partir do pendrive e carregar o instalador do Proxmox VE.
+    * Siga o assistente gráfico de instalação:
+        * **EULA:** Aceite os termos.
+        * **Target Harddisk:** Selecione seu **SSD NVMe de 1TB** como o disco de destino para a instalação do sistema operacional Proxmox VE.
+        !!! warning "Apagamento de Disco"
+            A instalação formatará o disco selecionado. Certifique-se de que não há dados importantes nele.
+        * **Country, Time zone and Keyboard Layout:** Configure de acordo com sua localização e preferências.
+        * **Password and Email:**
+            * **Password:** Defina uma senha forte para o usuário `root` do Proxmox. Esta senha será usada para o primeiro login na interface web e para acesso SSH inicial ao host.
+            !!! important "Anote a Senha Root e Use no Ansible Vault!"
+                Esta senha `root` é crítica. Anote-a em local seguro. Você também precisará dela para a variável `proxmox_api_password` no seu arquivo `ansible/inventories/home/group_vars/all/vault.yml` (pelo menos inicialmente).
+            * **Email:** Forneça um endereço de email válido. O sistema Proxmox pode enviar notificações importantes para este email.
+        * **Management Network Configuration:**
+            * **Management Interface:** Selecione a interface de rede correta do seu servidor (sua porta Ethernet Gigabit).
+            * **Hostname (FQDN):** Defina um nome de host completo para seu servidor Proxmox. Exemplo: `pve.meudominio.com` (substitua `meudominio.com` pelo seu domínio real).
+            * **IP Address (CIDR):** Defina um **endereço IP estático** para o seu host Proxmox. Este IP não deve estar na faixa DHCP do seu roteador para evitar conflitos. Exemplo: `192.168.15.10/24` (substitua pela sua sub-rede e IP desejado). **Anote este IP!**
+            * **Gateway:** O endereço IP do seu roteador doméstico. Exemplo: `192.168.15.1`.
+            * **DNS Server:** Um servidor DNS. Pode ser um DNS público (e.g., `1.1.1.1` da Cloudflare, ou `8.8.8.8` do Google) ou o IP do seu DNS local (e.g., se você tiver um Pi-hole, que pode ser `192.168.15.1` se o roteador também for o DNS, ou outro IP).
+    * Revise o sumário da instalação e clique em "Install". O processo de instalação começará.
 
-    !!! note "Subscrição Proxmox VE"
-        Você verá uma mensagem sobre não ter uma subscrição válida. Para uso doméstico, a subscrição não é necessária. Você pode desabilitar o repositório "enterprise" e adicionar o repositório "no-subscription" para atualizações, o que será feito via Ansible.
+4. **Primeiro Boot e Acesso à Interface Web:**
+    * Após a conclusão da instalação, o servidor será reiniciado automaticamente. **Remova o pendrive USB** para que ele não tente iniciar pela mídia de instalação novamente.
+    * Em outro computador na mesma rede local, abra um navegador web.
+    * Acesse a interface web do Proxmox VE usando o endereço IP que você configurou e a porta `8006`:
+        `https://IP_DO_SEU_PROXMOX:8006` (e.g., `https://192.168.15.10:8006`)
+    * Você provavelmente verá um aviso de segurança do navegador sobre um certificado SSL autoassinado. Isso é normal. Você pode prosseguir com segurança (geralmente clicando em "Avançado" e "Aceitar o risco e continuar"). Mais tarde, poderemos configurar um certificado válido para a UI do Proxmox, se desejado, embora o acesso principal aos seus serviços seja via Traefik e Cloudflare Tunnel.
+    * **Tela de Login do Proxmox VE:**
+        * **Username:** `root`
+        * **Password:** A senha `root` que você definiu durante a instalação.
+        * **Realm:** Selecione `Linux PAM standard authentication`.
+        * **Language:** Escolha seu idioma preferido.
+    * Clique em "Login".
+
+    !!! note "Aviso de Subscrição Proxmox VE"
+        Ao logar, você verá uma caixa de diálogo "No valid subscription". Para uso doméstico e aprendizado, uma subscrição paga não é necessária. Você pode simplesmente clicar em "OK". As atualizações do Proxmox VE podem ser obtidas do repositório "no-subscription", que será configurado automaticamente pelo nosso playbook Ansible na próxima etapa.
 
 ## 2.2. Configuração do Pool ZFS `/data` e Datasets
 
-Vamos criar um pool ZFS espelhado (RAID 1) usando seus dois HDDs de 500GB. Este pool, chamado `data`, armazenará os dados persistentes das suas aplicações Docker.
+Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando seus dois HDDs de 500GB. Este pool, que chamaremos de `data`, será o local principal para armazenar os dados persistentes das suas aplicações Docker, arquivos de mídia, downloads e backups de VMs.
 
-Execute os seguintes comandos no **shell do host Proxmox VE** (acessível via "Shell" na UI web do Datacenter ou via SSH como `root@IP_DO_PROXMOX`):
+1. Execute os seguintes comandos no **shell do host Proxmox VE**. Você pode acessar o shell de algumas maneiras:
+    * Na interface web do Proxmox: Selecione seu nó Proxmox (e.g., `pve`) na árvore à esquerda, depois clique em ">_ Shell".
+    * Via SSH: Conecte-se como `root` ao IP do seu host Proxmox (e.g., `ssh root@192.168.15.10`).
 
-1.  **Identifique seus HDDs de 500GB:**
-    Use `lsblk` para listar os dispositivos de bloco e identificar os nomes corretos dos seus HDDs. Preste atenção aos IDs únicos para evitar usar o disco errado.
+2. **Identifique seus HDDs de 500GB:**
+    Use o comando `lsblk` para listar os dispositivos de bloco e identificar os nomes corretos dos seus HDDs. É crucial usar identificadores persistentes para os discos.
+
     ```bash
-    root@proxmox:~# lsblk -o NAME,SIZE,FSTYPE,MODEL,SERIAL,WWN
+    root@pve:~# lsblk -o NAME,SIZE,FSTYPE,MODEL,SERIAL,WWN,PATH
     ```
-!!! note "IDs dos HDDs"
-    Anote os caminhos `/dev/disk/by-id/ata-DISK_MODEL_AND_SERIAL_ID` para cada um dos seus HDDs de 500GB. Usar `by-id` é mais robusto do que `/dev/sda`, `/dev/sdb`, etc., pois os IDs persistem entre reboots.
 
-2.  **Crie o Pool ZFS (`data`) em Modo Espelhado (RAID 1):**
-    Substitua `ata-HDD1_ID` e `ata-HDD2_ID` pelos IDs reais dos seus discos obtidos no passo anterior.
+    Procure pelos seus dois HDDs de 500GB. Anote seus caminhos únicos em `/dev/disk/by-id/`, por exemplo:
+    * `ata-HGST_HDN728080ALE604_R1234567`
+    * `ata-WDC_WD5000AAKX-001CA0_WD-WMEXAMPLE1`
+    !!! note "Importância dos IDs Persistentes dos HDDs"
+        Usar caminhos como `/dev/disk/by-id/ata-VENDOR_MODEL_SERIAL` é muito mais robusto do que usar `/dev/sda`, `/dev/sdb`, etc. Os nomes `sdX` podem mudar entre reboots, mas os caminhos `by-id` são baseados em identificadores únicos do hardware e permanecem consistentes.
+
+3. **Crie o Pool ZFS (`data`) em Modo Espelhado (RAID 1):**
+    Substitua `ata-HDD1_MODEL_SERIAL_ID` e `ata-HDD2_MODEL_SERIAL_ID` pelos IDs reais dos seus discos que você anotou no passo anterior.
+
     ```bash
-    root@proxmox:~# zpool create -f -o ashift=12 data mirror /dev/disk/by-id/ata-HDD1_ID /dev/disk/by-id/ata-HDD2_ID
+    root@pve:~# zpool create -f -o ashift=12 data mirror /dev/disk/by-id/ata-HDD1_MODEL_SERIAL_ID /dev/disk/by-id/ata-HDD2_MODEL_SERIAL_ID
     ```
-    *   `-f`: Força a criação, útil se os discos tiverem partições antigas.
-    *   `-o ashift=12`: Define o tamanho do setor para 4K, recomendado para a maioria dos HDDs modernos e SSDs para melhor performance.
-    *   `data`: Nome do pool ZFS.
-    *   `mirror`: Especifica um pool espelhado (RAID 1).
-    *   `/dev/disk/by-id/...`: Os dois discos que formarão o espelho.
 
-3.  **Verifique o Status do Pool:**
+    Explicação dos parâmetros:
+    * `-f`: Força a criação do pool. Útil se os discos tiverem partições ou metadados ZFS antigos.
+    * `-o ashift=12`: Define o tamanho do setor físico para o ZFS como 4KB (2^12 bytes). Isso é recomendado para a maioria dos HDDs modernos ("Advanced Format") e SSDs para otimizar a performance e o alinhamento.
+    * `data`: O nome que estamos dando ao nosso pool ZFS.
+    * `mirror`: Especifica que este VDEV (Virtual Device) será um espelho (RAID 1).
+    * `/dev/disk/by-id/...`: Os dois discos físicos que formarão o espelho.
+
+4. **Verifique o Status do Pool ZFS:**
+    Após a criação, verifique se o pool está online e saudável:
+
     ```bash
-    root@proxmox:~# zpool status data
+    root@pve:~# zpool status data
     ```
-    O estado (`state`) do pool deve ser `ONLINE` e ambos os discos devem aparecer como `ONLINE`.
 
-4.  **Crie os Datasets ZFS Principais:**
-    Datasets são como "sistemas de arquivos" dentro do pool ZFS. Eles podem ter propriedades individuais e são a unidade que será compartilhada via NFS. Os nomes dos datasets devem corresponder aos definidos em `ansible/inventories/home/group_vars/all/main.yml` (`zfs_*_dataset_name`).
+    A saída deve mostrar:
+    * `pool: data`
+    * `state: ONLINE`
+    * Ambos os discos listados sob `data` também devem estar `ONLINE`.
+
+5. **Crie os Datasets ZFS Principais:**
+    Datasets são como sistemas de arquivos ou diretórios "inteligentes" dentro de um pool ZFS. Eles podem ter propriedades individuais (como compressão, cotas, snapshots) e são a unidade que compartilharemos via NFS. Os nomes dos datasets devem corresponder aos definidos na variável `zfs_*_dataset_name` no seu arquivo `ansible/inventories/home/group_vars/all/main.yml`.
 
     ```bash
-    # Assumindo os valores de zfs_*_dataset_name de main.yml:
+    # Assumindo os valores padrão de zfs_*_dataset_name do main.yml:
     # zfs_docker_volumes_dataset_name: "docker-volumes"
     # zfs_media_dataset_name: "media"
     # zfs_downloads_dataset_name: "downloads"
     # zfs_rag_sources_dataset_name: "rag_sources"
     # zfs_backups_dataset_name: "backups"
 
-    root@proxmox:~# zfs create data/docker-volumes
-    root@proxmox:~# zfs create data/media
-    root@proxmox:~# zfs create data/downloads
-    root@proxmox:~# zfs create data/rag_sources
-    root@proxmox:~# zfs create data/backups
+    root@pve:~# zfs create data/docker-volumes
+    root@pve:~# zfs create data/media
+    root@pve:~# zfs create data/downloads
+    root@pve:~# zfs create data/rag_sources
+    root@pve:~# zfs create data/backups
     ```
-    Estes datasets serão automaticamente montados em `/data/docker-volumes`, `/data/media`, etc.
 
-    !!! tip "Vantagens dos Datasets ZFS"
-        *   **[Snapshots Individuais](../03-guias-sustentacao/12-guia-snapshots-zfs.md):** Você pode tirar snapshots de `data/media` sem afetar `data/docker-volumes`.
-        *   **Propriedades por Dataset:** Pode-se definir compressão, cotas, etc., por dataset.
-        *   **Compartilhamento Granular:** Facilita o compartilhamento de diretórios específicos via NFS.
+    Por padrão, esses datasets serão automaticamente montados pelo ZFS em `/data/docker-volumes`, `/data/media`, etc., no host Proxmox.
+
+    !!! tip "Vantagens de Usar Datasets ZFS"
+        * **Snapshots Individuais:** Você pode tirar snapshots de `data/media` sem afetar `data/docker-volumes`. Veja o [Guia de Snapshots ZFS](../../03-guias-sustentacao/12-guia-snapshots-zfs.md) para mais detalhes.
+        * **Propriedades por Dataset:** Permite definir configurações específicas como compressão (`zfs set compression=lz4 data/docker-volumes`), cotas (`zfs set quota=100G data/media`), ou `recordsize` por dataset.
+        * **Compartilhamento Granular via NFS:** Facilita a exportação de diretórios específicos.
+        * **Organização:** Mantém seus dados logicamente separados dentro do pool.
 
 ## 2.3. Playbook `setup-proxmox-host.yml` (Configurações Iniciais, Hardening, Servidor NFS)
 
-Agora que o Proxmox VE está instalado e o pool ZFS básico foi criado, usaremos Ansible para automatizar o restante da configuração do host.
+Agora que o Proxmox VE está instalado e o pool ZFS básico (`data`) e seus datasets principais foram criados manualmente, usaremos o Ansible para automatizar o restante da configuração do host. Isso inclui atualizar o sistema, instalar pacotes, configurar o firewall do Proxmox, fortalecer o SSH e, crucialmente, configurar o servidor NFS para compartilhar os datasets ZFS com as VMs.
 
-### Ações Manuais Prévias no Host Proxmox (Importante!)
+### Ações Manuais Prévias no Host Proxmox (Essencial para Ansible)
 
-Antes de executar o playbook `setup-proxmox-host.yml` pela primeira vez, você precisa:
+Antes de poder executar o playbook `setup-proxmox-host.yml` pela primeira vez, você precisa realizar algumas ações manuais no host Proxmox recém-instalado para permitir que o Ansible se conecte e execute tarefas com privilégios:
 
-1.  **Criar um Usuário Ansible Dedicado no Host Proxmox:**
-    Ainda no shell do host Proxmox como `root`:
+1. **Criar um Usuário Ansible Dedicado no Host Proxmox:**
+    É uma má prática de segurança usar o usuário `root` para automação Ansible. Vamos criar um usuário dedicado. No shell do host Proxmox (como `root`):
+
     ```bash
-    # O nome do usuário deve corresponder a 'proxmox_ansible_user_on_host'
-    # definido em ansible/inventories/home/group_vars/all/main.yml
-    # Exemplo: PROXMOX_ANSIBLE_USER="proxmox_ansible_user"
-    PROXMOX_ANSIBLE_USER="{{ proxmox_ansible_user_on_host }}" # Esta variável virá do Ansible, use o valor literal por enquanto.
+    # O nome do usuário ('proxmox_ansible_user') deve corresponder ao valor da variável
+    # 'proxmox_ansible_user_on_host' definida em seu arquivo
+    # ansible/inventories/home/group_vars/all/main.yml.
 
-    adduser ${PROXMOX_ANSIBLE_USER} # Siga as instruções para definir senha, etc.
-    usermod -aG sudo ${PROXMOX_ANSIBLE_USER} # Adiciona o usuário ao grupo sudo
-    # Permite que o usuário execute comandos sudo sem senha (necessário para Ansible)
-    echo "${PROXMOX_ANSIBLE_USER} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_${PROXMOX_ANSIBLE_USER}_nopasswd
-    chmod 0440 /etc/sudoers.d/010_${PROXMOX_ANSIBLE_USER}_nopasswd
+    PROXMOX_ANSIBLE_USER_VAR="proxmox_ansible_user" # Use o valor exato de main.yml
+
+    adduser ${PROXMOX_ANSIBLE_USER_VAR}
+    # Siga as instruções para definir uma senha para este novo usuário.
+    # Esta senha é para o sistema Linux, não necessariamente para a API Proxmox.
+
+    # Adicione o usuário ao grupo 'sudo' para permitir escalação de privilégios.
+    usermod -aG sudo ${PROXMOX_ANSIBLE_USER_VAR}
+
+    # Configure sudo para permitir que este usuário execute comandos como root SEM senha.
+    # Isso é necessário para que o Ansible (com 'become: yes') funcione sem problemas.
+    echo "${PROXMOX_ANSIBLE_USER_VAR} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_${PROXMOX_ANSIBLE_USER_VAR}_nopasswd
+    chmod 0440 /etc/sudoers.d/010_${PROXMOX_ANSIBLE_USER_VAR}_nopasswd
     ```
-    Substitua `${PROXMOX_ANSIBLE_USER}` pelo valor real da variável `proxmox_ansible_user_on_host` (e.g., `proxmox_ansible_user`).
 
-2.  **Copiar sua Chave SSH Pública para o Novo Usuário Ansible:**
-    Na sua **máquina de controle Ansible**, execute o comando `ssh-copy-id`. Isso permitirá que o Ansible se conecte ao host Proxmox usando sua chave SSH.
+2. **Copiar sua Chave SSH Pública para o Novo Usuário Ansible no Host Proxmox:**
+    Na sua **máquina de controle Ansible** (onde você gerou a chave SSH `id_ed25519_homelab` na [Seção 1.1](01-maquina-controle-ansible.md#ação-chave-ssh-essencial-para-automação)), execute o comando `ssh-copy-id`. Isso copia sua chave pública para o arquivo `~/.ssh/authorized_keys` do usuário `proxmox_ansible_user` no host Proxmox, permitindo login SSH sem senha.
+
     ```bash
-    # Substitua 'proxmox_ansible_user' pelo nome do usuário criado e 'IP_DO_PROXMOX' pelo IP do seu host.
-    # Use o caminho para a chave pública gerada na Seção 1.1.
-    ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub proxmox_ansible_user@IP_DO_PROXMOX
+    # Substitua 'proxmox_ansible_user' pelo nome do usuário que você acabou de criar
+    # e 'IP_DO_SEU_PROXMOX' pelo endereço IP do seu host Proxmox.
+    ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub proxmox_ansible_user@IP_DO_SEU_PROXMOX
     ```
-    Exemplo: `ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub proxmox_ansible_user@192.168.1.10`
 
-3.  **Teste a Conexão SSH e as Permissões Sudo:**
-    Ainda na sua máquina de controle Ansible:
+    Exemplo: `ssh-copy-id -i ~/.ssh/id_ed25519_homelab.pub proxmox_ansible_user@192.168.15.10`
+
+3. **Teste a Conexão SSH e as Permissões Sudo:**
+    Ainda na sua máquina de controle Ansible, verifique se você pode se conectar via SSH como o novo usuário e executar um comando `sudo` sem senha:
+
     ```bash
-    ssh proxmox_ansible_user@IP_DO_PROXMOX "sudo whoami"
+    ssh proxmox_ansible_user@IP_DO_SEU_PROXMOX "sudo whoami"
     ```
-    Isso deve se conectar sem pedir senha e retornar `root`. Se funcionar, o Ansible está pronto para gerenciar o host Proxmox.
+
+    Isso deve se conectar sem pedir a senha do usuário `proxmox_ansible_user` (usando sua chave SSH) e o comando `sudo whoami` deve retornar `root` sem pedir a senha sudo. Se isso funcionar, o Ansible está pronto para gerenciar seu host Proxmox.
 
 ### Estrutura do Role `ansible/roles/infra/proxmox-host-config/`
 
-Este role Ansible contém todas as tarefas para configurar o host Proxmox.
+Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os arquivos principais são:
+
+* `tasks/main.yml`: Define as ações a serem executadas.
 
 #### `tasks/main.yml`
 
@@ -333,6 +381,8 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     enabled: yes
 ```
 
+* `templates/`: Contém arquivos de template Jinja2 (e.g., `node_exporter_host.service.j2`, `etc_exports.j2`).
+
 #### Template `templates/node_exporter_host.service.j2`
 
 ```systemd
@@ -408,14 +458,17 @@ WantedBy=multi-user.target
 # a menos que uma VM específica precise ler backups. Pode ser 'ro' para VMs).
 # {{ zfs_base_pool_path }}/{{ zfs_backups_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(ro,sync,no_subtree_check)
 ```
+
 !!! note "Opções de Exportação NFS Explicadas"
-    *   `rw`: Permite leitura e escrita no compartilhamento.
-    *   `sync`: Força o servidor NFS a responder à requisição do cliente apenas após as mudanças terem sido escritas fisicamente no disco. É mais seguro para a integridade dos dados, mas pode ser um pouco mais lento que `async`.
-    *   `no_subtree_check`: Desabilita a verificação de subárvores, o que pode melhorar a confiabilidade se um subdiretório dentro do compartilhamento for renomeado enquanto estiver exportado.
-    *   `all_squash`: Mapeia todos os User IDs (UIDs) e Group IDs (GIDs) dos clientes NFS para o usuário anônimo no servidor.
-    *   `anonuid={{ docker_puid }}`: Define o UID do usuário anônimo (após o squash) para o valor da variável `docker_puid` (que é o PUID do seu `dockeruser` nas VMs).
-    *   `anongid={{ docker_pgid }}`: Define o GID do usuário anônimo para o valor da variável `docker_pgid` (PGID do `dockergroup` nas VMs).
+    * `rw`: Permite leitura e escrita no compartilhamento.
+    * `sync`: Força o servidor NFS a responder à requisição do cliente apenas após as mudanças terem sido escritas fisicamente no disco. É mais seguro para a integridade dos dados, mas pode ser um pouco mais lento que `async`.
+    * `no_subtree_check`: Desabilita a verificação de subárvores, o que pode melhorar a confiabilidade se um subdiretório dentro do compartilhamento for renomeado enquanto estiver exportado.
+    * `all_squash`: Mapeia todos os User IDs (UIDs) e Group IDs (GIDs) dos clientes NFS para o usuário anônimo no servidor.
+    * `anonuid={{ docker_puid }}`: Define o UID do usuário anônimo (após o squash) para o valor da variável `docker_puid` (que é o PUID do seu `dockeruser` nas VMs).
+    * `anongid={{ docker_pgid }}`: Define o GID do usuário anônimo para o valor da variável `docker_pgid` (PGID do `dockergroup` nas VMs).
     Esta combinação garante que os arquivos criados pelas VMs nos montados NFS tenham a propriedade correta para que os containers Docker (rodando como `dockeruser:dockergroup`) possam acessá-los corretamente.
+
+* `handlers/main.yml`: Define ações que são acionadas por notificações de tarefas (e.g., reiniciar um serviço).
 
 #### Handlers (`handlers/main.yml`)
 
@@ -467,7 +520,7 @@ Handlers são tarefas que são executadas apenas se notificadas por uma mudança
 
 ### Playbook Principal (`ansible/playbooks/setup-proxmox-host.yml`)
 
-Este é o playbook que você executará para aplicar o role `proxmox-host-config`.
+Este é o playbook que você executará para aplicar o role `proxmox-host-config` ao seu host Proxmox. Certifique-se de que o arquivo `ansible/playbooks/setup-proxmox-host.yml` exista com o seguinte conteúdo:
 
 ```yaml
 # ansible/playbooks/setup-proxmox-host.yml
@@ -475,22 +528,33 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
   become: yes # A maioria das tarefas neste role requer privilégios de root
   vars_files:
     - ../inventories/home/group_vars/all/vault.yml # Carrega variáveis sensíveis
-  # Variáveis de ../inventories/home/group_vars/all/main.yml são carregadas automaticamente
+  # Variáveis de ../inventories/home/group_vars/all/main.yml são carregadas automaticamente para 'all' hosts
 
   roles:
-    - role: infra/proxmox-host-config # Aplica o role que acabamos de detalhar
+    - role: infra/proxmox-host-config # Aplica o role que configura o host
 ```
 
-### Executando o Playbook
+### Executando o Playbook `setup-proxmox-host.yml`
 
-1.  **Certifique-se de que o role `infra/proxmox-host-config` está criado** com os arquivos `tasks/main.yml`, `templates/node_exporter_host.service.j2`, `templates/etc_exports.j2`, e `handlers/main.yml` conforme detalhado acima.
-2.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `home-server/`.
-3.  Execute o playbook:
+1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/node_exporter_host.service.j2`, `templates/etc_exports.j2`, e `handlers/main.yml` com o conteúdo apropriado.
+2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, navegue até a raiz do seu projeto `home-server/`.
+3. **Execute o Playbook:**
+
     ```bash
     ansible-playbook ansible/playbooks/setup-proxmox-host.yml --ask-vault-pass
     ```
-    Você será solicitado a fornecer a senha do Ansible Vault que você criou anteriormente.
 
-Após a execução bem-sucedida, seu host Proxmox VE estará com as configurações base aplicadas, incluindo o servidor NFS pronto para compartilhar os datasets ZFS.
+    Você será solicitado a fornecer a senha do Ansible Vault que você criou na [Seção 1.2](01-maquina-controle-ansible.md#12-criação-e-gerenciamento-de-variáveis-sensíveis-ansible-vault).
 
-E agora: [Provisionamento das Máquinas Virtuais (VMs) com Ansible](03-provisionamento-vms.md).
+Após a execução bem-sucedida deste playbook, seu host Proxmox VE estará com as configurações base aplicadas:
+
+* Repositórios APT ajustados (sem subscrição enterprise, com no-subscription).
+* Sistema atualizado.
+* Pacotes essenciais instalados.
+* Fuso horário e NTP configurados.
+* Firewall PVE básico configurado e habilitado.
+* Configuração SSHd fortalecida.
+* Node Exporter instalado e rodando para monitoramento com Prometheus.
+* Servidor NFS configurado e exportando os datasets ZFS.
+
+Com o host Proxmox pronto, o próximo passo é o [Provisionamento das Máquinas Virtuais (VMs) com Ansible](03-provisionamento-vms.md).

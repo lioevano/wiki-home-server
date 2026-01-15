@@ -1,35 +1,47 @@
 # Seção 10: Stack de Monitoramento (Glances, Prometheus, Grafana, Loki)
 
-Uma stack de monitoramento robusta é essencial para entender a performance, identificar gargalos e solucionar problemas no seu servidor doméstico. Esta seção detalha a implementação de:
-*   **Node Exporter:** Instalado no host Proxmox e em cada VM para coletar métricas do sistema.
-*   **Glances:** Um monitor de sistema abrangente com uma interface web e exportador de métricas para Prometheus.
-*   **Prometheus:** Um sistema de monitoramento e alerta que coleta e armazena métricas como séries temporais.
-*   **Grafana:** Uma plataforma de visualização e análise para criar dashboards a partir dos dados do Prometheus (e Loki).
-*   **Loki:** Um sistema de agregação de logs horizontalmente escalável, altamente disponível e multi-tenant, inspirado no Prometheus.
-*   **Promtail:** Um agente que coleta logs locais e os envia para Loki.
+Uma stack de monitoramento abrangente é indispensável para manter a saúde, entender a performance, identificar gargalos e solucionar problemas no seu servidor doméstico. Nesta seção, implementaremos um conjunto poderoso de ferramentas open-source:
 
-Todos os componentes principais da stack de monitoramento (Prometheus, Grafana, Loki, Promtail, Glances) rodarão como containers Docker na `core-services-vm`. O Node Exporter já foi instalado no host Proxmox e nas VMs pelos playbooks Ansible anteriores.
+*   **Node Exporter:** Já instalado no host Proxmox e em cada VM pelos playbooks Ansible anteriores. Ele coleta uma vasta gama de métricas do sistema operacional e do hardware.
+*   **Glances:** Um monitor de sistema "tudo em um" que fornece uma visão geral em tempo real (com interface web) e também pode exportar suas métricas para o Prometheus.
+*   **Prometheus:** Um sistema de monitoramento e alerta líder de mercado. Ele coleta (via "scraping" de endpoints) e armazena métricas como séries temporais, permitindo consultas poderosas com a linguagem PromQL.
+*   **Grafana:** Uma plataforma de visualização e análise de dados extremamente popular. Usaremos o Grafana para criar dashboards interativos e informativos a partir dos dados coletados pelo Prometheus e pelo Loki.
+*   **Loki:** Um sistema de agregação de logs inspirado no Prometheus, projetado para ser eficiente e fácil de integrar com Grafana. Ele foca em indexar metadados (labels) dos logs em vez do conteúdo completo.
+*   **Promtail:** Um agente leve que coleta logs de arquivos locais ou do systemd journal e os envia para a sua instância Loki.
 
-## 10.1. Preparação com Ansible
+Todos os componentes principais desta stack de monitoramento (Prometheus, Grafana, Loki, Promtail e Glances) rodarão como containers Docker na sua `core-services-vm`.
 
-Antes de implantar a stack no Portainer, o Ansible preparará os diretórios NFS, os arquivos de configuração para Prometheus, Grafana, Loki e Promtail, e o arquivo `.env` para a stack.
+## 10.1. Preparação com Ansible para a Stack de Monitoramento
+
+Antes de implantar a stack de monitoramento no Portainer, o Ansible precisa realizar algumas tarefas preparatórias cruciais na `core-services-vm`:
+
+1.  **Criação de Diretórios nos Volumes NFS:** Para configurações e dados persistentes de cada componente.
+2.  **Copia de Arquivos de Configuração Templateados:** Para Prometheus, Grafana (provisionamento de datasources e dashboards), Loki e Promtail.
+3.  **Preparação do Arquivo `.env`:** Para a stack de monitoramento no Portainer.
 
 ### Playbook `setup-monitoring-stack-volumes.yml`
 
-Este playbook, executado contra a `core-services-vm`, irá:
-*   Criar os subdiretórios necessários no dataset ZFS `docker-volumes` (montado em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/`) para as configurações e dados de Prometheus, Grafana (dados, DB, provisioning), Loki (dados, config), Promtail (config, positions) e Glances (config opcional).
-*   Copiar os arquivos de configuração templateados para seus respectivos diretórios NFS:
-    *   `prometheus.yml` para Prometheus.
-    *   Arquivos de provisionamento de datasources (Prometheus, Loki) e dashboards para Grafana.
-    *   `loki-local-config.yaml` para Loki.
-    *   `promtail-config.yml` para Promtail.
-*   Preparar o arquivo `/opt/portainer_stack_envs/monitoring.env` na `core-services-vm`.
+Este playbook Ansible, que será executado contra a `core-services-vm`, cuidará de todas essas preparações.
+
+*   **Criação de Diretórios:** No dataset ZFS `docker-volumes` (montado em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/` na VM), serão criados subdiretórios como:
+    *   `.../prometheus/config` e `.../prometheus/data`
+    *   `.../grafana/data`, `.../grafana/db_pg` (para o DB do Grafana), `.../grafana/provisioning/datasources`, `.../grafana/provisioning/dashboards`
+    *   `.../loki/config` e `.../loki/data`
+    *   `.../promtail/config` e `.../promtail/positions`
+    *   (Opcional) `.../glances/config`
+*   **Copia de Arquivos de Configuração:** O Ansible usará templates Jinja2 para gerar os arquivos de configuração iniciais e copiá-los para os diretórios NFS apropriados. Os detalhes desses arquivos de configuração foram abordados na Seção 10.1 do seu documento original.
+    *   **`prometheus.yml`:** Define os alvos (targets) que o Prometheus irá "raspar" para coletar métricas (Node Exporters, Glances, Cloudflared, o próprio Prometheus).
+    *   **Provisionamento do Grafana:**
+        *   `datasources/prometheus.yml` e `datasources/loki.yml`: Configuram automaticamente o Prometheus e o Loki como fontes de dados no Grafana.
+        *   `dashboards/dashboards.yml` e arquivos JSON de dashboards: Permitem pré-carregar dashboards úteis no Grafana.
+    *   **`loki-local-config.yaml`:** Configuração principal do Loki.
+    *   **`promtail-config.yml`:** Define de onde o Promtail coletará logs (e.g., journald, logs de containers Docker) e como rotulá-los.
+*   **Preparação do Arquivo `.env`:** Gerará o arquivo `/opt/portainer_stack_envs/monitoring.env` na `core-services-vm` com os caminhos e variáveis PUID/PGID, TZ, etc.
 
 **Ação:** Execute o playbook a partir da sua máquina de controle Ansible:
 ```bash
 ansible-playbook ansible/playbooks/setup-monitoring-stack-volumes.yml --ask-vault-pass
 ```
-
 ### Detalhes dos Arquivos de Configuração Gerados por Ansible
 
 #### Configuração do Prometheus (`prometheus.yml.j2`)
@@ -241,13 +253,14 @@ scrape_configs:
 
 ## 10.2. Deploy da Stack de Monitoramento via Portainer (`docker/stacks/monitoring/docker-compose.yml`)
 
-Com os volumes e configurações preparados, vamos implantar a stack de monitoramento.
+Com os volumes e arquivos de configuração devidamente preparados pelo Ansible, podemos agora implantar a stack de monitoramento usando o Portainer.
 
 **Ação:**
-1.  No Portainer, certifique-se de que está conectado ao endpoint `local` (`core-services-vm`).
+
+1.  **Acesse o Portainer e Selecione o Endpoint `local`** (`core-services-vm`).
 2.  Vá para "Stacks" -> "+ Add stack".
-3.  **Nome:** `monitoring-services`.
-4.  **Web editor:** Cole o conteúdo do arquivo `infra-servidor-domestico/docker/stacks/monitoring/docker-compose.yml`:
+3.  **Nome da Stack:** `monitoring-services`.
+4.  **Web editor:** Cole o conteúdo do arquivo `home-server/docker/stacks/monitoring/docker-compose.yml` (fornecido na Seção 10.2 do seu documento original).
 
     ```yaml
     # docker/stacks/monitoring/docker-compose.yml
@@ -405,30 +418,44 @@ Com os volumes e configurações preparados, vamos implantar a stack de monitora
           traefik.http.services.glances-svc.loadbalancer.server.port: "61208" # Porta interna do Glances
           traefik.http.routers.glances.middlewares: "authelia@docker"
     ```
+    
+        **Pontos Chave do Compose de Monitoramento:**
+        *   **Prometheus:** Mapeia o volume de dados (`${MONITORING_PROMETHEUS_DATA_PATH}`) e o arquivo de configuração (`${MONITORING_PROMETHEUS_CONFIG_PATH}/prometheus.yml`). Expõe sua UI via Traefik.
+        *   **Grafana:** Usa um container PostgreSQL (`grafana_db`) para seu banco de dados (mais robusto que o SQLite padrão). Mapeia volumes para dados, DB, e os diretórios de provisionamento de datasources e dashboards. Expõe sua UI via Traefik.
+        *   **Loki:** Mapeia seu arquivo de configuração e volume de dados. Não é exposto diretamente via Traefik, pois o Grafana o acessa internamente.
+        *   **Promtail:** Mapeia seu arquivo de configuração, um volume para `positions` (para rastrear onde parou de ler os logs), e os diretórios de log da VM host (`/var/log` e `/var/lib/docker/containers`) em modo `readonly`.
+        *   **Glances:** Roda com `pid: host` para monitorar processos da VM. Mapeia o socket Docker para monitorar containers. Expõe sua UI web e o endpoint de métricas Prometheus via Traefik.
 
 5.  **Variáveis de Ambiente e Secrets no Portainer:**
-    *   **Carregue o arquivo `.env`:**
-        *   Path on disk: `/opt/portainer_stack_envs/monitoring.env`.
-        *   Isso fornecerá `CORE_SERVICES_VM_IP_VAR`, `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE`, `base_domain`, e todos os caminhos `MONITORING_*_PATH`.
+    *   **Carregue o Arquivo `.env`:**
+        *   Na seção "Environment variables" (modo avançado), clique em "Load variables from .env file".
+        *   **Path on disk:** `/opt/portainer_stack_envs/monitoring.env`.
+        *   Isso fornecerá `CORE_SERVICES_VM_IP_VAR`, `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE`, `base_domain` (indiretamente para Traefik), e todos os caminhos `MONITORING_*_PATH`.
     *   **Adicione Secrets Manualmente:**
-        *   `GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV`: A senha que você definiu para o usuário `grafana` no PostgreSQL (variável `grafana_db_password` do seu Ansible Vault).
-        *   `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV`: A senha para o usuário administrador inicial do Grafana (variável `grafana_admin_initial_password` do seu Ansible Vault).
+        *   `GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV`: Cole aqui o valor da variável `grafana_db_password` do seu Ansible Vault (a senha para o usuário `grafana` no PostgreSQL).
+        *   `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV`: Cole aqui o valor da variável `grafana_admin_initial_password` do seu Ansible Vault (a senha para o usuário `admin` inicial do Grafana).
 
-6.  **Deploy da Stack:**
-    *   Clique em "Deploy the stack".
-    *   Monitore os logs dos containers.
+6.  **Deploy da Stack de Monitoramento:**
+    *   Clique em "**Deploy the stack**".
+    *   Monitore os logs de cada container no Portainer para verificar se há erros durante a inicialização. O Prometheus pode levar um momento para começar a raspar os alvos. O Grafana dependerá do `grafana_db` estar saudável.
 
-7.  **Configuração Pós-Deploy e Acesso às UIs:**
-    *   **Prometheus:** Acesse `https://prometheus.{{ base_domain }}`. Verifique a seção "Status" -> "Targets" para ver se todos os seus alvos (Node Exporters, Glances, etc.) estão "UP".
-    *   **Grafana:** Acesse `https://grafana.{{ base_domain }}`.
-        *   Faça login com `admin` e a senha `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV`. Mude a senha no primeiro login.
-        *   Os datasources para Prometheus e Loki já devem estar configurados via provisioning. Verifique em "Configuration" -> "Data Sources".
-        *   Comece a criar dashboards ou importe dashboards existentes para Node Exporter, Docker, etc. (e.g., IDs de dashboards populares do grafana.com).
-    *   **Glances:** Acesse `https://glances.{{ base_domain }}` para ver a interface web do Glances.
-    *   **Loki/Promtail:** Verifique os logs do Promtail para garantir que ele está enviando logs para Loki. No Grafana, use o datasource Loki na seção "Explore" para consultar seus logs.
+7.  **Configuração Pós-Deploy e Acesso às Interfaces:**
 
-Com a stack de monitoramento funcionando, você terá uma visão muito melhor da saúde e do desempenho do seu servidor doméstico!
+    *   **Prometheus UI:**
+        *   Acesse: `https://prometheus.{{ base_domain }}` (após autenticar com Authelia).
+        *   Navegue para **Status -> Targets**. Verifique se todos os seus alvos configurados no `prometheus.yml` (Node Exporters no Proxmox e VMs, Glances, Cloudflared, o próprio Prometheus) estão listados com o estado "**UP**". Se algum estiver "DOWN", verifique os logs do Prometheus e a conectividade com o alvo.
+    *   **Grafana UI:**
+        *   Acesse: `https://grafana.{{ base_domain }}` (após autenticar com Authelia).
+        *   **Primeiro Login:** Use o usuário `admin` e a senha que você definiu em `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV`. O Grafana solicitará que você altere esta senha no primeiro login.
+        *   **Verificar Datasources:** Vá para Configuration (ícone de engrenagem) -> Data Sources. Você deve ver "Prometheus" e "Loki" listados e configurados (graças aos arquivos de provisionamento). Teste a conexão com cada um.
+        *   **Explorar Dashboards:**
+            *   Se você incluiu arquivos JSON de dashboards no diretório de provisionamento, eles já devem estar disponíveis.
+            *   Você pode importar dashboards populares da comunidade Grafana. Acesse [grafana.com/grafana/dashboards/](https://grafana.com/grafana/dashboards/) e procure por dashboards para "Node Exporter Full" (e.g., ID 1860), "Docker and System Monitoring" (e.g., ID 179) ou dashboards específicos para as tecnologias que você usa. Para importar, vá em Dashboards (ícone de quatro quadrados) -> + Import, e cole o ID do dashboard ou o JSON.
+        *   **Explorar Logs com Loki:** Vá para "Explore" (ícone de bússola), selecione o datasource "Loki". Use LogQL para consultar seus logs (e.g., `{job="docker_logs"}`).
+    *   **Glances WebUI:**
+        *   Acesse: `https://glances.{{ base_domain }}` (após autenticar com Authelia).
+        *   Você verá uma visão geral em tempo real dos recursos da sua `core-services-vm` e dos containers Docker rodando nela.
+    *   **Promtail Logs:**
+        *   Verifique os logs do container `promtail` no Portainer para garantir que ele está conseguindo ler os arquivos de log especificados e enviá-los para o Loki sem erros.
 
-Isso conclui a Seção 10 e, portanto, a implementação inicial da infraestrutura e dos serviços principais. As próximas seções da wiki (Visão Geral da Arquitetura, Guias de Sustentação, Manutenção e Recuperação) se basearão nesta implementação.
-
-Próximo passo: [Seção 11: Manutenção e Backups](TODO-criar-link-para-secao-11-quando-existir-ou-ir-para-a-proxima-categoria-da-wiki).
+Com esta stack de monitoramento configurada e funcionando, você terá uma visibilidade crucial sobre a saúde, o desempenho e os eventos do seu servidor doméstico e suas aplicações. Isso é fundamental para a manutenção proativa e para o troubleshooting eficaz.

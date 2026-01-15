@@ -1,35 +1,39 @@
 # Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia)
 
-Esta seção é crucial para expor seus serviços auto-hospedados à internet de forma segura e gerenciada. Utilizaremos:
-*   **Traefik:** Como proxy reverso para rotear o tráfego para seus containers Docker e gerenciar certificados SSL/TLS.
-*   **Cloudflare Tunnel (`cloudflared`):** Para criar uma conexão segura de saída da sua rede local para a Cloudflare, eliminando a necessidade de abrir portas no roteador e protegendo seu IP público.
-*   **Authelia:** Como um portal de autenticação e autorização para adicionar uma camada de segurança (incluindo 2FA) aos seus serviços.
+Esta seção é fundamental para expor seus serviços auto-hospedados à internet de forma segura, controlada e gerenciada. Implementaremos uma stack de rede robusta na `core-services-vm` composta por:
 
-Todos esses componentes rodarão como containers Docker na `core-services-vm`.
+* **Traefik Proxy:** Atuará como nosso proxy reverso, roteando o tráfego externo para os containers Docker corretos e gerenciando automaticamente os certificados SSL/TLS com Let's Encrypt.
+* **Cloudflare Tunnel (`cloudflared`):** Criará uma conexão de saída segura da nossa rede local para a rede global da Cloudflare. Isso elimina a necessidade de abrir portas no roteador doméstico e protege nosso endereço IP público.
+* **Authelia:** Servirá como um portal de autenticação e autorização centralizado, adicionando uma camada de segurança com Single Sign-On (SSO) e autenticação de dois fatores (2FA) para os serviços que escolhermos proteger.
 
-## 5.1. Entendendo o Fluxo de Tráfego e o Proxy Reverso
+Todos esses componentes rodarão como containers Docker na `core-services-vm`, gerenciados via Docker Compose e, posteriormente, Portainer.
 
-Antes de configurar, é importante entender como o tráfego fluirá:
+## 5.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso
 
-1.  **Usuário Acessa:** O usuário digita `https://meuservico.{{ base_domain }}` no navegador.
-2.  **DNS Cloudflare:** A Cloudflare resolve o subdomínio para o seu Cloudflare Tunnel, não para o seu IP doméstico.
-3.  **Cloudflare Edge:** A requisição chega à rede global da Cloudflare, onde pode passar por proteções como WAF e DDoS mitigation.
-4.  **Cloudflare Tunnel (`cloudflared`):** O container `cloudflared` na sua `core-services-vm` mantém uma conexão de SAÍDA segura com a Cloudflare. O tráfego destinado aos seus subdomínios é "puxado" do Cloudflare Edge para sua rede local através deste túnel.
-5.  **`cloudflared` para Traefik:** O `cloudflared` recebe o tráfego do túnel e o encaminha para o Traefik, que está escutando nas portas 80 e 443 da `core-services-vm` (dentro da rede Docker `proxy`).
-6.  **Traefik (Proxy Reverso):**
-    *   Traefik inspeciona o nome do Host da requisição (e.g., `meuservico.{{ base_domain }}`).
-    *   **Authelia (Middleware):** Se a rota para `meuservico` estiver protegida por Authelia, Traefik primeiro consulta Authelia.
-        *   Se o usuário não estiver logado, Authelia redireciona para o portal de login (`auth.{{ base_domain }}`).
-        *   Após login bem-sucedido (com 2FA), Authelia informa ao Traefik que o usuário está autenticado.
-    *   **Roteamento para Serviço Docker:** Com base nas labels Docker do container de destino (e autenticação bem-sucedida), Traefik roteia a requisição para o container Docker correto (e.g., Nextcloud, Grafana).
-    *   **SSL/TLS (Let's Encrypt):** Traefik gerencia automaticamente os certificados SSL/TLS para todos os seus subdomínios usando Let's Encrypt através do desafio DNS-01 com a API da Cloudflare.
+Antes de mergulharmos na configuração, é vital entender como o tráfego de um usuário externo alcançará seus serviços internos:
 
-!!! tip "Diagrama Visual"
-    Para uma representação visual deste fluxo, consulte o diagrama na seção [Fluxo de Rede e Acesso Externo da Visão Geral da Arquitetura](../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md).
+1. **Requisição do Usuário:** O usuário digita `https://meuservico.{{ base_domain }}` no navegador (e.g., `https://nextcloud.meuhomelab.com`).
+2. **Resolução DNS via Cloudflare:** Os nameservers do seu domínio estão configurados para a Cloudflare. A Cloudflare não resolverá o subdomínio para o seu IP doméstico, mas para um endpoint da rede Cloudflare associado ao seu Cloudflare Tunnel.
+3. **Cloudflare Edge Network:** A requisição do usuário chega à rede global da Cloudflare. Aqui, ela pode se beneficiar de proteções como mitigação de DDoS e Web Application Firewall (WAF) básico da Cloudflare. Seu IP doméstico real permanece oculto.
+4. **Cloudflare Tunnel (`cloudflared` Agent):** O container `cloudflared` rodando na sua `core-services-vm` mantém uma conexão de **saída** persistente e criptografada com o data center da Cloudflare mais próximo. O tráfego destinado aos seus subdomínios configurados no túnel é "puxado" do Cloudflare Edge, através desta conexão segura, para o container `cloudflared` na sua rede local. **Nenhuma porta de entrada precisa ser aberta no seu roteador doméstico.**
+5. **`cloudflared` para Traefik:** O container `cloudflared` recebe o tráfego do túnel e o encaminha para o container Traefik. No nosso `docker-compose.yml`, o `cloudflared` é configurado para enviar o tráfego para o serviço Docker `traefik` na porta `80` (dentro da rede Docker `proxy` compartilhada).
+6. **Traefik (Proxy Reverso):**
+    * Traefik escuta nas portas `80` (HTTP) e `443` (HTTPS) na `core-services-vm` (mapeadas do host da VM para o container Traefik).
+    * **Redirecionamento HTTP para HTTPS:** Traefik está configurado para redirecionar automaticamente todo o tráfego chegando na porta `80` para HTTPS na porta `443`.
+    * **Roteamento Baseado em Host:** Traefik inspeciona o cabeçalho `Host` da requisição HTTP (e.g., `nextcloud.meuhomelab.com`).
+    * **Middleware de Autenticação (Authelia):** Se a rota do Traefik para o serviço estiver configurada com o middleware Authelia (e.g., `authelia@docker`), Traefik primeiro consulta o container Authelia para verificar a autenticação do usuário.
+        * Se o usuário não estiver logado, Authelia instrui Traefik a redirecionar o usuário para o portal de login do Authelia (e.g., `https://auth.meuhomelab.com`).
+        * Após o login bem-sucedido (incluindo 2FA), Authelia estabelece uma sessão (via cookie) e informa ao Traefik que o usuário está autenticado.
+    * **Gerenciamento de Certificados SSL/TLS (Let's Encrypt):** Traefik automaticamente solicita, renova e gerencia certificados SSL/TLS da Let's Encrypt para todos os seus subdomínios expostos. Ele utiliza o **desafio DNS-01** com a API da Cloudflare (usando o token API que configuraremos), o que é robusto e não requer que portas HTTP estejam abertas para o mundo. Os certificados são armazenados no arquivo `acme.json` (em um volume NFS).
+    * **Roteamento para o Serviço Docker de Destino:** Com base nas *labels* Docker definidas no `docker-compose.yml` do serviço de destino (e após autenticação bem-sucedida, se aplicável), Traefik encaminha a requisição para o container Docker correto e sua porta interna.
+7. **Serviço Docker:** O container da aplicação (e.g., Nextcloud) processa a requisição e envia a resposta de volta pelo mesmo caminho.
+
+!!! tip "Diagrama Visual do Fluxo"
+    Para uma representação gráfica detalhada deste fluxo, consulte o diagrama na seção [Fluxo de Rede e Acesso Externo da Visão Geral da Arquitetura](../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md).
 
 ## 5.2. Docker Compose para a Stack Core (`docker/stacks/core/docker-compose.yml`)
 
-Esta stack inclui Traefik e Cloudflared. Crie o arquivo `infra-servidor-domestico/docker/stacks/core/docker-compose.yml`:
+Esta stack fundamental inclui os containers Traefik e Cloudflared. Crie o arquivo `home-server/docker/stacks/core/docker-compose.yml` com o seguinte conteúdo:
 
 ```yaml
 # docker/stacks/core/docker-compose.yml
@@ -37,63 +41,70 @@ version: '3.9'
 
 networks:
   proxy: # Rede para Traefik e serviços expostos
-    name: proxy # Nome da rede que foi criada pelo Ansible
-    external: true # Indica que a rede 'proxy' já existe e será usada
+    name: proxy # Nome da rede que foi criada pelo Ansible na Seção 4.2
+    external: true # Indica que a rede 'proxy' já existe e será usada por esta stack
 
 services:
   traefik:
-    image: traefik:v2.11.2 # Use uma versão específica e estável. Verifique a mais recente.
+    image: traefik:v2.11.2 # Use uma versão específica e estável. Verifique por atualizações.
     container_name: traefik
     restart: unless-stopped
-    security_opt: [no-new-privileges:true]
+    security_opt:
+      - no-new-privileges:true # Boa prática de segurança, impede escalação de privilégios
     networks:
       - proxy # Conecta Traefik à rede proxy
     ports:
       # Mapeia as portas do Traefik no IP da core-services-vm.
-      # As variáveis injetadas (e.g., CORE_SERVICES_VM_IP_VAR) virão do .env ou Ansible.
-      - "${CORE_SERVICES_VM_IP_VAR}:80:80"   # HTTP (será redirecionado para HTTPS)
-      - "${CORE_SERVICES_VM_IP_VAR}:443:443" # HTTPS (ponto de entrada principal)
-      # - "${CORE_SERVICES_VM_IP_VAR}:8080:8080" # Opcional: Porta para a API/Dashboard do Traefik (se não exposta via rota segura)
+      # A variável ${CORE_SERVICES_VM_IP_VAR} virá do arquivo .env carregado pelo Portainer.
+      - "${CORE_SERVICES_VM_IP_VAR}:80:80"   # HTTP (será redirecionado para HTTPS por Traefik)
+      - "${CORE_SERVICES_VM_IP_VAR}:443:443" # HTTPS (ponto de entrada principal para serviços)
+      # - "${CORE_SERVICES_VM_IP_VAR}:8080:8080" # Opcional: Se você quiser expor a API/Dashboard do Traefik
+                                               # diretamente nesta porta, mas é melhor expô-la via rota segura HTTPS.
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro" # Permite Traefik detectar containers Docker
-      # Caminhos para configs e certs DENTRO DA VM (que são montagens NFS do host Proxmox)
-      # As variáveis (e.g., VM_NFS_MOUNT_BASE_PATH) virão do .env ou Ansible.
-      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/data:/data" # Para acme.json (certificados) e logs
-      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/config/traefik.yml:/traefik.yml:ro" # Configuração estática do Traefik
-      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/config/dynamic:/etc/traefik/dynamic_configs:ro" # Configs dinâmicas (middlewares, etc.)
-      - "/etc/localtime:/etc/localtime:ro" # Sincroniza o fuso horário
+      - "/var/run/docker.sock:/var/run/docker.sock:ro" # Permite Traefik detectar containers Docker e suas labels
+      # Caminhos para configs e certs DENTRO DA VM (que são montagens NFS do host Proxmox).
+      # As variáveis (e.g., ${VM_NFS_MOUNT_BASE_PATH}) virão do .env.
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/data:/data" # Para acme.json (certificados SSL) e logs Traefik
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/config/traefik.yml:/traefik.yml:ro" # Configuração estática do Traefik (readonly)
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/config/dynamic:/etc/traefik/dynamic_configs:ro" # Configs dinâmicas (middlewares, etc., readonly)
+      - "/etc/localtime:/etc/localtime:ro" # Sincroniza o fuso horário do container com o da VM
     environment:
-      # Token da API Cloudflare para o desafio DNS-01 (Let's Encrypt)
-      # Esta variável será injetada pelo Ansible ou definida no Portainer.
+      # Token da API Cloudflare para o desafio DNS-01 (Let's Encrypt).
+      # Esta variável ${CLOUDFLARE_API_TOKEN_FROM_VAULT} será injetada pelo .env
+      # (que por sua vez é preenchido por Ansible com o valor do vault.yml).
       - CF_DNS_API_TOKEN=${CLOUDFLARE_API_TOKEN_FROM_VAULT}
-      # - CF_API_EMAIL=${LETSENCRYPT_EMAIL_FROM_VAULT} # Para alguns provedores DNS mais antigos, não Cloudflare com token.
-      # - CF_ZONE_API_TOKEN=${CLOUDFLARE_ZONE_API_TOKEN_FROM_VAULT} # Alternativa ao token global
+      # Algumas configurações DNS podem exigir o email ou um token API específico da zona.
+      # Para DNS Challenge com API Token global, apenas CF_DNS_API_TOKEN é geralmente necessário.
+      # - CF_API_EMAIL=${LETSENCRYPT_EMAIL_FROM_VAULT}
+      # - CF_ZONE_API_TOKEN=${CLOUDFLARE_ZONE_API_TOKEN_FROM_VAULT} # Se usar token específico da zona
     labels:
-      traefik.enable: "true" # Permite Traefik gerenciar o próprio Traefik
-      # Dashboard Traefik (protegido por Authelia)
-      traefik.http.routers.traefik-dashboard.rule: "Host(`traefik.${BASE_DOMAIN_FROM_VAULT}`)" # BASE_DOMAIN_FROM_VAULT injetado
-      traefik.http.routers.traefik-dashboard.entrypoints: "websecure"
-      traefik.http.routers.traefik-dashboard.service: "api@internal" # Serviço interno do Traefik para o dashboard
-      traefik.http.routers.traefik-dashboard.tls.certresolver: "letsencrypt"
-      traefik.http.routers.traefik-dashboard.middlewares: "authelia@docker" # Protegido por Authelia
+      # --- Labels para Traefik gerenciar o próprio Traefik (Dashboard) ---
+      traefik.enable: "true" # Permite Traefik gerenciar este container (ele mesmo)
+      # Roteador para o Dashboard do Traefik
+      traefik.http.routers.traefik-dashboard.rule: "Host(`traefik.${BASE_DOMAIN_FROM_VAULT}`)" # ${BASE_DOMAIN_FROM_VAULT} do .env
+      traefik.http.routers.traefik-dashboard.entrypoints: "websecure" # Acessível apenas via HTTPS
+      traefik.http.routers.traefik-dashboard.service: "api@internal" # Serviço interno especial do Traefik para o dashboard/API
+      traefik.http.routers.traefik-dashboard.tls.certresolver: "letsencrypt" # Usar Let's Encrypt
+      traefik.http.routers.traefik-dashboard.middlewares: "authelia@docker" # Proteger o dashboard com Authelia
     healthcheck: # Define um healthcheck para o container Traefik
-      test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 10s
-      timeout: 2s
-      retries: 3
-      start_period: 5s # Período inicial antes de considerar falhas no healthcheck
+      test: ["CMD", "traefik", "healthcheck", "--ping"] # Comando para verificar a saúde
+      interval: 10s # Intervalo entre verificações
+      timeout: 2s   # Timeout para a verificação
+      retries: 3    # Número de tentativas antes de marcar como "unhealthy"
+      start_period: 15s # Período inicial de tolerância antes de falhas no healthcheck contarem
 
   cloudflared:
-    image: cloudflare/cloudflared:2024.5.0 # Use uma versão específica e estável. Verifique a mais recente.
+    image: cloudflare/cloudflared:2024.5.0 # Use uma versão específica e estável. Verifique por atualizações.
     container_name: cloudflared
     restart: unless-stopped
     networks:
-      - proxy # Precisa estar na mesma rede que Traefik para encaminhar tráfego
+      - proxy # Precisa estar na mesma rede que Traefik para poder encaminhar tráfego para ele
     # O comando para rodar o túnel.
-    # O token será injetado pelo Ansible ou Portainer.
-    # A flag --url http://traefik:80 direciona todo o tráfego do túnel para o serviço 'traefik' na porta 80.
-    # Se você preferir gerenciar os Ingress Rules no dashboard da Cloudflare, remova --hostname e --url,
-    # e use apenas 'run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}'.
+    # O token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT} será injetado pelo .env.
+    # A flag `--url http://traefik:80` direciona todo o tráfego do túnel para o serviço Docker 'traefik' na porta 80.
+    # A flag `--hostname ${BASE_DOMAIN_FROM_VAULT}` tenta registrar este hostname (e um wildcard) para o túnel.
+    # Se você preferir gerenciar os Ingress Rules (Public Hostnames) exclusivamente no dashboard da Cloudflare,
+    # remova `--hostname` e `--url`, e use apenas 'run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}'.
     command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 --protocol http2 --hostname ${BASE_DOMAIN_FROM_VAULT} --url http://traefik:80 run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}
     # Exemplo de comando para Ingress Rules gerenciadas no dashboard Cloudflare:
     # command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}
@@ -102,78 +113,88 @@ services:
     # - Hostname: *.seudominio.com, Service: http://traefik:80 (para um catch-all)
     depends_on: # Garante que Traefik esteja saudável antes de iniciar cloudflared
       traefik:
-        condition: service_healthy
+        condition: service_healthy # Espera o healthcheck do Traefik passar
 ```
-!!! note "Variáveis de Ambiente no Compose"
-    Variáveis como `${CORE_SERVICES_VM_IP_VAR}`, `${VM_NFS_MOUNT_BASE_PATH}`, `${ZFS_DOCKER_VOLUMES_DATASET_NAME}`, `${CLOUDFLARE_API_TOKEN_FROM_VAULT}`, `${BASE_DOMAIN_FROM_VAULT}`, e `${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}` serão substituídas:
-    *   Pelo Ansible ao gerar um arquivo `.env` para esta stack.
-    *   Ou definidas diretamente como variáveis de ambiente da stack no Portainer.
+
+!!! note "Variáveis de Ambiente no Docker Compose"
+    Variáveis como `${CORE_SERVICES_VM_IP_VAR}`, `${VM_NFS_MOUNT_BASE_PATH}`, `${ZFS_DOCKER_VOLUMES_DATASET_NAME}`, `${CLOUDFLARE_API_TOKEN_FROM_VAULT}`, `${BASE_DOMAIN_FROM_VAULT}`, e `${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}` são placeholders que serão substituídos:
+    *Pelo Ansible quando ele gerar um arquivo `.env` para esta stack na `core-services-vm`.
+    *   Ou, se você não usar um `.env` gerado por Ansible para esta stack específica, você precisaria definir essas variáveis diretamente como "Environment variables" da stack no Portainer. O método recomendado é via arquivo `.env` preparado por Ansible para consistência.
 
 ## 5.3. Docker Compose para a Stack Authelia (`docker/stacks/authelia/docker-compose.yml`)
 
-Authelia fornecerá autenticação 2FA. Crie o arquivo `infra-servidor-domestico/docker/stacks/authelia/docker-compose.yml`:
+Authelia fornecerá o portal de autenticação e o serviço de 2FA. Crie o arquivo `home-server/docker/stacks/authelia/docker-compose.yml`:
 
 ```yaml
 # docker/stacks/authelia/docker-compose.yml
 version: '3.9'
 
 networks:
-  proxy: { name: proxy, external: true } # Para ser acessado por Traefik
-  internal_services: # Rede para o banco de dados do Authelia
+  proxy: # Para Traefik alcançar o portal Authelia e o endpoint de verificação
+    name: proxy
+    external: true
+  internal_services: # Rede para o banco de dados PostgreSQL do Authelia
     name: internal_services
     external: true
 
 services:
   authelia:
-    image: authelia/authelia:4.38.0 # Use uma versão específica e estável. Verifique a mais recente.
+    image: authelia/authelia:4.38.0 # Use uma versão específica e estável. Verifique por atualizações.
     container_name: authelia
     restart: unless-stopped
     volumes:
-      # Caminho NFS para configs do Authelia. As variáveis virão do .env ou Ansible.
+      # Caminho NFS para as configurações do Authelia.
+      # As variáveis ${VM_NFS_MOUNT_BASE_PATH} e ${ZFS_DOCKER_VOLUMES_DATASET_NAME} virão do .env.
       - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/config:/config"
-      - "/etc/localtime:/etc/localtime:ro"
+      - "/etc/localtime:/etc/localtime:ro" # Sincroniza fuso horário
     networks:
-      - proxy # Para Traefik alcançar o portal Authelia e o endpoint de verificação
-      - internal_services # Para Authelia alcançar seu banco de dados
+      - proxy
+      - internal_services
     expose:
-      - "9091" # Porta interna do Authelia, não precisa ser mapeada para o host diretamente. Traefik acessa.
+      # Expõe a porta interna do Authelia para outros containers na mesma rede Docker,
+      # mas não a mapeia para o host da VM. Traefik acessará esta porta.
+      - "9091"
     environment:
-      - TZ=${SYSTEM_TIMEZONE_FROM_VAULT} # Injetado pelo .env ou Ansible
-      # Outras variáveis podem ser necessárias dependendo da sua config/configuration.yml do Authelia
-    depends_on: # Garante que o DB esteja saudável antes de iniciar Authelia
+      - TZ=${SYSTEM_TIMEZONE_FROM_VAULT} # Injetado pelo .env
+      # Outras variáveis de ambiente podem ser definidas aqui se o configuration.yml do Authelia
+      # estiver configurado para lê-las (e.g., segredos, embora seja melhor no config.yml).
+      # AUTHELIA_JWT_SECRET: ${AUTHELIA_JWT_SECRET_FROM_VAULT} # Exemplo
+      # AUTHELIA_SESSION_SECRET: ${AUTHELIA_SESSION_SECRET_FROM_VAULT} # Exemplo
+    depends_on: # Garante que o banco de dados esteja saudável antes de iniciar Authelia
       authelia_db:
         condition: service_healthy
-    labels: # Labels Traefik para expor o portal Authelia e definir o middleware
+    labels: # Labels Traefik para expor o portal Authelia e definir o middleware de autenticação
       traefik.enable: "true"
-      # --- Roteador para o portal Authelia (auth.seudominio.com) ---
+      # --- Roteador para o portal Authelia (e.g., auth.meuhomelab.com) ---
       traefik.http.routers.authelia-portal.rule: "Host(`auth.${BASE_DOMAIN_FROM_VAULT}`)"
       traefik.http.routers.authelia-portal.entrypoints: "websecure"
       traefik.http.routers.authelia-portal.tls.certresolver: "letsencrypt"
       traefik.http.routers.authelia-portal.service: "authelia-svc"
-      # --- Serviço para o portal Authelia ---
+      # --- Serviço Traefik para o portal Authelia ---
       traefik.http.services.authelia-svc.loadbalancer.server.port: "9091" # Porta interna do Authelia
-      # --- Middleware Authelia (a ser referenciado por outros serviços) ---
-      # O nome 'authelia@docker' é como outros containers (via labels) referenciarão este middleware.
+      # --- Middleware de Forward Authentication Authelia ---
+      # Este middleware será referenciado por outros serviços que precisam ser protegidos.
+      # O nome 'authelia@docker' é como outros containers (via suas labels) referenciarão este middleware.
       traefik.http.middlewares.authelia.forwardauth.address: "http://authelia:9091/api/verify?rd=https://auth.${BASE_DOMAIN_FROM_VAULT}/"
-      traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: "true"
-      traefik.http.middlewares.authelia.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+      traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: "true" # Confia nos headers X-Forwarded-* do Traefik
+      traefik.http.middlewares.authelia.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email" # Headers a serem passados para o serviço backend após auth
 
   authelia_db: # Banco de dados PostgreSQL para Authelia
     image: postgres:15.6-alpine # Use uma versão específica e estável.
     container_name: authelia_db
     restart: unless-stopped
     volumes:
-      # Caminho NFS para o banco de dados do Authelia. As variáveis virão do .env ou Ansible.
+      # Caminho NFS para os dados do banco de dados do Authelia. As variáveis virão do .env.
       - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/db_pg:/var/lib/postgresql/data"
     networks:
-      - internal_services # Apenas na rede interna, não acessível externamente
+      - internal_services # Apenas na rede interna, não acessível diretamente pelo Traefik ou externamente
     environment:
       - POSTGRES_DB=authelia
       - POSTGRES_USER=authelia
-      - POSTGRES_PASSWORD=${AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT} # Injetado
-      - TZ=${SYSTEM_TIMEZONE_FROM_VAULT} # Injetado
-    healthcheck: # Verifica se o banco de dados está pronto
-      test: ["CMD-SHELL", "pg_isready -U authelia -d authelia"]
+      - POSTGRES_PASSWORD=${AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT} # Injetado pelo .env
+      - TZ=${SYSTEM_TIMEZONE_FROM_VAULT} # Injetado pelo .env
+    healthcheck: # Verifica se o banco de dados PostgreSQL está pronto para aceitar conexões
+      test: ["CMD-SHELL", "pg_isready -U authelia -d authelia -h localhost"] # -h localhost pois roda dentro do container
       interval: 10s
       timeout: 5s
       retries: 5
@@ -181,10 +202,22 @@ services:
 
 ## 5.4. Playbook `ansible/playbooks/setup-core-networking.yml`
 
-Este playbook Ansible será responsável por:
-1.  Criar as redes Docker `proxy` e `internal_services` (se ainda não existirem).
-2.  Copiar os arquivos de configuração para Traefik (estática e dinâmica) e Authelia para os volumes NFS.
-3.  Fazer o deploy das stacks `core` (Traefik, Cloudflared) e `authelia` usando o módulo `docker_compose_v2`.
+Este playbook Ansible orquestra a preparação dos arquivos de configuração e o deploy das stacks `core` e `authelia`.
+
+**Principais Ações do Playbook:**
+
+  1. **Cria Redes Docker:** Garante que as redes `proxy` e `internal_services` existam na `core-services-vm`.
+  2. **Executa Role `infra/traefik-config`:**
+      * Cria os diretórios de configuração e dados para Traefik no volume NFS.
+      * Copia o `traefik.yml` (config estática) templateado.
+      * Copia os arquivos de configuração dinâmica (middlewares como `security_headers.yml`, `nextcloud_middleware.yml`, e o roteamento para RAG services `rag_services.yml`) para o diretório apropriado.
+      * Garante que o arquivo `acme.json` (para certificados SSL) exista com as permissões corretas.
+  3. **Deploy da Stack `core`:** Usa o módulo `community.docker.docker_compose_v2` para fazer deploy da stack `core` (Traefik, Cloudflared), injetando as variáveis de ambiente necessárias do Ansible Vault/`main.yml`.
+  4. **Aguarda Traefik:** Espera o healthcheck do Traefik passar antes de prosseguir.
+  5. **Executa Role `infra/authelia-config`:**
+      * Cria o diretório de configuração para Authelia no volume NFS.
+      * Copia o `configuration.yml` e `users_database.yml` (exemplo) templateados.
+  6. **Deploy da Stack `authelia`:** Usa `community.docker.docker_compose_v2` para fazer deploy da stack `authelia` (Authelia app, Authelia DB), injetando as variáveis de ambiente.
 
 ### Ações Preparatórias: Roles Ansible para Configuração
 
@@ -365,6 +398,7 @@ http:
         # X-Content-Type-Options: "nosniff" (já coberto por contentTypeNosniff)
         # Strict-Transport-Security: (já coberto por stsSeconds, etc.)
 ```
+
 !!! warning "Content-Security-Policy (CSP)"
     O `contentSecurityPolicy` é um header muito poderoso para mitigar XSS e outros ataques de injeção. No entanto, configurá-lo incorretamente pode quebrar a funcionalidade das suas aplicações. O exemplo acima é muito básico. Você precisará pesquisar e testar as diretivas CSP apropriadas para cada um dos seus serviços (Nextcloud, Grafana, etc.) ou começar com uma política menos restritiva e aumentá-la gradualmente.
 
@@ -443,6 +477,7 @@ http:
         # (Mas Traefik faria isso com routers, não headers)
         pass: true # Middleware vazio por enquanto, para estrutura. Adicione headers específicos se necessário.
 ```
+
 !!! note "Nextcloud Headers"
     Nextcloud tem recomendações específicas de headers de segurança, muitas das quais podem já estar cobertas pelos `securityHeaders@file` globais. Este middleware `nextcloud-headers@file` pode ser usado para adicionar ou sobrescrever headers especificamente para o Nextcloud se necessário. Consulte a documentação do Nextcloud para os headers mais recentes.
 
@@ -727,54 +762,66 @@ Este playbook orquestra o deploy da stack de rede.
         ZFS_DOCKER_VOLUMES_DATASET_NAME: "{{ zfs_docker_volumes_dataset_name }}"
 ```
 
-### Executando o Playbook de Rede
+### Executando o Playbook de Configuração da Rede Core
 
-1.  Certifique-se de que os roles `infra/traefik-config` e `infra/authelia-config` estão criados com os arquivos detalhados.
-2.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `infra-servidor-domestico/`.
-3.  Execute o playbook:
+1. **Verifique os Roles e Templates:** Certifique-se de que todos os arquivos de role (`infra/traefik-config`, `infra/authelia-config`) e seus respectivos templates (`.j2` arquivos) estão criados e preenchidos com o código correto no seu projeto Ansible.
+2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, navegue até a raiz do seu projeto `home-server/`.
+3. **Execute o Playbook:**
+
     ```bash
     ansible-playbook ansible/playbooks/setup-core-networking.yml --ask-vault-pass
     ```
 
+    Você será solicitado a fornecer a senha do Ansible Vault.
+
 ## 5.5. Configuração de DNS na Cloudflare
 
-Após o deploy da stack de rede, especialmente do Cloudflare Tunnel, você precisa configurar seus registros DNS na Cloudflare para que seus subdomínios apontem para o túnel.
+Após o deploy bem-sucedido da stack de rede, especialmente do container `cloudflared` (Cloudflare Tunnel), você precisa configurar seus registros DNS na Cloudflare para que seus subdomínios (e.g., `portainer.meuhomelab.com`, `traefik.meuhomelab.com`, `auth.meuhomelab.com`) apontem corretamente para o seu túnel.
 
-**Opção 1: Usando a flag `--hostname` no `cloudflared` (como no `docker-compose.yml` da Seção 5.2)**
+**Abordagem Recomendada: Usar Ingress Rules no Cloudflare Zero Trust Dashboard**
+
+Esta abordagem oferece a maior flexibilidade e é gerenciada centralmente no painel da Cloudflare. Assumindo que seu comando `cloudflared` no `docker-compose.yml` é:
+`command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}`
+(ou seja, sem as flags `--hostname` e `--url` que tentam gerenciar DNS automaticamente).
+
+1. **Acesse o Cloudflare Zero Trust Dashboard:** Vá para [one.dash.cloudflare.com](https://one.dash.cloudflare.com/).
+2. No menu lateral, navegue para **Access -> Tunnels**.
+3. Localize e selecione o túnel que foi criado (você deve ter criado um ao obter o `CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT`).
+4. Clique na aba "**Public Hostnames**".
+5. Clique em "**+ Add a public hostname**" para cada serviço que você deseja expor.
+    * **Subdomain:** O prefixo do seu serviço (e.g., `portainer`, `traefik`, `auth`, `nextcloud`, `hass`, `grafana`, `openwebui`, etc.).
+    * **Domain:** Selecione seu domínio base (`{{ base_domain }}` e.g., `meuhomelab.com`).
+    * **Path:** Deixe em branco (a menos que você queira rotear caminhos específicos para serviços diferentes, o que é mais avançado e geralmente tratado pelo Traefik).
+    * **Service Type:** `HTTP`.
+    * **Service URL:** `traefik:80`
+        * Isso instrui o Cloudflare Tunnel a encaminhar o tráfego para o serviço Docker chamado `traefik` (o container Traefik) na porta `80` (dentro da rede Docker `proxy` onde ambos, `cloudflared` e `traefik`, estão conectados).
+    * Clique em "Save hostname".
+
+**Exemplos de Public Hostnames a Adicionar Inicialmente:**
+
+* `portainer.{{ base_domain }}` -> `http://traefik:80`
+* `traefik.{{ base_domain }}` -> `http://traefik:80` (para o dashboard do Traefik)
+* `auth.{{ base_domain }}` -> `http://traefik:80` (para o portal do Authelia)
+* (Opcional, mas recomendado) **Catch-all com Wildcard:**
+    * Subdomain: `*`
+    * Domain: `{{ base_domain }}`
+    * Service: `http://traefik:80`
+    !!! tip "Vantagem do Catch-All (`*`)"
+        Configurar um hostname público com o subdomínio `*` (wildcard) significa que qualquer subdomínio de `{{ base_domain }}` que não tenha uma regra de Public Hostname mais específica na Cloudflare será automaticamente encaminhado para o Traefik. O Traefik então usará suas próprias regras de roteamento (definidas por labels Docker ou File Provider) para direcionar para o container correto. Isso simplifica muito a adição de novos serviços no futuro: você só precisa configurar as labels no Traefik, e não precisará adicionar um novo Public Hostname na Cloudflare toda vez (a menos que queira configurações de túnel muito específicas por subdomínio, como políticas de acesso Cloudflare).
+
+**Opção Alternativa: Usando a flag `--hostname` no `cloudflared`**
 
 Se o seu comando `cloudflared` no `docker-compose.yml` inclui:
-`--hostname ${BASE_DOMAIN_FROM_VAULT} --url http://traefik:80`
-ou similar, o `cloudflared` tentará criar automaticamente um registro CNAME para `${BASE_DOMAIN_FROM_VAULT}` (e.g., `seudominio.com`) e possivelmente um wildcard (`*.seudominio.com`) apontando para o seu túnel.
+`--hostname {{ base_domain }} --url http://traefik:80`
+O `cloudflared` tentará criar e gerenciar automaticamente um registro CNAME para `{{ base_domain }}` e um CNAME wildcard `*.{{ base_domain }}` apontando para o seu túnel.
 
-*   **Ação:** Verifique no painel DNS da Cloudflare se um registro CNAME como `seudominio.com CNAME <TUNNEL_ID>.cfargotunnel.com` e/ou `* CNAME <TUNNEL_ID>.cfargotunnel.com` foi criado. O `<TUNNEL_ID>` é o UUID do seu túnel.
+* **Ação:** Verifique no painel DNS da Cloudflare (não no Zero Trust, mas na seção DNS do seu domínio) se esses CNAMEs foram criados (e.g., `seudominio.com CNAME <TUNNEL_ID>.cfargotunnel.com` e `* CNAME <TUNNEL_ID>.cfargotunnel.com`). O `<TUNNEL_ID>` é o UUID do seu túnel.
+* **Menos Flexível:** Esta abordagem é mais simples, mas oferece menos controle granular do que as Ingress Rules/Public Hostnames no dashboard Zero Trust.
 
-**Opção 2: Gerenciamento Manual de Ingress Rules no Cloudflare Zero Trust Dashboard (Recomendado para Flexibilidade)**
+**Verificação Importante (em ambos os casos):**
 
-Se o seu comando `cloudflared` é apenas `run --token ...` (sem `--hostname` ou `--url`), você controlará os subdomínios publicamente acessíveis através do dashboard Cloudflare Zero Trust.
+* **Status do Proxy Cloudflare (Nuvem Laranja):** Para todos os registros DNS (CNAMEs) relacionados aos seus serviços expostos, certifique-se de que o "Proxy status" na Cloudflare está **habilitado (nuvem laranja)**. Isso garante que o tráfego passe pela rede da Cloudflare, beneficiando-se de suas proteções e permitindo que o túnel funcione.
 
-1.  Acesse o [Cloudflare Zero Trust Dashboard](https://one.dash.cloudflare.com/).
-2.  Vá para **Access -> Tunnels**.
-3.  Selecione seu túnel na lista.
-4.  Clique na aba **Public Hostnames**.
-5.  Clique em **"+ Add a public hostname"**.
-    *   **Subdomain:** O prefixo do seu serviço (e.g., `portainer`, `traefik`, `auth`, `nextcloud`). Use `*` como wildcard para um catch-all para todos os subdomínios não especificados.
-    *   **Domain:** Selecione seu `{{ base_domain }}`.
-    *   **Path:** Deixe em branco (a menos que você queira rotear caminhos específicos para serviços diferentes).
-    *   **Service Type:** `HTTP`.
-    *   **Service URL:** `traefik:80` (se `cloudflared` e `traefik` estão na mesma rede Docker `proxy` e o serviço Docker `traefik` está acessível por esse nome e porta). Se Traefik estivesse escutando em HTTPS internamente (não é o nosso caso aqui), seria `https://traefik:443`.
-    *   Clique em "Save hostname".
+Pode levar alguns minutos para que quaisquer novas configurações de DNS ou Public Hostnames se propaguem globalmente.
 
-    **Exemplos de Public Hostnames a serem adicionados:**
-    *   Subdomain: `portainer`, Domain: `{{ base_domain }}`, Service: `http://traefik:80`
-    *   Subdomain: `traefik` (para o dashboard), Domain: `{{ base_domain }}`, Service: `http://traefik:80`
-    *   Subdomain: `auth` (para Authelia), Domain: `{{ base_domain }}`, Service: `http://traefik:80`
-    *   Subdomain: `*` (catch-all), Domain: `{{ base_domain }}`, Service: `http://traefik:80`
-        !!! tip "Usando o Catch-All (`*`)"
-            Se você configurar um hostname público com o subdomínio `*`, ele atuará como um catch-all. Qualquer subdomínio de `{{ base_domain }}` que não tenha uma regra mais específica será encaminhado para o serviço especificado (neste caso, Traefik). Traefik então usará suas próprias regras de roteamento baseadas em host para direcionar para o container correto. Isso simplifica a adição de novos serviços, pois você só precisa configurar as labels no Traefik, sem precisar adicionar um novo Public Hostname na Cloudflare toda vez (a menos que queira configurações de túnel específicas por subdomínio).
-
-**Verificação Importante:**
-*   **Proxy Status:** Em todos os casos (CNAMEs automáticos ou Ingress Rules), certifique-se de que o status do proxy na Cloudflare (a nuvem laranja) está **habilitado** para esses registros/hostnames. Isso garante que o tráfego passe pela rede da Cloudflare, beneficiando-se de suas proteções e do túnel.
-
-Pode levar alguns minutos para as mudanças de DNS se propagarem globalmente.
-
-Com a rede segura implementada, você está pronto para começar a implantar suas aplicações usando o [Portainer](06-deploy-portainer-geral.md).
+Com a stack de rede segura implementada e o DNS configurado, você está pronto para começar a implantar suas aplicações de forma organizada e segura usando o [Portainer](06-deploy-portainer-geral.md).

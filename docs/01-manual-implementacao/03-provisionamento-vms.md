@@ -1,107 +1,164 @@
 # Seção 3: Provisionamento das Máquinas Virtuais (VMs) com Ansible
 
-Com o host Proxmox VE configurado, o próximo passo é provisionar as máquinas virtuais (VMs) que hospedarão seus serviços. Utilizaremos Ansible para automatizar a criação e configuração inicial dessas VMs a partir de um template Ubuntu Server Cloud-Init.
+Com o host Proxmox VE devidamente configurado ([Seção 2](02-proxmox-ve-host.md)), o próximo passo é provisionar as máquinas virtuais (VMs) que hospedarão seus serviços containerizados. Utilizaremos o Ansible para automatizar a criação e configuração inicial dessas VMs a partir de um template Ubuntu Server Cloud-Init, garantindo consistência e repetibilidade.
 
-Nesta arquitetura, com 48GB de RAM disponíveis, podemos planejar VMs com recursos mais generosos ou um número maior de VMs especializadas. Inicialmente, manteremos as duas VMs principais, mas com alocações de recursos mais confortáveis:
-*   `core-services-vm`: Hospedará a maioria dos serviços Docker (Traefik, Portainer, Nextcloud, mídia, monitoramento, etc.).
-*   `ai-desktop-vm`: Opcional, dedicada a tarefas de IA/LLM que podem exigir GPU passthrough e mais recursos.
+Nesta arquitetura, com 48GB de RAM disponíveis no host, temos flexibilidade para alocar recursos de forma mais confortável para nossas VMs principais:
+
+* **`core-services-vm`:** Esta VM será o cavalo de batalha, hospedando a maioria dos seus serviços Docker, incluindo Traefik, Portainer, Authelia, Nextcloud, a stack de mídia, a stack de monitoramento, e outros serviços essenciais.
+* **`ai-desktop-vm`:** Esta VM é opcional, mas planejada para tarefas de Inteligência Artificial (LLMs com Ollama, aplicações RAG) que podem se beneficiar de um ambiente isolado e, crucialmente, do passthrough da GPU AMD RX 5600XT para aceleração de hardware.
 
 ## 3.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)
 
-Um template de VM permite clonar rapidamente novas VMs já com configurações base. Usaremos uma imagem Cloud-Init do Ubuntu Server.
+Um template de VM no Proxmox permite que você clone rapidamente novas VMs já com uma configuração base (como o sistema operacional e alguns pacotes essenciais). Usaremos uma imagem Cloud-Init do Ubuntu Server, que é projetada para ser configurada dinamicamente no primeiro boot.
 
-Siga estes passos na **interface web do Proxmox VE** ou no **shell do host Proxmox**:
+Siga estes passos na **interface web do Proxmox VE** ou, para os comandos de download e importação, no **shell do host Proxmox VE** (como `root`):
 
-1.  **Download da Imagem Cloud-Init do Ubuntu Server:**
-    No shell do host Proxmox (como `root`):
+1. **Download da Imagem Cloud-Init do Ubuntu Server:**
+    No shell do host Proxmox:
+
     ```bash
-    # Exemplo para Ubuntu 22.04 LTS (Jammy Jellyfish)
-    # Verifique o link mais recente em https://cloud-images.ubuntu.com/
+    # Exemplo para Ubuntu 22.04 LTS (Jammy Jellyfish).
+    # Sempre verifique o link mais recente em https://cloud-images.ubuntu.com/
     IMAGE_URL="https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.qcow2"
     IMAGE_FILENAME="jammy-server-cloudimg-amd64.qcow2"
-    # O storage 'local' é geralmente onde ISOs e templates são armazenados no Proxmox
-    # Corresponde a proxmox_storage_iso_templates de main.yml
-    DOWNLOAD_PATH="/var/lib/vz/template/iso"
 
-    wget -P ${DOWNLOAD_PATH} ${IMAGE_URL}
+    # O storage 'local' (ou o nome do seu storage para ISOs/templates,
+    # conforme definido em proxmox_storage_iso_templates em main.yml)
+    # geralmente aponta para /var/lib/vz/template/iso/
+    DOWNLOAD_DEST_DIR="/var/lib/vz/template/iso" # Confirme este caminho no seu Proxmox
+
+    # Cria o diretório se não existir
+    mkdir -p "${DOWNLOAD_DEST_DIR}"
+
+    echo "Baixando imagem Cloud-Init para ${DOWNLOAD_DEST_DIR}..."
+    wget -P "${DOWNLOAD_DEST_DIR}" "${IMAGE_URL}"
+
+    if [ $? -eq 0 ]; then
+      echo "Download da imagem ${IMAGE_FILENAME} concluído com sucesso."
+    else
+      echo "ERRO: Falha ao baixar a imagem. Verifique a URL e a conexão."
+      exit 1
+    fi
     ```
 
-2.  **Crie uma Nova VM Base para o Template:**
-    *   Na UI do Proxmox, clique em "Create VM".
-    *   **General:**
-        *   **VM ID:** Escolha um ID alto, fora da sua faixa usual de VMs (e.g., `9000`).
-        *   **Name:** `ubuntu-2204-cloudinit-base` (ou similar).
-    *   **OS:**
-        *   Selecione **"Do not use any media"**.
-        *   Guest OS: Type `Linux`, Version `5.x - 2.6 Kernel`.
-    *   **System:**
-        *   **Machine:** `q35` (mais moderno).
-        *   **BIOS:** `OVMF (UEFI)`.
-        *   **EFI Storage:** Selecione o storage onde o disco EFI será armazenado (e.g., `local-lvm`).
-        *   **Add TPM:** Opcional, mas bom para futuras features de segurança (escolha `v2.0`).
-    *   **Hard Disk:**
-        *   Ignore por enquanto (vamos importar o disco qcow2).
-    *   **CPU:** 1 core (suficiente para o template).
-    *   **Memory:** 1024 MB ou 2048 MB (suficiente para o template).
-    *   **Network:** Use a bridge padrão (`vmbr0`), modelo VirtIO.
-    *   Confirme e crie a VM, **mas não a inicie ainda.**
+2. **Crie uma Nova VM Base para o Template (via UI Proxmox):**
+    * Na interface web do Proxmox, clique no botão azul "**Create VM**" no canto superior direito.
+    * **Aba General:**
+        * **Node:** Selecione seu nó Proxmox (e.g., `pve`).
+        * **VM ID:** Escolha um ID numérico único que esteja fora da sua faixa usual de VMs de produção. IDs altos como `9000`, `9001`, etc., são comumente usados para templates. Exemplo: `9000`.
+        * **Name:** Dê um nome descritivo, e.g., `ubuntu-2204-cloudinit-base`.
+    * **Aba OS:**
+        * Selecione a opção **"Do not use any media"**.
+        * **Guest OS Type:** `Linux`.
+        * **Version:** Escolha a mais apropriada (e.g., `5.x - 2.6 Kernel` ou a mais recente listada).
+    * **Aba System:**
+        * **Graphic card:** `Default`.
+        * **Machine:** `q35` (geralmente o padrão e recomendado por ser mais moderno).
+        * **BIOS:** `OVMF (UEFI)` (recomendado para sistemas modernos).
+        * **EFI Storage:** Selecione o storage onde o disco EFI da VM será armazenado (e.g., `local-lvm`, que é o seu SSD NVMe).
+        * **Add TPM:** Opcional, mas pode ser útil para futuras features de segurança. Se adicionar, escolha `v2.0`.
+    * **Aba Hard Disk:**
+        * **Ignore/Delete:** Não configure um disco aqui ainda. Nós vamos importar o disco da imagem qcow2. Se um disco for adicionado por padrão, você pode selecioná-lo e clicar em "Detach" e depois "Remove".
+    * **Aba CPU:**
+        * **Cores:** `1` (um core é suficiente para o template base).
+    * **Aba Memory:**
+        * **Memory (MiB):** `2048` (2GB é suficiente para o template e instalação do guest agent).
+    * **Aba Network:**
+        * **Bridge:** Selecione sua bridge de rede padrão (e.g., `vmbr0`).
+        * **Model:** `VirtIO (paravirtualized)` (para melhor performance).
+    * **Aba Confirm:** Revise as configurações e clique em "Finish". **Não marque "Start after created".**
 
-3.  **Importe o Disco da Imagem Cloud-Init para a VM Base:**
+3. **Importe o Disco da Imagem Cloud-Init para a VM Base:**
     No shell do host Proxmox (como `root`):
+
     ```bash
-    # Substitua 9000 pelo VM ID da sua VM base
-    # Substitua local-lvm pelo nome do seu storage para discos de VM (proxmox_storage_vm_disks)
-    qm importdisk 9000 ${DOWNLOAD_PATH}/${IMAGE_FILENAME} {{ proxmox_storage_vm_disks }}
+    # Substitua 9000 pelo VM ID real da sua VM base.
+    # Substitua 'local-lvm' pelo nome do seu storage de destino para discos de VM
+    # (conforme proxmox_storage_vm_disks em main.yml).
+    VMID_TEMPLATE=9000 # O ID da VM que você criou no passo anterior
+    STORAGE_VM_DISKS="local-lvm" # Onde os discos das VMs são armazenados
+    IMAGE_QCOW2_PATH="${DOWNLOAD_DEST_DIR}/${IMAGE_FILENAME}" # Caminho completo para a imagem baixada
+
+    echo "Importando disco ${IMAGE_QCOW2_PATH} para VM ${VMID_TEMPLATE} no storage ${STORAGE_VM_DISKS}..."
+    qm importdisk ${VMID_TEMPLATE} "${IMAGE_QCOW2_PATH}" ${STORAGE_VM_DISKS}
     ```
-    Exemplo: `qm importdisk 9000 /var/lib/vz/template/iso/jammy-server-cloudimg-amd64.qcow2 local-lvm`
 
-4.  **Anexe o Disco Importado à VM Base:**
-    *   Na UI do Proxmox, selecione a VM base (ID 9000).
-    *   Vá para a aba "Hardware".
-    *   Você verá um disco "Unused Disk 0" (ou similar). Selecione-o e clique em "Edit".
-    *   **Bus/Device:** Escolha `SCSI`.
-    *   **SSD emulation:** Marque se o seu storage (`local-lvm`) está em um SSD.
-    *   Clique em "Add".
+    Se bem-sucedido, você verá uma mensagem como "Successfully imported disk as 'unused0:local-lvm:vm-9000-disk-0'".
 
-5.  **Configure a Ordem de Boot:**
-    *   Ainda na aba "Hardware", vá em "Boot Order".
-    *   Habilite o disco SCSI que você acabou de adicionar (`scsi0`) e mova-o para o topo da ordem. Desabilite outras opções de boot como CD-ROM ou Rede se não forem necessárias.
+4. **Anexe o Disco Importado à VM Base (via UI Proxmox):**
+    * Na UI do Proxmox, selecione a VM base que você criou (e.g., VM 9000).
+    * Vá para a aba "**Hardware**".
+    * Você verá um item listado como "**Unused Disk 0**" (ou similar). Selecione este disco.
+    * Clique no botão "**Edit**".
+    * No diálogo "Edit Unused Disk":
+        * **Bus/Device:** Escolha `SCSI` (VirtIO SCSI é geralmente uma boa escolha para performance).
+        * **SSD emulation:** Marque esta caixa se o seu storage (`local-lvm` neste caso) estiver em um SSD, o que pode melhorar a forma como o SO convidado interage com o disco.
+    * Clique em "**Add**". O disco agora deve aparecer como `Hard Disk (scsi0)`.
 
-6.  **Adicione um Drive Cloud-Init:**
-    *   Na aba "Hardware", clique em "Add" -> "CloudInit Drive".
-    *   **Storage:** Selecione o mesmo storage onde o disco da VM está (e.g., `local-lvm`).
-    *   Este drive será usado pelo Ansible para passar configurações iniciais (usuário, senha, chave SSH, rede) para as VMs clonadas.
+5. **Configure a Ordem de Boot (via UI Proxmox):**
+    * Ainda na aba "**Hardware**" da VM template, selecione "**Boot Order**".
+    * No diálogo "Edit Boot Order":
+        * Habilite (marque a caixa) o disco que você acabou de adicionar (e.g., `scsi0`).
+        * Arraste-o para o topo da lista para ser o primeiro dispositivo de boot.
+        * Você pode desabilitar outras opções de boot como CD-ROM ou Rede se não forem necessárias para o template.
+    * Clique em "OK".
 
-7.  **(Opcional, mas Recomendado) Instalar `qemu-guest-agent` no Template:**
-    O `qemu-guest-agent` melhora a interação entre o host Proxmox e a VM (e.g., para obter o IP da VM, desligamento correto).
-    *   Inicie a VM base (ID 9000) a partir do console na UI do Proxmox.
-    *   A imagem cloud-init deve bootar e você eventualmente chegará a um login prompt. O usuário padrão e senha podem variar (ubuntu/ubuntu ou sem senha, acesso direto ao root).
-    *   Execute os seguintes comandos dentro da VM:
+6. **Adicione um Drive Cloud-Init (via UI Proxmox):**
+    Este drive é essencial para que o Ansible possa passar configurações (usuário, senha, chave SSH, rede) para as VMs clonadas a partir deste template.
+    * Na aba "**Hardware**", clique em "**Add**" -> "**CloudInit Drive**".
+    * **Storage:** Selecione o mesmo storage onde o disco principal da VM está (e.g., `local-lvm`).
+    * Clique em "**Add**".
+
+7. **(Opcional, mas Altamente Recomendado) Instalar `qemu-guest-agent` no Template:**
+    O `qemu-guest-agent` melhora significativamente a interação entre o host Proxmox e a VM (e.g., para obter o IP da VM de forma confiável, desligamento/reinício "gracioso", consistência de snapshots).
+    * **Inicie a VM template (e.g., VM 9000):** Na UI do Proxmox, selecione a VM e clique em "Start". Abra o ">_ Console".
+    * A imagem cloud-init do Ubuntu Server deve bootar. Pode levar um momento para a configuração inicial do Cloud-Init. Eventualmente, você chegará a um login prompt ou um shell.
+        * O usuário padrão para imagens cloud Ubuntu é geralmente `ubuntu`. A senha pode estar desabilitada (login direto) ou ser `ubuntu`. Se pedir senha e `ubuntu` não funcionar, pode ser necessário configurar uma senha via Cloud-Init (mas para o template, o acesso ao console deve ser suficiente).
+    * **Dentro da VM template, execute os seguintes comandos:**
+
         ```bash
         sudo apt update
         sudo apt install -y qemu-guest-agent
-        sudo systemctl enable qemu-guest-agent
-        sudo systemctl start qemu-guest-agent
+        sudo systemctl enable qemu-guest-agent # Habilita para iniciar no boot
+        sudo systemctl start qemu-guest-agent  # Inicia o serviço imediatamente
         ```
-    *   **Limpeza (Opcional, para reduzir o tamanho do template):**
-        ```bash
-        sudo apt-get clean
-        sudo rm -rf /tmp/* /var/tmp/*
-        sudo cloud-init clean --logs --seed # Limpa dados de cloud-init
-        # sudo rm /etc/ssh/ssh_host_* # Opcional: remove chaves SSH do host, serão geradas no clone
-        # history -c && history -w # Limpa o histórico do bash
-        ```
-    *   Desligue a VM base: `sudo shutdown now`.
 
-8.  **Converta a VM Base para um Template:**
-    *   Na UI do Proxmox, clique com o botão direito na VM base (ID 9000).
-    *   Selecione "**Convert to template**".
-    *   !!! important "Nome do Template"
-        O nome do template resultante no Proxmox deve corresponder exatamente ao valor da variável `proxmox_ubuntu_template_name` definida em `ansible/inventories/home/group_vars/all/main.yml` (e.g., `ubuntu-2204-cloudinit-template-v1`).
+    * **Limpeza (Opcional, para reduzir o tamanho do template e generalizá-lo):**
+
+        ```bash
+        sudo apt-get clean              # Limpa o cache do apt
+        sudo rm -rf /tmp/* /var/tmp/*   # Remove arquivos temporários
+        sudo cloud-init clean --logs --seed # Limpa dados de instância do Cloud-Init
+        # Opcional: Remover chaves SSH do host (serão geradas unicamente em cada clone)
+        # sudo rm -f /etc/ssh/ssh_host_*
+        # Limpar o histórico do bash do usuário atual
+        # history -c && history -w
+        ```
+
+    * **Desligue a VM template:**
+
+        ```bash
+        sudo shutdown now
+        ```
+
+8. **Converta a VM Base para um Template (via UI Proxmox):**
+    * Aguarde a VM desligar completamente.
+    * Na UI do Proxmox, clique com o botão direito do mouse na VM base (e.g., VM 9000).
+    * Selecione a opção "**Convert to template**".
+    * !!! important "Nome do Template no Proxmox"
+        O template agora aparecerá na sua lista de VMs com um ícone diferente. O **nome** deste template no Proxmox deve corresponder **exatamente** ao valor da variável `proxmox_ubuntu_template_name` que você definiu no seu arquivo `ansible/inventories/home/group_vars/all/main.yml` (e.g., `ubuntu-2204-cloudinit-template-v1`). O Ansible usará este nome para clonar as VMs.
 
 ## 3.2. Role Ansible `proxmox-vm` (`ansible/roles/infra/proxmox-vm/`)
 
-Este role Ansible será responsável por clonar VMs a partir do template, redimensionar seus discos, e configurar Cloud-Init para nome de usuário, senha, chave SSH e rede.
+Este role Ansible é o coração da automação do provisionamento de VMs. Ele é responsável por:
+* Clonar novas VMs a partir do template que acabamos de criar.
+* Configurar os recursos da VM (vCPUs, RAM).
+* Redimensionar o disco principal da VM.
+* Passar configurações via Cloud-Init para a VM, incluindo:
+    * Nome de usuário e senha.
+    * Chave SSH pública para acesso Ansible.
+    * Configuração de rede estática (IP, gateway, DNS).
+* Configurar o passthrough de dispositivos PCI (como a GPU), se especificado.
 
 ### `defaults/main.yml`
 
@@ -148,6 +205,7 @@ vm_host_pci_devices: []
 # Argumentos QEMU adicionais
 vm_qemu_args: ""
 ```
+
 !!! note "Chave SSH Pública para Cloud-Init"
     A linha `vm_ci_ssh_keys_public_file: "{{ ansible_ssh_private_key_file | regex_replace('.$', 'pub') | expanduser }}"` assume que sua chave pública tem o mesmo nome da privada, mas com `.pub` no final, e que `ansible_ssh_private_key_file` (de `hosts.ini`) aponta para a chave privada.
 
@@ -288,16 +346,19 @@ Handlers para o role `proxmox-vm`.
 
 ## 3.3. Playbook para Deploy de VM (`ansible/playbooks/vm-deploy.yml`)
 
-Este playbook utiliza o role `proxmox-vm` para criar as VMs especificadas.
+Este playbook utiliza o role `proxmox-vm` para criar e configurar as VMs `core-services-vm` e `ai-desktop-vm` com suas especificações de recursos.
 
-Crie o arquivo `ansible/playbooks/vm-deploy.yml`:
+Certifique-se de que o arquivo `ansible/playbooks/vm-deploy.yml` exista com o seguinte conteúdo, **ajustando os IDs PCI para sua GPU RX 5600XT se for usar o passthrough para `ai-desktop-vm`**:
 
 ```yaml
 # ansible/playbooks/vm-deploy.yml
-- hosts: proxmox_main_host # O playbook é executado *contra* o host Proxmox (para delegar as tasks da API)
-  gather_facts: no # Não precisamos de fatos do Proxmox host para estas tasks delegadas
+- hosts: proxmox_main_host # O playbook é executado *contra* o host Proxmox
+                          # pois as tasks do role proxmox-vm são delegadas (delegate_to: localhost)
+                          # e interagem com a API Proxmox a partir da máquina de controle.
+                          # O alvo aqui é para o Ansible saber com qual host Proxmox falar.
+  gather_facts: no # Não precisamos de fatos do Proxmox host para estas tasks
   vars_files:
-    - ../inventories/home/group_vars/all/vault.yml
+    - ../inventories/home/group_vars/all/vault.yml # Carrega segredos
   # Variáveis de group_vars/all/main.yml e hosts.ini são carregadas automaticamente
 
   tasks:
@@ -305,11 +366,11 @@ Crie o arquivo `ansible/playbooks/vm-deploy.yml`:
       ansible.builtin.include_role:
         name: infra/proxmox-vm
       vars:
-        vm_id: 100 # Escolha um ID único para esta VM
+        vm_id: 100 # ID único para esta VM
         vm_name: "core-services-vm" # DEVE corresponder ao nome no seu hosts.ini
-        vm_cores: 6 # Ajustado para 48GB RAM. Ryzen 5 5600G tem 6 cores/12 threads..
-        vm_memory: 16384 # 16GB RAM. Ajustado para 48GB RAM no host. Deixa espaço para outras VMs e host.
-        vm_disk_gb: 80 # Tamanho do disco em GB
+        vm_cores: 6 # Com 48GB RAM no host, podemos ser mais generosos.
+        vm_memory: 16384 # 16GB RAM para a VM de serviços principais
+        vm_disk_gb: 100 # Aumentado para 100GB
         # IP estático para a VM, usando o IP definido no inventário (hosts.ini)
         vm_ipconfig: "ip={{ hostvars['core-services-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
         vm_tags: "docker,core_services,homelab,ansible_managed"
@@ -320,124 +381,140 @@ Crie o arquivo `ansible/playbooks/vm-deploy.yml`:
       vars:
         vm_id: 101 # ID único
         vm_name: "ai-desktop-vm" # DEVE corresponder ao nome no hosts.ini
-        vm_cores: 4 # Se for usar intensivamente, pode precisar de mais, mas cuidado com a RAM total do host
-        vm_memory: 16384 # 16GB RAM. Ajustado para 48GB RAM no host. Pode ser aumentada se necessário.
-        vm_disk_gb: 150 # Para modelos LLM e SO
+        vm_cores: 4 # Pode ser aumentado para 6 ou 8 se necessário e o host permitir
+        vm_memory: 16384 # 16GB RAM, pode ser aumentada. Ex: 24576 (24GB)
+        vm_disk_gb: 200 # Aumentado para modelos LLM maiores e SO
         vm_ipconfig: "ip={{ hostvars['ai-desktop-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
         vm_tags: "llm,rag,ai_gpu,desktop,homelab,ansible_managed"
 
         # --- Configurações para GPU Passthrough (Exemplo para RX 5600XT) ---
-        # !!! Substitua pelos IDs PCI REAIS da sua GPU no host Proxmox !!!
-        # Use 'lspci -nn' no shell do Proxmox host para encontrar os IDs [vendor:device]
-        # e remova o prefixo "0000:".
-        # Exemplo: Se lspci -nn mostra "09:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 10 [Radeon RX 5600 OEM/5600 XT / 5700/5700 XT] [1002:731f]"
-        # e "09:00.1 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 10/10M/12/14 HDMI Audio Device [1002:ab28]"
-        # Os IDs PCI são "09:00.0" e "09:00.1".
-        vm_vga_type: "none" # Necessário para GPU passthrough como placa gráfica principal da VM
-        vm_host_pci_devices:
-          - "09:00.0,pcie=1,x-vga=1"  # ID_PCI_GPU_VIDEO com opções (pcie=1 para performance, x-vga=1 para ser primária)
-          - "09:00.1,pcie=1"         # ID_PCI_GPU_AUDIO (geralmente associado à GPU)
-        # Opcional: Se precisar de um arquivo ROM para a GPU AMD (raro, mais comum para NVIDIA)
+        # !!! IMPORTANTE: Substitua pelos IDs PCI REAIS da sua GPU no host Proxmox !!!
+        # Use 'lspci -nn' no shell do Proxmox host para encontrar os IDs [vendor:device] corretos.
+        # Remova o prefixo "0000:" dos IDs.
+        # Exemplo: Se lspci -nn mostra:
+        # 09:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 10 [Radeon RX 5600 OEM/5600 XT / 5700/5700 XT] [1002:731f] (rev c4)
+        # 09:00.1 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 10/10M/12/14 HDMI Audio Device [1002:ab28]
+        # Os IDs PCI para o array abaixo seriam "09:00.0" e "09:00.1".
+        vm_vga_type: "none" # Necessário para GPU passthrough ser a placa gráfica principal da VM
+        vm_host_pci_devices: # Lista de dispositivos PCI a serem passados
+          - "SEU_ID_PCI_GPU_VIDEO,pcie=1,x-vga=1"  # Ex: "09:00.0,pcie=1,x-vga=1"
+          - "SEU_ID_PCI_GPU_AUDIO,pcie=1"         # Ex: "09:00.1,pcie=1"
+        # Opcional: Se precisar de um arquivo ROM para a GPU (mais comum para NVIDIA, raro para AMD recentes)
         # vm_qemu_args: "-device vfio-pci,host=09:00.0,romfile=amd_rx5600xt.rom"
-        # Argumentos para tentar esconder que é uma VM (pode ser necessário para drivers NVIDIA)
-        # vm_qemu_args: "-cpu host,kvm=off,hv_relaxed,hv_spinlocks=0x1fff,hv_vapic,hv_time,hv_vendor_id=NvidiaFuckYou"
+        # Argumentos para tentar "esconder" que é uma VM, pode ser necessário para drivers NVIDIA (menos para AMD)
+        # vm_qemu_args: "-cpu host,kvm=off,hv_vendor_id=NvidiaFuckU" # Exemplo extremo, use com cautela e pesquisa
       when: "'ai-desktop-vm' in groups['virtual_machines']" # Só executa se a VM estiver definida no inventário
 
     # Aguardar que as VMs estejam prontas e atualizar o inventário Ansible em memória
     - name: "Aguardar todas as VMs Ubuntu recém-criadas/configuradas estarem acessíveis via SSH"
       ansible.builtin.wait_for:
         host: "{{ hostvars[item]['ansible_host'] }}" # IP da VM do inventário
-        port: 22
-        delay: 60  # Espera inicial antes do primeiro check (Cloud-Init pode demorar)
+        port: 22 # Porta SSH
+        delay: 60  # Segundos de espera inicial antes do primeiro check (Cloud-Init pode demorar)
         timeout: 360 # Tempo máximo de espera em segundos (6 minutos)
-        state: started
+        state: started # Espera até que a porta esteja aberta e respondendo
         msg: "Aguardando SSH na VM {{ item }} ({{ hostvars[item]['ansible_host'] }})"
-      loop: "{{ query('inventory_hostnames', 'ubuntu_vms') }}" # Itera sobre todas as VMs no grupo 'ubuntu_vms'
-      delegate_to: localhost # A tarefa wait_for roda na máquina de controle Ansible
+      # loop: "{{ groups['ubuntu_vms'] }}" # Itera sobre todas as VMs no grupo 'ubuntu_vms'
+      # Usar query é mais robusto se o grupo puder estar vazio ou hosts não definidos:
+      loop: "{{ query('inventory_hostnames', 'ubuntu_vms') }}"
+      delegate_to: localhost # A tarefa wait_for roda na máquina de controle Ansible, testando a conexão com as VMs
 
     - name: "Atualizar inventário Ansible em memória para refletir novas VMs"
-      ansible.builtin.meta: refresh_inventory
+      ansible.builtin.meta: refresh_inventory # Garante que Ansible conheça os novos hosts para tasks subsequentes
 ```
 
+!!! warning "Ajuste de Recursos e IDs PCI"
+    *   **Alocação de RAM:** Com 48GB no host, as alocações de 16GB para `core-services-vm` e 16GB (ou mais) para `ai-desktop-vm` são viáveis, deixando uma boa margem para o host Proxmox (16GB). Monitore o uso de RAM e ajuste conforme necessário.
+    *   **IDs PCI para GPU Passthrough:** É **crucial** que você use o comando `lspci -nn` no shell do seu host Proxmox para encontrar os IDs corretos da sua placa de vídeo RX 5600XT (tanto a parte de vídeo quanto a de áudio associada) e substitua os placeholders `SEU_ID_PCI_GPU_VIDEO` e `SEU_ID_PCI_GPU_AUDIO` no playbook `vm-deploy.yml`. Um ID incorreto fará com que o passthrough falhe ou a VM não inicie.
 
 ### Executando o Playbook de Deploy das VMs
 
-1.  Na sua máquina de controle Ansible, navegue até a raiz do projeto `home-server/`.
-2.  Execute o playbook:
+1. Na sua máquina de controle Ansible, navegue até a raiz do projeto `home-server/`.
+2. Execute o playbook:
+
     ```bash
     ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass
     ```
 
-Após a execução, suas VMs devem estar criadas e configuradas com os parâmetros básicos de Cloud-Init.
+Após a execução, suas VMs (`core-services-vm` e `ai-desktop-vm`, se habilitada) devem estar criadas no Proxmox, configuradas com os parâmetros básicos de Cloud-Init e, se tudo correu bem com o `wait_for`, prontas para as próximas etapas de configuração.
 
-## 3.4. Configuração de GPU Passthrough (Host Proxmox)
+## 3.4. Configuração de GPU Passthrough (Host Proxmox) - Revisão
 
-Se você planeja usar a `ai-desktop-vm` com a RX 5600XT para aceleração de IA, a configuração de GPU passthrough no host Proxmox é necessária. Este é um processo avançado e pode variar um pouco dependendo do seu hardware.
+Se você planeja usar a `ai-desktop-vm` com a RX 5600XT para aceleração de IA ou outras tarefas gráficas, a configuração de GPU passthrough no **host Proxmox** é um pré-requisito. Este é um processo avançado e os detalhes podem variar ligeiramente dependendo do seu hardware específico e versão do Proxmox.
 
-**Resumo das Etapas Essenciais no Host Proxmox (Reforçando):**
+**Resumo das Etapas Essenciais no Host Proxmox (Como Checklist de Verificação):**
 
-1.  **BIOS/UEFI do Servidor:**
-    *   Já deve ter sido feito (Seção 2.1): AMD-V (SVM) e IOMMU (AMD-Vi) **habilitados**.
+1. **BIOS/UEFI do Servidor (Já Coberto na Seção 2.1):**
+    * Virtualização de CPU (AMD-V / SVM Mode) **HABILITADA**.
+    * IOMMU (AMD-Vi) **HABILITADO**.
 
-2.  **Configuração do Kernel Proxmox:**
-    *   Edite `/etc/default/grub` no host Proxmox:
-        ```bash
-        # Exemplo de linha GRUB_CMDLINE_LINUX_DEFAULT
-        # Se a iGPU do 5600G for usada para o console Proxmox e a RX 5600XT for apenas para passthrough,
-        # video=efifb:off pode ajudar a desvincular a RX 5600XT do console do host. Teste!
-        # amd_iommu=on e iommu=pt são cruciais.
+2. **Configuração do Kernel Proxmox (GRUB e Módulos):**
+    * **Edite `/etc/default/grub`** no host Proxmox. A linha `GRUB_CMDLINE_LINUX_DEFAULT` deve incluir:
+
+        ```
         GRUB_CMDLINE_LINUX_DEFAULT="quiet amd_iommu=on iommu=pt video=efifb:off"
         ```
-    *   Após editar, execute: `sudo update-grub`.
-    *   Adicione os seguintes módulos a `/etc/modules` (um por linha):
+
+        * `amd_iommu=on`: Habilita IOMMU para AMD.
+        * `iommu=pt`: (Passthrough mode) Para melhor performance com passthrough.
+        * `video=efifb:off`: Tenta desabilitar o framebuffer EFI para a GPU que será passada, o que pode ajudar a desvinculá-la do host. Se você tem uma iGPU para o console do Proxmox, isso é geralmente seguro.
+    * Após editar, execute: `sudo update-grub`.
+    * **Adicione os seguintes módulos a `/etc/modules`** (um por linha) para garantir que sejam carregados no boot:
+
         ```
         vfio
         vfio_iommu_type1
         vfio_pci
         vfio_virqfd
         ```
-    *   Execute: `sudo update-initramfs -u -k all`.
 
-3.  **Blacklist dos Drivers da GPU no Host Proxmox:**
-    Crie (ou edite) o arquivo `/etc/modprobe.d/vfio-blacklist.conf` no host Proxmox com o seguinte conteúdo, **substituindo os VENDOR_ID e DEVICE_ID pelos da sua RX 5600XT** (obtidos com `lspci -nn`):
-    ```
-    # Blacklist drivers AMD para que vfio-pci possa controlar a GPU
+    * Atualize o initramfs: `sudo update-initramfs -u -k all`.
+
+3. **Blacklist dos Drivers da GPU no Host Proxmox:**
+    Para que o `vfio-pci` possa assumir o controle da GPU para passthrough, os drivers do host (como `amdgpu` ou `radeon`) não devem carregá-la. Crie (ou edite) o arquivo `/etc/modprobe.d/vfio-pci-blacklist.conf` (o nome pode variar) no host Proxmox com o seguinte conteúdo, **substituindo os VENDOR_ID e DEVICE_ID pelos da sua RX 5600XT** (obtidos com `lspci -nn`):
+
+    ```conf
+    # Blacklist drivers AMD para a GPU dedicada ao passthrough
     blacklist amdgpu
     blacklist radeon
 
     # Carrega vfio-pci para os IDs específicos da sua RX 5600XT
     # Exemplo para RX 5600XT (vídeo: 1002:731f, áudio: 1002:ab28)
-    options vfio-pci ids=1002:731f,1002:ab28
+    # Use os IDs que você identificou para sua placa!
+    options vfio-pci ids=1002:731f,1002:ab28 disable_vga=1
     ```
-    !!! tip "Encontrando VENDOR_ID:DEVICE_ID"
-        O comando `lspci -nn | grep -i amd | grep -i vga` (para vídeo) e `lspci -nn | grep -i amd | grep -i audio` (para áudio associado à GPU) ajudará a encontrar os IDs corretos no formato `[VENDOR_ID:DEVICE_ID]`.
 
-4.  **Reinicie o Host Proxmox.**
+    * `disable_vga=1` pode ser útil para algumas GPUs para desabilitar completamente a saída VGA legada na GPU passada.
 
-5.  **Verifique a Configuração IOMMU e Grupos:**
-    Após o reboot, no shell do host Proxmox, execute:
-    ```bash
-    dmesg | grep -e DMAR -e IOMMU
-    # E para verificar os grupos IOMMU:
-    find /sys/kernel/iommu_groups/ -type l
-    ```
-    Você deve ver mensagens indicando que o IOMMU está habilitado e os dispositivos PCI da sua RX 5600XT (vídeo e áudio) devem estar, idealmente, em seus próprios grupos IOMMU isolados.
+4. **Reinicie o Host Proxmox.** Esta etapa é crucial para que todas as mudanças no kernel e módulos tenham efeito.
 
-    Para uma verificação mais detalhada dos grupos:
-    ```bash
-    for d in /sys/kernel/iommu_groups/*/devices/*; do n=${d#*/iommu_groups/*}; n=${n%%/*}; printf 'IOMMU Group %s ' "$n"; lspci -nns "${d##*/}"; done
-    ```
-    Procure pelos dispositivos da sua RX 5600XT e verifique se não estão agrupados com outros dispositivos críticos do sistema que você não quer passar para a VM.
+5. **Verifique a Configuração IOMMU e Grupos:**
+    Após o reboot, no shell do host Proxmox:
+    * Verifique se o IOMMU está ativo: `dmesg | grep -e DMAR -e IOMMU` (deve mostrar IOMMU habilitado).
+    * **Verifique os Grupos IOMMU:** Este é um passo crítico. Sua GPU RX 5600XT (tanto o dispositivo de vídeo quanto o de áudio associado) deve estar em um ou mais grupos IOMMU que, idealmente, **não contenham outros dispositivos essenciais do sistema** (como a placa de rede do host, controladoras USB principais, etc.).
+        Para listar os grupos IOMMU e os dispositivos neles:
 
-A configuração de GPU passthrough é complexa. Consulte guias detalhados online específicos para Proxmox e AMD GPUs se encontrar problemas.
+        ```bash
+        find /sys/kernel/iommu_groups/ -type l
+        # Ou um script mais detalhado para ver os dispositivos em cada grupo:
+        for d in /sys/kernel/iommu_groups/*/devices/*; do \
+          n=${d#*/iommu_groups/*}; n=${n%%/*}; \
+          printf 'IOMMU Group %s ' "$n"; \
+          lspci -nns "${d##*/}"; \
+        done | sort -V
+        ```
+
+        Procure pelos dispositivos da sua RX 5600XT. Se eles estiverem em um grupo isolado ou com dispositivos não críticos, ótimo. Se estiverem agrupados com, por exemplo, a sua única placa de rede ou a controladora USB do teclado/mouse do host, o passthrough pode ser problemático ou requerer o patch ACS (Advanced Configuration and Power Interface Override), que é uma técnica avançada e com implicações de segurança.
+
+A configuração de GPU passthrough é uma das partes mais complexas e propensas a variações dependendo do hardware. Consulte guias detalhados online específicos para "Proxmox AMD GPU passthrough" se encontrar dificuldades.
 
 ## 3.5. Configuração de Ambiente Desktop (GUI) em VMs Linux (Opcional)
 
-Para a `ai-desktop-vm`, se você deseja uma interface gráfica para interagir com ela (especialmente se estiver usando GPU passthrough e conectar um monitor diretamente), você pode instalar um ambiente desktop.
+Para a `ai-desktop-vm`, se você deseja uma interface gráfica para interagir com ela (especialmente se estiver usando GPU passthrough e conectar um monitor diretamente à RX 5600XT), você pode instalar um ambiente desktop. Se o acesso for apenas via SSH e para rodar serviços como Ollama, uma GUI não é estritamente necessária.
 
 ### Role: `ansible/roles/apps/desktop-environment/`
 
-Este role instala XFCE (um ambiente leve) e TightVNCServer (para acesso remoto à GUI se não usar GPU passthrough direto com monitor).
+Este role Ansible instala XFCE (um ambiente desktop leve) e TightVNCServer (para acesso remoto à GUI se não usar GPU passthrough direto com um monitor conectado à VM).
 
 #### `tasks/main.yml`
 
@@ -477,6 +554,7 @@ Este role instala XFCE (um ambiente leve) e TightVNCServer (para acesso remoto �
       (ver Seção 7.1) para que a GUI utilize a GPU passada.
   when: install_gui_flag | default(false) | bool
 ```
-Este role será chamado condicionalmente pelo playbook `ansible/playbooks/setup-base-ubuntu.yml` para as VMs que tiverem `GUI_ENABLED=true` no inventário.
 
-Com as VMs provisionadas e o GPU passthrough (se aplicável) configurado no host, podemos prosseguir para a [Configuração Base das VMs Ubuntu](04-configuracao-base-vms-ubuntu.md).
+O playbook `ansible/playbooks/setup-base-ubuntu.yml` (Seção 4) chamará este role condicionalmente para as VMs que tiverem a variável `GUI_ENABLED=true` definida no seu inventário (`ansible/inventories/home/hosts.ini`).
+
+Com as VMs provisionadas e o GPU passthrough (se aplicável) configurado no host Proxmox, estamos prontos para avançar para a [Configuração Base das VMs Ubuntu](04-configuracao-base-vms-ubuntu.md), onde instalaremos Docker, Portainer e outros utilitários essenciais.

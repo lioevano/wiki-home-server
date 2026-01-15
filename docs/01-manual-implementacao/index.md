@@ -1,10 +1,12 @@
 # 🚀 Manual de Implementação Passo a Passo
 
-E aqui começa a jornada, aqui tem o guia completo para a implementação idêntica ao que eu elaborei para o meu servidor do zero! Se você quiser alguma alteração ou explicação, tentarei ao máximo deixar linkado a explicação de cada decisão junto com alternativas para cada aplicação escolhida, lembrando que se alguma aplicação não for do seu agrado, poderá pular, mas prestando atenção se não há integração com alguma outra.
+E aqui começa a jornada! Este é o guia completo para a implementação da arquitetura que elaborei para o meu servidor doméstico, construído do zero. Meu objetivo com este projeto é ter uma infraestrutura duradoura, que possa evoluir mesmo com trocas de hardware, e que resolva problemas de longo prazo de forma elegante.
+
+Se você tiver dúvidas sobre alguma escolha ou quiser explorar alternativas, tentarei ao máximo linkar para explicações mais detalhadas e opções para cada aplicação. Lembre-se: se alguma aplicação não for do seu agrado, você pode optar por não instalá-la, mas preste atenção às possíveis integrações com outros serviços.
 
 ## Objetivo
 
-O objetivo deste manual é levá-lo, passo a passo, desde a preparação inicial do hardware e software até o deploy e configuração de todos os serviços essenciais. Ao final desta seção, você terá um servidor doméstico funcional, seguro e automatizado.
+O objetivo deste manual é levá-lo, passo a passo, desde a preparação inicial do hardware e software até o deploy e configuração de todos os serviços essenciais. Ao final desta seção, você terá um servidor doméstico funcional, seguro e altamente automatizado.
 
 !!! important "Siga a Ordem!"
     É crucial seguir os passos apresentados neste manual **na ordem exata** em que são listados. Muitas etapas dependem de configurações realizadas anteriormente. Pular passos ou alterar a ordem pode levar a problemas de configuração e instabilidade.
@@ -13,10 +15,10 @@ O objetivo deste manual é levá-lo, passo a passo, desde a preparação inicial
 
 Ao longo deste manual, você encontrará placeholders e exemplos de valores (IPs, domínios, senhas, caminhos). **Você DEVE substituí-los pelos seus próprios valores.**
 
-*   **Endereços IP:** Adapte para a sua sub-rede local.
-*   **Nomes de Domínio:** Use o seu domínio registrado (e.g., `seudominio.com`).
+*   **Endereços IP:** Adapte para a sua sub-rede local (e.g., `192.168.X.Y`).
+*   **Nomes de Domínio:** Use o seu domínio registrado (e.g., `meuhomelab.com`).
 *   **Senhas e Tokens:** Gere senhas fortes e únicas. Segredos serão gerenciados pelo Ansible Vault.
-*   **Caminhos de Arquivo:** Verifique se os caminhos correspondem à sua estrutura.
+*   **Caminhos de Arquivo:** Verifique se os caminhos correspondem à sua estrutura e preferências.
 
 ## Estrutura do Manual de Implementação
 

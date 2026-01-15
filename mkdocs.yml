@@ -51,7 +51,6 @@ plugins:
   - search
   # - awesome-pages # Para gerar navegação a partir da estrutura de diretórios (alternativa ao nav manual)
   # - tags # Se quiser adicionar tags às páginas
-  - glightbox # Para visualização de imagens
   - mermaid2 # Para diagramas (muito útil para a Visão Geral da Arquitetura)
   - git-revision-date-localized:
       timezone: "America/Sao_Paulo"
@@ -98,6 +97,7 @@ nav:
     - 'Stack de Mídia': '01-manual-implementacao/08-stack-midia.md'
     - 'Stack de Produtividade & Automação': '01-manual-implementacao/09-stack-produtividade-automacao.md'
     - 'Stack de Monitoramento': '01-manual-implementacao/10-stack-monitoramento.md'
+    - 'Stack de Automação (n8n)': '01-manual-implementacao/11-stack-automacao-n8n.md'
   - '💡 Arquitetura':
     - 'Visão Geral': '02-visao-geral-arquitetura/index.md'
     - 'Fluxo de Rede e Acesso Externo': '02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md'
@@ -106,6 +106,8 @@ nav:
     - 'Automação (Ansible)': '02-visao-geral-arquitetura/04-automacao-ansible.md'
     - 'Gerenciamento de Containers (Docker)': '02-visao-geral-arquitetura/05-gerenciamento-containers.md'
     - 'Princípios de Segurança Aplicados': '02-visao-geral-arquitetura/06-principios-seguranca.md'
+    - 'Integração com a Nuvem (GCP)': '02-visao-geral-arquitetura/07-integracao-cloud-gcp.md'
+    - 'Estratégia de APIs de LLM': '02-visao-geral-arquitetura/08-apis-llm-estrategia.md'
   - '🛠️ Sustentação':
     - 'Visão Geral': '03-guias-sustentacao/index.md'
     - 'Adicionando Novo Serviço Docker': '03-guias-sustentacao/01-adicionando-novo-servico-docker.md'
@@ -120,6 +122,7 @@ nav:
     - 'Atualização Segura de Componentes Críticos': '03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md'
     - 'Hospedando Aplicação Pública no Domínio': '03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md'
     - 'Guia de Snapshots ZFS': '03-guias-sustentacao/12-guia-snapshots-zfs.md'
+    - 'Uso do GeminiCLI': '03-guias-sustentacao/13-usando-geminicli.md'
   - '⚙️ Manutenção':
     - 'Visão Geral': '04-manutencao-recuperacao/index.md'
     - 'Rotinas de Manutenção': '04-manutencao-recuperacao/01-rotinas-manutencao.md'
@@ -127,6 +130,8 @@ nav:
     - 'CI/CD Básico Ansible': '04-manutencao-recuperacao/03-cicd-basico-ansible.md'
     - 'Reconstruindo a Infraestrutura': '04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md'
     - 'Migrando Hardware/Rede': '04-manutencao-recuperacao/05-migrando-hardware-rede.md'
+    - 'Backup Off-site para GCP': '04-manutencao-recuperacao/06-backup-para-gcp.md'
+    - 'Recuperação de Desastre na Nuvem': '04-manutencao-recuperacao/07-migracao-para-cloud.md'
   - '📚 Guia de Estudos':
     - 'Visão Geral': '05-guia-estudos/index.md'
     - 'Aprofundamento em Proxmox VE': '05-guia-estudos/01-aprofundamento-proxmox-ve.md'
@@ -137,6 +142,8 @@ nav:
     - 'Aprofundamento em Segurança Avançada para Homelab': '05-guia-estudos/06-seguranca-avancada-homelab.md'
     - 'Aprofundamento em Kubernetes': '05-guia-estudos/07-introducao-kubernetes-k3s.md'
     - 'Gerenciamento Avançado de Segredos': '05-guia-estudos/08-gerenciamento-segredos-avancado.md'
+    - 'Aprofundamento em n8n': '05-guia-estudos/09-aprofundamento-n8n.md'
+    - 'Comparativo de Provedores de LLM': '05-guia-estudos/10-apis-llm-comparacao.md'
   - '🔄 Soluções Alternativas':
     - 'Visão Geral': '06-solucoes-alternativas/index.md'
     - 'Hypervisors': '06-solucoes-alternativas/01-hypervisors.md'
@@ -148,6 +155,7 @@ nav:
     - 'Servidores de Mídia': '06-solucoes-alternativas/07-servidores-midia.md'
     - 'Sincronização de Arquivos': '06-solucoes-alternativas/08-sincronizacao-arquivos.md'
     - 'Monitoramento e Logs': '06-solucoes-alternativas/09-monitoramento-logs.md'
+    - 'Plataformas de Automação': '06-solucoes-alternativas/10-plataformas-automacao.md'
 
 extra_css:
   - stylesheets/extra.css # Crie este arquivo se precisar de CSS customizado

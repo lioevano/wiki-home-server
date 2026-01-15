@@ -1,114 +1,155 @@
 # Modificando Configurações Existentes
 
-Sua infraestrutura de servidor doméstico é dinâmica. Com o tempo, você precisará ajustar configurações, atualizar serviços ou alterar parâmetros. Este guia descreve onde as principais configurações residem e como modificá-las com segurança.
+Sua infraestrutura de servidor doméstico é uma entidade viva. Com o tempo, você inevitavelmente precisará ajustar configurações, atualizar parâmetros, ou refinar o comportamento de serviços existentes. Este guia descreve onde as principais peças de configuração residem em nossa arquitetura e como abordá-las de forma segura e consistente, mantendo a integridade da sua Infraestrutura como Código (IaC).
 
-## Onde as Configurações Residem? Uma Visão Geral
+## Onde as Configurações Residem? Um Mapa da Sua Infra
 
-Entender onde cada peça de configuração está armazenada é o primeiro passo para uma modificação bem-sucedida.
+Entender onde cada configuração está armazenada é o primeiro e mais crucial passo para uma modificação bem-sucedida e para evitar quebrar coisas acidentalmente.
 
-*   **Ansible (Máquina de Controle):**
-    *   **Inventário (`ansible/inventories/home/hosts.ini`):** IPs dos hosts, grupos, variáveis de conexão.
-    *   **Variáveis Globais (`ansible/inventories/home/group_vars/all/main.yml`):** Parâmetros não sensíveis comuns a todos os hosts (e.g., caminhos NFS, nomes de usuário padrão).
-    *   **Vault (`ansible/inventories/home/group_vars/all/vault.yml`):** **TODOS os segredos** gerenciados pelo Ansible (senhas, tokens de API). Edite com `ansible-vault edit ...`.
-    *   **Roles (`ansible/roles/...`):** Contêm tasks, templates (`.j2` arquivos), handlers e defaults que definem a configuração dos componentes (e.g., config do servidor NFS, Docker, Traefik).
-    *   **Playbooks (`ansible/playbooks/...`):** Orquestram a aplicação dos roles e tasks.
-*   **Proxmox VE Host:**
-    *   **UI Web do Proxmox:** Para configurações de VMs (RAM, CPU, passthrough), storage, rede do host, firewall PVE.
-    *   **Arquivos de Configuração no Host (geralmente gerenciados por Ansible):**
-        *   `/etc/pve/`: Configuração do cluster e VMs.
-        *   `/etc/network/interfaces`: Configuração de rede do host.
-        *   `/etc/default/grub`: Opções de boot do kernel (para IOMMU, etc.).
-        *   `/etc/modules`: Módulos do kernel a serem carregados.
-        *   `/etc/modprobe.d/`: Blacklisting de módulos.
-        *   `/etc/exports`: Configuração do servidor NFS.
-        *   `/etc/systemd/system/`: Arquivos de unidade Systemd para serviços (e.g., Node Exporter, Ollama).
-*   **Máquinas Virtuais (VMs):**
-    *   **Arquivos de Configuração Padrão do Linux (geralmente gerenciados por Ansible):**
-        *   `/etc/fstab`: Para montagens NFS.
+1.  **Ansible (Sua Máquina de Controle Ansible - Fonte da Verdade para IaC):**
+    O Ansible gerencia a configuração fundamental da sua infraestrutura.
+    *   **Inventário (`home-server/ansible/inventories/home/hosts.ini`):**
+        *   Define os IPs dos seus hosts (Proxmox, VMs) e como o Ansible se conecta a eles.
+        *   Agrupa hosts para aplicação de configurações em massa.
+        *   Contém variáveis de host (e.g., `GUI_ENABLED`) e variáveis de grupo.
+    *   **Variáveis Globais Não Sensíveis (`home-server/ansible/inventories/home/group_vars/all/main.yml`):**
+        *   Parâmetros comuns e não secretos aplicados a todos os hosts. Exemplos: caminhos base NFS, nomes de usuário padrão, CIDRs de rede permitidos, nomes de datasets ZFS.
+    *   **Ansible Vault (`home-server/ansible/inventories/home/group_vars/all/vault.yml`):**
+        *   **Local de TODOS os segredos** gerenciados pelo Ansible: senhas de sistema, tokens de API (Cloudflare), segredos para Authelia, senhas de banco de dados para aplicações, etc.
+        *   **Edição Segura:** Sempre edite este arquivo com `ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`.
+    *   **Roles (`home-server/ansible/roles/...`):**
+        *   Contêm a lógica de configuração para componentes específicos (e.g., `infra/proxmox-host-config`, `common`, `infra/docker`, `infra/traefik-config`, `infra/authelia-config`).
+        *   **`tasks/main.yml`:** Define as ações.
+        *   **`templates/`:** Arquivos de template Jinja2 (`.j2`) que geram arquivos de configuração dinamicamente (e.g., `traefik.yml.j2`, `authelia/configuration.yml.j2`, `etc_exports.j2`).
+        *   **`handlers/main.yml`:** Ações acionadas por mudanças (e.g., reiniciar um serviço).
+        *   **`defaults/main.yml` e `vars/main.yml`:** Variáveis específicas do role.
+    *   **Playbooks (`home-server/ansible/playbooks/...`):**
+        *   Orquestram a aplicação de roles e tarefas aos hosts definidos no inventário.
+
+2.  **Host Proxmox VE:**
+    Embora muitas configurações do host sejam gerenciadas pelo Ansible, algumas podem ser ajustadas via UI ou arquivos de sistema.
+    *   **Interface Web do Proxmox:** Para configurações de VMs (RAM, CPU, dispositivos de passthrough PCI/USB), storage, rede do host (bridges), firewall PVE.
+    *   **Arquivos de Configuração no Host (Muitos gerenciados por Ansible, mas para referência):**
+        *   `/etc/pve/`: Configuração do cluster Proxmox e das VMs (e.g., `/etc/pve/qemu-server/VMID.conf`).
+        *   `/etc/network/interfaces`: Configuração de rede do host (bridges `vmbr0`, etc.).
+        *   `/etc/default/grub` e `/etc/kernel/cmdline`: Opções de boot do kernel (para IOMMU, etc.).
+        *   `/etc/modules`, `/etc/modprobe.d/`: Módulos do kernel e blacklisting.
+        *   `/etc/exports`: Configuração do servidor NFS (gerada pelo Ansible).
+        *   `/etc/systemd/system/` (e `override.conf` em subdiretórios): Arquivos de unidade Systemd para serviços como Node Exporter (gerenciados por Ansible) ou Ollama (instalado por script, mas com override gerenciado por Ansible).
+
+3.  **Máquinas Virtuais (VMs - `core-services-vm`, `ai-desktop-vm`):**
+    As configurações base são gerenciadas pelo Ansible.
+    *   **Arquivos de Configuração Padrão do Linux (Gerenciados por Ansible):**
+        *   `/etc/fstab`: Para montagens NFS automáticas.
         *   `/etc/ufw/`: Regras do firewall UFW.
-        *   `/etc/apt/sources.list.d/`: Repositórios de pacotes.
-        *   Configurações de serviços específicos (e.g., `/etc/systemd/system/node_exporter.service`).
-*   **Docker e Portainer (na `core-services-vm` ou `ai-desktop-vm`):**
-    *   **`docker-compose.yml` de cada Stack:** Estes arquivos (localizados em `infra-servidor-domestico/docker/stacks/.../`) definem os serviços, imagens, volumes, redes, portas, variáveis de ambiente e labels Traefik para cada stack. As modificações são feitas nesses arquivos e depois aplicadas via Portainer ("Update the stack").
-    *   **Variáveis de Ambiente no Portainer:**
-        *   Carregadas dos arquivos `.env` (e.g., `/opt/portainer_stack_envs/media.env` na VM).
-        *   Secrets (senhas, tokens) definidos manualmente na UI do Portainer ao criar/editar a stack.
-    *   **Volumes Docker Persistentes (nos montados NFS):** Contêm os dados e configurações internas das aplicações Docker (e.g., o `config.php` do Nextcloud, o banco de dados do Sonarr).
-*   **Traefik (Configuração via `core-services-vm`):**
-    *   **Configuração Estática (`traefik.yml`):** Gerada pelo Ansible a partir de `traefik.yml.j2` e localizada em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/traefik.yml`. Define entrypoints, provedores, resolvedores de ACME. **Requer reinício do container Traefik para aplicar mudanças.**
-    *   **Configuração Dinâmica (Diretório de Arquivos):** Arquivos YAML em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/`. Contém middlewares (e.g., `security_headers.yml`, `nextcloud_middleware.yml`) e roteamento para serviços externos (e.g., `rag_services.yml`). Traefik monitora este diretório e recarrega automaticamente as mudanças.
-    *   **`acme.json`:** Localizado em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/data/acme.json`. Contém os certificados SSL/TLS gerados pela Let's Encrypt. **NÃO EDITE MANUALMENTE.** Traefik gerencia este arquivo.
-    *   **Labels Docker nos Containers:** Definidas nos `docker-compose.yml`, são a principal forma de Traefik descobrir e configurar o roteamento para serviços Docker. Modificar labels e atualizar a stack no Portainer faz com que Traefik reconfigure dinamicamente.
-*   **Authelia (Configuração via `core-services-vm`):**
-    *   **`configuration.yml`:** Gerado pelo Ansible a partir de `configuration.yml.j2` e localizado em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/config/configuration.yml`. Define a configuração principal do Authelia. **Requer reinício do container Authelia para aplicar a maioria das mudanças.**
-    *   **Banco de Dados PostgreSQL do Authelia:** Armazena usuários, dispositivos 2FA, etc.
-*   **Aplicações Específicas:**
-    *   Muitas aplicações (Nextcloud, Sonarr, Grafana, etc.) têm suas próprias interfaces de administração web onde configurações específicas da aplicação são gerenciadas. Essas configurações são geralmente salvas nos volumes Docker persistentes.
+        *   `/etc/apt/sources.list.d/`: Repositórios de pacotes APT (e.g., para Docker).
+        *   Configurações de serviços systemd (e.g., `/etc/systemd/system/node_exporter.service`).
+    *   **Arquivos `.env` para Stacks Portainer:**
+        *   Localizados em `{{ portainer_env_files_dest_path_on_vm }}` (e.g., `/opt/portainer_stack_envs/`) nas VMs.
+        *   Gerados pelo Ansible (e.g., por `setup-media-stack-volumes.yml`). Contêm PUID/PGID, TZ, caminhos de volume, etc., para as stacks Docker.
 
-## Processo Seguro para Modificar Configurações
+4.  **Docker e Portainer (na `core-services-vm` ou `ai-desktop-vm`):**
+    *   **Arquivos `docker-compose.yml` de cada Stack:**
+        *   Localizados no seu projeto Git em `home-server/docker/stacks/NOME_DA_STACK/docker-compose.yml`.
+        *   Definem os serviços, imagens, volumes, redes, portas, variáveis de ambiente e labels Traefik para cada stack de aplicação.
+        *   **As modificações são feitas nestes arquivos e depois aplicadas via Portainer ("Update the stack").**
+    *   **Variáveis de Ambiente e Secrets no Portainer:**
+        *   Ao criar/editar uma stack no Portainer, você pode carregar variáveis de um arquivo `.env` (que foi gerado pelo Ansible na VM).
+        *   **Secrets críticos** (senhas de banco de dados, tokens de API específicos da aplicação) são definidos **manualmente** como variáveis de ambiente diretamente na UI do Portainer para a stack.
+    *   **Volumes Docker Persistentes (Mapeados para os Diretórios NFS):**
+        *   Contêm os dados e arquivos de configuração internos das suas aplicações Docker (e.g., o `config.php` do Nextcloud dentro do seu volume de config, o banco de dados SQLite do Sonarr, os arquivos de mídia do Plex/Jellyfin). As modificações de configuração *dentro* da aplicação são salvas aqui.
 
-1.  **Identifique a Configuração e Onde Ela Reside:** Consulte a lista acima. Determine se a mudança afeta Ansible, Proxmox, uma VM específica, uma stack Docker, Traefik, Authelia, ou a própria aplicação.
+5.  **Traefik (Configuração via `core-services-vm`):**
+    *   **Configuração Estática (`traefik.yml`):**
+        *   Gerada pelo Ansible a partir do template `traefik.yml.j2`.
+        *   Localizada no volume NFS: `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/traefik.yml`.
+        *   Define entrypoints, provedores Docker/File, e o resolvedor ACME para Let's Encrypt.
+        *   **Mudanças aqui geralmente requerem um reinício do container Traefik para terem efeito.**
+    *   **Configuração Dinâmica (Diretório de Arquivos):**
+        *   Arquivos YAML localizados em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/`.
+        *   Gerados pelo Ansible (e.g., `security_headers.yml`, `nextcloud_middleware.yml`, `rag_services.yml`).
+        *   Contém definições de middlewares, e roteamento para serviços que não são descobertos automaticamente pelo Docker provider (como os da `ai-desktop-vm`).
+        *   Traefik monitora este diretório e **recarrega automaticamente as mudanças** sem necessidade de reinício.
+    *   **Certificados SSL (`acme.json`):**
+        *   Localizado em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/data/acme.json`.
+        *   Contém os certificados SSL/TLS gerados pela Let's Encrypt.
+        *   !!! danger "Não Edite Manualmente `acme.json`"
+            Traefik gerencia este arquivo. A edição manual pode corrompê-lo e causar problemas na obtenção/renovação de certificados. Faça backup dele regularmente.
+    *   **Labels Docker nos Containers:**
+        *   Definidas nos arquivos `docker-compose.yml` de cada stack.
+        *   São a principal forma pela qual o Traefik descobre e configura o roteamento para os serviços Docker rodando na mesma instância Docker que ele.
+        *   Modificar labels e atualizar a stack no Portainer faz com que Traefik reconfigure dinamicamente o roteamento.
 
-2.  **Planeje a Mudança:** Entenda o impacto da alteração.
+6.  **Authelia (Configuração via `core-services-vm`):**
+    *   **Arquivo de Configuração Principal (`configuration.yml`):**
+        *   Gerado pelo Ansible a partir do template `configuration.yml.j2`.
+        *   Localizado no volume NFS: `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/config/configuration.yml`.
+        *   Define a configuração principal do Authelia (provedores de armazenamento, regras de acesso, segredos de sessão/JWT, notificador, etc.).
+        *   **A maioria das mudanças aqui requer um reinício do container Authelia para terem efeito.**
+    *   **Banco de Dados PostgreSQL do Authelia:**
+        *   Armazena informações de usuários, dispositivos 2FA registrados, sessões, etc.
+        *   Localizado no volume NFS: `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db_pg/`.
 
-3.  **Faça Backup (se a mudança for crítica ou arriscada):**
-    *   **Ansible:** Seus arquivos já estão no Git. Faça um commit antes de mudanças significativas.
-    *   **Proxmox/VMs:** Crie um snapshot da VM no Proxmox antes de alterações importantes no SO da VM ou configurações críticas do Proxmox.
-    *   **Volumes Docker/NFS:** ZFS snapshots no host Proxmox podem ser úteis (`sudo zfs snapshot data/docker-volumes@antes_da_mudanca_X`).
-    *   **Arquivos de Configuração Específicos:** Faça uma cópia do arquivo antes de editá-lo (e.g., `cp traefik.yml traefik.yml.bak`).
+7.  **Configurações Internas das Aplicações Específicas:**
+    *   Muitas aplicações (Nextcloud, Sonarr, Radarr, Grafana, Home Assistant, etc.) têm suas próprias interfaces de administração web (UIs) ou arquivos de configuração específicos dentro dos seus volumes persistentes.
+    *   **Exemplo:** Adicionar um usuário no Nextcloud, configurar um indexador no Sonarr, criar um dashboard no Grafana. Essas configurações são salvas nos volumes de dados da respectiva aplicação.
 
-4.  **Aplique a Mudança:**
+## Processo Seguro e Consistente para Modificar Configurações
 
-    *   **Mudanças Gerenciadas por Ansible:**
-        1.  Edite o arquivo Ansible apropriado (inventário, `main.yml`, `vault.yml`, template `.j2`, tasks de um role).
-        2.  Execute o playbook Ansible relevante (e.g., `ansible-playbook playbooks/setup-core-networking.yml --ask-vault-pass`). O Ansible aplicará a mudança de forma idempotente.
-    *   **Mudanças em Stacks Docker (via Portainer):**
-        1.  Edite o arquivo `docker-compose.yml` correspondente no seu projeto `infra-servidor-domestico/docker/stacks/.../`.
-        2.  No Portainer, vá para a stack, clique em "Editor".
-        3.  Cole o `docker-compose.yml` atualizado.
-        4.  Se necessário, modifique as variáveis de ambiente na UI do Portainer.
-        5.  Clique em "**Update the stack**". Selecione "Re-pull image and redeploy" se você alterou a tag da imagem.
-    *   **Mudanças na Configuração Estática do Traefik ou Authelia (arquivos .yml principais):**
-        1.  Edite o template `.j2` no seu role Ansible (`traefik-config` ou `authelia-config`).
-        2.  Execute o playbook Ansible que copia esses templates (e.g., `setup-core-networking.yml`).
-        3.  **Reinicie os containers Traefik e/ou Authelia** no Portainer para que eles carreguem a nova configuração estática.
-    *   **Mudanças na Configuração Dinâmica do Traefik (arquivos no diretório `dynamic`):**
-        1.  Edite o template `.j2` ou o arquivo YAML diretamente no volume NFS (se não gerenciado por Ansible).
-        2.  Se gerenciado por Ansible, execute o playbook que copia o arquivo.
-        3.  Traefik deve recarregar a configuração dinâmica automaticamente (verifique os logs do Traefik).
-    *   **Mudanças na UI de uma Aplicação:** Faça a alteração diretamente na interface web da aplicação (e.g., adicionar um usuário no Nextcloud, configurar um indexador no Sonarr). Essas configurações são salvas no volume persistente da aplicação.
-    *   **Mudanças na UI do Proxmox:** Faça a alteração na interface web do Proxmox (e.g., aumentar RAM de uma VM).
-        !!! warning "Consistência com Ansible"
-            Se você fizer uma mudança na UI do Proxmox que também é gerenciada pelo Ansible (e.g., RAM da VM definida no `vm-deploy.yml`), a próxima vez que você rodar o playbook Ansible, ele poderá reverter sua mudança manual para o estado definido no Ansible. Para mudanças permanentes, altere no Ansible e reaplique.
+1.  **Identifique a Configuração e Onde Ela Reside:** Use o mapa acima para determinar qual sistema ou arquivo controla a configuração que você deseja alterar.
 
-5.  **Verifique e Teste:**
-    *   Monitore os logs dos containers/serviços afetados.
-    *   Teste a funcionalidade que foi alterada.
-    *   Verifique se outros serviços não foram impactados negativamente.
+2.  **Planeje a Mudança:** Entenda o impacto da alteração. Quais serviços serão afetados? É uma mudança crítica?
 
-6.  **Documente a Mudança (Opcional, mas bom):** Se for uma alteração significativa, adicione uma nota nesta wiki ou no commit do Git.
+3.  **Faça Backup (SEMPRE para mudanças críticas ou arriscadas):**
+    *   **Repositório Ansible Git:** Seus arquivos de configuração IaC já estão versionados. Faça um `git commit` antes de mudanças significativas nos arquivos Ansible.
+    *   **Host Proxmox / VMs:** Antes de alterações no SO da VM, atualizações maiores do Proxmox, ou mudanças de hardware virtual, crie um **snapshot da VM** no Proxmox.
+    *   **Volumes Docker / Dados NFS:** Para os datasets ZFS no host Proxmox (e.g., `data/docker-volumes`, `data/media`), crie um **snapshot ZFS** antes de modificações que possam afetar os dados:
+        ```bash
+        # No host Proxmox
+        sudo zfs snapshot data/docker-volumes@antes_da_mudanca_X
+        ```
+        Consulte o [Guia de Snapshots ZFS](12-guia-snapshots-zfs.md) para mais detalhes.
+    *   **Arquivos de Configuração Específicos:** Se for editar manualmente um arquivo de configuração crítico (o que deve ser raro se gerenciado por Ansible), faça uma cópia dele primeiro (e.g., `cp /caminho/arquivo.conf /caminho/arquivo.conf.bak`).
 
-## Exemplos Comuns de Modificação
+4.  **Aplique a Mudança (Método Preferencial Primeiro):**
 
-*   **Alterar uma Senha no Ansible Vault:**
-    1.  `ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`
-    2.  Modifique a variável da senha. Salve.
-    3.  Execute o playbook que usa essa senha (e.g., se for `nextcloud_db_password`, execute o playbook que deploya a stack Nextcloud para que a nova senha seja passada ao container, ou atualize a variável de ambiente no Portainer e recrie a stack).
-*   **Atualizar a Imagem de um Container Docker:**
-    1.  Edite o `docker-compose.yml` da stack, alterando a tag da imagem (e.g., de `plex:1.30` para `plex:1.31`).
-    2.  No Portainer, vá para a stack, clique em "Editor", cole o compose atualizado.
-    3.  Clique em "Update the stack" e certifique-se que a opção "Re-pull image and redeploy" (ou similar) está marcada.
-*   **Adicionar um Novo Roteamento no Traefik para um Serviço Existente (sem Authelia):**
-    1.  Edite o `docker-compose.yml` do serviço, adicionando as labels Traefik apropriadas.
-    2.  Atualize a stack no Portainer. Traefik deve detectar as novas labels e criar a rota.
-*   **Mudar a Quantidade de RAM de uma VM:**
-    1.  **Método Ansible (Recomendado para consistência):**
-        *   Edite `ansible/playbooks/vm-deploy.yml`, alterando o valor de `vm_memory` para a VM desejada.
-        *   Execute `ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass`.
-        *   A VM provavelmente precisará ser reiniciada para a mudança de RAM ter efeito. O módulo `proxmox_kvm` pode lidar com isso se a VM estiver rodando.
-    2.  **Método UI Proxmox (Rápido, mas pode divergir do Ansible):**
-        *   Desligue a VM.
-        *   Na UI do Proxmox, vá para Hardware da VM, edite a Memória.
-        *   Inicie a VM.
+    *   **Se a Configuração é Gerenciada pelo Ansible (Ideal):**
+        1.  Edite o arquivo Ansible apropriado na sua máquina de controle (inventário, `main.yml`, `vault.yml`, um template `.j2`, ou as tasks de um role).
+        2.  Execute o playbook Ansible relevante para aplicar a mudança. Exemplo:
+            ```bash
+            ansible-playbook ansible/playbooks/setup-core-networking.yml --ask-vault-pass
+            ```
+        3.  O Ansible aplicará a mudança de forma idempotente. Se a configuração já estiver no estado desejado, nenhuma alteração será feita.
+    *   **Se a Mudança é em uma Stack Docker (via Portainer):**
+        1.  Edite o arquivo `docker-compose.yml` correspondente no seu projeto Git (`home-server/docker/stacks/.../`).
+        2.  No Portainer, navegue até a stack que você deseja modificar.
+        3.  Clique em "**Editor**".
+        4.  Cole o conteúdo do `docker-compose.yml` atualizado.
+        5.  Se necessário, modifique as variáveis de ambiente na UI do Portainer (especialmente secrets que não vêm do arquivo `.env`).
+        6.  Clique em "**Update the stack**".
+            *   Marque a opção "**Re-pull image and redeploy**" se você alterou a tag da imagem de um serviço e quer que o Portainer puxe a nova versão da imagem.
+    *   **Se a Mudança é na Configuração Estática do Traefik ou Authelia (arquivos `.yml` principais):**
+        1.  Edite o template Jinja2 (`.j2`) correspondente no seu role Ansible (`traefik-config` ou `authelia-config`).
+        2.  Execute o playbook Ansible que copia esses templates para os volumes NFS (geralmente `setup-core-networking.yml`).
+        3.  Após o Ansible atualizar o arquivo de configuração no volume NFS, você precisará **reiniciar os containers Traefik e/ou Authelia** no Portainer para que eles carreguem a nova configuração estática.
+    *   **Se a Mudança é na Configuração Dinâmica do Traefik (arquivos no diretório `dynamic`):**
+        1.  Edite o template Jinja2 (`.j2`) ou o arquivo YAML diretamente no volume NFS (se a configuração não for gerenciada pelo Ansible, o que não é o caso aqui para a maioria).
+        2.  Se gerenciado pelo Ansible, execute o playbook Ansible que copia o arquivo de configuração dinâmica (e.g., parte do `setup-core-networking.yml`).
+        3.  Traefik deve monitorar o diretório de configuração dinâmica e **recarregar automaticamente as mudanças** sem necessidade de reinício. Verifique os logs do Traefik para confirmação.
+    *   **Se a Mudança é na UI de uma Aplicação Específica:**
+        Faça a alteração diretamente na interface web da aplicação (e.g., adicionar um usuário no Nextcloud, configurar um novo indexador no Sonarr, criar um novo dashboard no Grafana). Essas configurações são salvas no volume persistente da respectiva aplicação.
+    *   **Se a Mudança é na UI do Proxmox (e.g., alterar RAM de uma VM):**
+        1.  Faça a alteração na interface web do Proxmox.
+        2.  !!! warning "Mantenha a Consistência com Ansible!"
+            Se a configuração que você alterou na UI do Proxmox também é definida pelo Ansible (e.g., RAM da VM definida no `vm-deploy.yml`), é **crucial** que você atualize também o arquivo Ansible correspondente. Caso contrário, na próxima vez que você rodar o playbook Ansible, ele poderá **reverter sua mudança manual** para o estado definido no Ansible. Para mudanças permanentes, altere no Ansible e reaplique o playbook.
 
-Lembre-se sempre de proceder com cautela, especialmente ao modificar configurações críticas. Backups e snapshots são seus amigos!
+5.  **Verifique e Teste a Mudança:**
+    *   Monitore os logs dos containers ou serviços afetados pela mudança.
+    *   Teste a funcionalidade que foi alterada para garantir que está funcionando como esperado.
+    *   Verifique se outros serviços ou partes do sistema não foram impactados negativamente.
+
+6.  **Documente a Mudança (Opcional, mas Boa Prática):**
+    *   Se for uma alteração significativa, adicione uma nota nesta wiki (talvez uma subseção em "Modificando Configurações" ou em um log de mudanças).
+    *   Faça um `git commit` das suas alterações nos arquivos Ansible/Docker Compose com uma mensagem clara descrevendo a mudança.
+
+Lembre-se sempre de proceder com cautela, especialmente ao modificar configurações críticas ou que afetam a segurança. A abordagem de Infraestrutura como Código com Ansible, combinada com backups e snapshots, fornece uma base sólida para gerenciar mudanças de forma segura e recuperável.

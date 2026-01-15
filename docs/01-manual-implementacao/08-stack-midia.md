@@ -1,41 +1,74 @@
 # Seção 8: Stack de Mídia (Plex/Jellyfin, \*arrs)
 
-Esta seção aborda a implementação da sua stack de mídia, que incluirá um servidor de mídia como Plex ou Jellyfin, e o conjunto de aplicações "\*arr" (Sonarr, Radarr, etc.) para gerenciamento e automação de downloads de mídia. Todos esses serviços rodarão como containers Docker na `core-services-vm`, com seus dados e configurações persistidos nos volumes NFS (pool de ~500GB).
+Esta seção detalha a implementação da sua suíte de entretenimento digital, comumente conhecida como "stack de mídia". Ela incluirá:
 
-!!! warning "Limitação de Armazenamento e Transcoding"
-    *   **Armazenamento:** O pool ZFS `/data` de aproximadamente 500GB será o principal limitador para a quantidade de mídia que você pode armazenar. Gerencie este espaço com cuidado.
-    *   **Transcoding:** Com 16GB de RAM total no host e o CPU Ryzen 5 5600G, o transcoding de vídeo pesado (especialmente 4K para múltiplos streams) será um desafio.
-        *   **Plex/Jellyfin:** Priorize o "Direct Play" ou "Direct Stream" sempre que possível, configurando seus clientes para suportar os formatos de mídia originais.
-        *   **Hardware Transcoding (iGPU):** A iGPU Vega do Ryzen 5 5600G pode ser usada para hardware transcoding no Jellyfin se configurada corretamente (passando `/dev/dri` para o container). Para Plex, o hardware transcoding com iGPUs AMD no Linux pode ser mais complexo de configurar e pode exigir Plex Pass.
-        *   **GPU Dedicada (RX 5600XT):** Se a RX 5600XT não estiver sendo usada pela `ai-desktop-vm`, ela *poderia* ser passada para a `core-services-vm` para transcoding, mas isso aumenta a complexidade do setup e pode não ser o melhor uso dado o foco na IA.
+*   Um **servidor de mídia** para organizar, transmitir e permitir o acesso à sua coleção de filmes, séries de TV, músicas e fotos. As principais opções que abordaremos são **Plex** e **Jellyfin**.
+*   O conjunto de aplicações **"\*arr"** (Sonarr, Radarr, Lidarr, Prowlarr, Bazarr) para gerenciamento automatizado e download de conteúdo de mídia.
+*   Um **cliente de torrent** (qBittorrent) para lidar com os downloads.
 
-## 8.1. Preparação com Ansible
+Todos esses serviços rodarão como containers Docker na sua `core-services-vm`. Os dados de configuração de cada aplicação e, mais importante, seus arquivos de mídia, serão armazenados de forma persistente nos volumes NFS, que por sua vez residem no pool ZFS `/data` do seu host Proxmox (com aproximadamente 500GB de capacidade útil, lembre-se!).
 
-Antes de implantar a stack de mídia no Portainer, o Ansible preparará os diretórios NFS e o arquivo `.env` necessário.
+!!! warning "Limitações de Armazenamento e Performance de Transcoding"
+    *   **Armazenamento:** Com um pool de dados ZFS de ~500GB, o espaço para sua biblioteca de mídia será limitado. Gerencie este espaço com atenção e considere futuras expansões se sua coleção crescer.
+    *   **Transcoding de Vídeo:** A transcodificação (converter vídeo de um formato/resolução para outro em tempo real para compatibilidade com o dispositivo cliente) é uma tarefa intensiva em CPU.
+        *   **CPU (Ryzen 5 5600G):** É capaz de fazer transcoding de software para alguns streams 1080p, mas terá dificuldades com 4K ou múltiplos streams simultâneos.
+        *   **Priorize Direct Play/Stream:** Configure seus clientes de mídia (Plex, Jellyfin apps) para "Direct Play" ou "Direct Stream" sempre que possível. Isso significa que o cliente reproduz o arquivo no formato original sem necessidade de transcodificação pelo servidor, economizando muitos recursos.
+        *   **Hardware Transcoding (iGPU Vega do 5600G):**
+            *   **Jellyfin:** Suporta bem hardware transcoding com a iGPU AMD Vega via VAAPI no Linux. O `docker-compose.yml` incluirá o mapeamento de `/dev/dri` para o container Jellyfin.
+            *   **Plex:** O hardware transcoding com Plex Pass pode funcionar com iGPUs AMD no Linux, mas historicamente tem sido menos direto de configurar e com menos suporte oficial do que com GPUs Intel Quick Sync Video (QSV) ou NVIDIA NVENC.
+        *   **GPU Dedicada (RX 5600XT):** Se não estiver sendo usada pela `ai-desktop-vm`, teoricamente poderia ser passada para a `core-services-vm` para transcoding. No entanto, isso adiciona complexidade significativa ao setup da VM e ao gerenciamento de drivers, e pode não ser o uso mais eficiente dos recursos se a IA for uma prioridade. Este guia foca na iGPU para Jellyfin.
+
+## 8.1. Preparação com Ansible para a Stack de Mídia
+
+Antes de implantar a stack de mídia no Portainer, o Ansible precisa preparar os diretórios nos volumes NFS onde as configurações das aplicações e os próprios arquivos de mídia serão armazenados. Ele também criará o arquivo `.env` específico para esta stack.
 
 ### Playbook `setup-media-stack-volumes.yml`
 
-Este playbook, executado contra a `core-services-vm`, irá:
-*   Criar os subdiretórios necessários no dataset ZFS `docker-volumes` (montado em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/`) para as configurações de cada aplicação da stack de mídia (Plex, Jellyfin, Sonarr, Radarr, qBittorrent, etc.).
-*   Criar os subdiretórios para a mídia em si no dataset ZFS `media` (montado em `{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/`), como `movies`, `tvshows`, `music`.
-*   Garantir que o diretório de downloads exista no dataset ZFS `downloads`.
-*   Preparar o arquivo `/opt/portainer_stack_envs/media.env` na `core-services-vm` com os caminhos e variáveis PUID/PGID, TZ, etc.
+Este playbook, que será executado contra a `core-services-vm`, realizará as seguintes tarefas:
+
+1.  **Criação de Diretórios de Configuração:**
+    *   No dataset ZFS `docker-volumes` (montado em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/` na VM), criará subdiretórios para cada aplicação da stack de mídia. Exemplos:
+        *   `.../plex/config`
+        *   `.../jellyfin/config`
+        *   `.../sonarr/config`
+        *   `.../radarr/config`
+        *   `.../qbittorrent/config`
+        *   (E para Prowlarr, Bazarr, etc., se você os incluir)
+    *   Esses diretórios terão permissões definidas para `owner: {{ docker_puid }}` e `group: {{ docker_pgid }}`.
+2.  **Criação de Diretórios de Mídia:**
+    *   No dataset ZFS `media` (montado em `{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/` na VM), criará subdiretórios para organizar sua mídia. Exemplos:
+        *   `.../movies`
+        *   `.../tvshows` (ou `series`)
+        *   `.../music`
+        *   `.../photos` (opcional)
+3.  **Criação do Diretório de Downloads:**
+    *   Garantirá que o diretório no dataset ZFS `downloads` (montado em `{{ vm_nfs_mount_base_path }}/{{ zfs_downloads_dataset_name }}/` na VM) exista para o qBittorrent.
+4.  **Preparação do Arquivo `.env`:**
+    *   Gerará o arquivo `/opt/portainer_stack_envs/media.env` na `core-services-vm`. Este arquivo conterá os caminhos completos para todos os volumes mencionados acima, além de PUID/PGID, TZ, e outras variáveis comuns. O template `ansible/templates/portainer_stack_env.j2` será usado, com `stack_name: "media"`.
 
 **Ação:** Execute o playbook a partir da sua máquina de controle Ansible:
 ```bash
 ansible-playbook ansible/playbooks/setup-media-stack-volumes.yml --ask-vault-pass
 ```
-Este playbook utilizará o template `ansible/templates/portainer_stack_env.j2` (detalhado na Seção 6.2), passando `stack_name: "media"` para gerar os caminhos corretos no arquivo `.env`.
 
 ## 8.2. Deploy da Stack de Mídia via Portainer (`docker/stacks/media/docker-compose.yml`)
 
-Com os volumes preparados, vamos implantar a stack de mídia.
+Com os volumes e o arquivo `.env` preparados pelo Ansible, podemos agora implantar a stack de mídia usando o Portainer.
 
 **Ação:**
-1.  No Portainer, certifique-se de que está conectado ao endpoint `local` (correspondente à `core-services-vm`).
-2.  Vá para "Stacks" -> "+ Add stack".
-3.  **Nome:** `media-services`.
-4.  **Web editor:** Cole o conteúdo do arquivo `infra-servidor-domestico/docker/stacks/media/docker-compose.yml`:
+
+1.  **Acesse o Portainer e Selecione o Endpoint Correto:**
+    *   Navegue para `https://portainer.{{ base_domain }}`.
+    *   Certifique-se de que está conectado ao endpoint `local` (que corresponde à `core-services-vm`).
+
+2.  **Adicionar uma Nova Stack:**
+    *   No menu lateral, clique em "**Stacks**".
+    *   Clique no botão "**+ Add stack**".
+
+3.  **Configurar a Stack:**
+    *   **Name:** Dê um nome descritivo, e.g., `media-services`.
+    *   **Build method:** Selecione "**Web editor**".
+    *   **Web editor:** Cole o conteúdo completo do arquivo `home-server/docker/stacks/media/docker-compose.yml` (fornecido na Seção 8.2 do seu documento original).
 
     ```yaml
     # docker/stacks/media/docker-compose.yml
@@ -250,59 +283,68 @@ Com os volumes preparados, vamos implantar a stack de mídia.
       #   (...)
     ```
 
-    !!! tip "Escolha Plex ou Jellyfin (ou ambos com cautela)"
-        Se você tem recursos limitados, pode ser melhor escolher um servidor de mídia principal (Plex ou Jellyfin) em vez de rodar ambos. Plex é conhecido por sua facilidade de uso e compatibilidade de clientes, enquanto Jellyfin é totalmente open-source e oferece mais opções de personalização.
+        **Pontos Chave do Compose:**
+        *   **Escolha Plex ou Jellyfin:** O compose de exemplo inclui ambos. Você pode comentar ou remover um deles se quiser rodar apenas um, para economizar recursos. Rodar ambos é possível com 48GB de RAM, mas monitore o uso.
+        *   **Network Mode para Plex:** O exemplo não usa `network_mode: host` para Plex, optando por mapear portas individuais. Isso é geralmente melhor para integração com Traefik/Cloudflare Tunnel. Se você optar por `network_mode: host` para Plex, o acesso externo precisará ser configurado no Cloudflare Tunnel apontando diretamente para `IP_DA_CORE_SERVICES_VM:32400`, e Traefik não será usado para Plex.
+        *   **Hardware Transcoding para Jellyfin:** O mapeamento `- "/dev/dri:/dev/dri"` está incluído para permitir que Jellyfin tente usar a iGPU para transcoding.
+        *   **Redes `proxy` e `internal_services`:** Usadas para expor UIs e permitir comunicação interna.
+        *   **Volumes:** Todos os volumes usam as variáveis de caminho (e.g., `${MEDIA_STACK_PLEX_CONFIG_PATH}`, `${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}`) que virão do arquivo `.env`.
+        *   **Labels Traefik:** Definidas para Jellyfin, Sonarr, Radarr e qBittorrent para exposição via `https.SUBDOMINIO.{{ base_domain }}` e proteção com Authelia. Plex é deixado sem labels Traefik no exemplo, assumindo acesso direto ou Plex Relay.
+        *   **Variáveis de Ambiente:** PUID, PGID, TZ são definidos usando variáveis do `.env`.
 
-    !!! note "Hardware Transcoding para Jellyfin com iGPU AMD"
-        Para habilitar o hardware transcoding no Jellyfin usando a iGPU Vega do Ryzen 5 5600G:
-        1.  **No Host Proxmox:**
-            *   Certifique-se que os drivers de kernel para a iGPU AMD estão carregados.
-            *   O dispositivo `/dev/dri` deve existir.
-            *   O usuário dentro da VM `core-services-vm` que o Docker usa (ou root) precisa de permissão para acessar `/dev/dri`. Uma forma é adicionar o usuário `kvm` (ou o usuário que roda a VM) aos grupos `render` e `video` no host Proxmox: `sudo usermod -aG render kvm` e `sudo usermod -aG video kvm`. Isso é para LXC, para VMs KVM é mais sobre passar o dispositivo.
-        2.  **Na Configuração da VM `core-services-vm` (Proxmox):**
-            *   Você precisa garantir que a VM tenha acesso ao dispositivo `/dev/dri` do host. Isso pode envolver editar a configuração da VM (`/etc/pve/qemu-server/VMID.conf`) para adicionar linhas como:
-                ```
-                lxc.cgroup2.devices.allow: c 226:0 rwm  # /dev/dri/card0
-                lxc.cgroup2.devices.allow: c 226:128 rwm # /dev/dri/renderD128
-                lxc.mount.entry: /dev/dri dev/dri none bind,optional,create=dir
-                ```
-                (Isto é mais para LXC, para KVM você pode precisar de um passthrough de dispositivo PCI para a iGPU, o que é complexo e pode conflitar com o console do Proxmox, ou configurar o kernel da VM para carregar os módulos corretos).
-            *   Uma abordagem mais simples para KVM pode ser garantir que o kernel da VM carregue os módulos `amdgpu`.
-        3.  **No Docker Compose do Jellyfin:**
-            *   O mapeamento `- "/dev/dri:/dev/dri"` já está presente.
-        4.  **Dentro do Jellyfin:**
-            *   Vá para Dashboard -> Playback -> Transcoding.
-            *   Selecione "AMD AMF" ou "VAAPI" como acelerador de hardware.
-            *   Selecione o dispositivo VAAPI correto (geralmente `/dev/dri/renderD128`).
-        O hardware transcoding pode ser temperamental. Verifique os logs do Jellyfin para erros.
-
-5.  **Variáveis de Ambiente e Secrets no Portainer:**
-    *   **Carregue o arquivo `.env`:**
-        *   Path on disk: `/opt/portainer_stack_envs/media.env`.
-        *   Isso fornecerá `CORE_SERVICES_VM_IP_VAR`, `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE`, `BASE_DOMAIN_FROM_VAULT`, e todos os caminhos `MEDIA_STACK_*_PATH` e `ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH`.
+4.  **Variáveis de Ambiente e Secrets no Portainer:**
+    *   **Carregue o Arquivo `.env`:**
+        *   Na seção "Environment variables" (modo avançado), clique em "Load variables from .env file".
+        *   **Path on disk:** `/opt/portainer_stack_envs/media.env` (este arquivo foi criado pelo Ansible na `core-services-vm`).
+        *   Isso preencherá automaticamente: `CORE_SERVICES_VM_IP_VAR`, `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE`, `BASE_DOMAIN_FROM_VAULT` (usada indiretamente pelos placeholders `{{ base_domain }}` nas labels Traefik, que o Portainer não resolve, mas o Traefik sim se `BASE_DOMAIN_FROM_VAULT` for passado para o container Traefik), e todos os caminhos de volume (`MEDIA_STACK_*_PATH`, `ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH`).
+            !!! note "Resolução de `{{ base_domain }}` nas Labels Traefik"
+                As labels Traefik no `docker-compose.yml` usam `Host(\`sonarr.{{ base_domain }}\`)`. Este `{{ base_domain }}` **não** é resolvido pelo Portainer a partir do `.env`. Ele deve ser resolvido pelo Traefik se o próprio container Traefik tiver acesso a uma variável de ambiente `BASE_DOMAIN`. No nosso setup do Traefik (Seção 5.2), passamos `BASE_DOMAIN_FROM_VAULT` para o container Traefik, que ele pode usar. Alternativamente, você pode hardcodar seu domínio nas labels ou usar `${BASE_DOMAIN_FROM_VAULT}` se essa variável estiver no `.env` carregado para esta stack de mídia também. Para manter o exemplo do documento original, assumimos que `{{ base_domain }}` será interpretado corretamente pelo Traefik com base na sua própria configuração.
     *   **Adicione Secrets Manualmente:**
-        *   `PLEX_CLAIM_TOKEN_FROM_PORTAINER_ENV`: Obtenha um token de [plex.tv/claim](https://www.plex.tv/claim) e cole o valor aqui. Este token é de uso único e expira rapidamente, então obtenha-o pouco antes de fazer o deploy do Plex.
+        *   `PLEX_CLAIM_TOKEN_FROM_PORTAINER_ENV`: Vá para [plex.tv/claim](https://www.plex.tv/claim) para obter um novo token de claim. Copie este token e cole-o como o valor para esta variável de ambiente no Portainer.
+            !!! important "Token de Claim do Plex"
+                O token de claim do Plex é de uso único e expira rapidamente (geralmente em poucos minutos). Obtenha-o **imediatamente antes** de clicar em "Deploy the stack" para o Plex. Se o Plex não conseguir se vincular à sua conta, você pode precisar parar o container Plex, remover seu volume de configuração (ou o arquivo `Preferences.xml` dentro dele), obter um novo token de claim, e redeployar a stack.
 
-6.  **Deploy da Stack:**
-    *   Clique em "Deploy the stack".
+5.  **Deploy da Stack de Mídia:**
+    *   Clique em "**Deploy the stack**".
+    *   Monitore os logs de cada container no Portainer para verificar se há erros durante a inicialização.
 
-7.  **Configuração Pós-Deploy (Dentro de cada Aplicação):**
-    *   **Plex/Jellyfin:**
-        *   Acesse a UI web (e.g., `IP_DA_VM_CORE_SERVICES:32400` para Plex localmente, ou `https://jellyfin.{{ base_domain }}` via Traefik).
-        *   Siga o assistente de configuração inicial.
-        *   Adicione suas bibliotecas de mídia, apontando para os caminhos mapeados dentro do container (e.g., `/data/movies`, `/data/tvshows`).
-    *   **Sonarr/Radarr:**
-        *   Acesse suas UIs (e.g., `https://sonarr.{{ base_domain }}`).
-        *   Configure indexadores (Prowlarr pode ajudar a centralizar isso).
-        *   Configure clientes de download (aponte para qBittorrent, usando o nome do serviço `qbittorrent` e a porta `8088` se estiverem na mesma rede `internal_services`).
-        *   Configure Root Folders (e.g., `/tv` para Sonarr, `/movies` para Radarr).
-        *   Configure mapeamento de caminhos se Sonarr/Radarr e qBittorrent veem o diretório de downloads com caminhos diferentes (geralmente não é necessário se ambos usam `/downloads` internamente).
-    *   **qBittorrent:**
-        *   Acesse a WebUI (e.g., `https://qbittorrent.{{ base_domain }}`).
-        *   Senha padrão (usuário: `admin`, senha: `adminadmin` - **MUDE IMEDIATAMENTE!**).
-        *   Configure o diretório de downloads padrão para `/downloads` (se não for o padrão).
-        *   Configure portas de escuta (se não usar VPN no container).
+6.  **Configuração Pós-Deploy (Dentro de Cada Aplicação):**
 
-Gerenciar sua mídia pode ser muito gratificante. Aproveite sua nova stack!
+    Após os containers estarem rodando, você precisará configurar cada aplicação individualmente acessando suas interfaces web:
+
+    *   **Plex (`http://{{ core_services_vm_ip_var }}:32400` para setup inicial local, ou via app.plex.tv):**
+        *   Siga o assistente de configuração inicial do Plex. Ele deve detectar o servidor vinculado pelo token de claim.
+        *   Dê um nome ao seu servidor Plex.
+        *   **Adicionar Bibliotecas:** Crie bibliotecas para Filmes, Séries de TV, Música, etc. Ao adicionar uma biblioteca, aponte para os caminhos *dentro do container Plex* que você mapeou nos volumes:
+            *   Filmes: `/data/movies`
+            *   Séries: `/data/tvshows`
+            *   Música: `/data/music`
+        *   Configure o acesso remoto nas configurações do Plex se não estiver usando um túnel direto ou Traefik.
+    *   **Jellyfin (`https://jellyfin.{{ base_domain }}` via Traefik/Authelia):**
+        *   Siga o assistente de configuração inicial. Crie um usuário administrador.
+        *   **Adicionar Bibliotecas:** Similar ao Plex, aponte para os caminhos dentro do container: `/data/movies`, `/data/tvshows`, `/data/music`.
+        *   **Configurar Hardware Transcoding (se desejado):** Vá para Dashboard -> Playback. Selecione "AMD AMF" ou "VAAPI" como acelerador de hardware e escolha o dispositivo correto (e.g., `/dev/dri/renderD128`). Teste para garantir que funciona.
+    *   **Sonarr (`https://sonarr.{{ base_domain }}`):**
+        *   **Configurações -> Media Management:**
+            *   Verifique "Advanced Settings".
+            *   Configure Root Folders: Adicione `/tv` (este é o caminho *dentro do container Sonarr* para sua biblioteca de séries).
+        *   **Configurações -> Download Clients:**
+            *   Adicione qBittorrent:
+                *   Nome: `qbittorrent`
+                *   Host: `qbittorrent` (nome do serviço Docker na rede `internal_services`)
+                *   Port: `8088` (a `WEBUI_PORT` do qBittorrent)
+                *   Usuário/Senha: As credenciais da WebUI do qBittorrent (lembre-se de mudar o padrão `admin/adminadmin`!).
+                *   Directory: `/downloads` (o caminho que qBittorrent usa para downloads *dentro do seu próprio container*).
+        *   **Configurações -> Indexers:** Adicione seus indexadores de torrent/usenet (Prowlarr pode ajudar a gerenciar isso centralmente).
+    *   **Radarr (`https://radarr.{{ base_domain }}`):**
+        *   Configuração muito similar ao Sonarr, mas para filmes.
+        *   Root Folder: `/movies`.
+        *   Download Client: qBittorrent (host `qbittorrent`, port `8088`, directory `/downloads`).
+    *   **qBittorrent (`https://qbittorrent.{{ base_domain }}`):**
+        *   **MUDE A SENHA PADRÃO!** Login inicial: `admin` / `adminadmin`. Vá para Tools -> Options -> Web UI e mude a senha.
+        *   **Configurar Diretórios de Download:** Em Options -> Downloads, certifique-se de que o "Default Save Path" está configurado para `/downloads` (o caminho dentro do container qBittorrent).
+        *   Configure outras preferências (limites de velocidade, portas de escuta se não usar VPN no container).
+
+Com esta stack configurada, você terá um sistema de gerenciamento e streaming de mídia poderoso e automatizado!
 
 Próximo passo: [Stack de Produtividade e Automação (Nextcloud, Home Assistant)](09-stack-produtividade-automacao.md).
