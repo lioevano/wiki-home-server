@@ -1,6 +1,6 @@
 # mkdocs.yml
 site_name: Wiki do Servidor do Léo Ivan
-site_url: https://lioevano.github.io/wiki-home-server/  # Ou seu domínio customizado
+site_url: https://wiki.lioevano.com/  # Ou seu domínio customizado
 site_author: Léo Ivan
 site_description: >-
   Guia completo para implementação e manutenção de um servidor doméstico
