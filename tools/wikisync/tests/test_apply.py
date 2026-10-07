@@ -81,3 +81,25 @@ def test_path_without_literal_block_is_error(make_repo):
     proc = cli(root, "--path", "ansible/digitado-errado.yml")
     assert proc.returncode == 1
     assert "nenhum bloco literal" in proc.stderr
+
+
+def test_directory_target_refuses_before_writing_anything(make_repo):
+    root = make_repo({
+        "wiki/docs/index.md": page(("ansible/a.yml", "a: 1"), ("ansible/sub", "x: 1")),
+        "server/ansible/sub/keep.yml": "k: 1\n",
+    })
+    with pytest.raises(ApplyError, match="ansible/sub"):
+        plan_apply(load_config(root))
+    proc = cli(root, "--yes")
+    assert proc.returncode == 1
+    assert not (root / "server/ansible/a.yml").exists()
+
+
+def test_symlink_escaping_server_is_refused(make_repo, tmp_path_factory):
+    outside = tmp_path_factory.mktemp("fora")
+    root = make_repo({"wiki/docs/index.md": page(("ansible/link/x.yml", "x: 1"))})
+    (root / "server/ansible").mkdir(parents=True, exist_ok=True)
+    (root / "server/ansible/link").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ApplyError, match="ansible/link/x.yml"):
+        plan_apply(load_config(root))
+    assert not (outside / "x.yml").exists()

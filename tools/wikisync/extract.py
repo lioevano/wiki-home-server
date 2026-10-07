@@ -96,8 +96,10 @@ def literal_path(block: Block, cfg: Config) -> str | None:
     if not block.title:
         return None
     title = block.title.strip()
-    if " " in title or title.split("/", 1)[0] not in cfg.server_roots or "/" not in title:
+    if " " in title or "\\" in title or title.split("/", 1)[0] not in cfg.server_roots or "/" not in title:
         return None
+    if any(seg in ("", ".", "..") for seg in title.split("/")):
+        return None  # nunca aceitar caminhos que saiam de server/ ou ambíguos
     if is_ignored(title, cfg):
         return None
     return title

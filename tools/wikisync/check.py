@@ -3,11 +3,13 @@ from __future__ import annotations
 
 import os
 import re
+import subprocess
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from functools import lru_cache
 from typing import Literal
 
-from .config import Config
+from .config import Config, is_ignored
 from .extract import (
     Block,
     extract_blocks,
@@ -58,17 +60,35 @@ def _excluded(rel: str, cfg: Config) -> bool:
     return False
 
 
+@lru_cache(maxsize=8)
+def _git_files(root: str) -> frozenset[str] | None:
+    """Arquivos versionados ou não ignorados (git ls-files -co --exclude-standard); None sem git."""
+    if not (Path(root) / ".git").exists():
+        return None
+    try:
+        proc = subprocess.run(["git", "-C", root, "ls-files", "-co", "--exclude-standard", "-z"],
+                              capture_output=True, check=False)
+    except OSError:
+        return None
+    if proc.returncode != 0:
+        return None
+    return frozenset(p for p in proc.stdout.decode("utf-8", "replace").split("\0") if p)
+
+
 def _walk(base: Path, cfg: Config, rel_to: Path) -> list[str]:
     out = []
     if not base.is_dir():
         return out
+    tracked = _git_files(str(cfg.root))
     for dirpath, dirnames, filenames in os.walk(base):
         d = Path(dirpath)
         dirnames[:] = [n for n in dirnames if not _excluded((d / n).relative_to(cfg.root).as_posix(), cfg)]
         for name in filenames:
             p = d / name
-            if not _excluded(p.relative_to(cfg.root).as_posix(), cfg):
-                out.append(p.relative_to(rel_to).as_posix())
+            rel_root = p.relative_to(cfg.root).as_posix()
+            if _excluded(rel_root, cfg) or (tracked is not None and rel_root not in tracked):
+                continue
+            out.append(p.relative_to(rel_to).as_posix())
     return sorted(out)
 
 
@@ -136,7 +156,7 @@ def _check_orphans(cfg: Config, wiki: Wiki) -> list[Finding]:
     refs |= set(wiki.literals)
     out = []
     for path in server_files(cfg):
-        if path in cfg.ignore_orphans or is_covered(path, refs):
+        if path in cfg.ignore_orphans or is_ignored(path, cfg) or is_covered(path, refs):
             continue
         out.append(Finding("ORPHAN", "aviso", path, None, "arquivo do server não citado por nenhuma página"))
     return out

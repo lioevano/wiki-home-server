@@ -140,3 +140,24 @@ def test_vault_encrypted_ok(make_repo):
 
 def test_vault_example_not_checked(make_repo):
     assert found(make_repo, _with_vault("vault_senha: TROCAR\n", "vault.yml.example")) == set()
+
+
+def test_orphan_respects_ignore_paths(make_repo):
+    assert found(make_repo, base(**{"server/docker/stacks/novoservico/docker-compose.yml": "services: {}\n"})) == set()
+
+
+def test_gitignored_files_are_not_scanned(make_repo):
+    import shutil
+    import subprocess
+
+    import pytest
+
+    if not shutil.which("git"):
+        pytest.skip("git ausente")
+    root = make_repo(base(**{
+        ".gitignore": ".env\n.vscode/\n",
+        "server/docker/stacks/apps/.env": b"SEGREDO=1\r\n",
+        ".vscode/settings.json": b"{}\r\n",
+    }))
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    assert {(f.code, f.path) for f in run_check(load_config(root))} == set()

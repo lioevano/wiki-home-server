@@ -115,3 +115,10 @@ def test_nav_pages_nested_and_external():
 
 def test_normalize_strips_bom_and_crlf():
     assert normalize("﻿a\r\nb\r\n\n") == "a\nb"
+
+
+def test_literal_path_rejects_traversal_and_odd_segments(make_repo):
+    cfg = load_config(make_repo({}))
+    titles = ["ansible/../../escaped.txt", "ansible/./a.yml", "ansible//a.yml", "ansible\\a.yml", "ansible/a/.."]
+    blocks = extract_blocks("".join(f'```yaml title="{t}"\na\n```\n' for t in titles), "p.md")
+    assert [literal_path(b, cfg) for b in blocks] == [None] * len(titles)

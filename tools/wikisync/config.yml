@@ -27,4 +27,4 @@ ignore_orphans:
   CLAUDE.md: contexto do Claude para a pasta server/ (não é infraestrutura)
 
 # Pastas ignoradas nas varreduras do repositório.
-exclude_dirs: [.git, .venv, venv, wiki/venv, wiki/site, site, __pycache__, .pytest_cache, node_modules, .superpowers]
+exclude_dirs: [.git, .venv, venv, wiki/venv, wiki/site, site, __pycache__, .pytest_cache, node_modules, .superpowers, .ansible, .vscode, .idea]

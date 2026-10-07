@@ -34,6 +34,14 @@ def plan_apply(cfg: Config, only: str | None = None, wiki: Wiki | None = None) -
     dups = sorted(p for p, blocks in literals.items() if len({normalize(b.content) for b in blocks}) > 1)
     if dups:
         raise ApplyError("blocos literais divergentes para: " + ", ".join(dups) + " (resolva o LIT-DUP na wiki)")
+    server_root = cfg.server_dir.resolve()
+    invalid = []
+    for path in sorted(literals):
+        target = cfg.server_dir / path
+        if target.is_dir() or not target.resolve().is_relative_to(server_root):
+            invalid.append(path)
+    if invalid:
+        raise ApplyError("destino inválido (diretório ou fora de server/): " + ", ".join(invalid))
     changes = []
     for path, blocks in sorted(literals.items()):
         new = normalize(blocks[0].content)
