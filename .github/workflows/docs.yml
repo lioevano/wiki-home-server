@@ -1,0 +1,48 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "wiki/**"
+      - "tools/**"
+      - "requirements-dev.txt"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # o plugin git-revision-date-localized precisa do histórico
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ambiente
+        run: python tools/dev.py setup
+
+      - name: Testes do wikisync
+        run: python tools/dev.py test
+
+      - name: Coerência wiki <-> server
+        run: python tools/dev.py check
+
+      - name: Build estrito da wiki
+        run: python tools/dev.py build
+
+      - name: Publicar no GitHub Pages (branch gh-pages)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          .venv/bin/mkdocs gh-deploy --force -f wiki/mkdocs.yml

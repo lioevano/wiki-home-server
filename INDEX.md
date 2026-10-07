@@ -1,0 +1,157 @@
+<!-- GERADO por tools/wikisync — não editar à mão -->
+# Índice do repositório
+
+Mapa gerado por `python tools/dev.py index` a partir da wiki (fonte da verdade) e do `server/`.
+Caminhos de arquivos são relativos a `server/`; páginas, a `wiki/docs/`.
+
+## Páginas
+
+| Página | Título | Descrição | Define (literal) | Cita |
+|---|---|---|---|---|
+| `01-manual-implementacao/00-preparacao-planejamento.md` | Seção 0: Preparação e Planejamento | Pré-requisitos, estrutura do repositório (server/, wiki/, tools/), .gitignore e modelo de variáveis das stacks antes de começar. | `docker/stacks/.env.template` | `ansible/`, `ansible/inventories/home/group_vars/all`, `ansible/inventories/home/group_vars/all/vault.yml`, `ansible/playbooks`, `ansible/roles/common`, `docker/stacks/`, `docker/stacks/core`, `scripts/` |
+| `01-manual-implementacao/01-maquina-controle-ansible.md` | Seção 1: Configuração da Máquina de Controle Ansible | Prepara a máquina de controle: Ansible, chaves SSH, Ansible Vault, inventário hosts.ini e variáveis globais em group_vars. | `ansible/inventories/home/group_vars/all/main.yml`, `ansible/inventories/home/group_vars/all/vault.yml.example`, `ansible/inventories/home/hosts.ini`, `ansible/requirements.yml` | `ansible/`, `ansible/ansible.cfg`, `ansible/inventories/home/group_vars/all/vault.yml`, `scripts/bootstrap.sh` |
+| `01-manual-implementacao/02-proxmox-ve-host.md` | Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS) | Instala e configura o host Proxmox VE: repositórios, pool ZFS, servidor NFS, firewall e Node Exporter via role proxmox-host-config. | `ansible/playbooks/setup-proxmox-host.yml`, `ansible/roles/infra/proxmox-host-config/handlers/main.yml`, `ansible/roles/infra/proxmox-host-config/tasks/main.yml`, `ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2`, `ansible/roles/infra/proxmox-host-config/templates/node_exporter_host.service.j2` | `ansible/inventories/home/group_vars/all/main.yml`, `ansible/inventories/home/group_vars/all/vault.yml`, `ansible/inventories/home/hosts.ini`, `ansible/roles/infra/proxmox-host-config/` |
+| `01-manual-implementacao/03-provisionamento-vms.md` | Seção 3: Provisionamento das Máquinas Virtuais (VMs) com Ansible | Cria as VMs core-services-vm e ai-desktop-vm a partir de template Cloud-Init com o role proxmox-vm, incluindo passthrough de GPU. | `ansible/playbooks/vm-deploy.yml`, `ansible/roles/apps/desktop-environment/tasks/main.yml`, `ansible/roles/infra/proxmox-vm/defaults/main.yml`, `ansible/roles/infra/proxmox-vm/handlers/main.yml`, `ansible/roles/infra/proxmox-vm/tasks/main.yml` | `ansible/inventories/home/group_vars/all/main.yml`, `ansible/inventories/home/hosts.ini`, `ansible/playbooks/setup-base-ubuntu.yml`, `ansible/roles/apps/desktop-environment/`, `ansible/roles/infra/proxmox-vm/` |
+| `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS) | Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e Node Exporter. | `ansible/playbooks/setup-base-ubuntu.yml`, `ansible/roles/common/handlers/main.yml`, `ansible/roles/common/tasks/main.yml`, `ansible/roles/common/templates/node_exporter_vm.service.j2`, `ansible/roles/infra/docker/handlers/main.yml`, `ansible/roles/infra/docker/tasks/main.yml` | `ansible/inventories/home/hosts.ini`, `ansible/roles/`, `ansible/roles/common/`, `ansible/roles/infra/docker/` |
+| `01-manual-implementacao/05-rede-segura.md` | Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia) | Rede segura na core-services-vm: Traefik como proxy reverso, Cloudflare Tunnel para acesso externo e Authelia para 2FA. | `ansible/playbooks/setup-core-networking.yml`, `ansible/roles/infra/authelia-config/tasks/main.yml`, `ansible/roles/infra/authelia-config/templates/configuration.yml.j2`, `ansible/roles/infra/authelia-config/templates/users_database.yml.j2`, `ansible/roles/infra/traefik-config/tasks/main.yml`, `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2`, `ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2`, `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2`, `ansible/roles/infra/traefik-config/templates/traefik.yml.j2`, `docker/stacks/core/docker-compose.yml` | `ansible/roles/infra/authelia-config/`, `ansible/roles/infra/traefik-config/` |
+| `01-manual-implementacao/06-deploy-core.md` | Seção 6: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia) | Deploy da stack core (Traefik, Cloudflared e Authelia) no Portainer a partir de docker/stacks/core/docker-compose.yml. | — | `ansible/inventories/home/hosts.ini`, `ansible/playbooks/setup-base-ubuntu.yml`, `ansible/playbooks/setup-core-networking.yml`, `docker/stacks/core/docker-compose.yml` |
+| `01-manual-implementacao/07-deploy-apps.md` | Seção 7: Deploy de Aplicações (Nextcloud, Mídia, Monitoramento, n8n, Home Assistant) | Deploy das aplicações na stack apps: Nextcloud, mídia, monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible. | — | `ansible/inventories/home/hosts.ini`, `ansible/playbooks/setup-media-stack-volumes.yml`, `ansible/playbooks/setup-monitoring-stack-volumes.yml`, `ansible/playbooks/setup-n8n-volumes.yml`, `ansible/playbooks/setup-productivity-automation-volumes.yml`, `ansible/templates/loki-local-config.yaml.j2`, `ansible/templates/portainer_stack_env.j2`, `ansible/templates/prometheus.yml.j2`, `ansible/templates/promtail-config.yml.j2`, `docker/stacks/apps/docker-compose.yml` |
+| `01-manual-implementacao/08-stack-ia.md` | Seção 8: Stack de IA (Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude) | Stack de IA na ai-desktop-vm: Ollama, LiteLLM, Open WebUI, OpenClaw e OpenClaude, com volumes e configuração do LiteLLM. | — | `ansible/inventories/home/hosts.ini`, `ansible/playbooks/setup-ai-volumes.yml`, `ansible/roles/apps/ml-tools/`, `ansible/templates/litellm_config.yaml.j2`, `docker/stacks/ai/docker-compose.yml` |
+| `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. | — | — |
+| `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. | — | — |
+| `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. | — | — |
+| `02-visao-geral-arquitetura/03-armazenamento-zfs-nfs.md` | Estratégia de Armazenamento com ZFS e NFS | Estratégia de armazenamento: pool ZFS no host Proxmox, datasets e compartilhamento com as VMs via NFS. | — | — |
+| `02-visao-geral-arquitetura/04-automacao-ansible.md` | Automação da Infraestrutura com Ansible | Infraestrutura como código com Ansible: inventário, roles, playbooks e Vault, e como eles se organizam no projeto. | — | — |
+| `02-visao-geral-arquitetura/05-gerenciamento-containers.md` | Gerenciamento de Containers com Docker e Portainer | Docker, Docker Compose e Portainer: como as stacks de containers são definidas, implantadas e gerenciadas. | — | — |
+| `02-visao-geral-arquitetura/06-principios-seguranca.md` | Princípios de Segurança Aplicados | Princípios de segurança aplicados: defesa em camadas, menor privilégio, 2FA, firewall e gestão de segredos. | — | `ansible/inventories/home/group_vars/all/vault.yml` |
+| `02-visao-geral-arquitetura/08-apis-llm-estrategia.md` | Seção 8: Estratégia de APIs de LLM e Arquitetura Híbrida de IA | Estratégia de IA híbrida com LiteLLM: quando usar modelos locais no Ollama ou APIs externas, com foco em custo. | — | — |
+| `02-visao-geral-arquitetura/index.md` | 💡 Visão Geral da Arquitetura | Visão conceitual de como virtualização, armazenamento, automação, containers, rede e segurança se integram no servidor. | — | — |
+| `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` | Adicionando um Novo Serviço Docker à Infraestrutura | Checklist e exemplo prático para adicionar um novo serviço Docker com volumes, Traefik, Authelia e Ansible. | — | `ansible/templates/portainer_stack_env.j2` |
+| `03-guias-sustentacao/02-modificando-configuracoes-existentes.md` | Modificando Configurações Existentes | Onde ficam as configurações (Ansible, compose, Portainer) e como alterá-las com segurança e rastreabilidade. | — | `ansible/inventories/home/group_vars/all/vault.yml`, `ansible/playbooks/setup-core-networking.yml` |
+| `03-guias-sustentacao/03-troubleshooting-comum.md` | Guia de Troubleshooting Comum | Ferramentas e soluções para os problemas mais comuns: rede, containers, NFS, Traefik, Authelia e VMs. | — | — |
+| `03-guias-sustentacao/04-gerenciando-redes-docker.md` | Gerenciando Redes Docker | Redes Docker da arquitetura (proxy e internal_services): como funcionam, como conectar serviços e diagnosticar. | — | — |
+| `03-guias-sustentacao/05-passthrough-hardware-adicional.md` | Passthrough de Hardware Adicional para VMs e Containers | Como passar dispositivos de hardware adicionais (USB, discos, PCI) do host Proxmox para VMs e containers. | — | `docker/stacks/apps/docker-compose.yml` |
+| `03-guias-sustentacao/06-gerenciando-recursos-vms.md` | Gerenciando Recursos de Máquinas Virtuais (VMs) | Ajuste de CPU, RAM e disco das VMs no Proxmox mantendo o Ansible como fonte da verdade. | — | `ansible/playbooks/vm-deploy.yml` |
+| `03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md` | Cenários Específicos de Criação de Máquinas Virtuais (VMs) | Cenários para criar VMs com propósito específico além da core-services-vm e da ai-desktop-vm. | — | `ansible/inventories/home/hosts.ini` |
+| `03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md` | Compartilhando Recursos Entre VMs ou com a Rede Local | Compartilhamento de arquivos, bancos de dados e serviços entre VMs e com a rede local (NFS, Samba, PostgreSQL). | — | `ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2` |
+| `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` | Integrando Novos Serviços a Stacks Docker Existentes | Quando e como adicionar um container a uma stack Docker existente em vez de criar uma stack nova. | — | `ansible/playbooks/setup-media-stack-volumes.yml`, `docker/stacks/apps/docker-compose.yml` |
+| `03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md` | Atualização Segura de Componentes Críticos da Infraestrutura | Como atualizar com segurança Proxmox VE, Docker, Traefik, Authelia e outros componentes críticos. | — | — |
+| `03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md` | Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog) | Como publicar uma aplicação (ex.: blog) no domínio raiz com Cloudflare Tunnel e Traefik, sem passar pelo Authelia. | — | — |
+| `03-guias-sustentacao/12-guia-snapshots-zfs.md` | Guia Prático de Snapshots ZFS | Guia prático de snapshots ZFS: criar, listar, reverter, automatizar e usá-los antes de mudanças arriscadas. | — | — |
+| `03-guias-sustentacao/13-usando-geminicli.md` | — | Instala o Gemini CLI nas VMs via Ansible e mostra como usá-lo no terminal para manutenção e troubleshooting. | `ansible/roles/tools/ai-cli-tools/tasks/main.yml` | `ansible/inventories/home/group_vars/all/vault.yml`, `ansible/roles/tools/ai-cli-tools/` |
+| `03-guias-sustentacao/index.md` | 🛠️ Guias de Sustentação e Modificação da Infraestrutura | Guias para modificar, expandir e manter a infraestrutura depois da implementação inicial. | — | — |
+| `04-manutencao-recuperacao/01-rotinas-manutencao.md` | Rotinas de Manutenção Essenciais | Rotinas periódicas de manutenção (atualizações, ZFS scrub, logs, certificados) e scripts de validação do server. | — | `ansible/`, `docker/`, `scripts/validation/`, `scripts/validation/check_nfs_permissions.sh`, `scripts/validation/check_yaml_integrity.py`, `scripts/validation/validate_infrastructure.sh` |
+| `04-manutencao-recuperacao/02-backup-restore-estrategia.md` | Estratégia de Backup e Procedimentos de Restauração | Estratégia de backup 3-2-1 e procedimentos de restauração de VMs, volumes e configurações. | — | — |
+| `04-manutencao-recuperacao/03-cicd-basico-ansible.md` | CI/CD Básico para Infraestrutura como Código (Ansible) | CI/CD básico para a infraestrutura como código: lint, testes e execução controlada dos playbooks Ansible. | `ansible/playbooks/full-deploy.yml` | `ansible/`, `ansible/inventories/home/group_vars/all/main.yml`, `ansible/inventories/home/hosts.ini`, `ansible/playbooks/`, `ansible/playbooks/setup-core-networking.yml`, `scripts/restore.sh` |
+| `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` | Reconstruindo a Infraestrutura Após uma Falha Grave | Como reconstruir a infraestrutura após falha grave do disco do sistema, usando Git, Ansible e o pool ZFS. | — | `ansible/playbooks/full-deploy.yml`, `scripts/bootstrap.sh`, `scripts/restore.sh` |
+| `04-manutencao-recuperacao/05-migrando-hardware-rede.md` | Adaptando a Infraestrutura para Novo Hardware ou Mudanças de Rede | Como adaptar a infraestrutura a um novo hardware ou a mudanças de rede (novo IP, sub-rede ou roteador). | — | `ansible/playbooks/full-deploy.yml`, `ansible/playbooks/setup-base-ubuntu.yml`, `ansible/playbooks/setup-proxmox-host.yml`, `ansible/playbooks/vm-deploy.yml`, `scripts/restore.sh` |
+| `04-manutencao-recuperacao/index.md` | ⚙️ Manutenção Preventiva e Recuperação de Desastres | Manutenção preventiva e recuperação de desastres: rotinas, backups, CI/CD, reconstrução e migração. | — | — |
+| `05-referencia-rapida.md` | 📎 Referência Rápida | Referência rápida: tecnologias usadas, para que servem, links da documentação oficial e alternativas. | — | `ansible/inventories/home/hosts.ini`, `ansible/playbooks/setup-base-ubuntu.yml` |
+| `index.md` | Guia do Servidor do Léo Ivan | Wiki do servidor doméstico do Léo Ivan: Proxmox, Ansible, Docker, ZFS, Cloudflare Tunnel, Traefik e Authelia, com o mapa das seções. | — | — |
+
+## Arquivos do server
+
+| Arquivo | Tipo | Páginas | Literal |
+|---|---|---|---|
+| `CLAUDE.md` | outro | — | — |
+| `ansible/ansible.cfg` | outro | `01-manual-implementacao/01-maquina-controle-ansible.md` | — |
+| `ansible/inventories/home/group_vars/all/main.yml` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` | ✅ sincronizado |
+| `ansible/inventories/home/group_vars/all/vault.yml.example` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md` | ✅ sincronizado |
+| `ansible/inventories/home/hosts.ini` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `05-referencia-rapida.md` | ✅ sincronizado |
+| `ansible/playbooks/full-deploy.yml` | playbook | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` | ✅ sincronizado |
+| `ansible/playbooks/setup-ai-volumes.yml` | playbook | `01-manual-implementacao/08-stack-ia.md` | — |
+| `ansible/playbooks/setup-base-ubuntu.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` | ✅ sincronizado |
+| `ansible/playbooks/setup-core-networking.yml` | playbook | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` | ✅ sincronizado |
+| `ansible/playbooks/setup-media-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` | — |
+| `ansible/playbooks/setup-monitoring-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` | — |
+| `ansible/playbooks/setup-n8n-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` | — |
+| `ansible/playbooks/setup-productivity-automation-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` | — |
+| `ansible/playbooks/setup-proxmox-host.yml` | playbook | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` | ✅ sincronizado |
+| `ansible/playbooks/vm-deploy.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `03-guias-sustentacao/06-gerenciando-recursos-vms.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` | ✅ sincronizado |
+| `ansible/requirements.yml` | outro | `01-manual-implementacao/01-maquina-controle-ansible.md` | ✅ sincronizado |
+| `ansible/roles/apps/desktop-environment/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` | ✅ sincronizado |
+| `ansible/roles/apps/ml-tools/handlers/main.yml` | role-handlers | `01-manual-implementacao/08-stack-ia.md` | — |
+| `ansible/roles/apps/ml-tools/tasks/main.yml` | role-tasks | `01-manual-implementacao/08-stack-ia.md` | — |
+| `ansible/roles/common/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | ✅ sincronizado |
+| `ansible/roles/common/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | ✅ sincronizado |
+| `ansible/roles/common/templates/node_exporter_vm.service.j2` | role-template | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | ✅ sincronizado |
+| `ansible/roles/infra/authelia-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` | — |
+| `ansible/roles/infra/authelia-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` | — |
+| `ansible/roles/infra/authelia-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/infra/authelia-config/templates/users_database.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/infra/docker/defaults/main.yml` | role-defaults | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | — |
+| `ansible/roles/infra/docker/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | ✅ sincronizado |
+| `ansible/roles/infra/docker/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | ✅ sincronizado |
+| `ansible/roles/infra/proxmox-host-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/02-proxmox-ve-host.md` | ✅ sincronizado |
+| `ansible/roles/infra/proxmox-host-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md` | ✅ sincronizado |
+| `ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md` | ✅ sincronizado |
+| `ansible/roles/infra/proxmox-host-config/templates/node_exporter_host.service.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md` | ✅ sincronizado |
+| `ansible/roles/infra/proxmox-vm/defaults/main.yml` | role-defaults | `01-manual-implementacao/03-provisionamento-vms.md` | ✅ sincronizado |
+| `ansible/roles/infra/proxmox-vm/handlers/main.yml` | role-handlers | `01-manual-implementacao/03-provisionamento-vms.md` | ✅ sincronizado |
+| `ansible/roles/infra/proxmox-vm/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` | ✅ sincronizado |
+| `ansible/roles/infra/traefik-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` | — |
+| `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` | — |
+| `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/infra/traefik-config/templates/traefik.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` | ✅ sincronizado |
+| `ansible/roles/tools/ai-cli-tools/tasks/main.yml` | role-tasks | `03-guias-sustentacao/13-usando-geminicli.md` | ✅ sincronizado |
+| `ansible/templates/litellm_config.yaml.j2` | template | `01-manual-implementacao/08-stack-ia.md` | — |
+| `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md` | — |
+| `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` | — |
+| `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md` | — |
+| `ansible/templates/promtail-config.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md` | — |
+| `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md` | ✅ sincronizado |
+| `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` | — |
+| `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` | — |
+| `docker/stacks/core/docker-compose.yml` | stack | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md` | ✅ sincronizado |
+| `scripts/bootstrap.sh` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` | — |
+| `scripts/restore.sh` | script | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` | — |
+| `scripts/validation/check_nfs_permissions.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` | — |
+| `scripts/validation/check_yaml_integrity.py` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` | — |
+| `scripts/validation/validate_infrastructure.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` | — |
+
+## Serviços
+
+| Stack | Serviço | Imagem | Redes | Hosts (Traefik) |
+|---|---|---|---|---|
+| ai | litellm | ghcr.io/berriai/litellm:main-latest | `ai_network` | — |
+| ai | ollama | ollama/ollama:latest | `ai_network` | — |
+| ai | open-webui | ghcr.io/open-webui/open-webui:main | `ai_network` | — |
+| ai | openclaude | ghcr.io/openclaude/openclaude:latest | `ai_network` | — |
+| ai | openclaw | ghcr.io/openclaw/openclaw:latest | `ai_network` | — |
+| apps | grafana | grafana/grafana-oss:latest | `internal_services`, `proxy` | `grafana.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | grafana_db | postgres:15-alpine | `internal_services` | — |
+| apps | homeassistant | ghcr.io/home-assistant/home-assistant:latest | `proxy` | `hass.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | jellyfin | jellyfin/jellyfin:latest | `proxy` | `jellyfin.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | loki | grafana/loki:latest | `internal_services` | — |
+| apps | n8n | docker.n8n.io/n8nio/n8n:latest | `proxy` | `${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | nextcloud_app | nextcloud:latest | `internal_services`, `proxy` | `nextcloud.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | nextcloud_db | postgres:15-alpine | `internal_services` | — |
+| apps | nextcloud_redis | redis:7-alpine | `internal_services` | — |
+| apps | prometheus | prom/prometheus:latest | `internal_services`, `proxy` | `prometheus.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | promtail | grafana/promtail:latest | `internal_services` | — |
+| apps | qbittorrent | lscr.io/linuxserver/qbittorrent:latest | `internal_services`, `proxy` | `qbittorrent.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | radarr | lscr.io/linuxserver/radarr:latest | `internal_services`, `proxy` | `radarr.${BASE_DOMAIN_FROM_VAULT}` |
+| apps | sonarr | lscr.io/linuxserver/sonarr:latest | `internal_services`, `proxy` | `sonarr.${BASE_DOMAIN_FROM_VAULT}` |
+| core | authelia | authelia/authelia:4.38.0 | `internal_services`, `proxy` | `auth.${BASE_DOMAIN_FROM_VAULT}` |
+| core | authelia_db | postgres:15.6-alpine | `internal_services` | — |
+| core | cloudflared | cloudflare/cloudflared:2024.5.0 | `proxy` | — |
+| core | traefik | traefik:v2.11.2 | `proxy` | `traefik.${BASE_DOMAIN_FROM_VAULT}` |
+
+## Playbooks e roles
+
+| Playbook | Hosts | Roles | Importa |
+|---|---|---|---|
+| `ansible/playbooks/full-deploy.yml` | — | — | `setup-proxmox-host.yml`, `setup-base-ubuntu.yml`, `setup-core-networking.yml`, `setup-media-stack-volumes.yml`, `setup-n8n-volumes.yml`, `setup-ai-volumes.yml` |
+| `ansible/playbooks/setup-ai-volumes.yml` | `ai_desktop` | `../roles/apps/ml-tools` | — |
+| `ansible/playbooks/setup-base-ubuntu.yml` | `ubuntu_vms`, `core-services-vm` | `common`, `infra/docker` | — |
+| `ansible/playbooks/setup-core-networking.yml` | `core-services-vm` | — | — |
+| `ansible/playbooks/setup-media-stack-volumes.yml` | `core_services` | — | — |
+| `ansible/playbooks/setup-monitoring-stack-volumes.yml` | `core_services` | — | — |
+| `ansible/playbooks/setup-n8n-volumes.yml` | `core_services` | — | — |
+| `ansible/playbooks/setup-productivity-automation-volumes.yml` | `core_services` | — | — |
+| `ansible/playbooks/setup-proxmox-host.yml` | `proxmox_main_host` | `infra/proxmox-host-config` | — |
+| `ansible/playbooks/vm-deploy.yml` | `proxmox_main_host` | — | — |

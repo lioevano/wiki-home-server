@@ -1,0 +1,39 @@
+name: server-lint
+
+on:
+  push:
+    paths:
+      - "server/**"
+      - "tools/**"
+      - ".yamllint"
+      - "requirements-dev.txt"
+      - ".github/workflows/server-lint.yml"
+  pull_request:
+    paths:
+      - "server/**"
+      - "tools/**"
+      - ".yamllint"
+      - "requirements-dev.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ambiente
+        run: python tools/dev.py setup
+
+      - name: Lint (yamllint, ansible-lint, syntax-check)
+        run: python tools/dev.py lint
+
+      - name: Coerência wiki <-> server
+        run: python tools/dev.py check
