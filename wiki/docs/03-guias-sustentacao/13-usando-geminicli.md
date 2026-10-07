@@ -16,7 +16,7 @@ A instalação do GeminiCLI e a configuração da chave de API serão gerenciada
 1.  **Adicionar a Chave de API ao Vault:**
     Primeiro, obtenha uma chave de API para o Gemini no [Google AI Studio](https://aistudio.google.com/app/apikey). Em seguida, adicione-a ao seu `ansible/inventories/home/group_vars/all/vault.yml`.
 
-    ```yaml
+    ```yaml title="Trecho: ansible/inventories/home/group_vars/all/vault.yml"
     # ansible/inventories/home/group_vars/all/vault.yml
     # ...
     llm_api_keys:
@@ -30,7 +30,7 @@ A instalação do GeminiCLI e a configuração da chave de API serão gerenciada
     *   **Crie a estrutura do role:** `ansible/roles/tools/ai-cli-tools/`
     *   **Adicione a tarefa em `tasks/main.yml`:**
 
-        ```yaml
+        ```yaml title="ansible/roles/tools/ai-cli-tools/tasks/main.yml"
         # ansible/roles/tools/ai-cli-tools/tasks/main.yml
         - name: "Instalar GeminiCLI via pip"
           ansible.builtin.pip:

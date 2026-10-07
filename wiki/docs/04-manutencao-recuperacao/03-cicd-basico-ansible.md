@@ -167,7 +167,7 @@ Este é o fluxo de trabalho recomendado ao fazer alterações na sua configuraç
 
 Este playbook é o ponto de entrada principal para garantir que toda a sua infraestrutura base (configuração do host Proxmox, VMs, Docker, rede core, preparação de volumes para stacks) esteja configurada conforme definido no seu código Ansible. Ele importa e executa os outros playbooks de setup em uma sequência lógica.
 
-```yaml
+```yaml title="ansible/playbooks/full-deploy.yml"
 # ansible/playbooks/full-deploy.yml
 # Orquestra a configuração completa da infraestrutura.
 

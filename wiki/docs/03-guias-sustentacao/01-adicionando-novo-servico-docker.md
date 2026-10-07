@@ -63,7 +63,7 @@ Siga estes passos para garantir uma integração suave e bem-sucedida:
     *   No seu projeto `home-server/`, crie um novo diretório para a stack, por exemplo, `docker/stacks/novoservico/`.
     *   Dentro dele, crie o arquivo `docker-compose.yml`.
     *   **Estrutura Típica (Exemplo):**
-        ```yaml
+        ```yaml title="Exemplo: docker/stacks/novoservico/docker-compose.yml"
         # docker/stacks/novoservico/docker-compose.yml
         version: '3.9' # Ou a versão mais recente suportada pelo seu Docker Compose
 

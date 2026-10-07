@@ -195,7 +195,7 @@ Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os ar
 
 Este arquivo define as tarefas a serem executadas no host Proxmox.
 
-```yaml
+```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
 - name: "Atualizar repositórios Proxmox (remover enterprise, adicionar no-subscription)"
   ansible.builtin.block:
@@ -385,7 +385,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 #### Template `templates/node_exporter_host.service.j2`
 
-```systemd
+```systemd title="ansible/roles/infra/proxmox-host-config/templates/node_exporter_host.service.j2"
 # ansible/roles/infra/proxmox-host-config/templates/node_exporter_host.service.j2
 [Unit]
 Description=Node Exporter for Prometheus (Proxmox Host)
@@ -429,7 +429,7 @@ WantedBy=multi-user.target
 
 #### Template `templates/etc_exports.j2`
 
-```jinja
+```jinja title="ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2"
 # ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2
 # Gerenciado por Ansible - NÃO EDITE MANUALMENTE
 # Define os compartilhamentos NFS para os datasets ZFS do host Proxmox.
@@ -474,7 +474,7 @@ WantedBy=multi-user.target
 
 Handlers são tarefas que são executadas apenas se notificadas por uma mudança em outra tarefa.
 
-```yaml
+```yaml title="ansible/roles/infra/proxmox-host-config/handlers/main.yml"
 # ansible/roles/infra/proxmox-host-config/handlers/main.yml
 - name: Update apt cache
   ansible.builtin.apt:
@@ -522,7 +522,7 @@ Handlers são tarefas que são executadas apenas se notificadas por uma mudança
 
 Este é o playbook que você executará para aplicar o role `proxmox-host-config` ao seu host Proxmox. Certifique-se de que o arquivo `ansible/playbooks/setup-proxmox-host.yml` exista com o seguinte conteúdo:
 
-```yaml
+```yaml title="ansible/playbooks/setup-proxmox-host.yml"
 # ansible/playbooks/setup-proxmox-host.yml
 - hosts: proxmox_main_host # Alvo definido no seu inventário (ansible/inventories/home/hosts.ini)
   become: yes # A maioria das tarefas neste role requer privilégios de root

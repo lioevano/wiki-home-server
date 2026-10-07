@@ -161,7 +161,7 @@ Este role Ansible é o coração da automação do provisionamento de VMs. Ele �
 
 Valores padrão para o role. Estes podem ser sobrescritos no playbook que chama o role.
 
-```yaml
+```yaml title="ansible/roles/infra/proxmox-vm/defaults/main.yml"
 # ansible/roles/infra/proxmox-vm/defaults/main.yml
 # Variáveis padrão para o role proxmox-vm.
 # Valores obrigatórios (vm_id, vm_name, vm_ipconfig) devem ser definidos no playbook que chama o role.
@@ -210,7 +210,7 @@ vm_qemu_args: ""
 
 Tarefas para criar/configurar a VM.
 
-```yaml
+```yaml title="ansible/roles/infra/proxmox-vm/tasks/main.yml"
 # ansible/roles/infra/proxmox-vm/tasks/main.yml
 # Cria ou atualiza uma VM no Proxmox a partir de um template.
 
@@ -321,7 +321,7 @@ Tarefas para criar/configurar a VM.
 
 Handlers para o role `proxmox-vm`.
 
-```yaml
+```yaml title="ansible/roles/infra/proxmox-vm/handlers/main.yml"
 # ansible/roles/infra/proxmox-vm/handlers/main.yml
 - name: Configure VM settings
   ansible.builtin.debug:
@@ -347,7 +347,7 @@ Este playbook utiliza o role `proxmox-vm` para criar e configurar as VMs `core-s
 
 Certifique-se de que o arquivo `ansible/playbooks/vm-deploy.yml` exista com o seguinte conteúdo, **ajustando os IDs PCI para sua GPU RX 5600XT se for usar o passthrough para `ai-desktop-vm`**:
 
-```yaml
+```yaml title="ansible/playbooks/vm-deploy.yml"
 # ansible/playbooks/vm-deploy.yml
 - hosts: proxmox_main_host # O playbook é executado *contra* o host Proxmox
                           # pois as tasks do role proxmox-vm são delegadas (delegate_to: localhost)
@@ -515,7 +515,7 @@ Este role Ansible instala XFCE (um ambiente desktop leve) e TightVNCServer (para
 
 #### `tasks/main.yml`
 
-```yaml
+```yaml title="ansible/roles/apps/desktop-environment/tasks/main.yml"
 # ansible/roles/apps/desktop-environment/tasks/main.yml
 - name: "Atualizar apt cache e instalar ambiente XFCE e TightVNCServer"
   ansible.builtin.apt:

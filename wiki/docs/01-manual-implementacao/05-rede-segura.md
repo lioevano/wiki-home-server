@@ -35,7 +35,7 @@ Antes de mergulharmos na configuração, é vital entender como o tráfego de um
 
 Esta stack fundamental inclui os containers Traefik e Cloudflared. Crie o arquivo `home-server/docker/stacks/core/docker-compose.yml` com o seguinte conteúdo:
 
-```yaml
+```yaml title="docker/stacks/core/docker-compose.yml"
 # docker/stacks/core/docker-compose.yml
 version: '3.9'
 
@@ -124,7 +124,7 @@ services:
 ## 5.3. Authelia (parte de `docker/stacks/core/docker-compose.yml`)
 
 Authelia fornecerá o portal de autenticação e o serviço de 2FA. O conteúdo está incluído em `docker/stacks/core/docker-compose.yml` junto com Traefik e Cloudflared.
-```yaml
+```yaml title="Trecho: docker/stacks/core/docker-compose.yml (serviços Authelia)"
 # docker/stacks/core/docker-compose.yml (serviços Authelia)
 version: '3.9'
 
@@ -228,7 +228,7 @@ Este role prepara os arquivos de configuração do Traefik.
 
 ##### `tasks/main.yml`
 
-```yaml
+```yaml title="ansible/roles/infra/traefik-config/tasks/main.yml"
 # ansible/roles/infra/traefik-config/tasks/main.yml
 - name: "Garantir que diretórios de configuração do Traefik existam na VM (via NFS)"
   ansible.builtin.file:
@@ -288,7 +288,7 @@ Este role prepara os arquivos de configuração do Traefik.
 
 ##### `templates/traefik.yml.j2` (Configuração Estática)
 
-```yaml
+```yaml title="ansible/roles/infra/traefik-config/templates/traefik.yml.j2"
 # ansible/roles/infra/traefik-config/templates/traefik.yml.j2
 # Configuração Estática do Traefik (gerada por Ansible)
 
@@ -367,7 +367,7 @@ ping: {} # Habilita o entrypoint /ping para healthchecks do Traefik
 
 ##### `templates/security_headers.yml.j2` (Middleware de Segurança)
 
-```yaml
+```yaml title="ansible/roles/infra/traefik-config/templates/security_headers.yml.j2"
 # ansible/roles/infra/traefik-config/templates/security_headers.yml.j2
 # (Copiado para /etc/traefik/dynamic_configs/security_headers.yml no container Traefik)
 # Define um middleware para adicionar headers de segurança HTTP.
@@ -403,7 +403,7 @@ http:
 
 ##### `templates/dynamic_rag_services.yml.j2` (Roteamento para VM de IA)
 
-```yaml
+```yaml title="ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2"
 # ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2
 # (Copiado para /etc/traefik/dynamic_configs/rag_services.yml no container Traefik)
 # Define roteamento para serviços rodando na ai-desktop-vm (e.g., OpenWebUI).
@@ -444,7 +444,7 @@ http:
 
 ##### `templates/nextcloud_middleware.yml.j2` (Middleware para Nextcloud)
 
-```yaml
+```yaml title="ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2"
 # ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2
 # (Copiado para /etc/traefik/dynamic_configs/nextcloud_middleware.yml no container Traefik)
 # Define um middleware com headers recomendados para Nextcloud.
@@ -486,7 +486,7 @@ Este role prepara os arquivos de configuração do Authelia.
 
 ##### `tasks/main.yml`
 
-```yaml
+```yaml title="ansible/roles/infra/authelia-config/tasks/main.yml"
 # ansible/roles/infra/authelia-config/tasks/main.yml
 - name: "Garantir que diretórios de configuração do Authelia existam na VM (via NFS)"
   ansible.builtin.file:
@@ -518,7 +518,7 @@ Este role prepara os arquivos de configuração do Authelia.
 
 ##### `templates/configuration.yml.j2` (Configuração Principal Authelia)
 
-```yaml
+```yaml title="ansible/roles/infra/authelia-config/templates/configuration.yml.j2"
 # ansible/roles/infra/authelia-config/templates/configuration.yml.j2
 # Configuração Principal do Authelia (gerada por Ansible)
 
@@ -643,7 +643,7 @@ regulation:
 
 ##### `templates/users_database.yml.j2` (Exemplo de Usuários - se backend `file`)
 
-```yaml
+```yaml title="ansible/roles/infra/authelia-config/templates/users_database.yml.j2"
 # ansible/roles/infra/authelia-config/templates/users_database.yml.j2
 # Arquivo de Banco de Dados de Usuários Locais do Authelia (gerado por Ansible)
 # Hashes de senha DEVEM ser gerados com 'authelia crypto hash generate argon2'
@@ -679,7 +679,7 @@ users:
 
 Este playbook orquestra o deploy da stack de rede. Authelia agora está consolidado na mesma stack `core`.
 
-```yaml
+```yaml title="ansible/playbooks/setup-core-networking.yml"
 # ansible/playbooks/setup-core-networking.yml
 - hosts: core-services-vm
   become: yes

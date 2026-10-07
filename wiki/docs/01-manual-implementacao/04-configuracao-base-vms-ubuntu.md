@@ -24,7 +24,7 @@ Este role é fundamental, pois aplica configurações e instala pacotes que são
 
 Este arquivo contém as tarefas principais do role `common`.
 
-```yaml
+```yaml title="ansible/roles/common/tasks/main.yml"
 # ansible/roles/common/tasks/main.yml
 
 - name: "Aguardar cloud-init finalizar completamente na VM"
@@ -217,7 +217,7 @@ Este arquivo contém as tarefas principais do role `common`.
 
 Este template define o serviço systemd para o Node Exporter que roda dentro das VMs.
 
-```systemd
+```systemd title="ansible/roles/common/templates/node_exporter_vm.service.j2"
 # ansible/roles/common/templates/node_exporter_vm.service.j2
 [Unit]
 Description=Node Exporter for Prometheus (VM)
@@ -252,7 +252,7 @@ WantedBy=multi-user.target
 
 Handlers para o role `common`.
 
-```yaml
+```yaml title="ansible/roles/common/handlers/main.yml"
 # ansible/roles/common/handlers/main.yml
 - name: Reload systemd and restart node_exporter_vm
   ansible.builtin.systemd:
@@ -321,7 +321,7 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
 
 ### `tasks/main.yml`
 
-```yaml
+```yaml title="ansible/roles/infra/docker/tasks/main.yml"
 # ansible/roles/infra/docker/tasks/main.yml
 # Instala Docker Engine e Portainer CE na VM designada (core-services-vm).
 
@@ -422,7 +422,7 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
 
 Handler para o role `docker`.
 
-```yaml
+```yaml title="ansible/roles/infra/docker/handlers/main.yml"
 # ansible/roles/infra/docker/handlers/main.yml
 - name: Reiniciar VM para aplicar mudanças de grupo Docker
   ansible.builtin.reboot:
@@ -443,7 +443,7 @@ Este playbook orquestra a aplicação dos roles `common` e `docker` (e `apps/des
 
 Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista com o seguinte conteúdo:
 
-```yaml
+```yaml title="ansible/playbooks/setup-base-ubuntu.yml"
 # ansible/playbooks/setup-base-ubuntu.yml
 # Configura a base para todas as VMs Ubuntu e instala Docker/Portainer na VM de containers.
 

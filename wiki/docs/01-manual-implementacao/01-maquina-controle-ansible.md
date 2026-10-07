@@ -165,7 +165,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
 2.  **Adicione suas Variáveis Sensíveis ao `vault.yml`:**
     Após o comando `create`, o arquivo será aberto no seu editor de texto padrão (geralmente `vi` ou `nano`). Cole o conteúdo abaixo, **substituindo TODOS os placeholders em MAIÚSCULAS** com seus valores reais e secretos.
 
-    ```yaml
+    ```yaml title="ansible/inventories/home/group_vars/all/vault.yml"
     # ansible/inventories/home/group_vars/all/vault.yml
     # Edite SEMPRE com: ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml
 
@@ -255,7 +255,7 @@ O inventário Ansible é o coração da sua automação. Ele define:
 
 Crie o arquivo `home-server/ansible/inventories/home/hosts.ini`. Este arquivo define seus servidores e VMs. **Ajuste os endereços IP e nomes de host conforme sua rede e preferências.**
 
-```ini
+```ini title="ansible/inventories/home/hosts.ini"
 # ansible/inventories/home/hosts.ini
 
 # Grupo para o(s) seu(s) host(s) Proxmox VE
@@ -309,7 +309,7 @@ ai_desktop_vm_ip_var: 192.168.15.12
 
 Crie o arquivo `home-server/ansible/inventories/home/group_vars/all/main.yml`. Este arquivo define variáveis que se aplicam a todos os hosts no seu inventário e que não são secretas (segredos vão no `vault.yml`).
 
-```yaml
+```yaml title="ansible/inventories/home/group_vars/all/main.yml"
 # ansible/inventories/home/group_vars/all/main.yml
 
 # --- Configurações do Host Proxmox ---
