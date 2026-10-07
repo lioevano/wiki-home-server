@@ -27,6 +27,38 @@ def _cmd_check(cfg, args) -> int:
     return 1 if errors else 0
 
 
+def _cmd_apply(cfg, args) -> int:
+    from .apply import ApplyError, plan_apply, write_changes
+
+    try:
+        changes = plan_apply(cfg, only=args.path)
+    except ApplyError as exc:
+        print(f"wikisync: {exc}", file=sys.stderr)
+        return 1
+    if args.path and not changes and args.path not in _literal_paths(cfg):
+        print(f"wikisync: nenhum bloco literal para {args.path}", file=sys.stderr)
+        return 1
+    if not changes:
+        print("nada a aplicar: server já reflete os blocos literais da wiki")
+        return 0
+    for change in changes:
+        action = "criar" if change.old is None else "atualizar"
+        print(f"== {action}: server/{change.path}")
+        print(change.diff())
+    if args.yes:
+        write_changes(cfg, changes)
+        print(f"{len(changes)} arquivo(s) gravado(s)")
+    else:
+        print(f"{len(changes)} arquivo(s) a alterar — dry-run: use --yes para gravar")
+    return 0
+
+
+def _literal_paths(cfg) -> set[str]:
+    from .check import collect
+
+    return set(collect(cfg).literals)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="wikisync", description="Sincronização wiki (fonte da verdade) -> server.")
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="raiz do repositório")
@@ -34,6 +66,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_check = sub.add_parser("check", help="verifica divergências entre wiki e server")
     p_check.add_argument("--json", action="store_true", help="saída em JSON")
     p_check.set_defaults(func=_cmd_check)
+    p_apply = sub.add_parser("apply", help="copia blocos literais da wiki para o server (dry-run por padrão)")
+    p_apply.add_argument("--yes", action="store_true", help="grava as alterações")
+    p_apply.add_argument("--path", help="restringe a um caminho (relativo a server/)")
+    p_apply.set_defaults(func=_cmd_apply)
     return parser
 
 
