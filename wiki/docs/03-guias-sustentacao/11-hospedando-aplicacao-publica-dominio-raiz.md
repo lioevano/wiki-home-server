@@ -1,3 +1,7 @@
+---
+description: "Como publicar uma aplicação (ex.: blog) no domínio raiz com Cloudflare Tunnel e Traefik, sem passar pelo Authelia."
+---
+
 # Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)
 
 Em muitos casos, você pode desejar hospedar uma aplicação que seja publicamente acessível diretamente no seu domínio raiz (apex domain), por exemplo, `https://meudominio.com`, em vez de um subdomínio como `https://blog.meudominio.com`. Um caso de uso comum para isso é um blog pessoal, um site de portfólio, ou uma landing page.

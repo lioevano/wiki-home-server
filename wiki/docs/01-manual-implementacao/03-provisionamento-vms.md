@@ -1,3 +1,7 @@
+---
+description: "Cria as VMs core-services-vm e ai-desktop-vm a partir de template Cloud-Init com o role proxmox-vm, incluindo passthrough de GPU."
+---
+
 # Seção 3: Provisionamento das Máquinas Virtuais (VMs) com Ansible
 
 Com o host Proxmox VE devidamente configurado ([Seção 2](02-proxmox-ve-host.md)), o próximo passo é provisionar as máquinas virtuais (VMs) que hospedarão seus serviços containerizados. Utilizaremos o Ansible para automatizar a criação e configuração inicial dessas VMs a partir de um template Ubuntu Server Cloud-Init, garantindo consistência e repetibilidade.

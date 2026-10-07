@@ -1,3 +1,7 @@
+---
+description: "Quando e como adicionar um container a uma stack Docker existente em vez de criar uma stack nova."
+---
+
 # Integrando Novos Serviços a Stacks Docker Existentes
 
 Em muitos casos, ao adicionar uma nova funcionalidade ou um pequeno utilitário ao seu servidor doméstico, você pode não querer criar uma stack Docker completamente nova (ou seja, um novo arquivo `docker-compose.yml` e um novo "Stack" no Portainer) apenas para um único container. Em vez disso, pode ser mais lógico e organizado adicionar o novo serviço a uma **stack Docker já existente**, especialmente se o novo serviço estiver intimamente relacionado ou for um "companion" para os serviços já presentes naquela stack.

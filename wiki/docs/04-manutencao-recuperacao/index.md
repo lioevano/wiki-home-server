@@ -1,3 +1,7 @@
+---
+description: "Manutenção preventiva e recuperação de desastres: rotinas, backups, CI/CD, reconstrução e migração."
+---
+
 # ⚙️ Manutenção Preventiva e Recuperação de Desastres
 
 Bem-vindo à seção de Manutenção e Recuperação! Um servidor doméstico, por mais robusto e bem configurado que seja inicialmente, requer atenção e cuidados contínuos para garantir sua segurança, estabilidade e performance a longo prazo. Além disso, estar preparado para o inesperado – seja uma falha de hardware, um erro de software, ou um problema mais sério – com uma sólida estratégia de backup e um plano de recuperação testado é absolutamente crucial.

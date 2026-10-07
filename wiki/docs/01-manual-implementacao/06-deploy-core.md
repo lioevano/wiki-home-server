@@ -1,3 +1,7 @@
+---
+description: "Deploy da stack core (Traefik, Cloudflared e Authelia) no Portainer a partir de docker/stacks/core/docker-compose.yml."
+---
+
 # Seção 6: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia)
 
 A stack core é a base de rede: Traefik (proxy reverso), Cloudflared (túnel) e Authelia (autenticação 2FA). Tudo consolidado em `docker/stacks/core/docker-compose.yml`.

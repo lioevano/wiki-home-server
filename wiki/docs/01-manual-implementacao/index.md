@@ -1,3 +1,7 @@
+---
+description: "Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero."
+---
+
 # Manual de Implementação
 
 Guia passo a passo para implementar o servidor doméstico. Siga na ordem.

@@ -1,3 +1,7 @@
+---
+description: "Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura."
+---
+
 # Virtualização com Proxmox VE
 
 Proxmox Virtual Environment (PVE) é a espinha dorsal da nossa infraestrutura de servidor doméstico, fornecendo a plataforma para hospedar todas as nossas aplicações e serviços em máquinas virtuais (VMs) isoladas.

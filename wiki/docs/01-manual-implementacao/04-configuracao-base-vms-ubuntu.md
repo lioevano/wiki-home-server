@@ -1,3 +1,7 @@
+---
+description: "Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e Node Exporter."
+---
+
 # Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS)
 
 Com as máquinas virtuais (`core-services-vm` e, opcionalmente, `ai-desktop-vm`) devidamente provisionadas ([Seção 3](03-provisionamento-vms.md)), o próximo passo é realizar a configuração base essencial dentro delas. Este processo é automatizado pelo Ansible e inclui:

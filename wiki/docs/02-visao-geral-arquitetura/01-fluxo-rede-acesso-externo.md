@@ -1,3 +1,7 @@
+---
+description: "Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo."
+---
+
 # Fluxo de Rede e Acesso Externo Seguro
 
 A capacidade de acessar seus serviços auto-hospedados de qualquer lugar, de forma segura, é uma das principais funcionalidades desta arquitetura. Utilizamos uma combinação de Cloudflare Tunnel, Traefik como proxy reverso e Authelia para autenticação de dois fatores (2FA) para alcançar este objetivo.

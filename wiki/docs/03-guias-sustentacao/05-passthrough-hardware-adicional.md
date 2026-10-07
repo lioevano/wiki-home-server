@@ -1,3 +1,7 @@
+---
+description: "Como passar dispositivos de hardware adicionais (USB, discos, PCI) do host Proxmox para VMs e containers."
+---
+
 # Passthrough de Hardware Adicional para VMs e Containers
 
 Além do passthrough de GPU já abordado para a `ai-desktop-vm` ([Seção 3.4 do Manual de Implementação](../01-manual-implementacao/03-provisionamento-vms.md#34-configuração-de-gpu-passthrough-host-proxmox)), você pode encontrar cenários onde precisa passar outros tipos de dispositivos de hardware do seu host Proxmox VE diretamente para suas máquinas virtuais (VMs) ou, subsequentemente, para containers Docker rodando dentro dessas VMs.

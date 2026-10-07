@@ -1,3 +1,7 @@
+---
+description: "Checklist e exemplo prático para adicionar um novo serviço Docker com volumes, Traefik, Authelia e Ansible."
+---
+
 # Adicionando um Novo Serviço Docker à Infraestrutura
 
 Uma das grandes vantagens da nossa arquitetura baseada em Docker, Portainer e Traefik é a facilidade com que podemos adicionar novos serviços e aplicações ao nosso servidor doméstico. Este guia fornece um checklist detalhado e um exemplo prático para integrar uma nova aplicação containerizada de forma segura e consistente com o restante da infraestrutura.

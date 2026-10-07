@@ -1,3 +1,7 @@
+---
+description: "Onde ficam as configurações (Ansible, compose, Portainer) e como alterá-las com segurança e rastreabilidade."
+---
+
 # Modificando Configurações Existentes
 
 Sua infraestrutura de servidor doméstico é uma entidade viva. Com o tempo, você inevitavelmente precisará ajustar configurações, atualizar parâmetros, ou refinar o comportamento de serviços existentes. Este guia descreve onde as principais peças de configuração residem em nossa arquitetura e como abordá-las de forma segura e consistente, mantendo a integridade da sua Infraestrutura como Código (IaC).

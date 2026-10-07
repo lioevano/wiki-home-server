@@ -1,3 +1,7 @@
+---
+description: "Guias para modificar, expandir e manter a infraestrutura depois da implementação inicial."
+---
+
 # 🛠️ Guias de Sustentação e Modificação da Infraestrutura
 
 Bem-vindo à seção de **Guias de Sustentação e Modificação** da sua infraestrutura de servidor doméstico! Após ter concluído a [Implementação Inicial](../01-manual-implementacao/index.md) e ter uma compreensão da [Visão Geral da Arquitetura](../02-visao-geral-arquitetura/index.md), esta seção é o seu manual prático para as operações do dia-a-dia, para realizar alterações, adicionar novos serviços e funcionalidades, solucionar problemas comuns, e gerenciar os diversos componentes do seu setup.

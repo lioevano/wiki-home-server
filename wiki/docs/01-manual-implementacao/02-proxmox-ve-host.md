@@ -1,3 +1,7 @@
+---
+description: "Instala e configura o host Proxmox VE: repositórios, pool ZFS, servidor NFS, firewall e Node Exporter via role proxmox-host-config."
+---
+
 # Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS)
 
 Nesta seção crucial, instalaremos o Proxmox VE no seu servidor físico. Em seguida, realizaremos as configurações base essenciais, incluindo a criação de um pool ZFS resiliente para armazenamento de dados e a configuração de um servidor NFS para compartilhar esses dados com as futuras máquinas virtuais que hospedarão nossos containers Docker.

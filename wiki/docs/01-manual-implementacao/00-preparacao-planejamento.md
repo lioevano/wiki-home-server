@@ -1,3 +1,7 @@
+---
+description: "Pré-requisitos, estrutura do repositório (server/, wiki/, tools/), .gitignore e modelo de variáveis das stacks antes de começar."
+---
+
 # Seção 0: Preparação e Planejamento
 
 Antes de sair apertando botão, um planejamento cuidadoso e a preparação do ambiente são fundamentais para o sucesso do seu servidor doméstico. ~~Tipo eu que elaborei esta wiki antes mesmo de começar a implementar.~~ Esta seção aborda os pré-requisitos, a organização do projeto e considerações iniciais de segurança e resiliência.

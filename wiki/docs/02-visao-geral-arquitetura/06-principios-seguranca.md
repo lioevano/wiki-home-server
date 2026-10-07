@@ -1,3 +1,7 @@
+---
+description: "Princípios de segurança aplicados: defesa em camadas, menor privilégio, 2FA, firewall e gestão de segredos."
+---
+
 # Princípios de Segurança Aplicados
 
 A segurança é uma preocupação primordial em qualquer servidor, especialmente um que pode expor serviços à internet. Esta arquitetura foi projetada com vários princípios e camadas de segurança em mente.

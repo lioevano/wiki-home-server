@@ -1,3 +1,7 @@
+---
+description: "Wiki do servidor doméstico do Léo Ivan: Proxmox, Ansible, Docker, ZFS, Cloudflare Tunnel, Traefik e Authelia, com o mapa das seções."
+---
+
 # Guia do Servidor do Léo Ivan
 
 Esta wiki é o que eu fiz para não me perder quando resolvi elaborar uma grande arquitetura doméstica, pensando em longevidade, uma estrutura que pudesse perdurar mesmo após a troca de componentes do meu computador atual e resolver problemas de longo prazo.

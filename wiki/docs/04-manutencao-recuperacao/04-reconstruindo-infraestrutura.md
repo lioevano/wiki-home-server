@@ -1,3 +1,7 @@
+---
+description: "Como reconstruir a infraestrutura após falha grave do disco do sistema, usando Git, Ansible e o pool ZFS."
+---
+
 # Reconstruindo a Infraestrutura Após uma Falha Grave
 
 Apesar de todos os nossos esforços de manutenção preventiva e redundância (como o pool ZFS `/data` em RAID 1), falhas de hardware catastróficas podem ocorrer. O cenário mais impactante seria a falha do seu SSD NVMe principal, que hospeda o sistema operacional Proxmox VE e os discos virtuais das suas máquinas virtuais. Outros cenários podem incluir corrupção irreparável do sistema operacional do host Proxmox ou um desastre físico que afete o servidor.

@@ -1,3 +1,7 @@
+---
+description: "Como adaptar a infraestrutura a um novo hardware ou a mudanças de rede (novo IP, sub-rede ou roteador)."
+---
+
 # Adaptando a Infraestrutura para Novo Hardware ou Mudanças de Rede
 
 Com o tempo, você pode se deparar com a necessidade de migrar seu servidor doméstico para um **novo hardware físico** ou de adaptar sua configuração existente a **mudanças significativas na sua rede local**, como um novo roteador que impõe um esquema de endereçamento IP diferente.

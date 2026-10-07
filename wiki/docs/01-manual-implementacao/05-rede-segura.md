@@ -1,3 +1,7 @@
+---
+description: "Rede segura na core-services-vm: Traefik como proxy reverso, Cloudflare Tunnel para acesso externo e Authelia para 2FA."
+---
+
 # Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia)
 
 Esta seção é fundamental para expor seus serviços auto-hospedados à internet de forma segura, controlada e gerenciada. Implementaremos uma stack de rede robusta na `core-services-vm` composta por:

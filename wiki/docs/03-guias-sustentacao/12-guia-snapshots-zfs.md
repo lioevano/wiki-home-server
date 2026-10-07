@@ -1,3 +1,7 @@
+---
+description: "Guia prático de snapshots ZFS: criar, listar, reverter, automatizar e usá-los antes de mudanças arriscadas."
+---
+
 # Guia Prático de Snapshots ZFS
 
 Os snapshots ZFS são uma das funcionalidades mais poderosas e distintivas do ZFS, oferecendo uma maneira incrivelmente eficiente e rápida de capturar o estado de um dataset (seja um sistema de arquivos ZFS ou um ZVOL - ZFS Volume) em um ponto específico no tempo. Eles são uma ferramenta crucial para:

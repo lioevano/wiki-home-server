@@ -1,3 +1,7 @@
+---
+description: "Stack de IA na ai-desktop-vm: Ollama, LiteLLM, Open WebUI, OpenClaw e OpenClaude, com volumes e configuração do LiteLLM."
+---
+
 # Seção 8: Stack de IA (Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude)
 
 A stack de IA roda na `ai-desktop-vm`. Todos os serviços estão em `docker/stacks/ai/docker-compose.yml`.

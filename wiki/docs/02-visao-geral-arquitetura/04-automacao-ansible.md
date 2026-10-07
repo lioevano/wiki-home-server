@@ -1,3 +1,7 @@
+---
+description: "Infraestrutura como código com Ansible: inventário, roles, playbooks e Vault, e como eles se organizam no projeto."
+---
+
 # Automação da Infraestrutura com Ansible
 
 Ansible é a ferramenta de automação escolhida para esta arquitetura, permitindo que configuremos e gerencemos nosso servidor doméstico de forma programática, consistente e repetível. Isso é um pilar da filosofia de Infraestrutura como Código (IaC).

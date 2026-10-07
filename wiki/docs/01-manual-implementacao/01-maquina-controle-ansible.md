@@ -1,3 +1,7 @@
+---
+description: "Prepara a máquina de controle: Ansible, chaves SSH, Ansible Vault, inventário hosts.ini e variáveis globais em group_vars."
+---
+
 # Seção 1: Configuração da Máquina de Controle Ansible
 
 A máquina de controle Ansible é o seu "cockpit" para automação. É a partir dela que você executará os playbooks Ansible para provisionar, configurar e gerenciar toda a sua infraestrutura de servidor doméstico.

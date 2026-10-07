@@ -1,3 +1,7 @@
+---
+description: "Referência rápida: tecnologias usadas, para que servem, links da documentação oficial e alternativas."
+---
+
 # 📎 Referência Rápida
 
 Conceitos essenciais, links úteis e alternativas para o servidor doméstico.

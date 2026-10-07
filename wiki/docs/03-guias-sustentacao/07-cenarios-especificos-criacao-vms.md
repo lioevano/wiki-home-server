@@ -1,3 +1,7 @@
+---
+description: "Cenários para criar VMs com propósito específico além da core-services-vm e da ai-desktop-vm."
+---
+
 # Cenários Específicos de Criação de Máquinas Virtuais (VMs)
 
 Embora nossa arquitetura principal se concentre na `core-services-vm` (para a maioria dos serviços Docker) e na `ai-desktop-vm` (para tarefas de IA com GPU passthrough), podem surgir cenários onde você precise ou deseje criar máquinas virtuais com propósitos mais específicos e isolados. Este guia explora alguns desses cenários comuns e as considerações para implementá-los no seu ambiente Proxmox VE.

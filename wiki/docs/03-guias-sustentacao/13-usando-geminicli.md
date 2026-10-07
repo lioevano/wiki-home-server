@@ -1,4 +1,8 @@
 ---
+description: "Instala o Gemini CLI nas VMs via Ansible e mostra como usá-lo no terminal para manutenção e troubleshooting."
+---
+
+---
 
 ## 13. Usando o GeminiCLI para Interação Inteligente com o Servidor
 

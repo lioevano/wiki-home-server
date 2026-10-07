@@ -1,3 +1,7 @@
+---
+description: "Docker, Docker Compose e Portainer: como as stacks de containers são definidas, implantadas e gerenciadas."
+---
+
 # Gerenciamento de Containers com Docker e Portainer
 
 Containers Docker são a tecnologia fundamental para empacotar, distribuir e executar as diversas aplicações e serviços do nosso servidor doméstico. Portainer fornece uma interface gráfica amigável para gerenciar esses containers.

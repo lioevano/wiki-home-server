@@ -1,3 +1,7 @@
+---
+description: "Rotinas periódicas de manutenção (atualizações, ZFS scrub, logs, certificados) e scripts de validação do server."
+---
+
 # Rotinas de Manutenção Essenciais
 
 A manutenção preventiva e regular é a chave para um servidor doméstico estável, seguro e com bom desempenho a longo prazo. Estabelecer rotinas para as tarefas descritas abaixo ajudará a evitar problemas inesperados, a manter seu sistema protegido contra vulnerabilidades e a garantir que seus dados estejam seguros.

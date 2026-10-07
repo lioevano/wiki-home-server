@@ -1,3 +1,7 @@
+---
+description: "Ajuste de CPU, RAM e disco das VMs no Proxmox mantendo o Ansible como fonte da verdade."
+---
+
 # Gerenciando Recursos de Máquinas Virtuais (VMs)
 
 À medida que seu servidor doméstico evolui, seus serviços crescem, ou suas necessidades mudam, você provavelmente precisará ajustar os recursos alocados para suas máquinas virtuais (VMs). Esta página aborda como gerenciar CPU, RAM e discos de VMs existentes no Proxmox VE, com a importante consideração de manter a consistência com sua configuração Ansible (Infraestrutura como Código - IaC).

@@ -1,3 +1,7 @@
+---
+description: "Visão conceitual de como virtualização, armazenamento, automação, containers, rede e segurança se integram no servidor."
+---
+
 # 💡 Visão Geral da Arquitetura
 
 Bem-vindo à seção de Visão Geral da Arquitetura! Após a implementação detalhada no [Manual de Implementação](../01-manual-implementacao/index.md), esta seção tem como objetivo fornecer um entendimento conceitual de como os diversos componentes do seu servidor doméstico se integram e operam em conjunto.

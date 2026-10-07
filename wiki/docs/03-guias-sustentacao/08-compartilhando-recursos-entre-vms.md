@@ -1,3 +1,7 @@
+---
+description: "Compartilhamento de arquivos, bancos de dados e serviços entre VMs e com a rede local (NFS, Samba, PostgreSQL)."
+---
+
 # Compartilhando Recursos Entre VMs ou com a Rede Local
 
 Em um ambiente de servidor doméstico, frequentemente surge a necessidade de compartilhar arquivos, bancos de dados ou outros recursos não apenas entre containers Docker dentro de uma mesma VM, mas também entre diferentes máquinas virtuais (VMs) ou entre suas VMs e outros dispositivos na sua rede local (como seu desktop, laptop ou media players).

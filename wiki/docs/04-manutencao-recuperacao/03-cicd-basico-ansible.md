@@ -1,3 +1,7 @@
+---
+description: "CI/CD básico para a infraestrutura como código: lint, testes e execução controlada dos playbooks Ansible."
+---
+
 # CI/CD Básico para Infraestrutura como Código (Ansible)
 
 Gerenciar sua infraestrutura de servidor doméstico como código (IaC) com Ansible e versioná-la com Git não apenas torna sua configuração repetível e documentada, mas também abre a porta para um fluxo de trabalho similar ao de desenvolvimento de software, incluindo conceitos de Integração Contínua (CI) e Entrega/Deploy Contínuo (CD) – mesmo que de forma simplificada para um ambiente de homelab.

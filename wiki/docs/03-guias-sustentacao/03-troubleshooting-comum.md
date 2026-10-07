@@ -1,3 +1,7 @@
+---
+description: "Ferramentas e soluções para os problemas mais comuns: rede, containers, NFS, Traefik, Authelia e VMs."
+---
+
 # Guia de Troubleshooting Comum
 
 Mesmo com uma configuração cuidadosa e automatizada, problemas podem (e irão!) surgir no seu servidor doméstico. Saber como diagnosticar e resolver esses problemas é uma habilidade essencial. Este guia oferece um ponto de partida com ferramentas, técnicas e soluções para alguns dos cenários de erro mais comuns que você pode encontrar.

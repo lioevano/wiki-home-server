@@ -1,3 +1,7 @@
+---
+description: "Como atualizar com segurança Proxmox VE, Docker, Traefik, Authelia e outros componentes críticos."
+---
+
 # Atualização Segura de Componentes Críticos da Infraestrutura
 
 Manter sua infraestrutura de servidor doméstico atualizada é vital para a segurança (recebendo os últimos patches de vulnerabilidade) e para ter acesso a novas funcionalidades e correções de bugs. No entanto, atualizar componentes críticos como o sistema operacional do host Proxmox VE, o Docker Engine, ou os pilares da nossa rede como Traefik e Authelia, requer mais cautela do que simplesmente atualizar uma aplicação Docker comum. Falhas durante essas atualizações podem ter um impacto significativo em todos os seus serviços.

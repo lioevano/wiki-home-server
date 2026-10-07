@@ -1,3 +1,7 @@
+---
+description: "Estratégia de backup 3-2-1 e procedimentos de restauração de VMs, volumes e configurações."
+---
+
 # Estratégia de Backup e Procedimentos de Restauração
 
 Uma estratégia de backup abrangente, bem planejada e regularmente testada é a sua apólice de seguro mais valiosa contra a perda de dados. Falhas de hardware, corrupção de software, erros humanos, ou até mesmo eventos maliciosos como ransomware podem ocorrer, e ter backups confiáveis é o que determinará se você pode se recuperar completamente ou se enfrentará uma perda de dados catastrófica.

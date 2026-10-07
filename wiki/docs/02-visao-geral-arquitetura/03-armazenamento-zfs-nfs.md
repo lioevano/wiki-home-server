@@ -1,3 +1,7 @@
+---
+description: "Estratégia de armazenamento: pool ZFS no host Proxmox, datasets e compartilhamento com as VMs via NFS."
+---
+
 # Estratégia de Armazenamento com ZFS e NFS
 
 Uma estratégia de armazenamento robusta e resiliente é vital para a segurança e disponibilidade dos dados do seu servidor doméstico. Nesta arquitetura, utilizamos o ZFS no host Proxmox para gerenciamento avançado de discos e o NFS para compartilhar esse armazenamento com as máquinas virtuais.
