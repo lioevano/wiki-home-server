@@ -1,0 +1,4 @@
+# ansible/roles/infra/docker/defaults/main.yml
+docker_ce_version: "" # Deixe vazio para instalar a última versão disponível
+portainer_ce_image: "portainer/portainer-ce:2.19.4"
+docker_proxy_network_name: "proxy"

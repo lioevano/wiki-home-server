@@ -1,0 +1,74 @@
+# ansible/roles/infra/traefik-config/templates/traefik.yml.j2
+# Configuração Estática do Traefik (gerada por Ansible)
+
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false # Desabilitar telemetria para privacidade
+
+# API e Dashboard do Traefik (será acessível via rota segura definida nas labels do container Traefik)
+api:
+  dashboard: true
+  # insecure: true # APENAS para debug local em ambiente isolado. NUNCA em produção. Removido.
+
+# EntryPoints (Pontos de Entrada HTTP e HTTPS)
+entryPoints:
+  web: # Entrypoint para HTTP na porta 80
+    address: ":80"
+    http:
+      redirections: # Redirecionar todo tráfego HTTP para HTTPS
+        entryPoint:
+          to: "websecure" # Nome do entrypoint HTTPS
+          scheme: "https"
+          permanent: true # Usa redirecionamento 301 (permanente)
+  websecure: # Entrypoint principal para HTTPS na porta 443
+    address: ":443"
+    http:
+      tls:
+        certResolver: "letsencrypt" # Resolvedor padrão para certificados TLS
+        domains: # Opcional: Define domínios para os quais gerar certificados "on-demand"
+          - main: "{{ base_domain }}" # Seu domínio principal
+            sans: # Subdomínios alternativos (SANs)
+              - "*.{{ base_domain }}" # Wildcard para todos os subdomínios
+      middlewares: # Middlewares globais aplicados a TODAS as rotas no entrypoint websecure
+        - "securityHeaders@file" # Referencia o middleware de headers de segurança (definido em dynamic/security_headers.yml)
+
+# Provedores de Configuração (Docker e Arquivos para configs dinâmicas)
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock" # Socket Docker para detectar containers
+    exposedByDefault: false # APENAS containers com label 'traefik.enable=true' são expostos
+    network: "proxy" # Rede Docker padrão onde Traefik procura por containers a serem expostos
+    # watch: true # Padrão, Traefik monitora eventos Docker
+  file:
+    # Diretório para arquivos de configuração dinâmica (e.g., middlewares, serviços manuais)
+    # O caminho é DENTRO do container Traefik, mapeado do volume NFS.
+    directory: "/etc/traefik/dynamic_configs" # Corresponde ao volume montado no docker-compose do Traefik
+    watch: true # Traefik monitora este diretório por mudanças e recarrega dinamicamente
+
+# Resolvedores de Certificados (Let's Encrypt)
+certificatesResolvers:
+  letsencrypt: # Nome do resolvedor (usado em entrypoints e routers)
+    acme:
+      email: "{{ letsencrypt_email }}" # Email para notificações da Let's Encrypt (do vault.yml)
+      storage: "/data/acme.json"      # Onde os certificados são armazenados (DENTRO do container Traefik)
+      # Desafio DNS-01 usando Cloudflare API Token
+      # O token é passado como variável de ambiente para o container Traefik.
+      dnsChallenge:
+        provider: "cloudflare"
+        # delayBeforeCheck: 0 # Padrão geralmente funciona bem
+        # resolvers: # Opcional: especificar servidores DNS para verificação do desafio
+        #  - "1.1.1.1:53"
+        #  - "8.8.8.8:53"
+
+# Configurações de Log (opcional, mas útil para debug)
+log:
+  level: INFO # Níveis: DEBUG, INFO, WARNING, ERROR, FATAL, PANIC
+  filePath: "/data/traefik.log" # Caminho DENTRO do container Traefik (mapeado para volume NFS)
+  format: json # Ou common
+accessLog:
+  filePath: "/data/access.log" # Caminho DENTRO do container Traefik
+  format: json # Ou common
+  bufferingSize: 100 # Número de linhas de log para bufferizar antes de escrever
+
+# Healthcheck para o container Traefik (usado por depends_on: condition: service_healthy no docker-compose)
+ping: {} # Habilita o entrypoint /ping para healthchecks do Traefik

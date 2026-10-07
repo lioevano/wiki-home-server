@@ -1,0 +1,29 @@
+# ansible/templates/portainer_stack_env.j2
+# Gerado por Ansible para a stack {{ stack_name }}
+# Use este arquivo no Portainer: Add Stack -> Environment Variables -> Advanced mode
+# Caminho na VM: {{ portainer_env_files_dest_path_on_vm }}/{{ stack_name }}.env
+
+# --- Variáveis Comuns (resolvidas do Ansible vault/main.yml) ---
+DOCKER_PUID={{ docker_puid }}
+DOCKER_PGID={{ docker_pgid }}
+SYSTEM_TIMEZONE={{ system_timezone }}
+BASE_DOMAIN_FROM_VAULT={{ base_domain }}
+
+{% if CORE_SERVICES_VM_IP_VAR is defined %}
+CORE_SERVICES_VM_IP_VAR={{ CORE_SERVICES_VM_IP_VAR }}
+{% endif %}
+{% if AI_DESKTOP_VM_IP_VAR is defined %}
+AI_DESKTOP_VM_IP_VAR={{ AI_DESKTOP_VM_IP_VAR }}
+{% endif %}
+
+# --- Caminhos de Volume Base (montados via NFS do Proxmox Host) ---
+VM_NFS_MOUNT_BASE_PATH={{ vm_nfs_mount_base_path }}
+ZFS_DOCKER_VOLUMES_DATASET_NAME={{ zfs_docker_volumes_dataset_name }}
+ZFS_MEDIA_DATASET_NAME={{ zfs_media_dataset_name }}
+ZFS_DOWNLOADS_DATASET_NAME={{ zfs_downloads_dataset_name }}
+ZFS_RAG_SOURCES_DATASET_NAME={{ zfs_rag_sources_dataset_name }}
+
+# --- Caminhos Específicos para a Stack ---
+{% for config in stack_configs | default([]) %}
+{{ config.name }}={{ config.value }}
+{% endfor %}

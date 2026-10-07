@@ -1,0 +1,10 @@
+---
+- name: Configuração base do host Proxmox
+  hosts: proxmox
+  # become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  roles:
+    - infra/proxmox-host-config

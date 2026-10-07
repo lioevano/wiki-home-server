@@ -1,0 +1,36 @@
+# ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2
+# (Copiado para /etc/traefik/dynamic_configs/rag_services.yml no container Traefik)
+# Define roteamento para serviços rodando na ai-desktop-vm (e.g., OpenWebUI).
+# Usa o File Provider do Traefik para definir serviços que não são descobertos via Docker (porque estão em outra VM).
+http:
+  routers:
+    openwebui-dynamic: # Roteador para OpenWebUI
+      entryPoints: ["websecure"] # Usa o entrypoint HTTPS
+      rule: "Host(`openwebui.{{ base_domain }}`)" # Subdomínio para OpenWebUI
+      service: "openwebui-svc-dynamic" # Nome do serviço Traefik definido abaixo
+      tls:
+        certResolver: "letsencrypt" # Usa Let's Encrypt
+      middlewares:
+        - "authelia@docker" # Protegido por Authelia (middleware definido no compose do Authelia)
+
+    # Adicione aqui roteadores para outros serviços RAG/AI na ai-desktop-vm se necessário
+    # Exemplo para um hipotético OpenNotebookLM
+    # opennotebooklm-dynamic:
+    #   entryPoints: ["websecure"]
+    #   rule: "Host(`notebooklm.{{ base_domain }}`)"
+    #   service: "opennotebooklm-svc-dynamic"
+    #   tls: { certResolver: "letsencrypt" }
+    #   middlewares: ["authelia@docker"]
+
+  services:
+    openwebui-svc-dynamic: # Serviço Traefik para OpenWebUI
+      loadBalancer:
+        servers:
+          # Aponta para o IP da ai-desktop-vm e a porta interna do container OpenWebUI.
+          # A variável ai_desktop_vm_ip_var vem do inventário Ansible (hosts.ini).
+          - url: "http://{{ ai_desktop_vm_ip_var }}:8080" # Porta que OpenWebUI expõe na ai-desktop-vm
+
+    # opennotebooklm-svc-dynamic:
+    #   loadBalancer:
+    #     servers:
+    #       - url: "http://{{ ai_desktop_vm_ip_var }}:7860" # Porta interna do Open-NotebookLM

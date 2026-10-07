@@ -1,0 +1,28 @@
+# ansible/roles/infra/traefik-config/templates/security_headers.yml.j2
+# (Copiado para /etc/traefik/dynamic_configs/security_headers.yml no container Traefik)
+# Define um middleware para adicionar headers de segurança HTTP.
+http:
+  middlewares:
+    securityHeaders: # Nome do middleware (referenciado em entrypoints ou routers)
+      headers:
+        # Habilita o filtro XSS do navegador (obsoleto em navegadores modernos, mas não prejudicial)
+        browserXssFilter: true
+        # Impede que o navegador tente adivinhar o tipo de conteúdo (MIME-sniffing)
+        contentTypeNosniff: true
+        # Força o uso de HSTS (HTTP Strict Transport Security)
+        forceSTSHeader: true
+        stsIncludeSubdomains: true # Aplica HSTS a todos os subdomínios
+        stsPreload: true           # Permite que seu domínio seja incluído na lista de preload HSTS
+        stsSeconds: 31536000       # Duração do HSTS em segundos (1 ano). CUIDADO: habilite apenas quando tudo estiver funcionando 100% em HTTPS.
+        # Previne clickjacking, permitindo iframes apenas do mesmo domínio.
+        customFrameOptionsValue: "SAMEORIGIN"
+        # Content-Security-Policy (CSP) - ALTAMENTE RECOMENDADO, mas requer ajuste fino por aplicação.
+        # Este é um exemplo básico. Você precisará ajustá-lo para seus serviços específicos.
+        # contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'self' *.{{ base_domain }};"
+        # Controla quais informações de referer são enviadas.
+        referrerPolicy: "strict-origin-when-cross-origin"
+        # Controla o acesso a APIs do navegador.
+        permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), vr=()"
+        # Adiciona outros headers de segurança conforme necessário
+        # X-Content-Type-Options: "nosniff" (já coberto por contentTypeNosniff)
+        # Strict-Transport-Security: (já coberto por stsSeconds, etc.)

@@ -1,0 +1,91 @@
+# ansible/roles/infra/proxmox-host-config/tasks/main.yml
+# Configuração do host Proxmox: repositórios, pacotes, ZFS, NFS e segurança de rede
+
+- name: "Remover repositórios Enterprise que exigem subscrição"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/sources.list.d/pve-enterprise.list
+    - /etc/apt/sources.list.d/ceph.list
+
+- name: "Adicionar repositório Proxmox No-Subscription"
+  ansible.builtin.apt_repository:
+    repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+    state: present
+    filename: pve-no-subscription
+    update_cache: yes
+
+- name: "Instalar pacotes essenciais no host Proxmox"
+  ansible.builtin.apt:
+    name:
+      - htop
+      - ncdu
+      - git
+      - curl
+      - wget
+      - nfs-kernel-server
+      - smartmontools
+    state: present
+
+- name: "Configurar timezone do host"
+  community.general.timezone:
+    name: "{{ system_timezone }}"
+
+# --- ZFS Pool Creation ---
+- name: "Verificar se o pool ZFS '/data' já existe"
+  ansible.builtin.command: zpool list data
+  register: zpool_data_check
+  changed_when: false
+  failed_when: false
+
+- name: "Criar pool ZFS espelhado '/data' se não existir"
+  when: zpool_data_check.rc != 0
+  ansible.builtin.command: >
+    zpool create -f data mirror /dev/disk/by-id/{{ zfs_disk_1 }} /dev/disk/by-id/{{ zfs_disk_2 }}
+  register: zpool_create_result
+  changed_when: zpool_create_result.rc == 0
+
+- name: "Criar datasets ZFS no pool '/data'"
+  ansible.builtin.command: >
+    zfs create -o mountpoint=/data/{{ item }} data/{{ item }}
+  args:
+    creates: "/data/{{ item }}"
+  loop:
+    - "{{ zfs_docker_volumes_dataset_name }}"
+    - "{{ zfs_media_dataset_name }}"
+    - "{{ zfs_downloads_dataset_name }}"
+    - "{{ zfs_rag_sources_dataset_name }}"
+    - "{{ zfs_backups_dataset_name }}"
+
+# --- NFS Server Setup ---
+- name: "Configurar exportações NFS para o pool ZFS '/data'"
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "/data/{{ item }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})"
+    create: yes
+    mode: '0644'
+  loop:
+    - "{{ zfs_docker_volumes_dataset_name }}"
+    - "{{ zfs_media_dataset_name }}"
+    - "{{ zfs_downloads_dataset_name }}"
+    - "{{ zfs_rag_sources_dataset_name }}"
+    - "{{ zfs_backups_dataset_name }}"
+  notify: Restart NFS server
+
+- name: "Aplicar novas exportações NFS (exportfs -ra)"
+  ansible.builtin.command: exportfs -ra
+  changed_when: true
+
+- name: "Garantir que serviço NFS está habilitado e rodando"
+  ansible.builtin.systemd_service:
+    name: nfs-kernel-server
+    state: started
+    enabled: yes
+
+# --- Security: Firewall rules ---
+- name: "Garantir que pve-firewall está habilitado e rodando"
+  ansible.builtin.systemd_service:
+    name: pve-firewall
+    state: started
+    enabled: yes

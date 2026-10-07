@@ -1,0 +1,164 @@
+# ansible/playbooks/setup-monitoring-stack-volumes.yml
+- name: Setup Monitoring Stack Volumes and Environment
+  hosts: core_services
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+
+  tasks:
+    - name: Garantir diretório de envs do Portainer
+      ansible.builtin.file:
+        path: "{{ portainer_env_files_dest_path_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    # --- Prometheus directories ---
+    - name: Create Prometheus directories on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/prometheus/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - config
+        - data
+
+    # --- Grafana directories ---
+    - name: Create Grafana directories on NFS volume
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/data"
+        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/db_pg"
+        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/datasources"
+        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/dashboards"
+
+    # --- Loki directories ---
+    - name: Create Loki directories on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - config
+        - data
+
+    # --- Promtail directories ---
+    - name: Create Promtail directories on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - config
+        - positions
+
+    # --- Gerar arquivos de configuração via templates ---
+    - name: Deploy Prometheus configuration
+      ansible.builtin.template:
+        src: ../templates/prometheus.yml.j2
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/prometheus/config/prometheus.yml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    - name: Deploy Grafana datasource provisioning (Prometheus)
+      ansible.builtin.copy:
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/datasources/prometheus.yml"
+        content: |
+          datasources:
+            - name: Prometheus
+              type: prometheus
+              access: proxy
+              url: http://prometheus:9090
+              isDefault: true
+              jsonData:
+                timeInterval: "15s"
+              editable: true
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    - name: Deploy Grafana datasource provisioning (Loki)
+      ansible.builtin.copy:
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/datasources/loki.yml"
+        content: |
+          datasources:
+            - name: Loki
+              type: loki
+              access: proxy
+              url: http://loki:3100
+              jsonData:
+                maxLines: 1000
+              editable: true
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    - name: Deploy Grafana dashboard provisioning configuration
+      ansible.builtin.copy:
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/dashboards/dashboards.yml"
+        content: |
+          apiVersion: 1
+          providers:
+            - name: 'default'
+              orgId: 1
+              folder: ''
+              type: file
+              disableDeletion: false
+              editable: true
+              options:
+                path: /etc/grafana/provisioning/dashboards
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    - name: Deploy Loki configuration
+      ansible.builtin.template:
+        src: ../templates/loki-local-config.yaml.j2
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/config/loki-local-config.yaml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    - name: Deploy Promtail configuration
+      ansible.builtin.template:
+        src: ../templates/promtail-config.yml.j2
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/config/config.yml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    # --- .env file ---
+    - name: Generate .env file for monitoring stack
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/monitoring.env"
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        stack_name: monitoring
+        stack_configs:
+          - { name: 'MONITORING_PROMETHEUS_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/prometheus/data" }
+          - { name: 'MONITORING_PROMETHEUS_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/prometheus/config" }
+          - { name: 'MONITORING_GRAFANA_DB_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/db_pg" }
+          - { name: 'MONITORING_GRAFANA_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/data" }
+          - { name: 'MONITORING_GRAFANA_PROVISIONING_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning" }
+          - { name: 'MONITORING_LOKI_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/config" }
+          - { name: 'MONITORING_LOKI_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/data" }
+          - { name: 'MONITORING_PROMTAIL_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/config" }
+          - { name: 'MONITORING_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/positions" }

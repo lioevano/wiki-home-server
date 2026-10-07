@@ -1,0 +1,14 @@
+# ansible/roles/infra/authelia-config/handlers/main.yml
+- name: Restart authelia container
+  community.docker.docker_container:
+    name: authelia
+    state: started
+    restart: true
+  ignore_errors: true
+
+- name: Restart authelia_db container
+  community.docker.docker_container:
+    name: authelia_db
+    state: started
+    restart: true
+  ignore_errors: true

@@ -1,0 +1,39 @@
+# ansible/roles/infra/proxmox-vm/defaults/main.yml
+# Variáveis padrão para o role proxmox-vm.
+# Valores obrigatórios (vm_id, vm_name, vm_ipconfig) devem ser definidos no playbook que chama o role.
+
+# Nome do template Proxmox a ser clonado (deve corresponder ao template criado na Seção 3.1)
+vm_template: "{{ proxmox_ubuntu_template_name }}" # Definido em group_vars/all/main.yml
+
+# Recursos padrão da VM (podem ser sobrescritos por VM)
+vm_cores: "{{ vm_default_cores | default(2) }}"    # Número de cores CPU
+vm_memory: "{{ vm_default_memory_mb | default(2048) }}" # Memória RAM em MB
+vm_disk_gb: "{{ vm_default_disk_gb | default(32) }}" # Tamanho final do disco principal (scsi0) em GB
+
+# Configurações Proxmox para a VM
+vm_os_type: "l26" # Tipo de OS Proxmox (l26 para Linux genérico 2.6/3.x/4.x/5.x kernel)
+vm_bridge: "{{ proxmox_default_bridge | default('vmbr0') }}" # Bridge de rede Proxmox
+vm_storage_disk: "{{ proxmox_storage_vm_disks | default('local-lvm') }}" # Storage para o disco da VM
+
+# Configuração Cloud-Init
+vm_ci_user: "{{ vm_ansible_user_name | default('vm_ansible_user') }}" # Nome do usuário a ser criado via cloud-init
+vm_ci_password: "{{ vm_ansible_user_password_plain }}"      # Senha para vm_ci_user (do vault.yml)
+# Caminho para a chave SSH pública na máquina de controle Ansible
+vm_ci_ssh_keys_public_file: "{{ ansible_ssh_private_key_file | regex_replace('.$', 'pub') | expanduser }}" # Adiciona .pub ao nome da chave privada e expande ~
+vm_ci_nameservers: "{{ vm_cloud_init_nameservers | default('1.1.1.1,8.8.8.8') }}" # DNS para a VM
+# A variável vm_ipconfig (e.g., "dhcp" ou "ip=IP/MASK,gw=GATEWAY") DEVE ser passada pelo playbook.
+
+# Comportamento da VM
+vm_start_at_boot: true         # Iniciar VM quando o host Proxmox iniciar
+vm_qemu_agent_enabled: true    # Habilitar o QEMU Guest Agent (requer instalado na VM/template)
+vm_tags: "ansible_managed,homelab"     # Tags para organização no Proxmox
+
+# Configurações avançadas (principalmente para GPU passthrough)
+vm_vga_type: "std"             # Tipo de display virtual ('std', 'cirrus', 'vmware', 'qxl', 'serial0', 'none')
+vm_machine_type: "q35"         # Tipo de máquina virtual (q35 é mais moderno)
+vm_bios_type: "ovmf"           # BIOS ('seabios' ou 'ovmf' para UEFI)
+# Lista de dispositivos PCI do host para passthrough (e.g., ["01:00.0", "01:00.1"])
+# Para cada device, pode-se adicionar opções: "01:00.0,pcie=1,x-vga=1"
+vm_host_pci_devices: []
+# Argumentos QEMU adicionais
+vm_qemu_args: ""

@@ -1,0 +1,6 @@
+# ansible/roles/infra/traefik-config/defaults/main.yml
+traefik_version: "v2.11.2"
+traefik_config_path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik"
+traefik_log_level: "INFO"
+traefik_access_log_enabled: true
+traefik_dashboard_subdomain: "traefik"

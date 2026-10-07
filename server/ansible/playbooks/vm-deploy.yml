@@ -1,0 +1,45 @@
+# ansible/playbooks/vm-deploy.yml
+- hosts: proxmox_main_host
+  gather_facts: no
+  vars_files:
+    - ../inventories/home/group_vars/all/vault.yml
+
+  tasks:
+    - name: "Deploy VM: core-services-vm"
+      ansible.builtin.include_role:
+        name: infra/proxmox-vm
+      vars:
+        vm_id: 100
+        vm_name: "core-services-vm"
+        vm_cores: 4
+        vm_memory: 12288          # 12GB RAM
+        vm_disk_gb: 80
+        vm_ipconfig: "ip={{ hostvars['core-services-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
+        vm_tags: "docker,core_services,homelab,ansible_managed"
+
+    - name: "Deploy VM: ai-desktop-vm (opcional, com Ollama + LiteLLM)"
+      ansible.builtin.include_role:
+        name: infra/proxmox-vm
+      vars:
+        vm_id: 101
+        vm_name: "ai-desktop-vm"
+        vm_cores: 4
+        vm_memory: 8192           # 8GB RAM (suficiente para modelos leves no Ollama)
+        vm_disk_gb: 100
+        vm_ipconfig: "ip={{ hostvars['ai-desktop-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
+        vm_tags: "llm,ai,homelab,ansible_managed"
+      when: "'ai-desktop-vm' in groups['virtual_machines']"
+
+    - name: "Aguardar VMs acessíveis via SSH"
+      ansible.builtin.wait_for:
+        host: "{{ hostvars[item]['ansible_host'] }}"
+        port: 22
+        delay: 60
+        timeout: 360
+        state: started
+        msg: "Aguardando SSH na VM {{ item }} ({{ hostvars[item]['ansible_host'] }})"
+      loop: "{{ query('inventory_hostnames', 'ubuntu_vms') }}"
+      delegate_to: localhost
+
+    - name: "Atualizar inventário Ansible em memória"
+      ansible.builtin.meta: refresh_inventory

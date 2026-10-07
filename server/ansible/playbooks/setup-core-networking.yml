@@ -1,0 +1,79 @@
+# ansible/playbooks/setup-core-networking.yml
+- hosts: core-services-vm # Todas estas stacks rodam na core-services-vm
+  become: yes # Para gerenciar Docker e arquivos de configuração no sistema de arquivos
+  vars_files:
+    - ../inventories/home/group_vars/all/vault.yml
+  # Variáveis de group_vars/all/main.yml são carregadas automaticamente
+
+  tasks:
+    - name: "Garantir que redes Docker globais (proxy, internal_services) existam"
+      community.docker.docker_network:
+        name: "{{ item }}"
+        state: present # Cria se não existir, não faz nada se já existir
+      loop:
+        - proxy
+        - internal_services
+
+    - name: "Incluir role para criar diretórios e copiar configs para Traefik"
+      ansible.builtin.include_role:
+        name: infra/traefik-config
+
+    - name: "Deploy Core Stack (Traefik, Cloudflared)"
+      community.docker.docker_compose_v2: # Módulo Ansible para Docker Compose v2
+        project_src: "{{ playbook_dir }}/../../docker/stacks/core/" # Caminho para o diretório da stack
+        files:
+          - docker-compose.yml # Arquivo compose a ser usado
+        state: present # Garante que a stack está rodando conforme definido
+        remove_orphans: true # Remove containers órfãos se o compose mudar
+        pull: always # Sempre tenta puxar a imagem mais recente (respeitando a tag especificada)
+      environment: # Injeta variáveis Ansible/Vault no ambiente do docker-compose
+        # Estas variáveis são usadas dentro do docker-compose.yml da stack 'core'
+        # Para Traefik:
+        CLOUDFLARE_API_TOKEN_FROM_VAULT: "{{ cloudflare_api_token }}"
+        BASE_DOMAIN_FROM_VAULT: "{{ base_domain }}"
+        LETSENCRYPT_EMAIL_FROM_VAULT: "{{ letsencrypt_email }}" # Usado por Traefik
+        # Para Cloudflared:
+        CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT: "{{ cloudflare_tunnel_token }}"
+        # Para caminhos de volume NFS (usados por Traefik):
+        VM_NFS_MOUNT_BASE_PATH: "{{ vm_nfs_mount_base_path }}"
+        ZFS_DOCKER_VOLUMES_DATASET_NAME: "{{ zfs_docker_volumes_dataset_name }}"
+        # IP da VM para mapeamento de portas no Traefik (se referenciado no compose):
+        CORE_SERVICES_VM_IP_VAR: "{{ core_services_vm_ip_var }}"
+      register: core_stack_deploy_result
+
+    - name: "Aguardar Traefik estar saudável após deploy/atualização"
+      community.docker.docker_container_info:
+        name: traefik # Nome do container Traefik
+      register: traefik_container_status
+      until: traefik_container_status.container.State.Health.Status == "healthy" # Espera pelo healthcheck do Traefik
+      retries: 15 # Número de tentativas
+      delay: 10   # Segundos de espera entre tentativas
+      when: core_stack_deploy_result.changed # Só espera se a stack Traefik foi realmente alterada/deployada
+
+    - name: "Incluir role para criar diretórios e copiar configs para Authelia"
+      ansible.builtin.include_role:
+        name: infra/authelia-config
+
+    - name: "Deploy Authelia Stack"
+      community.docker.docker_compose_v2:
+        project_src: "{{ playbook_dir }}/../../docker/stacks/authelia/"
+        files:
+          - docker-compose.yml
+        state: present
+        remove_orphans: true
+        pull: always
+      environment: # Variáveis para a stack Authelia
+        SYSTEM_TIMEZONE_FROM_VAULT: "{{ system_timezone }}"
+        BASE_DOMAIN_FROM_VAULT: "{{ base_domain }}"
+        AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT: "{{ authelia_storage_postgres_password }}"
+        AUTHELIA_JWT_SECRET_FROM_VAULT: "{{ authelia_jwt_secret }}" # Necessário se Authelia lê do env
+        AUTHELIA_SESSION_SECRET_FROM_VAULT: "{{ authelia_session_secret }}" # Necessário se Authelia lê do env
+        # Se for criar o admin inicial via ENV (algumas versões do Authelia suportam isso)
+        # AUTHELIA_IDENTITY_PROVIDERS_OIDC_CLIENTS_0_ID: admin # Exemplo, verifique a doc do Authelia
+        # AUTHELIA_IDENTITY_PROVIDERS_OIDC_CLIENTS_0_DESCRIPTION: Admin User
+        # AUTHELIA_IDENTITY_PROVIDERS_OIDC_CLIENTS_0_SECRET: "{{ authelia_admin_password_hash_initial }}" # Não é o ideal
+        # AUTHELIA_USERS_ADMIN_PASSWORD: "{{ authelia_admin_password_hash_initial }}" # Não é o ideal
+        # É melhor que o configuration.yml (template) já tenha os segredos e hashes.
+        # As variáveis PUID/PGID e de caminho NFS também devem ser passadas se referenciadas no compose Authelia
+        VM_NFS_MOUNT_BASE_PATH: "{{ vm_nfs_mount_base_path }}"
+        ZFS_DOCKER_VOLUMES_DATASET_NAME: "{{ zfs_docker_volumes_dataset_name }}"

@@ -1,0 +1,80 @@
+# ansible/playbooks/setup-media-stack-volumes.yml
+- name: Setup Media Stack Volumes and Environment
+  hosts: core_services
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+
+  tasks:
+    - name: Garantir diretório de envs do Portainer
+      ansible.builtin.file:
+        path: "{{ portainer_env_files_dest_path_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create media config directories on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/{{ item }}/config"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - plex
+        - jellyfin
+        - sonarr
+        - radarr
+        - qbittorrent
+
+    - name: Create Plex transcode directory on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/plex/transcode"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    - name: Create media directories on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - movies
+        - tvshows
+        - music
+
+    - name: Create downloads directory on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_downloads_dataset_name }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    - name: Generate .env file for media stack
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/media.env"
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        stack_name: media
+        stack_configs:
+          - { name: 'MEDIA_STACK_PLEX_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/plex/config" }
+          - { name: 'MEDIA_STACK_PLEX_TRANSCODE_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/plex/transcode" }
+          - { name: 'MEDIA_STACK_JELLYFIN_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/jellyfin/config" }
+          - { name: 'MEDIA_STACK_SONARR_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/sonarr/config" }
+          - { name: 'MEDIA_STACK_RADARR_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/radarr/config" }
+          - { name: 'MEDIA_STACK_QBITTORRENT_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/qbittorrent/config" }
+          - { name: 'MEDIA_STACK_MOVIES_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/movies" }
+          - { name: 'MEDIA_STACK_TVSHOWS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/tvshows" }
+          - { name: 'MEDIA_STACK_MUSIC_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/music" }
+          - { name: 'ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_downloads_dataset_name }}" }

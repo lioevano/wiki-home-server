@@ -1,0 +1,186 @@
+# ansible/roles/common/tasks/main.yml
+
+- name: "Aguardar cloud-init finalizar completamente na VM"
+  ansible.builtin.command: cloud-init status --wait
+  changed_when: false # Este comando não altera o estado, apenas espera
+  tags: always # Garante que esta task sempre rode
+
+- name: "Atualizar cache APT e instalar pacotes essenciais (incluindo nfs-common)"
+  ansible.builtin.apt:
+    name:
+      - git
+      - curl
+      - wget
+      - htop
+      - tmux # Multiplexador de terminal, muito útil
+      - ufw # Uncomplicated Firewall
+      - python3-apt # Necessário para alguns módulos Ansible de gerenciamento de pacotes
+      - qemu-guest-agent # Já deve ter sido instalado no template, mas garante
+      - nfs-common # Cliente NFS, essencial para montar volumes do Proxmox
+      - unattended-upgrades # Para atualizações automáticas de segurança
+      - apt-listchanges # Mostra o changelog de pacotes durante upgrades
+      # Adicione outros utilitários comuns que você usa
+    state: present
+    update_cache: yes
+  notify: Configure unattended-upgrades # Handler para configurar atualizações automáticas
+
+- name: "Garantir que o serviço qemu-guest-agent está rodando e habilitado"
+  ansible.builtin.systemd_service:
+    name: qemu-guest-agent
+    state: started
+    enabled: yes
+
+- name: "Configurar fuso horário da VM"
+  community.general.timezone:
+    name: "{{ system_timezone }}" # Variável do vault.yml
+
+# --- Configuração do Cliente NFS para montar volumes ZFS do Proxmox Host ---
+- name: "Criar ponto de montagem base para volumes NFS do Proxmox Host na VM"
+  ansible.builtin.file:
+    path: "{{ vm_nfs_mount_base_path }}" # Ex: /mnt/pve_data_zfs (de group_vars/all/main.yml)
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: "Montar datasets ZFS do Proxmox Host via NFS na VM"
+  ansible.posix.mount:
+    src: "{{ hostvars[groups['proxmox_hosts'][0]]['ansible_host'] }}:{{ zfs_base_pool_path }}/{{ item.dataset_name }}" # Ex: 192.168.1.10:/data/docker-volumes
+    path: "{{ vm_nfs_mount_base_path }}/{{ item.dataset_name }}"       # Ex: /mnt/pve_data_zfs/docker-volumes
+    fstype: nfs
+    # Opções de montagem NFS otimizadas. vers=4.2 é recomendado se suportado pelo host Proxmox.
+    # rsize e wsize maiores podem melhorar a performance em redes gigabit.
+    opts: "rw,sync,hard,intr,bg,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2"
+    state: mounted # Garante que está montado e adiciona a entrada correspondente ao /etc/fstab
+  loop: # Itera sobre os datasets ZFS definidos em group_vars/all/main.yml
+    - { dataset_name: "{{ zfs_docker_volumes_dataset_name }}" }
+    - { dataset_name: "{{ zfs_media_dataset_name }}" }
+    - { dataset_name: "{{ zfs_downloads_dataset_name }}" }
+    # Monta o dataset de RAG Sources apenas se a VM atual estiver no grupo 'ai_desktop_vm'
+    # e se zfs_rag_sources_dataset_name estiver definido.
+    - { dataset_name: "{{ zfs_rag_sources_dataset_name }}", when_condition: "'ai-desktop-vm' in group_names and zfs_rag_sources_dataset_name is defined" }
+  when: item.when_condition is not defined or item.when_condition # Permite loop condicional
+  # NOTA: O dataset de backups (zfs_backups_dataset_name) geralmente não precisa ser montado nas VMs.
+
+# --- Criação de Usuários e Grupos Docker ---
+# Este usuário e grupo serão donos dos arquivos nos volumes NFS,
+# e os containers Docker rodarão com estes PUID/PGID.
+- name: "Criar grupo '{{ docker_group_name_on_vm }}' com GID específico"
+  ansible.builtin.group:
+    name: "{{ docker_group_name_on_vm }}" # De group_vars/all/main.yml
+    gid: "{{ docker_pgid }}" # Do vault.yml
+    state: present
+
+- name: "Criar usuário '{{ docker_user_name_on_vm }}' com UID e grupo específicos"
+  ansible.builtin.user:
+    name: "{{ docker_user_name_on_vm }}" # De group_vars/all/main.yml
+    uid: "{{ docker_puid }}" # Do vault.yml
+    group: "{{ docker_group_name_on_vm }}" # Grupo criado acima
+    groups: sudo # Opcional: Adiciona ao grupo sudo para conveniência. Pode ser removido se não desejado.
+    append: yes
+    shell: /bin/bash
+    comment: "Usuário para containers Docker e proprietário de volumes NFS"
+    # Define uma senha (pode ser a mesma do usuário Ansible da VM ou outra do vault)
+    # A senha é hasheada com SHA512.
+    password: "{{ vm_ansible_user_password_plain | password_hash('sha512') }}"
+    state: present
+
+- name: "Adicionar usuário Ansible da VM ('{{ vm_ansible_user_name }}') ao grupo '{{ docker_group_name_on_vm }}'"
+  ansible.builtin.user:
+    name: "{{ vm_ansible_user_name }}" # Usuário Ansible criado via Cloud-Init
+    groups: "{{ docker_group_name_on_vm }}" # Adiciona a este grupo
+    append: yes
+  # O usuário Ansible já é sudo por padrão via Cloud-Init.
+
+# --- Configuração do Firewall UFW (Uncomplicated Firewall) ---
+# Aplicado condicionalmente:
+# - Sempre na 'core-services-vm'.
+# - Na 'ai-desktop-vm' apenas se a flag GUI_ENABLED for true para ela no inventário.
+- name: "Configurar e Habilitar Firewall UFW"
+  community.general.ufw:
+    state: enabled
+    policy: deny # Política padrão: negar todo tráfego de entrada
+    rules:
+      # Regras básicas
+      - { rule: 'allow', name: 'ssh' } # Ou port: '22', proto: 'tcp'
+      - { rule: 'allow', port: '80', proto: 'tcp', comment: 'Allow HTTP for Traefik redirect and local services' }
+      - { rule: 'allow', port: '443', proto: 'tcp', comment: 'Allow HTTPS for Traefik' }
+      # Portas para Node Exporter (Prometheus scrape)
+      - { rule: 'allow', port: '9100', proto: 'tcp', comment: 'Allow Node Exporter' }
+      # Porta para Glances WebUI (se não acessado via Traefik)
+      - { rule: 'allow', port: '61208', proto: 'tcp', comment: 'Allow Glances WebUI' }
+      # Para VNC na ai-desktop-vm se GUI_ENABLED=true
+      # Esta regra só será efetiva se o UFW for aplicado na ai-desktop-vm.
+      - { rule: 'allow', port: '5901', proto: 'tcp', comment: 'Allow VNC :1 (TCP port for display 1)' }
+    default_outgoing_policy: allow # Permite todo tráfego de saída por padrão
+  when: inventory_hostname == 'core-services-vm' or (inventory_hostname == 'ai-desktop-vm' and hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool)
+
+# --- Instalação do Node Exporter (para monitoramento da VM por Prometheus) ---
+- name: "Verificar se Node Exporter já está instalado na VM (binário)"
+  ansible.builtin.stat:
+    path: /usr/local/bin/node_exporter
+  register: node_exporter_vm_binary
+
+- name: "Instalar Node Exporter na VM (se não existir)"
+  when: not node_exporter_vm_binary.stat.exists
+  block: # Agrupa tarefas para instalação do Node Exporter
+    - name: "Checar última release do Node Exporter no GitHub (VM)"
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"
+        return_content: yes
+      register: node_exporter_vm_latest_release
+      run_once: true # Evita múltiplas chamadas à API se o role for aplicado a várias VMs em paralelo
+
+    - name: "Definir URL de download do Node Exporter (VM)"
+      ansible.builtin.set_fact:
+        node_exporter_vm_version: "{{ node_exporter_vm_latest_release.json.tag_name | regex_replace('^v(.*)$', '\\1') }}"
+        node_exporter_vm_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_vm_version }}/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
+
+    - name: "Baixar Node Exporter (VM)"
+      ansible.builtin.get_url:
+        url: "{{ node_exporter_vm_download_url }}"
+        dest: "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
+        mode: '0644'
+
+    - name: "Descompactar Node Exporter (VM)"
+      ansible.builtin.unarchive:
+        src: "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/"
+        remote_src: yes # Indica que o arquivo de origem está no host remoto (a VM)
+
+    - name: "Mover binário Node Exporter para /usr/local/bin (VM)"
+      ansible.builtin.copy:
+        src: "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64/node_exporter"
+        dest: "/usr/local/bin/node_exporter"
+        mode: '0755'
+        remote_src: yes # Indica que o arquivo de origem está no host remoto
+
+    - name: "Criar usuário de sistema 'node_exporter' (VM)"
+      ansible.builtin.user:
+        name: node_exporter
+        shell: /bin/false
+        system: yes
+        create_home: no
+
+    - name: "Criar arquivo de serviço systemd para Node Exporter (VM)"
+      ansible.builtin.template:
+        src: node_exporter_vm.service.j2 # Template específico para VM
+        dest: /etc/systemd/system/node_exporter.service
+        mode: '0644'
+      notify: Reload systemd and restart node_exporter_vm # Handler para recarregar systemd e reiniciar o serviço
+
+    - name: "Limpar arquivos temporários de instalação do Node Exporter (VM)"
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
+        - "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64"
+  # Fim do block de instalação do Node Exporter
+
+- name: "Garantir que Node Exporter (VM) está habilitado e rodando"
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    state: started
+    enabled: yes
+  # Esta task roda mesmo se o Node Exporter já existia, garantindo que o serviço está OK.

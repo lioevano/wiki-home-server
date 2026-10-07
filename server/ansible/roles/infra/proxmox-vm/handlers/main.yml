@@ -1,0 +1,17 @@
+# ansible/roles/infra/proxmox-vm/handlers/main.yml
+- name: Configure VM settings
+  ansible.builtin.debug:
+    msg: "VM {{ vm_name }} (ID: {{ vm_id }}) clonada/verificada. Aplicando configurações detalhadas e iniciando."
+
+- name: Start VM after configuration
+  community.proxmox.proxmox_kvm:
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    vmid: "{{ vm_id }}"
+    node: "{{ (vm_info_check.proxmox_kvm_info.node if vm_info_check.proxmox_kvm_info else omit) | default(omit) }}" # Necessário para start
+    state: started # Garante que a VM esteja rodando
+    timeout: 120 # Timeout para iniciar a VM
+  delegate_to: localhost

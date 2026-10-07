@@ -1,0 +1,55 @@
+# ansible/roles/infra/traefik-config/tasks/main.yml
+- name: "Garantir que diretórios de configuração do Traefik existam na VM (via NFS)"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ docker_puid }}" # PUID/PGID para que o container Traefik possa ler/escrever (e.g., acme.json)
+    group: "{{ docker_pgid }}"
+    mode: '0750' # Mais restritivo para diretórios de config
+  loop:
+    # Caminhos DENTRO da VM, que são montagens NFS.
+    # Correspondem aos volumes no docker-compose do Traefik.
+    - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config" # Para traefik.yml
+    - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic" # Para configs dinâmicas (middlewares)
+    - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/data" # Para acme.json e logs
+
+- name: "Copiar configuração estática do Traefik (traefik.yml)"
+  ansible.builtin.template:
+    src: traefik.yml.j2
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/traefik.yml"
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0640' # Traefik só precisa ler este
+
+- name: "Copiar configuração de headers de segurança para Traefik (dinâmica)"
+  ansible.builtin.template:
+    src: security_headers.yml.j2
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/security_headers.yml"
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0640'
+
+- name: "Copiar configuração dinâmica para serviços RAG (se ai-desktop-vm existir)"
+  ansible.builtin.template:
+    src: dynamic_rag_services.yml.j2 # Para rotear para OpenWebUI na ai-desktop-vm
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/rag_services.yml"
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0640'
+  when: "'ai-desktop-vm' in groups['virtual_machines']" # Só cria se a VM AI estiver no inventário
+
+- name: "Copiar middleware para Nextcloud (dinâmico)"
+  ansible.builtin.template:
+    src: nextcloud_middleware.yml.j2 # Headers recomendados para Nextcloud
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/nextcloud_middleware.yml"
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0640'
+
+- name: "Garantir que acme.json existe e tem permissões corretas para Traefik"
+  ansible.builtin.file:
+    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/data/acme.json"
+    state: touch # Cria se não existir, não modifica se existir (Traefik gerencia o conteúdo)
+    owner: "{{ docker_puid }}" # Usuário que o container Traefik usa (ou root se PUID/PGID não for setado no container)
+    group: "{{ docker_pgid }}" # Certifique-se que as permissões do NFS squash para este PUID/PGID
+    mode: '0600' # Permissões restritas para o arquivo de certificados SSL

@@ -1,0 +1,100 @@
+# docker/stacks/ai/docker-compose.yml
+# Stack de IA: Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude
+# Roda na ai-desktop-vm
+version: '3.9'
+
+networks:
+  ai_network:
+    name: ai_network
+    driver: bridge
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    networks:
+      - ai_network
+    volumes:
+      - "${AI_STACK_OLLAMA_MODELS_PATH}:/root/.ollama"
+    ports:
+      - "127.0.0.1:11434:11434"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm_proxy
+    restart: unless-stopped
+    networks:
+      - ai_network
+    ports:
+      - "4000:4000"
+    volumes:
+      - "${AI_STACK_LITELLM_CONFIG_PATH}/config.yaml:/app/config.yaml:ro"
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - TZ=${SYSTEM_TIMEZONE}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    depends_on:
+      - ollama
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open_webui
+    restart: unless-stopped
+    networks:
+      - ai_network
+    ports:
+      - "${AI_DESKTOP_VM_IP}:3000:8080"
+    volumes:
+      - "${AI_STACK_OPENWEBUI_DATA_PATH}:/app/backend/data"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - LITELLM_API_BASE=http://litellm:4000
+      - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+    depends_on:
+      - ollama
+      - litellm
+
+  openclaw:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
+    restart: unless-stopped
+    networks:
+      - ai_network
+    volumes:
+      - "${AI_STACK_OPENCLAW_CONFIG_PATH}:/app/config"
+    environment:
+      - LITELLM_BASE_URL=http://litellm:4000
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY}
+      - TZ=${SYSTEM_TIMEZONE}
+    depends_on:
+      - litellm
+
+  openclaude:
+    image: ghcr.io/openclaude/openclaude:latest
+    container_name: openclaude
+    restart: unless-stopped
+    networks:
+      - ai_network
+    volumes:
+      - "${AI_STACK_OPENCLAUDE_CONFIG_PATH}:/app/config"
+      - "${AI_STACK_OPENCLAUDE_MEMORY_PATH}:/app/memory"
+    environment:
+      - LITELLM_BASE_URL=http://litellm:4000
+      - LITELLM_API_KEY=${LITELLM_MASTER_KEY}
+      - TZ=${SYSTEM_TIMEZONE}
+    depends_on:
+      - litellm

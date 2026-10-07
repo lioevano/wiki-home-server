@@ -1,0 +1,120 @@
+# ansible/roles/infra/authelia-config/templates/configuration.yml.j2
+# Configuração Principal do Authelia (gerada por Ansible)
+
+# Nome da instância exibido em alguns locais (e.g., título da página)
+instance_name: "Meu Servidor Doméstico"
+
+# URL de redirecionamento padrão se Authelia não souber para onde enviar o usuário
+# Geralmente o próprio portal Authelia.
+default_redirection_url: "https://auth.{{ base_domain }}/"
+
+# Tema da interface Authelia (opções: light, dark, grey)
+theme: dark
+
+# Segredos JWT e de Sessão (do vault.yml)
+jwt_secret: "{{ authelia_jwt_secret }}"
+
+# Método 2FA padrão para novos usuários (pode ser sobrescrito por usuário)
+# Opções: "totp" (Time-based One-Time Password), "webauthn" (FIDO2/Passkeys)
+default_2fa_method: "totp"
+
+# Configuração da Sessão
+session:
+  name: "homelab_authelia_session" # Nome do cookie de sessão
+  secret: "{{ authelia_session_secret }}" # Secret para criptografar o cookie (do vault.yml)
+  expiration: 1h # Duração da sessão (e.g., 1h, 8h, 30d). Aumente se desejar sessões mais longas.
+  inactivity: 10m  # Duração da inatividade antes de exigir re-autenticação (login novamente).
+  # Domínio do cookie. Importante para SSO entre subdomínios.
+  # DEVE ser o domínio pai (e.g., seudominio.com, NÃO auth.seudominio.com).
+  domain: "{{ base_domain }}"
+  # Se usar Redis para sessões distribuídas (não coberto neste guia simples):
+  # redis:
+  #   host: authelia_redis # Nome do serviço Docker do Redis
+  #   port: 6379
+  #   password: "SENHA_DO_REDIS_SE_HOUVER"
+  #   database_index: 1 # Índice do banco de dados Redis
+
+# Armazenamento de Dados do Usuário (PostgreSQL)
+# Authelia usará este banco de dados para armazenar informações de usuários, dispositivos 2FA, etc.
+storage:
+  postgres:
+    address: "tcp://authelia_db:5432" # Nome do serviço Docker do banco de dados Authelia e porta
+    database: authelia # Nome do banco de dados
+    username: authelia # Usuário do banco de dados
+    password: "{{ authelia_storage_postgres_password }}" # Senha do usuário do DB (do vault.yml)
+    timeout: 5s # Timeout para conexão com o DB
+    # Para SSL com o DB (se configurado no PostgreSQL e você tiver os certificados):
+    # schema: public # Padrão
+    # ssl:
+    #   mode: require # ou verify-ca, verify-full
+    #   root_certificate: /config/certs/db_ca.pem
+    #   client_certificate: /config/certs/db_client.crt
+    #   client_key: /config/certs/db_client.key
+
+# Backend de Autenticação
+# Define como Authelia verifica as credenciais do usuário.
+# Com 'storage.postgres' configurado, Authelia usará o mesmo DB para autenticação.
+# Se você quisesse usar um arquivo YAML para usuários (users_database.yml):
+# authentication_backend:
+#   file:
+#     path: /config/users_database.yml # Caminho DENTRO do container Authelia
+#     # Configurações de hashing de senha (argon2id é o padrão e recomendado)
+#     password:
+#       algorithm: argon2id
+#       iterations: 3
+#       memory: 65536 # KiB (64MB)
+#       parallelism: 4 # Número de threads
+#       salt_length: 16
+#       key_length: 32
+
+# Regras de Controle de Acesso
+# Define quais domínios/subdomínios são protegidos e qual política aplicar.
+access_control:
+  default_policy: deny # Política padrão se nenhuma regra corresponder (deny, one_factor, two_factor, bypass)
+  rules:
+    # Regra para o próprio portal Authelia (auth.seudominio.com)
+    # Usuários precisam acessá-lo para logar, então não deve ser protegido pelo próprio Authelia.
+    - domain: "auth.{{ base_domain }}"
+      policy: bypass # Não requer autenticação para acessar o portal de login
+
+    # Regra geral para todos os outros subdomínios do seu domínio base: requer dois fatores.
+    - domain: "*.{{ base_domain }}"
+      policy: two_factor # Requer login bem-sucedido com primeiro e segundo fator
+
+    # Exemplo: Permitir acesso da rede local sem Authelia (bypass) para certos serviços.
+    # Cuidado ao usar bypass, pois anula a proteção do Authelia para essas condições.
+    # - domain: "servico_local.{{ base_domain }}"
+    #   networks: # IPs ou CIDRs da sua rede local
+    #     - "192.168.1.0/24"
+    #   policy: bypass
+
+# Notificador (para reset de senha, alertas de segurança, etc.) - ALTAMENTE RECOMENDADO
+# Configure para receber notificações por email.
+# notifier:
+#   smtp:
+#     address: "smtp.seuprovedor.com:587" # Servidor SMTP e porta (587 para STARTTLS, 465 para SSL/TLS direto)
+#     username: "seu_email_de_envio@example.com"
+#     password: "SENHA_DO_SEU_EMAIL_DE_ENVIO_APP_PASSWORD" # Use senha de aplicativo se o provedor exigir
+#     sender: "Authelia <authelia@{{ base_domain }}>" # Remetente exibido nos emails
+#     subject: "[Authelia - {{ base_domain }}] {title}" # Assunto do email (pode usar placeholders)
+#     # Para TLS (STARTTLS é geralmente usado na porta 587):
+#     # tls:
+#     #   server_name: "smtp.seuprovedor.com" # Se diferente do address
+#     #   skip_verify: false # Mantenha false para segurança, a menos que seja um servidor interno com cert autoassinado
+#     #   minimum_version: "TLS1.2"
+#     # Para verificar a configuração do notificador ao iniciar Authelia:
+#     # startup_check_address: "email_de_teste_para_receber_notificacao@example.com"
+
+# Configuração TOTP (Time-based One-Time Password)
+totp:
+  issuer: "Homelab {{ base_domain }}" # Nome exibido no app autenticador (e.g., Google Authenticator, Authy)
+  algorithm: SHA1 # Padrão (SHA256, SHA512 também são opções)
+  digits: 6       # Padrão (número de dígitos no código TOTP)
+  period: 30      # Padrão (período de validade do código em segundos)
+  skew: 1         # Permite uma pequena dessincronização de relógio (1 período para frente ou para trás)
+
+# Regulação (Proteção contra Brute-Force nas tentativas de login)
+regulation:
+  max_retries: 3  # Número de tentativas de login falhas antes do banimento temporário.
+  find_time: 2m   # Janela de tempo para contar as tentativas falhas (e.g., 3 falhas em 2 minutos).
+  ban_time: 5m    # Duração do banimento temporário.

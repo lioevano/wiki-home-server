@@ -1,0 +1,104 @@
+# ansible/roles/infra/proxmox-vm/tasks/main.yml
+# Cria ou atualiza uma VM no Proxmox a partir de um template.
+
+- name: "Garantir que a chave SSH pública para Cloud-Init existe na máquina de controle"
+  ansible.builtin.stat:
+    path: "{{ vm_ci_ssh_keys_public_file }}"
+  register: ssh_key_stat
+  delegate_to: localhost # Esta verificação é feita na máquina de controle Ansible
+
+- name: "Falhar se a chave SSH pública não for encontrada"
+  ansible.builtin.fail:
+    msg: "Chave SSH pública {{ vm_ci_ssh_keys_public_file }} não encontrada. Verifique o caminho ou gere a chave."
+  when: not ssh_key_stat.stat.exists
+  delegate_to: localhost
+
+- name: "Verificar se a VM {{ vm_name }} (ID: {{ vm_id }}) já existe no Proxmox"
+  community.proxmox.proxmox_kvm_info:
+    vmid: "{{ vm_id }}"
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_host: "{{ groups['proxmox_hosts'][0] }}" # Pega o primeiro host do grupo proxmox_hosts
+  register: vm_info_check
+  delegate_to: localhost # A API Proxmox é chamada da máquina de controle
+
+- name: "Clonar VM {{ vm_name }} (ID: {{ vm_id }}) a partir do template {{ vm_template }}"
+  community.proxmox.proxmox_kvm:
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    clone: "{{ vm_template }}"
+    newid: "{{ vm_id }}"
+    name: "{{ vm_name }}"
+    full: true # Cria um clone completo (não um linked clone)
+    state: present # Garante que a VM clonada exista
+    timeout: 600 # Timeout para a operação de clone em segundos (10 minutos)
+  when: not vm_info_check.proxmox_kvm_info or vm_info_check.proxmox_kvm_info.status == "unknown" # Só clona se não existir
+  delegate_to: localhost
+  notify: Configure VM settings # Handler para configurar após o clone (ou se já existir)
+
+- name: "Configurar recursos e Cloud-Init para VM {{ vm_name }} (ID: {{ vm_id }})"
+  community.proxmox.proxmox_kvm:
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_password | default(omit) }}"
+    api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
+    api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
+    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    vmid: "{{ vm_id }}"
+    node: "{{ (vm_info_check.proxmox_kvm_info.node if vm_info_check.proxmox_kvm_info else omit) | default(omit) }}" # Necessário para algumas operações de update
+
+    # Recursos da VM
+    cores: "{{ vm_cores }}"
+    memory: "{{ vm_memory }}"
+    agent: "{{ vm_qemu_agent_enabled | ternary('enabled=1', 'enabled=0') }}"
+    tags: "{{ vm_tags }}"
+    onboot: "{{ vm_start_at_boot | bool }}"
+    startup: "{{ 'order=1,up=60' if vm_start_at_boot else '' }}" # Ordem de boot e delay se autostart
+    scsihw: "virtio-scsi-pci" # Controlador SCSI para melhor performance
+
+    # Redimensionar disco principal (scsi0) se vm_disk_gb for definido
+    # O disco já deve existir (criado pelo clone do template). Esta task irá redimensioná-lo.
+    disk:
+      scsi0:
+        size: "{{ vm_disk_gb }}G"
+        storage: "{{ vm_storage_disk }}"
+        # O 'disk' parameter pode precisar ser mais específico se o template tiver múltiplos discos.
+        # Geralmente o disco principal do template é scsi0.
+
+    # Configuração de rede via Cloud-Init (ipconfig0)
+    # A interface de rede net0 é geralmente criada pelo template.
+    net:
+      net0: "model=virtio,bridge={{ vm_bridge }}" # Garante que net0 está configurada
+    # Configuração IP para net0 via Cloud-Init
+    ipconfig0: "{{ vm_ipconfig }}" # Ex: "ip={{ hostvars[vm_name]['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}" ou "dhcp"
+
+    # Configurações Cloud-Init
+    nameserver: "{{ vm_ci_nameservers }}"
+    searchdomain: "{{ base_domain | default(omit) }}" # Omitir se base_domain não estiver definido
+    ciuser: "{{ vm_ci_user }}"
+    cipassword: "{{ vm_ci_password }}" # Senha em texto plano para cloud-init
+    sshkeys: "{{ lookup('file', vm_ci_ssh_keys_public_file) | urlencode }}" # Lê a chave pública e formata para a API
+
+    # Configurações para GPU Passthrough e outras opções avançadas
+    vga: "{{ vm_vga_type }}"
+    machine: "{{ vm_machine_type }}"
+    bios: "{{ vm_bios_type }}"
+    # Mapeamento de dispositivos PCI para passthrough
+    # O módulo proxmox_kvm espera uma string como 'hostpci0=01:00.0,pcie=1;hostpci1=01:00.1'
+    args: >-
+      {% set pci_args_list = [] %}
+      {% for idx, device in enumerate(vm_host_pci_devices) %}
+      {%   set _ = pci_args_list.append("hostpci" + idx|string + "=" + device) %}
+      {% endfor %}
+      {% set pci_string = pci_args_list | join(';') %}
+      {{ (pci_string + " " + vm_qemu_args) if pci_string else vm_qemu_args | default('') }}
+
+    state: present # Garante que a VM exista com estas configurações
+    update: true   # Permite atualizar uma VM existente
+    timeout: 300
+  delegate_to: localhost
+  notify: Start VM after configuration # Handler para iniciar/reiniciar a VM

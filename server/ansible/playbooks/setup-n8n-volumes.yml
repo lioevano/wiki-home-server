@@ -1,0 +1,37 @@
+---
+- name: Setup n8n volumes and environment
+  hosts: core_services
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  tasks:
+    - name: Garantir diretório de envs do Portainer
+      ansible.builtin.file:
+        path: "{{ portainer_env_files_dest_path_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create n8n config directory on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/n8n/config"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    - name: Generate .env file for n8n stack
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/n8n.env"
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        stack_name: automation-n8n
+        stack_configs:
+          - { name: 'N8N_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/n8n/config" }
+          - { name: 'N8N_SUBDOMAIN', value: "{{ n8n_subdomain }}" }

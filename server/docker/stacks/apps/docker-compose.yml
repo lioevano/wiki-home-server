@@ -1,0 +1,324 @@
+# docker/stacks/apps/docker-compose.yml
+# Todas as aplicações: produtividade, mídia, monitoramento e automação
+# Roda na core-services-vm
+version: '3.9'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal_services:
+    name: internal_services
+    external: true
+
+services:
+  # ===================== PRODUTIVIDADE =====================
+
+  nextcloud_db:
+    image: postgres:15-alpine
+    container_name: nextcloud_db
+    restart: unless-stopped
+    volumes:
+      - "${PROD_STACK_NEXTCLOUD_DB_PATH}:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
+      - TZ=${SYSTEM_TIMEZONE}
+    networks:
+      - internal_services
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud -d nextcloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nextcloud_redis:
+    image: redis:7-alpine
+    container_name: nextcloud_redis
+    restart: unless-stopped
+    networks:
+      - internal_services
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nextcloud_app:
+    image: nextcloud:latest
+    container_name: nextcloud_app
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${PROD_STACK_NEXTCLOUD_HTML_PATH}:/var/www/html"
+      - "${PROD_STACK_NEXTCLOUD_DATA_PATH}:/var/www/html/data"
+      - "${PROD_STACK_NEXTCLOUD_CONFIG_PATH}:/var/www/html/config"
+    environment:
+      - POSTGRES_HOST=nextcloud_db
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
+      - NEXTCLOUD_ADMIN_USER=ncadmin
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${BASE_DOMAIN_FROM_VAULT} localhost ${CORE_SERVICES_VM_IP_VAR}
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_UPLOAD_LIMIT=4G
+      - TZ=${SYSTEM_TIMEZONE}
+      - REDIS_HOST=nextcloud_redis
+    depends_on:
+      nextcloud_db:
+        condition: service_healthy
+      nextcloud_redis:
+        condition: service_healthy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.nextcloud.rule: "Host(`nextcloud.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.nextcloud.entrypoints: "websecure"
+      traefik.http.routers.nextcloud.tls.certresolver: "letsencrypt"
+      traefik.http.routers.nextcloud.middlewares: "authelia-forwardauth@docker,nextcloud-headers@file"
+      traefik.http.services.nextcloud-svc.loadbalancer.server.port: "80"
+
+  # ===================== MÍDIA =====================
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - "${MEDIA_STACK_JELLYFIN_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_MOVIES_PATH}:/data/movies:ro"
+      - "${MEDIA_STACK_TVSHOWS_PATH}:/data/tvshows:ro"
+      - "${MEDIA_STACK_MUSIC_PATH}:/data/music:ro"
+      - "/dev/dri:/dev/dri"
+    environment:
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.jellyfin.rule: "Host(`jellyfin.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.jellyfin.entrypoints: "websecure"
+      traefik.http.routers.jellyfin.tls.certresolver: "letsencrypt"
+      traefik.http.routers.jellyfin.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.jellyfin-svc.loadbalancer.server.port: "8096"
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_SONARR_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_TVSHOWS_PATH}:/tv"
+      - "${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads"
+    environment:
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.sonarr.rule: "Host(`sonarr.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.sonarr.entrypoints: "websecure"
+      traefik.http.routers.sonarr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.sonarr.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.sonarr-svc.loadbalancer.server.port: "8989"
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_RADARR_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_MOVIES_PATH}:/movies"
+      - "${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads"
+    environment:
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.radarr.rule: "Host(`radarr.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.radarr.entrypoints: "websecure"
+      traefik.http.routers.radarr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.radarr.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.radarr-svc.loadbalancer.server.port: "7878"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_QBITTORRENT_CONFIG_PATH}:/config"
+      - "${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads"
+    environment:
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - TZ=${SYSTEM_TIMEZONE}
+      - WEBUI_PORT=8088
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.qbittorrent.rule: "Host(`qbittorrent.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.qbittorrent.entrypoints: "websecure"
+      traefik.http.routers.qbittorrent.tls.certresolver: "letsencrypt"
+      traefik.http.routers.qbittorrent.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.qbittorrent-svc.loadbalancer.server.port: "8088"
+
+  # ===================== MONITORAMENTO =====================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MONITORING_PROMETHEUS_DATA_PATH}:/prometheus"
+      - "${MONITORING_PROMETHEUS_CONFIG_PATH}/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+      - '--web.listen-address=:9090'
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.prometheus.rule: "Host(`prometheus.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.prometheus.entrypoints: "websecure"
+      traefik.http.routers.prometheus.tls.certresolver: "letsencrypt"
+      traefik.http.routers.prometheus.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.prometheus-svc.loadbalancer.server.port: "9090"
+
+  grafana_db:
+    image: postgres:15-alpine
+    container_name: grafana_db
+    restart: unless-stopped
+    volumes:
+      - "${MONITORING_GRAFANA_DB_PATH}:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_DB=grafana
+      - POSTGRES_USER=grafana
+      - POSTGRES_PASSWORD=${GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV}
+      - TZ=${SYSTEM_TIMEZONE}
+    networks:
+      - internal_services
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grafana -d grafana"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MONITORING_GRAFANA_DATA_PATH}:/var/lib/grafana"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV}
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=grafana_db
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=grafana
+      - GF_DATABASE_PASSWORD=${GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV}
+      - GF_DATABASE_SSL_MODE=disable
+      - TZ=${SYSTEM_TIMEZONE}
+    depends_on:
+      grafana_db:
+        condition: service_healthy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.grafana.rule: "Host(`grafana.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.grafana.entrypoints: "websecure"
+      traefik.http.routers.grafana.tls.certresolver: "letsencrypt"
+      traefik.http.routers.grafana.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.grafana-svc.loadbalancer.server.port: "3000"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    restart: unless-stopped
+    networks:
+      - internal_services
+    volumes:
+      - "${MONITORING_LOKI_CONFIG_PATH}/loki-local-config.yaml:/etc/loki/config.yaml:ro"
+      - "${MONITORING_LOKI_DATA_PATH}:/loki"
+    command: -config.file=/etc/loki/config.yaml
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    restart: unless-stopped
+    networks:
+      - internal_services
+    volumes:
+      - "/var/log:/var/log:ro"
+      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
+      - "${MONITORING_PROMTAIL_CONFIG_PATH}/config.yml:/etc/promtail/config.yml:ro"
+      - "${MONITORING_PROMTAIL_POSITIONS_PATH}:/tmp/positions"
+    command: -config.file=/etc/promtail/config.yml
+
+  # ===================== AUTOMAÇÃO =====================
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n_app
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - "${N8N_CONFIG_PATH}:/home/node/.n8n"
+    environment:
+      - N8N_HOST=${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}/
+      - NODE_ENV=production
+      - GENERIC_TIMEZONE=${SYSTEM_TIMEZONE}
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_ADMIN_USER_FROM_PORTAINER_ENV}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_ADMIN_PASSWORD_FROM_PORTAINER_ENV}
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.n8n.rule: 'Host(`${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}`)'
+      traefik.http.routers.n8n.entrypoints: websecure
+      traefik.http.routers.n8n.tls.certresolver: letsencrypt
+      traefik.http.routers.n8n.middlewares: authelia-forwardauth@docker
+      traefik.http.services.n8n.loadbalancer.server.port: '5678'
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:latest
+    container_name: homeassistant
+    restart: unless-stopped
+    volumes:
+      - "${AUTO_STACK_HOMEASSISTANT_CONFIG_PATH}:/config"
+      - "/etc/localtime:/etc/localtime:ro"
+    networks:
+      - proxy
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.homeassistant.rule: "Host(`hass.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.homeassistant.entrypoints: "websecure"
+      traefik.http.routers.homeassistant.tls.certresolver: "letsencrypt"
+      traefik.http.routers.homeassistant.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.homeassistant-svc.loadbalancer.server.port: "8123"

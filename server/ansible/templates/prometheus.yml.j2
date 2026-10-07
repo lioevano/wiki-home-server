@@ -1,0 +1,44 @@
+# ansible/templates/prometheus.yml.j2
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          instance: 'prometheus'
+
+  - job_name: 'node_exporter_proxmox_host'
+    static_configs:
+      - targets: ['{{ proxmox_host_ip_var }}:9100']
+        labels:
+          instance: 'proxmox_main_host'
+
+  - job_name: 'node_exporter_core_services_vm'
+    static_configs:
+      - targets: ['{{ core_services_vm_ip_var }}:9100']
+        labels:
+          instance: 'core-services-vm'
+
+{% if 'ai_desktop' in groups %}
+  - job_name: 'node_exporter_ai_desktop_vm'
+    static_configs:
+      - targets: ['{{ ai_desktop_vm_ip_var }}:9100']
+        labels:
+          instance: 'ai-desktop-vm'
+{% endif %}
+
+  - job_name: 'cloudflared_tunnel'
+    static_configs:
+      - targets: ['cloudflared:2000']
+        labels:
+          instance: 'cloudflared_tunnel_metrics'
+
+  - job_name: 'glances'
+    static_configs:
+      - targets: ['glances:61208']
+        metrics_path: /api/3/metrics
+        labels:
+          instance: 'glances_core_services_vm'

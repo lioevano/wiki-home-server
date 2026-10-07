@@ -1,0 +1,23 @@
+---
+- name: Instalar dependências do Gemini CLI
+  ansible.builtin.apt:
+    name:
+      - nodejs
+      - npm
+    state: present
+    update_cache: true
+
+- name: Instalar Gemini CLI globalmente
+  community.general.npm:
+    name: "@google/gemini-cli"
+    global: true
+    state: present
+
+- name: Configurar chave de API do Gemini para o usuário
+  ansible.builtin.lineinfile:
+    path: "/home/{{ vm_ansible_user_name }}/.bashrc"
+    line: 'export GEMINI_API_KEY="{{ llm_api_keys.google_gemini }}"'
+    create: true
+    owner: "{{ vm_ansible_user_name }}"
+    group: "{{ vm_ansible_user_name }}"
+    mode: '0644'

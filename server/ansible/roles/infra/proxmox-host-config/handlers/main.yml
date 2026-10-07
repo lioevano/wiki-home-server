@@ -1,0 +1,11 @@
+# ansible/roles/infra/proxmox-host-config/handlers/main.yml
+- name: Restart NFS server
+  ansible.builtin.systemd_service:
+    name: nfs-kernel-server
+    state: restarted
+    enabled: yes
+
+- name: Restart pve-firewall
+  ansible.builtin.systemd_service:
+    name: pve-firewall
+    state: restarted

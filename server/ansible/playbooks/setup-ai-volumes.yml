@@ -1,0 +1,95 @@
+# ansible/playbooks/setup-ai-volumes.yml
+# Volumes e configs para a stack de IA (Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude)
+- name: Preparar volumes e configuração da Stack de IA
+  hosts: ai_desktop
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+
+  roles:
+    - role: ../roles/apps/ml-tools
+
+  tasks:
+    # --- LiteLLM ---
+    - name: Criar diretório do LiteLLM no NFS
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/config"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    - name: Gerar config.yaml do LiteLLM
+      ansible.builtin.template:
+        src: ../templates/litellm_config.yaml.j2
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/config/config.yaml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    # --- Ollama ---
+    - name: Criar diretório dos modelos Ollama no NFS
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/ollama/models"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    # --- Open WebUI ---
+    - name: Criar diretório do Open WebUI no NFS
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openwebui/data"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    # --- OpenClaw ---
+    - name: Criar diretório do OpenClaw no NFS
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaw/config"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    # --- OpenClaude ---
+    - name: Criar diretórios do OpenClaude no NFS
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      with_items:
+        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/config"
+        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory"
+
+    # --- .env para Portainer ---
+    - name: Garantir diretório de envs do Portainer
+      ansible.builtin.file:
+        path: "{{ portainer_env_files_dest_path_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Gerar ai.env para Portainer
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/ai.env"
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        stack_name: ai
+        stack_configs:
+          - { name: 'AI_STACK_LITELLM_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/config" }
+          - { name: 'AI_STACK_OLLAMA_MODELS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/ollama/models" }
+          - { name: 'AI_STACK_OPENWEBUI_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openwebui/data" }
+          - { name: 'AI_STACK_OPENCLAW_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaw/config" }
+          - { name: 'AI_STACK_OPENCLAUDE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/config" }
+          - { name: 'AI_STACK_OPENCLAUDE_MEMORY_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory" }

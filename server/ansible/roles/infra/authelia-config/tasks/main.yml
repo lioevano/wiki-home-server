@@ -1,0 +1,27 @@
+# ansible/roles/infra/authelia-config/tasks/main.yml
+- name: "Garantir que diretórios de configuração do Authelia existam na VM (via NFS)"
+  ansible.builtin.file:
+    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/config"
+    state: directory
+    owner: "{{ docker_puid }}" # PUID/PGID para que o container Authelia possa ler
+    group: "{{ docker_pgid }}"
+    mode: '0750' # Authelia só precisa ler (e talvez escrever logs se configurado para arquivos)
+
+- name: "Copiar configuração principal do Authelia (configuration.yml)"
+  ansible.builtin.template:
+    src: configuration.yml.j2
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/config/configuration.yml"
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0640' # Authelia só precisa ler este
+
+- name: "Copiar banco de dados de usuários inicial do Authelia (users_database.yml)"
+  ansible.builtin.template:
+    src: users_database.yml.j2
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/config/users_database.yml"
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0640'
+  # Este arquivo só é usado se o backend de autenticação do Authelia for 'file'.
+  # No nosso caso, usaremos PostgreSQL, então este arquivo serve mais como um exemplo
+  # ou um backup se mudarmos para o backend 'file'.

@@ -1,0 +1,28 @@
+# ansible/roles/common/templates/node_exporter_vm.service.j2
+[Unit]
+Description=Node Exporter for Prometheus (VM)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=node_exporter
+Group=node_exporter
+Type=simple
+ExecStart=/usr/local/bin/node_exporter \
+    --collector.systemd \
+    --collector.filesystem \
+    --collector.network_dev \
+    --collector.vmstat \
+    --collector.meminfo \
+    --collector.diskstats \
+    --collector.processes \
+    --collector.cpu \
+    --collector.loadavg \
+    --collector.netstat \
+    --collector.stat \
+    --collector.time \
+    --collector.pressure
+    # Coletores relevantes para VMs. Evite coletores que tentem acessar hardware específico do host.
+
+[Install]
+WantedBy=multi-user.target

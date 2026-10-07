@@ -1,0 +1,94 @@
+# ansible/roles/infra/docker/tasks/main.yml
+# Instala Docker Engine e Portainer CE na VM designada (core-services-vm).
+
+- name: "Adicionar chave GPG oficial do Docker"
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.gpg # Novo caminho recomendado para chaves GPG
+    mode: '0644'
+    force: true # Sobrescreve se já existir, para garantir a chave mais recente
+
+- name: "Adicionar repositório Docker"
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker # Nome do arquivo .list em /etc/apt/sources.list.d/
+    update_cache: yes # Atualiza o cache após adicionar o repo
+
+- name: "Instalar Docker Engine, CLI, Containerd e plugins Compose/Buildx"
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin # Para `docker compose` (v2)
+    state: present
+
+- name: "Garantir que o serviço Docker está rodando e habilitado"
+  ansible.builtin.systemd_service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: "Adicionar usuários ao grupo 'docker' do sistema para permitir execução de comandos Docker sem sudo"
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker # Grupo 'docker' é criado automaticamente pela instalação do Docker CE
+    append: yes
+  loop:
+    - "{{ vm_ansible_user_name }}"    # Usuário Ansible da VM
+    - "{{ docker_user_name_on_vm }}" # Usuário dedicado para volumes Docker
+  notify: Reiniciar VM para aplicar mudanças de grupo Docker # Ou pedir logout/login do usuário
+
+- name: "Criar diretório para dados persistentes do Portainer (via NFS)"
+  ansible.builtin.file:
+    # Caminho no host (VM core-services-vm) onde o volume do Portainer será montado.
+    # Este caminho DEVE existir DENTRO da VM e ser um ponto de montagem NFS do Proxmox Host.
+    # {{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }} é o caminho base NFS na VM.
+    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/portainer/data"
+    state: directory
+    owner: "{{ docker_puid }}" # PUID do vault.yml (usuário que rodará o container Portainer, ou root)
+    group: "{{ docker_pgid }}" # PGID do vault.yml
+    mode: '0755' # Permissões para o container Portainer escrever.
+  # A criação do diretório base no dataset ZFS do Proxmox host (e.g., /data/docker-volumes/portainer/data)
+  # pode ser feita aqui também ou assumir que o dataset pai já existe.
+  # Para simplicidade, esta task garante o subdiretório no montado NFS.
+
+- name: "Criar rede Docker 'proxy' se não existir (para Traefik e serviços expostos)"
+  community.docker.docker_network:
+    name: proxy
+    state: present
+    # Outras opções como 'driver: bridge' são padrão.
+
+- name: "Deploy Portainer CE container"
+  community.docker.docker_container:
+    name: portainer
+    image: portainer/portainer-ce:2.19.4 # Use uma versão específica e estável. Verifique a mais recente.
+    restart_policy: unless-stopped
+    security_opt: ["no-new-privileges:true"] # Boa prática de segurança
+    ports:
+      # Mapeia portas apenas no IP da VM 'core-services-vm' para evitar conflitos e melhor controle.
+      # Acesso principal via Traefik na porta 443. Estas são para acesso direto se necessário.
+      - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9443:9443" # HTTPS principal do Portainer
+      - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9000:9000" # HTTP (redireciona para 9443, pode ser omitido se só usar Traefik)
+      - "{{ hostvars[inventory_hostname]['ansible_host'] }}:8000:8000" # Porta para o Edge Agent do Portainer (opcional)
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock" # Permite Portainer gerenciar o Docker local
+      # Caminho no host (VM core-services-vm) onde o volume NFS do Portainer está montado
+      - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/portainer/data:/data" # Dados persistentes do Portainer
+    networks:
+      - proxy # Conecta Portainer à rede 'proxy' para ser descoberto pelo Traefik
+    labels: # Labels para Traefik descobrir e rotear para Portainer
+      traefik.enable: "true"
+      # Roteador para Portainer
+      traefik.http.routers.portainer.rule: "Host(`portainer.{{ base_domain }}`)" # base_domain do vault.yml
+      traefik.http.routers.portainer.entrypoints: "websecure" # Usa o entrypoint HTTPS do Traefik
+      traefik.http.routers.portainer.tls.certresolver: "letsencrypt" # Usa Let's Encrypt para SSL
+      traefik.http.routers.portainer.service: "portainer-svc" # Nome do serviço Traefik para Portainer
+      # Serviço Traefik para Portainer
+      traefik.http.services.portainer-svc.loadbalancer.server.port: "9443" # Porta interna do Portainer (HTTPS)
+      traefik.http.services.portainer-svc.loadbalancer.server.scheme: "https" # Esquema para o backend
+      # Middleware de Autenticação Authelia
+      # Refere-se ao middleware Authelia que será definido no docker-compose do Authelia (Seção 5).
+      traefik.http.routers.portainer.middlewares: "authelia@docker"

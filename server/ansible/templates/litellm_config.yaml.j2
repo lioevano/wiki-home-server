@@ -1,0 +1,23 @@
+general_settings:
+  master_key: "{{ litellm_master_key }}"
+
+model_list:
+  - model_name: gpt-4o
+    litellm_params:
+      model: gpt-4o
+      api_key: "{{ llm_api_keys.openai }}"
+
+  - model_name: claude-3-opus
+    litellm_params:
+      model: claude-3-opus-20240229
+      api_key: "{{ llm_api_keys.anthropic }}"
+
+  - model_name: gemini-1.5-pro
+    litellm_params:
+      model: gemini/gemini-1.5-pro-latest
+      api_key: "{{ llm_api_keys.google_gemini }}"
+
+  - model_name: ollama/llama3
+    litellm_params:
+      model: ollama/llama3
+      api_base: "http://{{ ai_desktop_vm_ip_var }}:11434"

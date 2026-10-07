@@ -1,0 +1,28 @@
+# ansible/roles/apps/ml-tools/handlers/main.yml
+- name: Update apt cache after adding key ROCm
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Update apt cache after adding repo ROCm
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Reboot VM for GPU drivers
+  ansible.builtin.reboot:
+    msg: "Reiniciando a VM para aplicar os drivers de GPU AMD ROCm."
+    connect_timeout: 5
+    reboot_timeout: 600
+    pre_reboot_delay: 0
+    post_reboot_delay: 60
+    test_command: uptime
+
+- name: Reload systemd and restart Ollama
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  notify: Restart Ollama service
+
+- name: Restart Ollama service
+  ansible.builtin.systemd_service:
+    name: ollama
+    state: restarted
+    enabled: yes

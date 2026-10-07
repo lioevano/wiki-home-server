@@ -1,0 +1,18 @@
+---
+# Copie este arquivo para vault.yml e criptografe com:
+# ansible-vault create ansible/inventories/home/group_vars/all/vault.yml
+
+proxmox_api_user: root@pam
+proxmox_api_password: "12345678"
+cloudflare_api_token: ALTERAR
+cloudflare_tunnel_token: ALTERAR
+authelia_jwt_secret: ALTERAR
+authelia_session_secret: ALTERAR
+authelia_storage_postgres_password: ALTERAR
+n8n_admin_user: admin
+n8n_admin_password: ALTERAR
+litellm_master_key: ALTERAR
+llm_api_keys:
+  openai: ALTERAR
+  anthropic: ALTERAR
+  google_gemini: ALTERAR

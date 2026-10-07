@@ -1,0 +1,83 @@
+# ansible/roles/apps/ml-tools/tasks/main.yml
+# Este role é para a VM ai-desktop-vm
+# Assume que o passthrough da GPU AMD (RX 5600XT) para esta VM foi configurado no Proxmox.
+
+- name: "Verificar se GPU AMD está presente na VM (lspci)"
+  ansible.builtin.command: lspci -nn
+  register: lspci_output_vm
+  changed_when: false
+  failed_when: false
+
+- name: "Instalar drivers AMD ROCm para RX 5600XT (Ubuntu 22.04)"
+  when: "'AMD' in lspci_output_vm.stdout and ('Radeon RX 5600' in lspci_output_vm.stdout or 'Navi 10' in lspci_output_vm.stdout or '1002:731f' in lspci_output_vm.stdout)"
+  ansible.builtin.block:
+    tasks:
+      - name: "Adicionar chave GPG do ROCm"
+        ansible.builtin.get_url:
+          url: https://repo.radeon.com/rocm/rocm.gpg.key
+          dest: /etc/apt/keyrings/rocm.gpg
+          mode: '0644'
+          force: yes
+        notify: Update apt cache after adding key ROCm
+
+      - name: "Adicionar repositório AMD ROCm"
+        ansible.builtin.apt_repository:
+          repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/5.7 {{ ansible_distribution_codename }} main"
+          state: present
+          filename: rocm
+        notify: Update apt cache after adding repo ROCm
+
+      - name: "Instalar pacotes ROCm (drivers e SDK básico)"
+        ansible.builtin.apt:
+          name:
+            - amdgpu-dkms
+            - rocm-hip-sdk
+            - mesa-utils
+          state: present
+          update_cache: yes
+        notify: Reboot VM for GPU drivers
+
+      - name: "Adicionar usuários aos grupos 'render' e 'video' para acesso à GPU"
+        ansible.builtin.user:
+          name: "{{ item }}"
+          groups: render,video
+          append: yes
+        loop:
+          - "{{ vm_ansible_user_name }}"
+          - "{{ docker_user_name_on_vm }}"
+  rescue:
+    - name: "Falha ao tentar instalar ROCm"
+      ansible.builtin.debug:
+        msg: "Não foi possível instalar os drivers ROCm. Verifique compatibilidade da GPU e versão do ROCm. Ollama pode rodar em modo CPU."
+
+- name: "Instalar Ollama via script oficial"
+  ansible.builtin.shell: |
+    curl -fsSL https://ollama.com/install.sh | sh
+  args:
+    creates: /usr/local/bin/ollama
+  changed_when: true
+  become: true
+
+- name: "Garantir que diretório de override do serviço Ollama exista"
+  ansible.builtin.file:
+    path: /etc/systemd/system/ollama.service.d
+    state: directory
+    mode: '0755'
+
+- name: "Criar arquivo de override para o serviço Ollama"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/ollama.service.d/override.conf
+    content: |
+      [Service]
+      Environment="OLLAMA_HOST=0.0.0.0:11434"
+      Environment="OLLAMA_MODELS={{ vm_nfs_mount_base_path }}/{{ zfs_rag_sources_dataset_name }}/ollama_models"
+    mode: '0644'
+  notify: Reload systemd and restart Ollama
+
+- name: "Garantir que diretório de modelos Ollama no volume NFS exista"
+  ansible.builtin.file:
+    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_rag_sources_dataset_name }}/ollama_models"
+    state: directory
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0775'

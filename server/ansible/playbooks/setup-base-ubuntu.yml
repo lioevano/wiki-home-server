@@ -1,0 +1,33 @@
+# ansible/playbooks/setup-base-ubuntu.yml
+# Configura a base para todas as VMs Ubuntu e instala Docker/Portainer na VM de containers.
+
+- hosts: ubuntu_vms # Alvo: todas as VMs definidas no grupo 'ubuntu_vms' do inventário
+  become: yes # Tarefas nos roles 'common' e 'docker' exigem privilégios de root
+  vars_files:
+    - ../inventories/home/group_vars/all/vault.yml
+  # Variáveis de group_vars/all/main.yml são carregadas automaticamente
+
+  roles:
+    - role: common # Aplica configurações base, UFW, Node Exporter VM a todas as VMs Ubuntu
+
+- hosts: core-services-vm # Alvo específico para instalar Docker e o container Portainer
+  become: yes
+  vars_files:
+    - ../inventories/home/group_vars/all/vault.yml # Necessário para base_domain nas labels do Portainer
+  roles:
+    - role: infra/docker # Instala Docker Engine e o container Portainer
+
+# Opcional: Instalar ambiente gráfico em VMs específicas
+# A variável GUI_ENABLED deve ser definida no inventário para os hosts desejados.
+# Exemplo em ansible/inventories/home/hosts.ini:
+# ai-desktop-vm ansible_host=192.168.15.12 GUI_ENABLED=true
+- hosts: ubuntu_vms # Verifica todas as VMs Ubuntu que podem ter a flag
+  become: yes
+  tasks:
+    - name: "Incluir role para ambiente desktop (se GUI_ENABLED for true para o host)"
+      ansible.builtin.include_role:
+        name: apps/desktop-environment # Role definido na Seção 3.5
+      vars:
+        # Passa a flag para o role, convertendo para booleano e tratando ausência da variável
+        install_gui_flag: "{{ hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool }}"
+      when: hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool # Só executa se a flag for true

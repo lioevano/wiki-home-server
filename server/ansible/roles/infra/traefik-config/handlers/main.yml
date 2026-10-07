@@ -1,0 +1,12 @@
+# ansible/roles/infra/traefik-config/handlers/main.yml
+- name: Reload systemd and restart traefik
+  community.docker.docker_container:
+    name: traefik
+    state: started
+    restart: true
+  ignore_errors: true
+
+- name: Reload traefik config
+  ansible.builtin.command: docker exec traefik traefik healthcheck --ping
+  changed_when: true
+  ignore_errors: true

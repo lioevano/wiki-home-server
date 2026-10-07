@@ -1,0 +1,34 @@
+---
+# Configurações globais não sensíveis do homelab
+
+proxmox_ansible_user_on_host: proxmox_ansible_user
+vm_ansible_user_name: homelab
+docker_user_name_on_vm: homelab
+docker_group_name_on_vm: docker
+
+system_timezone: America/Sao_Paulo
+base_domain: exemplo.com.br
+letsencrypt_email: admin@exemplo.com.br
+n8n_subdomain: n8n
+
+portainer_env_files_dest_path_on_vm: /opt/portainer_stack_envs
+vm_nfs_mount_base_path: /mnt/pve_data_zfs
+zfs_base_pool_path: /data
+zfs_docker_volumes_dataset_name: docker-volumes
+zfs_media_dataset_name: media
+zfs_downloads_dataset_name: downloads
+zfs_rag_sources_dataset_name: rag_sources
+zfs_backups_dataset_name: backups
+
+proxmox_host_ip_var: 192.168.15.66
+core_services_vm_ip_var: 192.168.15.67
+ai_desktop_vm_ip_var: 192.168.15.68
+vm_cloud_init_gateway: 192.168.15.1
+vm_nfs_allowed_clients_cidr: 192.168.15.0/24
+proxmox_ssh_allowed_cidrs:
+  - 192.168.15.0/24
+proxmox_web_ui_allowed_cidrs:
+  - 192.168.15.0/24
+
+docker_puid: 1000
+docker_pgid: 1000

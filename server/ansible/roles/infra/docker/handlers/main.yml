@@ -1,0 +1,12 @@
+# ansible/roles/infra/docker/handlers/main.yml
+- name: Reiniciar VM para aplicar mudanças de grupo Docker
+  ansible.builtin.reboot:
+    msg: "Reiniciando a VM para que as mudanças de associação ao grupo 'docker' tenham efeito para os usuários."
+    connect_timeout: 5
+    reboot_timeout: 300 # Tempo máximo para a VM reiniciar e SSH estar disponível
+    pre_reboot_delay: 0
+    post_reboot_delay: 30 # Espera após o reboot para garantir que SSH esteja pronto
+    test_command: uptime # Comando para verificar se a VM está de volta
+  # Este handler é chamado se a task de adicionar usuário ao grupo 'docker' fizer alguma mudança.
+  # É necessário para que o usuário Ansible e dockeruser possam rodar comandos Docker sem sudo
+  # em sessões SSH subsequentes sem precisar fazer logout/login manual.

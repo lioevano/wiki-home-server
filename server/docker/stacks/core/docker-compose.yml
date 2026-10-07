@@ -1,0 +1,104 @@
+# docker/stacks/core/docker-compose.yml
+# Infraestrutura base: Traefik + Cloudflare Tunnel + Authelia
+# Roda na core-services-vm
+version: '3.9'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal_services:
+    name: internal_services
+    external: true
+
+services:
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - proxy
+    ports:
+      - "${CORE_SERVICES_VM_IP_VAR}:80:80"
+      - "${CORE_SERVICES_VM_IP_VAR}:443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/data:/data"
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/config/traefik.yml:/traefik.yml:ro"
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/traefik/config/dynamic:/etc/traefik/dynamic_configs:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+    environment:
+      - CF_DNS_API_TOKEN=${CLOUDFLARE_API_TOKEN_FROM_VAULT}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik-dashboard.rule: "Host(`traefik.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.traefik-dashboard.entrypoints: websecure
+      traefik.http.routers.traefik-dashboard.service: api@internal
+      traefik.http.routers.traefik-dashboard.tls.certresolver: letsencrypt
+      traefik.http.routers.traefik-dashboard.middlewares: authelia-forwardauth@docker
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 10s
+      timeout: 2s
+      retries: 3
+      start_period: 15s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    networks:
+      - proxy
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}
+    depends_on:
+      traefik:
+        condition: service_healthy
+
+  authelia_db:
+    image: postgres:15-alpine
+    container_name: authelia_db
+    restart: unless-stopped
+    volumes:
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/db_pg:/var/lib/postgresql/data"
+    networks:
+      - internal_services
+    environment:
+      - POSTGRES_DB=authelia
+      - POSTGRES_USER=authelia
+      - POSTGRES_PASSWORD=${AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT}
+      - TZ=${SYSTEM_TIMEZONE}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authelia -d authelia -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  authelia:
+    image: authelia/authelia:latest
+    container_name: authelia
+    restart: unless-stopped
+    volumes:
+      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/config:/config"
+      - "/etc/localtime:/etc/localtime:ro"
+    networks:
+      - proxy
+      - internal_services
+    expose:
+      - "9091"
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+    depends_on:
+      authelia_db:
+        condition: service_healthy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.authelia-portal.rule: "Host(`auth.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.authelia-portal.entrypoints: websecure
+      traefik.http.routers.authelia-portal.tls.certresolver: letsencrypt
+      traefik.http.routers.authelia-portal.service: authelia-svc
+      traefik.http.services.authelia-svc.loadbalancer.server.port: "9091"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/verify?rd=https://auth.${BASE_DOMAIN_FROM_VAULT}/"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.trustForwardHeader: "true"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"

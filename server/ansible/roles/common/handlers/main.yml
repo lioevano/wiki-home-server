@@ -1,0 +1,35 @@
+# ansible/roles/common/handlers/main.yml
+- name: Reload systemd and restart node_exporter_vm
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  notify: Restart node_exporter_vm_service # Encadeia para o próximo handler
+
+- name: Restart node_exporter_vm_service
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    state: restarted
+    enabled: yes
+
+- name: Configure unattended-upgrades
+  ansible.builtin.copy:
+    content: |
+      // Configurações para atualizações automáticas.
+      // Arquivo: /etc/apt/apt.conf.d/20auto-upgrades
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Download-Upgradeable-Packages "1";
+      APT::Periodic::AutocleanInterval "7";
+      APT::Periodic::Unattended-Upgrade "1";
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: '0644'
+  # Para uma configuração mais detalhada de unattended-upgrades (e.g., Allowed-Origins, Blacklist, Email),
+  # você pode usar um template para /etc/apt/apt.conf.d/50unattended-upgrades.
+  # Exemplo:
+  # - name: Configure unattended-upgrades details (50unattended-upgrades)
+  #   ansible.builtin.template:
+  #     src: 50unattended-upgrades.j2
+  #     dest: /etc/apt/apt.conf.d/50unattended-upgrades
+  #     owner: root
+  #     group: root
+  #     mode: '0644'
