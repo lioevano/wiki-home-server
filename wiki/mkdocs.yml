@@ -1,0 +1,126 @@
+site_name: Wiki do Servidor do Léo Ivan
+site_url: https://lioevano.github.io/wiki-home-server/
+site_author: Léo Ivan
+site_description: >-
+  Guia completo para implementação e manutenção de um servidor doméstico
+  otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.
+
+repo_name: 'lioevano/wiki-home-server'
+repo_url: 'https://github.com/lioevano/wiki-home-server/'
+edit_uri: 'edit/main/wiki-home-server/docs/'
+
+theme:
+  name: material
+  language: 'pt'
+  palette:
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: 'blue'
+      accent: 'indigo'
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: 'blue'
+      accent: 'indigo'
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotate
+    - content.code.copy
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - glightbox
+  - mermaid2
+  - git-revision-date-localized:
+      timezone: "America/Sao_Paulo"
+      custom_format: "%d/%m/%Y"
+      fallback_to_build_date: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.extra
+  - pymdownx.tilde
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - attr_list
+
+nav:
+  - 'Introdução': 'index.md'
+  - '🚀 Implementação':
+    - 'Visão Geral': '01-manual-implementacao/index.md'
+    - 'Preparação e Planejamento': '01-manual-implementacao/00-preparacao-planejamento.md'
+    - 'Máquina de Controle Ansible': '01-manual-implementacao/01-maquina-controle-ansible.md'
+    - 'Proxmox VE Host': '01-manual-implementacao/02-proxmox-ve-host.md'
+    - 'Provisionamento de VMs': '01-manual-implementacao/03-provisionamento-vms.md'
+    - 'Configuração Base das VMs': '01-manual-implementacao/04-configuracao-base-vms-ubuntu.md'
+    - 'Rede Segura': '01-manual-implementacao/05-rede-segura.md'
+    - 'Deploy Core': '01-manual-implementacao/06-deploy-core.md'
+    - 'Deploy de Apps': '01-manual-implementacao/07-deploy-apps.md'
+    - 'Stack de IA': '01-manual-implementacao/08-stack-ia.md'
+  - '💡 Arquitetura':
+    - 'Visão Geral': '02-visao-geral-arquitetura/index.md'
+    - 'Fluxo de Rede': '02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md'
+    - 'Virtualização': '02-visao-geral-arquitetura/02-virtualizacao-proxmox.md'
+    - 'Armazenamento': '02-visao-geral-arquitetura/03-armazenamento-zfs-nfs.md'
+    - 'Automação': '02-visao-geral-arquitetura/04-automacao-ansible.md'
+    - 'Containers': '02-visao-geral-arquitetura/05-gerenciamento-containers.md'
+    - 'Segurança': '02-visao-geral-arquitetura/06-principios-seguranca.md'
+    - 'Estratégia LLM': '02-visao-geral-arquitetura/08-apis-llm-estrategia.md'
+  - '🛠️ Sustentação':
+    - 'Visão Geral': '03-guias-sustentacao/index.md'
+    - 'Novo Serviço Docker': '03-guias-sustentacao/01-adicionando-novo-servico-docker.md'
+    - 'Modificando Configurações': '03-guias-sustentacao/02-modificando-configuracoes-existentes.md'
+    - 'Troubleshooting': '03-guias-sustentacao/03-troubleshooting-comum.md'
+    - 'Redes Docker': '03-guias-sustentacao/04-gerenciando-redes-docker.md'
+    - 'Passthrough de Hardware': '03-guias-sustentacao/05-passthrough-hardware-adicional.md'
+    - 'Recursos de VMs': '03-guias-sustentacao/06-gerenciando-recursos-vms.md'
+  - '⚙️ Manutenção':
+    - 'Visão Geral': '04-manutencao-recuperacao/index.md'
+    - 'Rotinas': '04-manutencao-recuperacao/01-rotinas-manutencao.md'
+    - 'Backup e Restore': '04-manutencao-recuperacao/02-backup-restore-estrategia.md'
+    - 'CI/CD Ansible': '04-manutencao-recuperacao/03-cicd-basico-ansible.md'
+    - 'Reconstruindo': '04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md'
+    - 'Migrando Hardware/Rede': '04-manutencao-recuperacao/05-migrando-hardware-rede.md'
+  - '📎 Referência': '05-referencia-rapida.md'
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/lioevano
+    - icon: fontawesome/brands/instagram
+      link: https://instagram.com/lioevano
