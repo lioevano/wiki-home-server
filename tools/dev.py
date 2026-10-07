@@ -112,6 +112,9 @@ def task_lint(args: list[str]) -> int:
     else:
         ansible_dir = root / "server" / "ansible"
         env = dict(os.environ, ANSIBLE_CONFIG=str(ansible_dir / "ansible.cfg"))
+        requirements = ansible_dir / "requirements.yml"
+        if requirements.exists():
+            failures += bool(run([venv_bin("ansible-galaxy"), "collection", "install", "-r", str(requirements)], cwd=ansible_dir, env=env))
         failures += bool(run([venv_bin("ansible-lint"), "--profile", "min", "playbooks/", "roles/"], cwd=ansible_dir, env=env))
         for playbook in sorted((ansible_dir / "playbooks").glob("*.yml")):
             failures += bool(run(

@@ -199,6 +199,9 @@ Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os ar
 
 Este arquivo define as tarefas a serem executadas no host Proxmox.
 
+!!! bug "Problema conhecido — revisar na refatoração"
+    As tarefas de firewall usam `community.proxmox.pve_firewall_global` e `community.proxmox.pve_firewall_rules`, que **não existem** na coleção `community.proxmox`. O `--syntax-check` (e o `python tools/dev.py lint`) falha neste role até que elas sejam reescritas com módulos reais (ex.: `proxmox_cluster_firewall_options`, `proxmox_firewall`).
+
 ```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
 - name: "Atualizar repositórios Proxmox (remover enterprise, adicionar no-subscription)"

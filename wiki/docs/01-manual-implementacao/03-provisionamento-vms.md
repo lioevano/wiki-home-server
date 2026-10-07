@@ -214,6 +214,9 @@ vm_qemu_args: ""
 
 Tarefas para criar/configurar a VM.
 
+!!! bug "Problema conhecido — revisar na refatoração"
+    A verificação de existência da VM usa `community.proxmox.proxmox_kvm_info`, que **não existe**; o módulo atual é `community.proxmox.proxmox_vm_info` (com formato de retorno diferente). O `--syntax-check` falha neste role até a correção.
+
 ```yaml title="ansible/roles/infra/proxmox-vm/tasks/main.yml"
 # ansible/roles/infra/proxmox-vm/tasks/main.yml
 # Cria ou atualiza uma VM no Proxmox a partir de um template.

@@ -1,0 +1,8 @@
+# ansible/requirements.yml
+# Coleções Ansible usadas pelos roles e playbooks.
+# Instale com: ansible-galaxy collection install -r ansible/requirements.yml
+collections:
+  - name: community.general
+  - name: community.docker
+  - name: community.proxmox
+  - name: ansible.posix

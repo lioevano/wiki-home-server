@@ -84,8 +84,8 @@ else
 fi
 
 # 4. Instala coleções Ansible necessárias
-echo -e "${YELLOW}Instalando/Atualizando coleções Ansible: community.general, community.docker, community.proxmox...${NC}"
-ansible-galaxy collection install community.general community.docker community.proxmox --force # --force para garantir a atualização
+echo -e "${YELLOW}Instalando/Atualizando coleções Ansible (ansible/requirements.yml)...${NC}"
+ansible-galaxy collection install -r ansible/requirements.yml --force # coleções listadas em ansible/requirements.yml
 
 # 5. Instala SDK Docker para Python (necessário para módulos Docker do Ansible)
 echo -e "${YELLOW}Instalando/Atualizando Docker SDK para Python...${NC}"
@@ -152,6 +152,21 @@ Ansible se conecta aos servidores (Proxmox host e VMs) via SSH. A autenticação
             ```
 
 A chave pública (`~/.ssh/id_ed25519_homelab.pub`) será o que você copiará para os servidores remotos para permitir o login sem senha via Ansible.
+
+### Coleções Ansible do projeto
+
+Os módulos usados pelos roles vêm destas coleções, instaladas pelo script acima (e pelo `python tools/dev.py lint`, que precisa delas para o `--syntax-check`):
+
+```yaml title="ansible/requirements.yml"
+# ansible/requirements.yml
+# Coleções Ansible usadas pelos roles e playbooks.
+# Instale com: ansible-galaxy collection install -r ansible/requirements.yml
+collections:
+  - name: community.general
+  - name: community.docker
+  - name: community.proxmox
+  - name: ansible.posix
+```
 
 ## 1.2. Criação e Gerenciamento de Variáveis Sensíveis (Ansible Vault)
 

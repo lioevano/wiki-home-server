@@ -9,6 +9,11 @@ rules:
   line-length: disable
   document-start: disable
   comments-indentation: disable
+  # Estilo do projeto: mapas/listas inline com um espaço interno, ex.: { dir: 'in', action: 'ACCEPT' }
+  braces:
+    max-spaces-inside: 1
+  brackets:
+    max-spaces-inside: 1
   comments:
     min-spaces-from-content: 1
   truthy:
