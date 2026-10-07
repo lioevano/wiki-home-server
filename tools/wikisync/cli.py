@@ -53,6 +53,16 @@ def _cmd_apply(cfg, args) -> int:
     return 0
 
 
+def _cmd_index(cfg, args) -> int:
+    from .index import build_index, write_index
+
+    idx = build_index(cfg)
+    write_index(cfg, idx)
+    print(f"INDEX.md e index.json gerados: {len(idx['pages'])} páginas, {len(idx['server_files'])} arquivos, "
+          f"{len(idx['services'])} serviços, {len(idx['playbooks'])} playbooks")
+    return 0
+
+
 def _literal_paths(cfg) -> set[str]:
     from .check import collect
 
@@ -70,6 +80,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_apply.add_argument("--yes", action="store_true", help="grava as alterações")
     p_apply.add_argument("--path", help="restringe a um caminho (relativo a server/)")
     p_apply.set_defaults(func=_cmd_apply)
+    p_index = sub.add_parser("index", help="gera INDEX.md e index.json na raiz")
+    p_index.set_defaults(func=_cmd_index)
     return parser
 
 
