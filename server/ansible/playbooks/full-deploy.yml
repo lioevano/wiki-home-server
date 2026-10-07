@@ -1,4 +1,6 @@
----
+# ansible/playbooks/full-deploy.yml
+# Orquestra a configuração completa da infraestrutura.
+
 - import_playbook: setup-proxmox-host.yml
 - import_playbook: setup-base-ubuntu.yml
 - import_playbook: setup-core-networking.yml

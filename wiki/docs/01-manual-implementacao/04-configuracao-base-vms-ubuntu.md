@@ -150,7 +150,7 @@ Este arquivo contém as tarefas principais do role `common`.
 
 - name: "Instalar Node Exporter na VM (se não existir)"
   when: not node_exporter_vm_binary.stat.exists
-  ansible.builtin.block: # Agrupa tarefas para instalação do Node Exporter
+  block: # Agrupa tarefas para instalação do Node Exporter
     - name: "Checar última release do Node Exporter no GitHub (VM)"
       ansible.builtin.uri:
         url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"

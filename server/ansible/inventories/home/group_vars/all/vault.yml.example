@@ -1,0 +1,79 @@
+# ansible/inventories/home/group_vars/all/vault.yml.example
+# MODELO versionado. Copie para vault.yml, preencha e criptografe:
+#   cp vault.yml.example vault.yml && ansible-vault encrypt vault.yml
+# Depois, edite SEMPRE com: ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml
+
+# --- Credenciais Proxmox ---
+# Usuário e senha para a API do Proxmox.
+# Inicialmente, pode ser root@pam. Após o setup inicial do host Proxmox,
+# é recomendado criar um usuário API dedicado no Proxmox com um token API.
+proxmox_api_user: "root@pam"
+proxmox_api_password: "SENHA_DO_ROOT_DO_PROXMOX_DEFINIDA_NA_INSTALACAO"
+# Se optar por usar um Token API do Proxmox (mais seguro a longo prazo):
+# proxmox_api_user: "ansible_api_user@pve!meuapitokenid" # Formato: usuario@realm!TokenID
+# proxmox_api_token_id: "meuapitokenid"                   # O ID do token
+# proxmox_api_token_secret: "SEGREDO_LONGO_DO_TOKEN_API_PROXMOX" # O segredo gerado
+
+# --- Credenciais VMs ---
+# Senha para o usuário Ansible ('{{ vm_ansible_user_name }}') que será criado nas VMs via Cloud-Init.
+vm_ansible_user_password_plain: "SENHA_FORTE_E_UNICA_PARA_USUARIO_ANSIBLE_NAS_VMS"
+
+# --- Cloudflare ---
+# Token de API da Cloudflare com permissões para editar registros DNS no seu domínio.
+# Crie em: Cloudflare Dashboard > My Profile > API Tokens > Create Token > Use "Edit zone DNS" template.
+cloudflare_api_token: "TOKEN_API_CLOUDFLARE_PARA_EDICAO_DNS_DO_SEU_DOMINIO"
+# Token do Cloudflare Tunnel. Obtido ao criar um túnel no dashboard Cloudflare Zero Trust.
+# Siga: Zero Trust > Access > Tunnels > Create a tunnel. Após criado, você verá o comando para
+# rodar o conector, que inclui o token. Ou use `cloudflared tunnel token <TUNNEL_NAME_OR_ID>`.
+cloudflare_tunnel_token: "TOKEN_LONGO_ALFANUMERICO_DO_SEU_CLOUDFLARE_TUNNEL"
+# O ID do túnel (UUID) pode ser útil para referência, mas o token é o principal para o conector.
+# cloudflare_tunnel_id: "UUID_DO_SEU_TUNNEL_CLOUDFLARE_EX_AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"
+
+# --- Authelia ---
+# Segredos para JWT (JSON Web Token) e Sessão. Gere strings aleatórias longas e seguras.
+# Exemplo de geração: openssl rand -base64 64
+authelia_jwt_secret: "SEU_SECRET_JWT_PARA_AUTHELIA_MUITO_LONGO_E_ALEATORIO"
+authelia_session_secret: "SEU_SECRET_DE_SESSAO_PARA_AUTHELIA_MUITO_LONGO_E_ALEATORIO"
+# Usuário administrador inicial do Authelia.
+authelia_admin_user_initial: "admin" # Ou seu nome de admin preferido
+# Hash da senha do administrador do Authelia. Gere com o comando Docker:
+# docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password 'SUA_SENHA_ADMIN_AUTHELIA_FORTE'
+# Copie a saída completa, incluindo o $argon2id$...
+authelia_admin_password_hash_initial: "$argon2id$v=19$m=65536,t=3,p=4$SEU_SALT_GERADO_PELO_COMANDO$SEU_HASH_GERADO_PELO_COMANDO"
+# Senha para o usuário 'authelia' no banco de dados PostgreSQL do Authelia.
+authelia_storage_postgres_password: "SENHA_FORTE_PARA_O_USUARIO_AUTHELIA_NO_DB_POSTGRES"
+
+# --- Configurações Gerais ---
+# Email para notificações do Let's Encrypt (renovação de certificados, problemas).
+letsencrypt_email: "seu_email_valido_para_lets_encrypt@example.com"
+# Seu domínio base, SEM https:// ou www (e.g., meuhomelab.com).
+base_domain: "seudominio.com"
+# Fuso horário para os sistemas. Encontre o seu com `timedatectl list-timezones` no Linux.
+system_timezone: "America/Sao_Paulo" # Exemplo, ajuste para o seu.
+
+# --- Docker User/Group IDs (Numéricos) ---
+# Usados para consistência de permissões nos volumes NFS e dentro dos containers.
+# Geralmente 1000 para o primeiro usuário não-root criado em um sistema Linux.
+# Verifique o UID/GID do usuário que você deseja que seja o "dono" dos arquivos Docker.
+docker_puid: 1000
+docker_pgid: 1000
+
+# --- Senhas de Bancos de Dados de Aplicações (Adicione conforme necessário) ---
+nextcloud_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_NEXTCLOUD"
+# Senha para o usuário administrador inicial do Nextcloud (criado na primeira execução).
+nextcloud_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_NEXTCLOUD"
+
+grafana_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"
+grafana_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"
+
+# --- n8n ---
+n8n_admin_user: "admin"
+n8n_admin_password: "SENHA_FORTE_PARA_O_ADMIN_DO_N8N"
+
+# --- APIs de LLM (LiteLLM e Gemini CLI) ---
+# Chave mestra do proxy LiteLLM (gere com: openssl rand -hex 32).
+litellm_master_key: "CHAVE_MESTRA_DO_LITELLM"
+llm_api_keys:
+  openai: "SUA_CHAVE_OPENAI"
+  anthropic: "SUA_CHAVE_ANTHROPIC"
+  google_gemini: "SUA_CHAVE_GEMINI"

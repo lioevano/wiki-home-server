@@ -1,10 +1,9 @@
----
-- name: Configuração base do host Proxmox
-  hosts: proxmox
-  # become: true
-  gather_facts: true
+# ansible/playbooks/setup-proxmox-host.yml
+- hosts: proxmox_main_host # Alvo definido no seu inventário (ansible/inventories/home/hosts.ini)
+  become: yes # A maioria das tarefas neste role requer privilégios de root
   vars_files:
-    - ../inventories/home/group_vars/all/main.yml
-    - ../inventories/home/group_vars/all/vault.yml
+    - ../inventories/home/group_vars/all/vault.yml # Carrega variáveis sensíveis
+  # Variáveis de ../inventories/home/group_vars/all/main.yml são carregadas automaticamente para 'all' hosts
+
   roles:
-    - infra/proxmox-host-config
+    - role: infra/proxmox-host-config # Aplica o role que configura o host

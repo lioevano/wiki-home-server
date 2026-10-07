@@ -2,12 +2,12 @@
 
 ## 13. Usando o GeminiCLI para Interação Inteligente com o Servidor
 
-Nossa arquitetura de home server é poderosa, mas a interação com ela, especialmente para tarefas de manutenção, análise de logs e troubleshooting, geralmente acontece através da linha de comando (CLI). Para turbinar essa interação, integramos o **GeminiCLI**, uma ferramenta não-oficial que leva o poder dos modelos de linguagem da Google (Gemini) diretamente para o seu terminal.
+Nossa arquitetura de home server é poderosa, mas a interação com ela, especialmente para tarefas de manutenção, análise de logs e troubleshooting, geralmente acontece através da linha de comando (CLI). Para turbinar essa interação, integramos o **Gemini CLI** (`@google/gemini-cli`), a ferramenta de código aberto do Google que leva o poder dos modelos de linguagem da Google (Gemini) diretamente para o seu terminal.
 
 O GeminiCLI permite que você faça perguntas em linguagem natural sobre o seu sistema, gere comandos, analise arquivos e muito mais, tudo isso com o contexto do seu filesystem. É como ter um assistente de DevOps experiente disponível 24/7 diretamente no seu shell.
 
 !!! warning "Ferramenta Não-Oficial e Segurança"
-    O GeminiCLI é um projeto da comunidade e não uma ferramenta oficial do Google. Embora seja extremamente útil, sempre exerça cautela. **Nunca execute comandos gerados por uma IA em um ambiente de produção sem antes revisá-los cuidadosamente.** Trate as sugestões da IA como as de um assistente júnior: úteis, mas que exigem supervisão sênior (a sua!).
+    O Gemini CLI é instalado via `npm` (pacote `@google/gemini-cli`), por isso o role instala `nodejs` e `npm` antes. Embora seja extremamente útil, sempre exerça cautela. **Nunca execute comandos gerados por uma IA em um ambiente de produção sem antes revisá-los cuidadosamente.** Trate as sugestões da IA como as de um assistente júnior: úteis, mas que exigem supervisão sênior (a sua!).
 
 ### Instalação e Configuração via Ansible
 
@@ -32,17 +32,25 @@ A instalação do GeminiCLI e a configuração da chave de API serão gerenciada
 
         ```yaml title="ansible/roles/tools/ai-cli-tools/tasks/main.yml"
         # ansible/roles/tools/ai-cli-tools/tasks/main.yml
-        - name: "Instalar GeminiCLI via pip"
-          ansible.builtin.pip:
-            name: geminicli
-            executable: pip3
+        - name: Instalar dependências do Gemini CLI
+          ansible.builtin.apt:
+            name:
+              - nodejs
+              - npm
+            state: present
+            update_cache: true
+
+        - name: Instalar Gemini CLI globalmente
+          community.general.npm:
+            name: "@google/gemini-cli"
+            global: true
             state: present
 
-        - name: "Configurar a chave de API do Gemini para o usuário"
+        - name: Configurar chave de API do Gemini para o usuário
           ansible.builtin.lineinfile:
-            path: "/home/{{ vm_ansible_user_name }}/.bashrc" # ou .zshrc
+            path: "/home/{{ vm_ansible_user_name }}/.bashrc"
             line: 'export GEMINI_API_KEY="{{ llm_api_keys.google_gemini }}"'
-            create: yes
+            create: true
             owner: "{{ vm_ansible_user_name }}"
             group: "{{ vm_ansible_user_name }}"
             mode: '0644'

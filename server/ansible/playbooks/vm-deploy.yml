@@ -1,45 +1,70 @@
 # ansible/playbooks/vm-deploy.yml
-- hosts: proxmox_main_host
-  gather_facts: no
+- hosts: proxmox_main_host # O playbook é executado *contra* o host Proxmox
+                          # pois as tasks do role proxmox-vm são delegadas (delegate_to: localhost)
+                          # e interagem com a API Proxmox a partir da máquina de controle.
+                          # O alvo aqui é para o Ansible saber com qual host Proxmox falar.
+  gather_facts: no # Não precisamos de fatos do Proxmox host para estas tasks
   vars_files:
-    - ../inventories/home/group_vars/all/vault.yml
+    - ../inventories/home/group_vars/all/vault.yml # Carrega segredos
+  # Variáveis de group_vars/all/main.yml e hosts.ini são carregadas automaticamente
 
   tasks:
     - name: "Deploy VM: core-services-vm"
       ansible.builtin.include_role:
         name: infra/proxmox-vm
       vars:
-        vm_id: 100
-        vm_name: "core-services-vm"
-        vm_cores: 4
-        vm_memory: 12288          # 12GB RAM
-        vm_disk_gb: 80
+        vm_id: 100 # ID único para esta VM
+        vm_name: "core-services-vm" # DEVE corresponder ao nome no seu hosts.ini
+        vm_cores: 6 # Com 48GB RAM no host, podemos ser mais generosos.
+        vm_memory: 16384 # 16GB RAM para a VM de serviços principais
+        vm_disk_gb: 100 # Aumentado para 100GB
+        # IP estático para a VM, usando o IP definido no inventário (hosts.ini)
         vm_ipconfig: "ip={{ hostvars['core-services-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
         vm_tags: "docker,core_services,homelab,ansible_managed"
 
-    - name: "Deploy VM: ai-desktop-vm (opcional, com Ollama + LiteLLM)"
+    - name: "Deploy VM: ai-desktop-vm (Opcional, para LLM/RAG com GPU)"
       ansible.builtin.include_role:
         name: infra/proxmox-vm
       vars:
-        vm_id: 101
-        vm_name: "ai-desktop-vm"
-        vm_cores: 4
-        vm_memory: 8192           # 8GB RAM (suficiente para modelos leves no Ollama)
-        vm_disk_gb: 100
+        vm_id: 101 # ID único
+        vm_name: "ai-desktop-vm" # DEVE corresponder ao nome no hosts.ini
+        vm_cores: 4 # Pode ser aumentado para 6 ou 8 se necessário e o host permitir
+        vm_memory: 16384 # 16GB RAM, pode ser aumentada. Ex: 24576 (24GB)
+        vm_disk_gb: 200 # Aumentado para modelos LLM maiores e SO
         vm_ipconfig: "ip={{ hostvars['ai-desktop-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
-        vm_tags: "llm,ai,homelab,ansible_managed"
-      when: "'ai-desktop-vm' in groups['virtual_machines']"
+        vm_tags: "llm,rag,ai_gpu,desktop,homelab,ansible_managed"
 
-    - name: "Aguardar VMs acessíveis via SSH"
+        # --- Configurações para GPU Passthrough (Exemplo para RX 5600XT) ---
+        # !!! IMPORTANTE: Substitua pelos IDs PCI REAIS da sua GPU no host Proxmox !!!
+        # Use 'lspci -nn' no shell do Proxmox host para encontrar os IDs [vendor:device] corretos.
+        # Remova o prefixo "0000:" dos IDs.
+        # Exemplo: Se lspci -nn mostra:
+        # 09:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 10 [Radeon RX 5600 OEM/5600 XT / 5700/5700 XT] [1002:731f] (rev c4)
+        # 09:00.1 Audio device [0403]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 10/10M/12/14 HDMI Audio Device [1002:ab28]
+        # Os IDs PCI para o array abaixo seriam "09:00.0" e "09:00.1".
+        vm_vga_type: "none" # Necessário para GPU passthrough ser a placa gráfica principal da VM
+        vm_host_pci_devices: # Lista de dispositivos PCI a serem passados
+          - "SEU_ID_PCI_GPU_VIDEO,pcie=1,x-vga=1"  # Ex: "09:00.0,pcie=1,x-vga=1"
+          - "SEU_ID_PCI_GPU_AUDIO,pcie=1"         # Ex: "09:00.1,pcie=1"
+        # Opcional: Se precisar de um arquivo ROM para a GPU (mais comum para NVIDIA, raro para AMD recentes)
+        # vm_qemu_args: "-device vfio-pci,host=09:00.0,romfile=amd_rx5600xt.rom"
+        # Argumentos para tentar "esconder" que é uma VM, pode ser necessário para drivers NVIDIA (menos para AMD)
+        # vm_qemu_args: "-cpu host,kvm=off,hv_vendor_id=NvidiaFuckU" # Exemplo extremo, use com cautela e pesquisa
+      when: "'ai-desktop-vm' in groups['virtual_machines']" # Só executa se a VM estiver definida no inventário
+
+    # Aguardar que as VMs estejam prontas e atualizar o inventário Ansible em memória
+    - name: "Aguardar todas as VMs Ubuntu recém-criadas/configuradas estarem acessíveis via SSH"
       ansible.builtin.wait_for:
-        host: "{{ hostvars[item]['ansible_host'] }}"
-        port: 22
-        delay: 60
-        timeout: 360
-        state: started
+        host: "{{ hostvars[item]['ansible_host'] }}" # IP da VM do inventário
+        port: 22 # Porta SSH
+        delay: 60  # Segundos de espera inicial antes do primeiro check (Cloud-Init pode demorar)
+        timeout: 360 # Tempo máximo de espera em segundos (6 minutos)
+        state: started # Espera até que a porta esteja aberta e respondendo
         msg: "Aguardando SSH na VM {{ item }} ({{ hostvars[item]['ansible_host'] }})"
+      # loop: "{{ groups['ubuntu_vms'] }}" # Itera sobre todas as VMs no grupo 'ubuntu_vms'
+      # Usar query é mais robusto se o grupo puder estar vazio ou hosts não definidos:
       loop: "{{ query('inventory_hostnames', 'ubuntu_vms') }}"
-      delegate_to: localhost
+      delegate_to: localhost # A tarefa wait_for roda na máquina de controle Ansible, testando a conexão com as VMs
 
-    - name: "Atualizar inventário Ansible em memória"
-      ansible.builtin.meta: refresh_inventory
+    - name: "Atualizar inventário Ansible em memória para refletir novas VMs"
+      ansible.builtin.meta: refresh_inventory # Garante que Ansible conheça os novos hosts para tasks subsequentes

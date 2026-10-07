@@ -1,11 +1,41 @@
 # ansible/roles/infra/proxmox-host-config/handlers/main.yml
-- name: Restart NFS server
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Restart timesyncd
+  ansible.builtin.systemd_service:
+    name: systemd-timesyncd
+    state: restarted
+
+- name: Reload PVE Firewall
+  ansible.builtin.command: pve-firewall restart
+  when: ansible_distribution == 'Proxmox VE'
+  # Usar 'command' pois pode não haver um módulo Ansible específico para 'pve-firewall restart'
+  # que seja idempotente da maneira que queremos (apenas recarregar).
+
+- name: Restart sshd
+  ansible.builtin.systemd_service:
+    name: sshd # Ou ssh.service, dependendo da distro
+    state: restarted
+
+- name: Reload systemd and restart node_exporter_host
+  ansible.builtin.systemd: # Módulo systemd para daemon_reload
+    daemon_reload: yes
+  notify: Restart node_exporter_host_service # Encadeia para o próximo handler
+
+- name: Restart node_exporter_host_service
+  ansible.builtin.systemd_service:
+    name: node_exporter
+    state: restarted
+    enabled: yes # Garante que está habilitado também
+
+- name: Export filesystems
+  ansible.builtin.command: exportfs -ra
+  listen: "Export filesystems" # Nome do listener para ser chamado por notify
+
+- name: Restart nfs-server
   ansible.builtin.systemd_service:
     name: nfs-kernel-server
     state: restarted
-    enabled: yes
-
-- name: Restart pve-firewall
-  ansible.builtin.systemd_service:
-    name: pve-firewall
-    state: restarted
+  listen: "Export filesystems" # Também reinicia nfs-server se os exports mudarem

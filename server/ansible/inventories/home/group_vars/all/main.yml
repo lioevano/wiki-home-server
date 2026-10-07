@@ -1,34 +1,70 @@
----
-# Configurações globais não sensíveis do homelab
+# ansible/inventories/home/group_vars/all/main.yml
 
-proxmox_ansible_user_on_host: proxmox_ansible_user
-vm_ansible_user_name: homelab
-docker_user_name_on_vm: homelab
-docker_group_name_on_vm: docker
+# --- Configurações do Host Proxmox ---
+# Nome do usuário Ansible dedicado a ser criado no host Proxmox.
+proxmox_ansible_user_on_host: "proxmox_ansible_user"
+# CIDRs da sua rede local permitidos para SSH e acesso à Web UI do Proxmox.
+# AJUSTE ESTES VALORES PARA CORRESPONDER À SUA REDE LOCAL!
+proxmox_ssh_allowed_cidrs: "192.168.15.0/24"
+proxmox_web_ui_allowed_cidrs: "192.168.15.0/24"
+# Bridge de rede padrão no Proxmox (geralmente vmbr0, conectada à sua LAN).
+proxmox_default_bridge: "vmbr0"
+# Storage no Proxmox onde os discos virtuais das VMs serão armazenados (geralmente 'local-lvm' no SSD NVMe).
+proxmox_storage_vm_disks: "local-lvm"
+# Storage no Proxmox onde ISOs e templates de VM são armazenados (geralmente 'local' no SSD NVMe).
+proxmox_storage_iso_templates: "local"
+# Nome do template Ubuntu Cloud-Init que será criado no Proxmox.
+proxmox_ubuntu_template_name: "ubuntu-2204-cloudinit-template-v1"
 
-system_timezone: America/Sao_Paulo
-base_domain: exemplo.com.br
-letsencrypt_email: admin@exemplo.com.br
-n8n_subdomain: n8n
+# --- Configurações Padrão para Máquinas Virtuais (VMs) ---
+# Nome do usuário Ansible a ser criado nas VMs via Cloud-Init.
+vm_ansible_user_name: "vm_ansible_user"
+# Gateway padrão para as VMs (geralmente o IP do seu roteador doméstico).
+# AJUSTE ESTE VALOR PARA O SEU GATEWAY!
+vm_cloud_init_gateway: "192.168.15.1"
+# Servidores DNS para as VMs.
+vm_cloud_init_nameservers: "1.1.1.1,8.8.8.8" # Ou seu DNS local preferido (e.g., Pi-hole IP).
+# Recursos padrão para VMs. Estes podem ser sobrescritos por VM no playbook `vm-deploy.yml`.
+# Com 48GB de RAM no host, temos mais flexibilidade.
+vm_default_cores: 2
+vm_default_memory_mb: 4096 # 4GB como padrão (ajustaremos para VMs específicas)
+vm_default_disk_gb: 50     # Tamanho do disco da VM em GB como padrão
 
-portainer_env_files_dest_path_on_vm: /opt/portainer_stack_envs
-vm_nfs_mount_base_path: /mnt/pve_data_zfs
-zfs_base_pool_path: /data
-zfs_docker_volumes_dataset_name: docker-volumes
-zfs_media_dataset_name: media
-zfs_downloads_dataset_name: downloads
-zfs_rag_sources_dataset_name: rag_sources
-zfs_backups_dataset_name: backups
+# --- Docker User/Group nas VMs ---
+# Nomes para o usuário e grupo dedicados que serão proprietários dos arquivos nos volumes NFS
+# e com cujos PUID/PGID os containers Docker rodarão.
+# Os IDs numéricos (PUID/PGID) estão definidos no vault.yml.
+docker_user_name_on_vm: "dockeruser"
+docker_group_name_on_vm: "dockergroup"
 
-proxmox_host_ip_var: 192.168.15.66
-core_services_vm_ip_var: 192.168.15.67
-ai_desktop_vm_ip_var: 192.168.15.68
-vm_cloud_init_gateway: 192.168.15.1
-vm_nfs_allowed_clients_cidr: 192.168.15.0/24
-proxmox_ssh_allowed_cidrs:
-  - 192.168.15.0/24
-proxmox_web_ui_allowed_cidrs:
-  - 192.168.15.0/24
+# --- Caminhos e Nomes de Datasets ZFS no Host Proxmox ---
+# O pool ZFS principal (criado nos HDDs) será montado em /data.
+zfs_base_pool_path: "/data"
+# Nomes dos datasets ZFS a serem criados sob o pool 'data'.
+# Estes serão montados em, por exemplo, /data/docker-volumes, /data/media, etc.
+zfs_docker_volumes_dataset_name: "docker-volumes"
+zfs_media_dataset_name: "media"
+zfs_downloads_dataset_name: "downloads"
+zfs_rag_sources_dataset_name: "rag_sources"       # Para a VM de IA, se usada.
+zfs_backups_dataset_name: "backups"
 
-docker_puid: 1000
-docker_pgid: 1000
+# --- Caminhos de Montagem NFS DENTRO das VMs ---
+# Ponto de montagem base DENTRO das VMs para os datasets ZFS compartilhados do Host Proxmox.
+vm_nfs_mount_base_path: "/mnt/pve_data_zfs"
+
+# --- Configuração do Servidor NFS (no Host Proxmox) ---
+# IPs ou CIDRs das VMs que terão permissão para montar os compartilhamentos NFS.
+# Deve cobrir os IPs de todas as suas VMs que precisarão de acesso NFS.
+# AJUSTE ESTE VALOR PARA A SUB-REDE DAS SUAS VMs!
+vm_nfs_allowed_clients_cidr: "192.168.15.0/24"
+
+# --- Caminhos para Templates `.env` para Stacks Portainer ---
+# Usado por playbooks Ansible para preparar arquivos .env para as stacks Docker.
+# portainer_env_template_src: "templates/portainer_stack_env.j2" # Caminho relativo ao diretório de roles/playbooks
+# Onde os arquivos .env resolvidos (preenchidos pelo Ansible) serão colocados na VM
+# para o Portainer usar ao criar/atualizar stacks.
+portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
+
+# --- Subdomínios de serviços ---
+# Subdomínio do n8n (resulta em n8n.<base_domain>).
+n8n_subdomain: "n8n"

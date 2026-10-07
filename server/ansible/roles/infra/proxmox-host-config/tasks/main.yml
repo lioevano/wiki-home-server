@@ -1,20 +1,27 @@
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
-# Configuração do host Proxmox: repositórios, pacotes, ZFS, NFS e segurança de rede
+- name: "Atualizar repositórios Proxmox (remover enterprise, adicionar no-subscription)"
+  block:
+    - name: "Comentar repositório enterprise"
+      ansible.builtin.replace:
+        path: /etc/apt/sources.list.d/pve-enterprise.list
+        regexp: '^deb'
+        replace: '#deb'
+      when: ansible_distribution == 'Proxmox VE' # Garante que só roda em PVE
+    - name: "Adicionar repositório no-subscription"
+      ansible.builtin.apt_repository:
+        repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
+        state: present
+        filename: pve-no-subscription
+      when: ansible_distribution == 'Proxmox VE'
+  notify: Update apt cache
 
-- name: "Remover repositórios Enterprise que exigem subscrição"
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - /etc/apt/sources.list.d/pve-enterprise.list
-    - /etc/apt/sources.list.d/ceph.list
-
-- name: "Adicionar repositório Proxmox No-Subscription"
-  ansible.builtin.apt_repository:
-    repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
-    state: present
-    filename: pve-no-subscription
+- name: "Atualizar todos os pacotes do sistema"
+  ansible.builtin.apt:
     update_cache: yes
+    upgrade: dist # Equivalente a apt full-upgrade
+    autoremove: yes
+  register: apt_upgrade_status
+  changed_when: "'0 upgraded, 0 newly installed' not in apt_upgrade_status.stdout"
 
 - name: "Instalar pacotes essenciais no host Proxmox"
   ansible.builtin.apt:
@@ -24,68 +31,153 @@
       - git
       - curl
       - wget
-      - nfs-kernel-server
-      - smartmontools
+      - qemu-guest-agent # Embora seja host, é bom ter para consistência se virtualizar PVE
+      - nfs-kernel-server # Para compartilhar ZFS com VMs
+      - zfsutils-linux # Já deve estar, mas para garantir
+      - smartmontools # Para monitoramento de discos S.M.A.R.T.
     state: present
 
-- name: "Configurar timezone do host"
+- name: "Configurar fuso horário do sistema"
   community.general.timezone:
-    name: "{{ system_timezone }}"
+    name: "{{ system_timezone }}" # Variável do vault.yml
 
-# --- ZFS Pool Creation ---
-- name: "Verificar se o pool ZFS '/data' já existe"
-  ansible.builtin.command: zpool list data
-  register: zpool_data_check
-  changed_when: false
-  failed_when: false
-
-- name: "Criar pool ZFS espelhado '/data' se não existir"
-  when: zpool_data_check.rc != 0
-  ansible.builtin.command: >
-    zpool create -f data mirror /dev/disk/by-id/{{ zfs_disk_1 }} /dev/disk/by-id/{{ zfs_disk_2 }}
-  register: zpool_create_result
-  changed_when: zpool_create_result.rc == 0
-
-- name: "Criar datasets ZFS no pool '/data'"
-  ansible.builtin.command: >
-    zfs create -o mountpoint=/data/{{ item }} data/{{ item }}
-  args:
-    creates: "/data/{{ item }}"
-  loop:
-    - "{{ zfs_docker_volumes_dataset_name }}"
-    - "{{ zfs_media_dataset_name }}"
-    - "{{ zfs_downloads_dataset_name }}"
-    - "{{ zfs_rag_sources_dataset_name }}"
-    - "{{ zfs_backups_dataset_name }}"
-
-# --- NFS Server Setup ---
-- name: "Configurar exportações NFS para o pool ZFS '/data'"
+- name: "Configurar NTP (systemd-timesyncd)"
   ansible.builtin.lineinfile:
-    path: /etc/exports
-    line: "/data/{{ item }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})"
-    create: yes
-    mode: '0644'
-  loop:
-    - "{{ zfs_docker_volumes_dataset_name }}"
-    - "{{ zfs_media_dataset_name }}"
-    - "{{ zfs_downloads_dataset_name }}"
-    - "{{ zfs_rag_sources_dataset_name }}"
-    - "{{ zfs_backups_dataset_name }}"
-  notify: Restart NFS server
-
-- name: "Aplicar novas exportações NFS (exportfs -ra)"
-  ansible.builtin.command: exportfs -ra
-  changed_when: true
-
-- name: "Garantir que serviço NFS está habilitado e rodando"
-  ansible.builtin.systemd_service:
-    name: nfs-kernel-server
+    path: /etc/systemd/timesyncd.conf
+    regexp: "^#?NTP="
+    line: "NTP=a.st1.ntp.br b.st1.ntp.br c.st1.ntp.br pool.ntp.org" # Servidores NTP BR + pool global
+  notify: Restart timesyncd
+- ansible.builtin.systemd_service:
+    name: systemd-timesyncd
     state: started
     enabled: yes
 
-# --- Security: Firewall rules ---
-- name: "Garantir que pve-firewall está habilitado e rodando"
+- name: "Configurar Firewall Proxmox (PVE Firewall) - Políticas Globais"
+  community.proxmox.pve_firewall_global: # Módulo correto para PVE Firewall global
+    enable: true # Habilita o firewall globalmente
+    input_policy: DROP # Política padrão para tráfego de entrada
+    output_policy: ACCEPT # Política padrão para tráfego de saída
+    api_user: "{{ proxmox_api_user }}" # Do vault.yml
+    api_password: "{{ proxmox_api_password }}" # Do vault.yml
+    api_host: "{{ inventory_hostname }}" # Conecta ao host Proxmox que está sendo configurado
+  notify: Reload PVE Firewall
+  when: ansible_distribution == 'Proxmox VE'
+
+- name: "Permitir SSH e Web UI no Firewall do Host Proxmox"
+  community.proxmox.pve_firewall_rules: # Módulo para regras de firewall
+    node: "{{ inventory_hostname_short | lower }}" # Nome curto do host Proxmox (e.g., 'proxmox_main_host')
+    type: group # Aplica a um grupo de regras (security group, não é o caso aqui, mas pode ser usado)
+                 # Para regras individuais, omita 'type: group' e defina 'direction', 'action', etc. diretamente.
+                 # Vamos definir regras individuais
+    rules:
+      - { dir: 'in', action: 'ACCEPT', enable: 1, interface: '{{ proxmox_default_bridge }}', source: '{{ proxmox_ssh_allowed_cidrs }}', dport: '22', proto: 'tcp', comment: 'Allow SSH from Local LAN' }
+      - { dir: 'in', action: 'ACCEPT', enable: 1, interface: '{{ proxmox_default_bridge }}', source: '{{ proxmox_web_ui_allowed_cidrs }}', dport: '8006', proto: 'tcp', comment: 'Allow Proxmox WebUI from Local LAN' }
+    api_user: "{{ proxmox_api_user }}"
+    api_password: "{{ proxmox_api_password }}"
+    api_host: "{{ inventory_hostname }}"
+  notify: Reload PVE Firewall
+  when: ansible_distribution == 'Proxmox VE'
+
+- name: "Hardening Configuração SSHD"
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - { regexp: '^#?PermitRootLogin', line: 'PermitRootLogin prohibit-password' }
+    - { regexp: '^#?PasswordAuthentication', line: 'PasswordAuthentication no' } # Desabilita login por senha, força chaves SSH
+    - { regexp: '^#?PubkeyAuthentication', line: 'PubkeyAuthentication yes' }
+    - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
+    - { regexp: '^#?UsePAM', line: 'UsePAM yes' } # Manter PAM para `su` e outras funcionalidades
+  notify: Restart sshd
+
+# --- Instalação do Node Exporter (Host Proxmox) para Prometheus ---
+- name: "Verificar se Node Exporter já está instalado (binário)"
+  ansible.builtin.stat:
+    path: /usr/local/bin/node_exporter
+  register: node_exporter_host_binary
+
+- name: Instalar Node Exporter (se não existir)
+  when: not node_exporter_host_binary.stat.exists
+  block:
+    - name: Checar última release do Node Exporter no GitHub
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"
+        return_content: yes
+      register: node_exporter_latest_release
+      run_once: true # Para evitar múltiplas chamadas à API se rodar em vários hosts
+
+    - name: Definir URL de download do Node Exporter
+      ansible.builtin.set_fact:
+        node_exporter_version: "{{ node_exporter_latest_release.json.tag_name | regex_replace('^v(.*)$', '\\1') }}"
+        node_exporter_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+
+    - name: Baixar Node Exporter
+      ansible.builtin.get_url:
+        url: "{{ node_exporter_download_url }}"
+        dest: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        mode: '0644'
+
+    - name: Descompactar Node Exporter
+      ansible.builtin.unarchive:
+        src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/"
+        remote_src: yes # O arquivo .tar.gz está no host remoto (Proxmox)
+
+    - name: Mover binário Node Exporter para /usr/local/bin
+      ansible.builtin.copy:
+        src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+        dest: "/usr/local/bin/node_exporter"
+        mode: '0755'
+        remote_src: yes # O binário extraído está no host remoto
+
+    - name: Criar usuário de sistema 'node_exporter'
+      ansible.builtin.user:
+        name: node_exporter
+        shell: /bin/false
+        system: yes
+        create_home: no
+
+    - name: Criar arquivo de serviço systemd para Node Exporter (Host)
+      ansible.builtin.template:
+        src: node_exporter_host.service.j2 # Template específico para o host
+        dest: /etc/systemd/system/node_exporter.service
+        mode: '0644'
+      notify: Reload systemd and restart node_exporter_host
+
+    - name: Limpar arquivos temporários de instalação do Node Exporter
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        - "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
+
+- name: Garantir que Node Exporter (Host) está habilitado e rodando
   ansible.builtin.systemd_service:
-    name: pve-firewall
+    name: node_exporter
+    state: started
+    enabled: yes
+  # Esta task roda mesmo se o Node Exporter já existia, garantindo que o serviço está OK.
+
+# --- Configuração do Servidor NFS ---
+- name: "Garantir que nfs-kernel-server está instalado"
+  ansible.builtin.apt:
+    name: nfs-kernel-server
+    state: present
+
+- name: "Criar arquivo /etc/exports a partir do template"
+  ansible.builtin.template:
+    src: etc_exports.j2 # Template Jinja2 para /etc/exports
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Export filesystems # Handler para aplicar mudanças no NFS
+
+- name: "Garantir que o serviço NFS está habilitado e rodando"
+  ansible.builtin.systemd_service:
+    name: nfs-kernel-server
     state: started
     enabled: yes

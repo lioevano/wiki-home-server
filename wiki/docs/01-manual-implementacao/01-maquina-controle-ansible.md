@@ -163,11 +163,15 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     Esta senha é essencial. Sem ela, você não poderá acessar ou modificar os segredos no arquivo `vault.yml`, nem executar playbooks que dependam dele. Armazene-a em um gerenciador de senhas seguro.
 
 2.  **Adicione suas Variáveis Sensíveis ao `vault.yml`:**
+    O modelo abaixo está versionado em `ansible/inventories/home/group_vars/all/vault.yml.example`. Como alternativa ao `create`, copie o modelo, preencha e criptografe: `cp vault.yml.example vault.yml && ansible-vault encrypt vault.yml` (dentro de `group_vars/all/`).
+
     Após o comando `create`, o arquivo será aberto no seu editor de texto padrão (geralmente `vi` ou `nano`). Cole o conteúdo abaixo, **substituindo TODOS os placeholders em MAIÚSCULAS** com seus valores reais e secretos.
 
-    ```yaml title="ansible/inventories/home/group_vars/all/vault.yml"
-    # ansible/inventories/home/group_vars/all/vault.yml
-    # Edite SEMPRE com: ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml
+    ```yaml title="ansible/inventories/home/group_vars/all/vault.yml.example"
+    # ansible/inventories/home/group_vars/all/vault.yml.example
+    # MODELO versionado. Copie para vault.yml, preencha e criptografe:
+    #   cp vault.yml.example vault.yml && ansible-vault encrypt vault.yml
+    # Depois, edite SEMPRE com: ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml
 
     # --- Credenciais Proxmox ---
     # Usuário e senha para a API do Proxmox.
@@ -231,6 +235,18 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
 
     grafana_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"
     grafana_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"
+
+    # --- n8n ---
+    n8n_admin_user: "admin"
+    n8n_admin_password: "SENHA_FORTE_PARA_O_ADMIN_DO_N8N"
+
+    # --- APIs de LLM (LiteLLM e Gemini CLI) ---
+    # Chave mestra do proxy LiteLLM (gere com: openssl rand -hex 32).
+    litellm_master_key: "CHAVE_MESTRA_DO_LITELLM"
+    llm_api_keys:
+      openai: "SUA_CHAVE_OPENAI"
+      anthropic: "SUA_CHAVE_ANTHROPIC"
+      google_gemini: "SUA_CHAVE_GEMINI"
     ```
     !!! important "Como Editar o Arquivo Vault no Futuro"
         Para editar o arquivo `vault.yml` após sua criação, SEMPRE use o comando:
@@ -240,7 +256,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
         Você será solicitado a fornecer a senha do Vault que você definiu. **Não tente editar o arquivo criptografado diretamente.**
 
 3.  **Salve e feche o editor.** O arquivo `vault.yml` agora estará criptografado no seu sistema de arquivos.
-4.  **Verifique se `vault.yml` está listado no seu arquivo `.gitignore`** (conforme Seção 0.2). Isso é uma precaução extra caso você descriptografe o arquivo localmente para alguma verificação e se esqueça de criptografá-lo novamente antes de um commit. O arquivo criptografado *deve* ser commitado no Git.
+4.  **Nunca commite o `vault.yml` em texto puro.** O arquivo criptografado *deve* ser commitado no Git; cópias descriptografadas (`*.decrypted*`) já são ignoradas pelo `.gitignore` do repositório, e o `python tools/dev.py check` (e o CI) falham se o `vault.yml` não começar com `$ANSIBLE_VAULT;`.
 
 ## 1.3. Configuração do Inventário Ansible
 
@@ -258,47 +274,44 @@ Crie o arquivo `home-server/ansible/inventories/home/hosts.ini`. Este arquivo de
 ```ini title="ansible/inventories/home/hosts.ini"
 # ansible/inventories/home/hosts.ini
 
-# Grupo para o(s) seu(s) host(s) Proxmox VE
+# Host Proxmox VE.
+# 'proxmox_main_host' é o nome lógico usado nos playbooks (setup-proxmox-host.yml, vm-deploy.yml).
+# A variável '{{ proxmox_ansible_user_on_host }}' vem de group_vars/all/main.yml.
 [proxmox_hosts]
-# 'proxmox_main_host' é um nome lógico que você usará nos playbooks Ansible.
-# 'ansible_host' é o endereço IP real ou hostname DNS do seu host Proxmox.
-# 'ansible_user' é o usuário que o Ansible usará para se conectar ao Proxmox host.
-# A variável '{{ proxmox_ansible_user_on_host }}' será resolvida de group_vars/all/main.yml.
-proxmox_main_host ansible_host=192.168.15.10 ansible_user={{ proxmox_ansible_user_on_host }}
+proxmox_main_host ansible_host=192.168.15.66 ansible_user="{{ proxmox_ansible_user_on_host }}"
 
-# Grupo para suas máquinas virtuais
-# Estes são os nomes lógicos que você usará nos playbooks.
-# Os IPs (ansible_host) devem ser os IPs estáticos que você planeja para estas VMs.
-[virtual_machines]
-core-services-vm ansible_host=192.168.15.11
-ai-desktop-vm ansible_host=192.168.15.12 GUI_ENABLED=true # GUI_ENABLED é uma variável de host
+# VM de serviços principais (Traefik, Authelia, Portainer, apps).
+[core_services]
+core-services-vm ansible_host=192.168.15.67
 
-# Grupo 'filho' que inclui todas as VMs que rodam Ubuntu Server.
-# Isso permite aplicar roles comuns a todas elas facilmente.
+# VM de IA (Ollama, LiteLLM, Open WebUI). GUI_ENABLED é uma variável de host.
+[ai_desktop]
+ai-desktop-vm ansible_host=192.168.15.68 GUI_ENABLED=true
+
+# Todas as VMs gerenciadas pelo Proxmox (usado por vm-deploy.yml).
+[virtual_machines:children]
+core_services
+ai_desktop
+
+# VMs Ubuntu Server que recebem os roles comuns (setup-base-ubuntu.yml).
 [ubuntu_vms:children]
-core-services-vm
-ai-desktop-vm # Inclua aqui se você planeja criar e gerenciar esta VM
+core_services
+ai_desktop
 
-# Variáveis globais aplicadas a TODOS os hosts definidos neste inventário.
+# Variáveis globais aplicadas a TODOS os hosts deste inventário.
 [all:vars]
-# Usuário Ansible padrão para se conectar às VMs (será criado via Cloud-Init).
-# A variável '{{ vm_ansible_user_name }}' será resolvida de group_vars/all/main.yml.
+# Usuário Ansible nas VMs (criado via Cloud-Init); vem de group_vars/all/main.yml.
 ansible_user="{{ vm_ansible_user_name }}"
-# Caminho para a chave SSH privada gerada anteriormente (na sua máquina de controle).
+# Chave SSH privada gerada na máquina de controle.
 ansible_ssh_private_key_file="~/.ssh/id_ed25519_homelab"
-# Método para escalação de privilégios (e.g., para se tornar root).
 ansible_become_method=sudo
-# Se o usuário Ansible nas VMs não tiver 'NOPASSWD: ALL' no sudoers,
-# você precisaria descomentar a linha abaixo e fornecer a senha (do vault.yml).
-# No entanto, o setup com Cloud-Init configurará 'NOPASSWD: ALL' para o usuário Ansible.
+# Se o usuário Ansible nas VMs não tiver 'NOPASSWD: ALL', descomente e use a senha do vault.yml.
 # ansible_become_pass="{{ vm_ansible_user_password_plain }}"
 
-# --- IPs para Referência em Templates ---
-# Estas variáveis são convenientes para usar em templates de configuração (e.g., prometheus.yml).
-# Elas devem corresponder aos IPs 'ansible_host' definidos acima para consistência.
-proxmox_host_ip_var: 192.168.15.10
-core_services_vm_ip_var: 192.168.15.11
-ai_desktop_vm_ip_var: 192.168.15.12
+# --- IPs para referência em templates (devem bater com os ansible_host acima) ---
+proxmox_host_ip_var=192.168.15.66
+core_services_vm_ip_var=192.168.15.67
+ai_desktop_vm_ip_var=192.168.15.68
 ```
 !!! note "Nomes de Hosts vs. IPs de Conexão"
     *   `proxmox_main_host`, `core-services-vm`, `ai-desktop-vm` são nomes lógicos (apelidos) que você usará nos seus playbooks Ansible para se referir aos hosts.
@@ -376,6 +389,10 @@ vm_nfs_allowed_clients_cidr: "192.168.15.0/24"
 # Onde os arquivos .env resolvidos (preenchidos pelo Ansible) serão colocados na VM
 # para o Portainer usar ao criar/atualizar stacks.
 portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
+
+# --- Subdomínios de serviços ---
+# Subdomínio do n8n (resulta em n8n.<base_domain>).
+n8n_subdomain: "n8n"
 ```
 
 Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).

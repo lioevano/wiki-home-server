@@ -198,7 +198,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 ```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
 - name: "Atualizar repositórios Proxmox (remover enterprise, adicionar no-subscription)"
-  ansible.builtin.block:
+  block:
     - name: "Comentar repositório enterprise"
       ansible.builtin.replace:
         path: /etc/apt/sources.list.d/pve-enterprise.list
@@ -298,7 +298,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 - name: Instalar Node Exporter (se não existir)
   when: not node_exporter_host_binary.stat.exists
-  ansible.builtin.block:
+  block:
     - name: Checar última release do Node Exporter no GitHub
       ansible.builtin.uri:
         url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"

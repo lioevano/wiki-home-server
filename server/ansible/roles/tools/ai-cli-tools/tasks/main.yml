@@ -1,4 +1,4 @@
----
+# ansible/roles/tools/ai-cli-tools/tasks/main.yml
 - name: Instalar dependências do Gemini CLI
   ansible.builtin.apt:
     name:

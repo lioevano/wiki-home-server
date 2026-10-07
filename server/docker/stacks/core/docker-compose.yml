@@ -13,7 +13,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v2.11
+    image: traefik:v2.11.2
     container_name: traefik
     restart: unless-stopped
     security_opt:
@@ -46,7 +46,7 @@ services:
       start_period: 15s
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2024.5.0
     container_name: cloudflared
     restart: unless-stopped
     networks:
@@ -57,7 +57,7 @@ services:
         condition: service_healthy
 
   authelia_db:
-    image: postgres:15-alpine
+    image: postgres:15.6-alpine
     container_name: authelia_db
     restart: unless-stopped
     volumes:
@@ -76,7 +76,7 @@ services:
       retries: 5
 
   authelia:
-    image: authelia/authelia:latest
+    image: authelia/authelia:4.38.0
     container_name: authelia
     restart: unless-stopped
     volumes:
