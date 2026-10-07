@@ -1,0 +1,16 @@
+extends: default
+
+ignore: |
+  *.j2
+  .venv/
+  wiki/venv/
+
+rules:
+  line-length: disable
+  document-start: disable
+  comments-indentation: disable
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+    check-keys: false

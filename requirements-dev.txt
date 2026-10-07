@@ -1,0 +1,9 @@
+# Ambiente de desenvolvimento do repositório (wiki + tools + lint).
+# Instale com: python tools/dev.py setup
+-r wiki/requirements.txt
+PyYAML>=6
+pytest>=8
+yamllint>=1.35
+# Ansible não roda nativamente no Windows: use Linux/WSL ou o CI.
+ansible-core>=2.17,<2.18 ; sys_platform != "win32"
+ansible-lint>=24 ; sys_platform != "win32"

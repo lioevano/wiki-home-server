@@ -7,7 +7,7 @@ site_description: >-
 
 repo_name: 'lioevano/wiki-home-server'
 repo_url: 'https://github.com/lioevano/wiki-home-server/'
-edit_uri: 'edit/main/wiki-home-server/docs/'
+edit_uri: 'edit/main/wiki/docs/'
 
 theme:
   name: material
@@ -106,6 +106,13 @@ nav:
     - 'Redes Docker': '03-guias-sustentacao/04-gerenciando-redes-docker.md'
     - 'Passthrough de Hardware': '03-guias-sustentacao/05-passthrough-hardware-adicional.md'
     - 'Recursos de VMs': '03-guias-sustentacao/06-gerenciando-recursos-vms.md'
+    - 'Cenários de VMs': '03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md'
+    - 'Recursos entre VMs': '03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md'
+    - 'Integrando Serviços': '03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md'
+    - 'Atualização Segura': '03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md'
+    - 'App no Domínio Raiz': '03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md'
+    - 'Snapshots ZFS': '03-guias-sustentacao/12-guia-snapshots-zfs.md'
+    - 'Gemini CLI': '03-guias-sustentacao/13-usando-geminicli.md'
   - '⚙️ Manutenção':
     - 'Visão Geral': '04-manutencao-recuperacao/index.md'
     - 'Rotinas': '04-manutencao-recuperacao/01-rotinas-manutencao.md'
@@ -114,9 +121,6 @@ nav:
     - 'Reconstruindo': '04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md'
     - 'Migrando Hardware/Rede': '04-manutencao-recuperacao/05-migrando-hardware-rede.md'
   - '📎 Referência': '05-referencia-rapida.md'
-
-extra_css:
-  - stylesheets/extra.css
 
 extra:
   social:
