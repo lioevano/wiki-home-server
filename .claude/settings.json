@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python tools/dev.py:*)",
+      "Bash(python3 tools/dev.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(ansible-playbook --syntax-check:*)",
+      "Bash(ansible-playbook -i localhost, --syntax-check:*)",
+      "Bash(ansible-inventory:*)",
+      "Bash(docker compose config:*)"
+    ],
+    "ask": [
+      "Bash(ansible-playbook:*)",
+      "Bash(ansible-vault:*)",
+      "Bash(ssh:*)",
+      "Bash(docker compose up:*)",
+      "Bash(docker compose down:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

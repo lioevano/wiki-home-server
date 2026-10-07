@@ -23,7 +23,8 @@ ignore_paths:
   - "docker/stacks/*/.env"
 
 # Arquivos do server conscientemente não documentados: caminho -> motivo.
-ignore_orphans: {}
+ignore_orphans:
+  CLAUDE.md: contexto do Claude para a pasta server/ (não é infraestrutura)
 
 # Pastas ignoradas nas varreduras do repositório.
 exclude_dirs: [.git, .venv, venv, wiki/venv, wiki/site, site, __pycache__, .pytest_cache, node_modules, .superpowers]
