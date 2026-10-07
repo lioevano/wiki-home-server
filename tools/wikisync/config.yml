@@ -1,0 +1,22 @@
+# Configuração do wikisync (tools/wikisync). Caminhos relativos à raiz do repo,
+# exceto ignore_paths/ignore_orphans, relativos a server/.
+wiki_dir: wiki
+server_dir: server
+
+# Blocos com title="<caminho>" iniciado por uma destas pastas são verdade literal.
+server_roots: [ansible, docker, scripts]
+
+# Placeholders didáticos citados na wiki (não são arquivos reais).
+ignore_paths:
+  - "docker/stacks/novoservico/**"
+  - "docker/stacks/NOME_DA_STACK/**"
+  - "docker/stacks/nome_da_stack/**"
+  - "ansible/roles/NOME_DO_ROLE/**"
+  - "ansible/playbooks/meu_playbook_modificado.yml"
+  - "ansible/roles/meu_role_modificado/**"
+
+# Arquivos do server conscientemente não documentados: caminho -> motivo.
+ignore_orphans: {}
+
+# Pastas ignoradas nas varreduras do repositório.
+exclude_dirs: [.git, .venv, venv, wiki/venv, wiki/site, site, __pycache__, .pytest_cache, node_modules, .superpowers]
