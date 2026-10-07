@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # NFS Permissions Diagnostic Script
 # Diagnoses and fixes common NFS permission issues
 # Version: 1.0.0

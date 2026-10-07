@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Infrastructure Validation Script
 # Validates entire home server infrastructure after deployment
 # Version: 1.0.0

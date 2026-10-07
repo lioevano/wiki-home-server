@@ -1,0 +1,14 @@
+# Tudo em LF no repositório e no checkout, em qualquer sistema
+* text=auto eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+
+# Binários
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.bundle binary
