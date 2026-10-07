@@ -1,0 +1,27 @@
+# ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2
+# Gerenciado por Ansible - NÃO EDITE MANUALMENTE
+# Define os compartilhamentos NFS para os datasets ZFS do host Proxmox.
+
+# Variáveis Ansible usadas (definidas em group_vars/all/main.yml e vault.yml):
+# {{ zfs_base_pool_path }}: Caminho base do pool ZFS (e.g., /data)
+# {{ vm_nfs_allowed_clients_cidr }}: CIDR da sub-rede das VMs (e.g., 192.168.1.0/24)
+# {{ docker_puid }}: User ID numérico do usuário 'dockeruser' nas VMs.
+# {{ docker_pgid }}: Group ID numérico do grupo 'dockergroup' nas VMs.
+
+# Compartilhamento para volumes Docker gerais
+{{ zfs_base_pool_path }}/{{ zfs_docker_volumes_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+
+# Compartilhamento para dados de mídia
+{{ zfs_base_pool_path }}/{{ zfs_media_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+
+# Compartilhamento para downloads
+{{ zfs_base_pool_path }}/{{ zfs_downloads_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+
+# Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)
+{% if zfs_rag_sources_dataset_name is defined and 'ai-desktop-vm' in groups['virtual_machines'] %}
+{{ zfs_base_pool_path }}/{{ zfs_rag_sources_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+{% endif %}
+
+# Compartilhamento para backups (geralmente não precisa ser montado por VMs,
+# a menos que uma VM específica precise ler backups. Pode ser 'ro' para VMs).
+# {{ zfs_base_pool_path }}/{{ zfs_backups_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(ro,sync,no_subtree_check)
