@@ -76,33 +76,37 @@ Graças ao Ansible, vamos adotar a Infraestrutura como Código (IaC), gerenciand
 
 A estrutura do seu projeto `home-server/` será:
 ```text
-home-server/
-├── ansible/
-│   ├── inventories/
-│   │   └── home/
-│   │       ├── group_vars/
-│   │       │   └── all/
-│   │       │       ├── main.yml
-│   │       │       └── vault.yml
-│   │       └── hosts.ini
-│   ├── playbooks/
-│   │   # ... (lista de playbooks) ...
-│   │   └── full-deploy.yml
-│   └── roles/
-│       ├── common/
-│       ├── infra/
-│       │   # ... (lista de roles de infra) ...
-│       └── apps/
-│           # ... (lista de roles de apps) ...
-├── docker/
-│   ├── stacks/
+homeserver/                 # repositório lioevano/wiki-home-server
+├── server/                 # implementação (reflete a wiki)
+│   ├── ansible/
+│   │   ├── ansible.cfg
+│   │   ├── inventories/home/
+│   │   │   ├── hosts.ini
+│   │   │   └── group_vars/all/
+│   │   │       ├── main.yml
+│   │   │       ├── vault.yml.example   # modelo versionado
+│   │   │       └── vault.yml           # criptografado (ansible-vault)
+│   │   ├── playbooks/          # setup-*.yml, vm-deploy.yml, full-deploy.yml
+│   │   ├── roles/
+│   │   │   ├── common/
+│   │   │   ├── infra/          # docker, proxmox-host-config, proxmox-vm, traefik-config, authelia-config
+│   │   │   ├── apps/           # desktop-environment, ml-tools
+│   │   │   └── tools/          # ai-cli-tools
+│   │   └── templates/          # prometheus, loki, promtail, litellm, portainer_stack_env
+│   ├── docker/stacks/
 │   │   ├── .env.template
-│   │   # ... (lista de stacks docker-compose) ...
-├── scripts/
-│   ├── bootstrap.sh
-│   └── restore.sh
-├── homelab-wiki/ # Esta documentação
-│   └── ...
+│   │   ├── core/               # Traefik, Cloudflared, Authelia
+│   │   ├── apps/               # Nextcloud, mídia, monitoramento, n8n, Home Assistant
+│   │   └── ai/                 # Ollama, LiteLLM, Open WebUI
+│   └── scripts/
+│       ├── bootstrap.sh
+│       ├── restore.sh
+│       └── validation/
+├── wiki/                   # esta documentação (MkDocs): mkdocs.yml, docs/
+├── tools/                  # dev.py (tarefas) e wikisync (wiki -> server)
+├── .claude/                # skills e permissões do Claude Code
+├── CLAUDE.md               # contexto do projeto para o Claude
+├── INDEX.md / index.json   # índice gerado (não editar à mão)
 ├── .gitignore
 └── README.md
 ```
@@ -127,61 +131,114 @@ mkdir -p ansible/inventories/home/group_vars/all ansible/playbooks ansible/roles
 !!! tip "Dica para Criar Estrutura"
     Você pode listar a estrutura completa e usar um script simples ou até pedir a uma IA para gerar os comandos `mkdir -p` para você.
 4.  **Crie o arquivo `.gitignore` com o seguinte conteúdo:**
-```gitignore
-# Arquivos de cache e temporários Python
+```gitignore title=".gitignore (raiz do repositório)"
+# Ambientes Python
+.venv/
+venv/
+wiki/venv/
 __pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
+*.pyc
 .pytest_cache/
+
+# Build da wiki
+wiki/site/
+site/
 
 # Ansible
 *.retry
-*.safe  # Arquivos de backup do Ansible Vault (nome padrão se não customizado)
-ansible/cp/ # Ansible control path directory
-.ansible/ # Ansible temp files and logs
-# Embora o vault.yml deva ser commitado criptografado,
-# adicionar ao .gitignore previne commits acidentais se descriptografado temporariamente.
-ansible/inventories/home/group_vars/all/vault.yml
+*.safe
+.ansible/
+# vault.yml é versionado SOMENTE criptografado; cópias abertas nunca:
+*.decrypted*
 
-# Docker
-# O .env.template PODE ser commitado como exemplo.
-# Arquivos .env REAIS com segredos NUNCA devem ser commitados.
-# Estes são gerados nas VMs ou gerenciados pelo Portainer.
-docker/stacks/*/.env
-docker/stacks/.env
+# Docker: .env reais (com segredos) nunca são versionados; o .env.template sim.
+.env
+server/docker/stacks/.env
+server/docker/stacks/*/.env
 
-# Arquivos de sistema operacional
+# Rascunho de execução do Claude (superpowers)
+.superpowers/
+
+# Sistema operacional e editores
 .DS_Store
 Thumbs.db
-
-# IDEs e editores
 .vscode/
 .idea/
-*.swp
-*~
+```
 
-# Segredos e dados sensíveis explícitos
-secrets/
-*.key
-*.pem # Certificados privados, a menos que sejam públicos e parte da IaC
-*.token
-credentials.*
+5.  **Crie o modelo de variáveis das stacks Docker** em `docker/stacks/.env.template`. Ele documenta todas as variáveis `${...}` usadas pelos `docker-compose.yml`; os `.env` reais (gerados pelo Ansible ou definidos no Portainer) nunca são versionados.
 
-# Logs
-*.log
-logs/
+```bash title="docker/stacks/.env.template"
+# docker/stacks/.env.template
+# Contrato de variáveis usadas pelos docker-compose.yml das stacks (core, apps, ai).
+# Este MODELO pode ser versionado; os arquivos .env REAIS nunca são commitados.
+# Em produção, os .env são gerados pelo Ansible (templates/portainer_stack_env.j2,
+# playbooks setup-*-volumes.yml) ou definidos como "Environment variables" no Portainer.
 
-# Binários e executáveis compilados (se houver)
-*.out
-*.exe
-*.dll
-*.so
+# --- Comuns ---
+SYSTEM_TIMEZONE=America/Sao_Paulo
+BASE_DOMAIN_FROM_VAULT=
+DOCKER_PUID=1000
+DOCKER_PGID=1000
+CORE_SERVICES_VM_IP_VAR=
+VM_NFS_MOUNT_BASE_PATH=/mnt/pve_data_zfs
+ZFS_DOCKER_VOLUMES_DATASET_NAME=docker-volumes
+
+# --- Stack core (Traefik, Cloudflared, Authelia) ---
+CLOUDFLARE_API_TOKEN_FROM_VAULT=
+CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT=
+AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT=
+
+# --- Stack apps: produtividade (Nextcloud) ---
+PROD_STACK_NEXTCLOUD_CONFIG_PATH=
+PROD_STACK_NEXTCLOUD_DATA_PATH=
+PROD_STACK_NEXTCLOUD_DB_PATH=
+PROD_STACK_NEXTCLOUD_HTML_PATH=
+NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV=
+NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV=
+
+# --- Stack apps: mídia (Jellyfin, Sonarr, Radarr, qBittorrent) ---
+MEDIA_STACK_JELLYFIN_CONFIG_PATH=
+MEDIA_STACK_SONARR_CONFIG_PATH=
+MEDIA_STACK_RADARR_CONFIG_PATH=
+MEDIA_STACK_QBITTORRENT_CONFIG_PATH=
+MEDIA_STACK_MOVIES_PATH=
+MEDIA_STACK_TVSHOWS_PATH=
+MEDIA_STACK_MUSIC_PATH=
+ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH=
+
+# --- Stack apps: monitoramento (Prometheus, Grafana, Loki, Promtail) ---
+MONITORING_PROMETHEUS_CONFIG_PATH=
+MONITORING_PROMETHEUS_DATA_PATH=
+MONITORING_GRAFANA_DATA_PATH=
+MONITORING_GRAFANA_DB_PATH=
+MONITORING_LOKI_CONFIG_PATH=
+MONITORING_LOKI_DATA_PATH=
+MONITORING_PROMTAIL_CONFIG_PATH=
+MONITORING_PROMTAIL_POSITIONS_PATH=
+GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV=
+GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV=
+
+# --- Stack apps: automação (n8n, Home Assistant) ---
+N8N_SUBDOMAIN=n8n
+N8N_CONFIG_PATH=
+N8N_ADMIN_USER_FROM_PORTAINER_ENV=
+N8N_ADMIN_PASSWORD_FROM_PORTAINER_ENV=
+AUTO_STACK_HOMEASSISTANT_CONFIG_PATH=
+
+# --- Stack ai (Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude) ---
+AI_DESKTOP_VM_IP=
+AI_STACK_OLLAMA_MODELS_PATH=
+AI_STACK_LITELLM_CONFIG_PATH=
+AI_STACK_OPENWEBUI_DATA_PATH=
+AI_STACK_OPENCLAW_CONFIG_PATH=
+AI_STACK_OPENCLAUDE_CONFIG_PATH=
+AI_STACK_OPENCLAUDE_MEMORY_PATH=
+LITELLM_MASTER_KEY=
+OPENWEBUI_SECRET_KEY=
+OPENAI_API_KEY=
+ANTHROPIC_API_KEY=
+GEMINI_API_KEY=
 ```
 !!! important "Segurança de Segredos com .gitignore"
     O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e será criptografado. Adicioná-lo ao `.gitignore` é uma camada extra de precaução contra commits acidentais se você o descriptografar localmente. Arquivos `.env` reais com segredos (gerados nas VMs ou gerenciados pelo Portainer) **NUNCA** devem ser commitados.

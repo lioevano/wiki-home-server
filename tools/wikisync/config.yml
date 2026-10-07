@@ -14,6 +14,13 @@ ignore_paths:
   - "ansible/roles/NOME_DO_ROLE/**"
   - "ansible/playbooks/meu_playbook_modificado.yml"
   - "ansible/roles/meu_role_modificado/**"
+  # Exemplos didáticos do guia "Adicionando novo serviço Docker".
+  - "ansible/playbooks/setup-novoservico-volumes.yml"
+  - "ansible/playbooks/setup-filebrowser-volumes.yml"
+  - "docker/stacks/filebrowser/**"
+  # .env reais: existem só em tempo de execução e nunca são versionados.
+  - "docker/stacks/.env"
+  - "docker/stacks/*/.env"
 
 # Arquivos do server conscientemente não documentados: caminho -> motivo.
 ignore_orphans: {}

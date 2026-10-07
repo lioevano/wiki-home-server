@@ -38,9 +38,11 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
    docker compose up -d
    ```
 
+O `setup-ai-volumes.yml` também aplica o role `ansible/roles/apps/ml-tools/` na `ai-desktop-vm` (ferramentas de ML e dependências da stack).
+
 ## Configuração do LiteLLM
 
-O arquivo `config.yaml` é gerado pelo Ansible (`litellm_config.yaml.j2`). Modelo base:
+O arquivo `config.yaml` é gerado pelo Ansible a partir de `ansible/templates/litellm_config.yaml.j2`. Modelo base:
 
 ```yaml
 general_settings:

@@ -10,12 +10,23 @@ __pycache__/
 wiki/site/
 site/
 
-# Segredos e artefatos locais
-.env
+# Ansible
 *.retry
+*.safe
+.ansible/
+# vault.yml é versionado SOMENTE criptografado; cópias abertas nunca:
 *.decrypted*
+
+# Docker: .env reais (com segredos) nunca são versionados; o .env.template sim.
+.env
+server/docker/stacks/.env
+server/docker/stacks/*/.env
 
 # Rascunho de execução do Claude (superpowers)
 .superpowers/
 
+# Sistema operacional e editores
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/

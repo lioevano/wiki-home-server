@@ -320,6 +320,9 @@ ai_desktop_vm_ip_var=192.168.15.68
 
 ### Variáveis Globais Não Sensíveis (`ansible/inventories/home/group_vars/all/main.yml`)
 
+!!! info "Configuração do Ansible do projeto"
+    O arquivo `ansible/ansible.cfg` define o inventário padrão (`inventories/home/hosts.ini`), o `roles_path` e opções como `host_key_checking`. Rode os comandos `ansible-playbook` a partir de `server/ansible/` para que ele seja carregado.
+
 Crie o arquivo `home-server/ansible/inventories/home/group_vars/all/main.yml`. Este arquivo define variáveis que se aplicam a todos os hosts no seu inventário e que não são secretas (segredos vão no `vault.yml`).
 
 ```yaml title="ansible/inventories/home/group_vars/all/main.yml"

@@ -146,3 +146,15 @@ Seu pool ZFS `/data` é o coração do armazenamento de dados.
     *   **Documente Seu Processo de Restauração:** Enquanto você testa, documente os passos exatos que você tomou. Isso será inestimável em uma emergência real quando você estiver sob pressão.
 
 Estabelecer e seguir estas rotinas de manutenção, mesmo que pareçam trabalhosas inicialmente, é um investimento fundamental na estabilidade, segurança e longevidade do seu servidor doméstico. Automatize o que puder (atualizações, backups, verificações de saúde) e reserve tempo para as verificações manuais e testes.
+
+## Scripts de Validação
+
+Ferramentas de diagnóstico versionadas em `server/scripts/validation/`:
+
+| Script | Para que serve |
+|---|---|
+| `scripts/validation/validate_infrastructure.sh` | Valida a infraestrutura inteira após um deploy (hosts, serviços, stacks). |
+| `scripts/validation/check_nfs_permissions.sh` | Diagnostica e corrige problemas comuns de permissão nos compartilhamentos NFS. |
+| `scripts/validation/check_yaml_integrity.py` | Verifica a sintaxe de todos os YAML de `ansible/` e `docker/`. |
+
+A coerência entre esta wiki e o `server/` é verificada por `python tools/dev.py check` (veja o `CLAUDE.md` na raiz do repositório).

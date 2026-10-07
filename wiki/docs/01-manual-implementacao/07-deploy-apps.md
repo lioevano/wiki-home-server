@@ -34,7 +34,12 @@ ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-m
 
 # Volumes n8n
 ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-n8n-volumes.yml
+
+# Volumes monitoramento (gera prometheus.yml, Loki e Promtail a partir de templates)
+ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-monitoring-stack-volumes.yml
 ```
+
+O playbook de monitoramento renderiza as configurações a partir de `ansible/templates/prometheus.yml.j2`, `ansible/templates/loki-local-config.yaml.j2` e `ansible/templates/promtail-config.yml.j2`, e o `.env` da stack a partir de `ansible/templates/portainer_stack_env.j2`.
 
 ## Ativando/Desativando Serviços
 
