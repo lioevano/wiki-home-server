@@ -88,3 +88,4 @@ Cada skill é um `SKILL.md` em `.agents/skills/<nome>/` (formato Agent Skills). 
 | `add-ansible-component` | criar role, playbook, grupo ou variável Ansible | `.agents/skills/add-ansible-component/SKILL.md` |
 | `validate-infra` | antes de commitar ou entregar mudanças | `.agents/skills/validate-infra/SKILL.md` |
 | `audit-integrations` | verificar integrações (catálogo × índice × arquivos) | `.agents/skills/audit-integrations/SKILL.md` |
+| `update-index` | manter o `INDEX.md` em dia (fim de toda mudança) | `.agents/skills/update-index/SKILL.md` |
