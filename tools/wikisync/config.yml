@@ -24,6 +24,7 @@ ignore_paths:
 
 # Arquivos do server conscientemente não documentados: caminho -> motivo.
 ignore_orphans:
+  AGENTS.md: contexto para agentes de IA da pasta server/ (não é infraestrutura)
   CLAUDE.md: contexto do Claude para a pasta server/ (não é infraestrutura)
 
 # Pastas ignoradas nas varreduras do repositório.
