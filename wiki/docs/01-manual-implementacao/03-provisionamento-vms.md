@@ -214,8 +214,8 @@ vm_qemu_args: ""
 
 Tarefas para criar/configurar a VM.
 
-!!! bug "Problema conhecido — revisar na refatoração"
-    A verificação de existência da VM usa `community.proxmox.proxmox_kvm_info`, que **não existe**; o módulo atual é `community.proxmox.proxmox_vm_info` (com formato de retorno diferente). O `--syntax-check` falha neste role até a correção.
+!!! info "Verificação de existência e acesso à API"
+    A existência da VM é verificada com `community.proxmox.proxmox_vm_info`, que devolve a lista `proxmox_vms` (vazia quando o `vmid` não existe). A API é acessada pelo IP do primeiro host de `proxmox_hosts` no inventário (`hostvars[...].ansible_host`), não pelo nome lógico `proxmox_main_host`.
 
 ```yaml title="ansible/roles/infra/proxmox-vm/tasks/main.yml"
 # ansible/roles/infra/proxmox-vm/tasks/main.yml
@@ -234,13 +234,14 @@ Tarefas para criar/configurar a VM.
   delegate_to: localhost
 
 - name: "Verificar se a VM {{ vm_name }} (ID: {{ vm_id }}) já existe no Proxmox"
-  community.proxmox.proxmox_kvm_info:
+  community.proxmox.proxmox_vm_info:
     vmid: "{{ vm_id }}"
+    type: qemu
     api_user: "{{ proxmox_api_user }}"
     api_password: "{{ proxmox_api_password | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-    api_host: "{{ groups['proxmox_hosts'][0] }}" # Pega o primeiro host do grupo proxmox_hosts
+    api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}" # IP do primeiro host do grupo proxmox_hosts
   register: vm_info_check
   delegate_to: localhost # A API Proxmox é chamada da máquina de controle
 
@@ -250,14 +251,14 @@ Tarefas para criar/configurar a VM.
     api_password: "{{ proxmox_api_password | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     clone: "{{ vm_template }}"
     newid: "{{ vm_id }}"
     name: "{{ vm_name }}"
     full: true # Cria um clone completo (não um linked clone)
     state: present # Garante que a VM clonada exista
     timeout: 600 # Timeout para a operação de clone em segundos (10 minutos)
-  when: not vm_info_check.proxmox_kvm_info or vm_info_check.proxmox_kvm_info.status == "unknown" # Só clona se não existir
+  when: vm_info_check.proxmox_vms | length == 0 # Só clona se não existir
   delegate_to: localhost
   notify: Configure VM settings # Handler para configurar após o clone (ou se já existir)
 
@@ -267,9 +268,9 @@ Tarefas para criar/configurar a VM.
     api_password: "{{ proxmox_api_password | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     vmid: "{{ vm_id }}"
-    node: "{{ (vm_info_check.proxmox_kvm_info.node if vm_info_check.proxmox_kvm_info else omit) | default(omit) }}" # Necessário para algumas operações de update
+    node: "{{ vm_info_check.proxmox_vms[0].node if vm_info_check.proxmox_vms else omit }}" # Necessário para algumas operações de update
 
     # Recursos da VM
     cores: "{{ vm_cores }}"
@@ -340,9 +341,9 @@ Handlers para o role `proxmox-vm`.
     api_password: "{{ proxmox_api_password | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     vmid: "{{ vm_id }}"
-    node: "{{ (vm_info_check.proxmox_kvm_info.node if vm_info_check.proxmox_kvm_info else omit) | default(omit) }}" # Necessário para start
+    node: "{{ vm_info_check.proxmox_vms[0].node if vm_info_check.proxmox_vms else omit }}" # Necessário para start
     state: started # Garante que a VM esteja rodando
     timeout: 120 # Timeout para iniciar a VM
   delegate_to: localhost

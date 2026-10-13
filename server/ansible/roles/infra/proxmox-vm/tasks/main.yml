@@ -14,13 +14,14 @@
   delegate_to: localhost
 
 - name: "Verificar se a VM {{ vm_name }} (ID: {{ vm_id }}) já existe no Proxmox"
-  community.proxmox.proxmox_kvm_info:
+  community.proxmox.proxmox_vm_info:
     vmid: "{{ vm_id }}"
+    type: qemu
     api_user: "{{ proxmox_api_user }}"
     api_password: "{{ proxmox_api_password | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-    api_host: "{{ groups['proxmox_hosts'][0] }}" # Pega o primeiro host do grupo proxmox_hosts
+    api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}" # IP do primeiro host do grupo proxmox_hosts
   register: vm_info_check
   delegate_to: localhost # A API Proxmox é chamada da máquina de controle
 
@@ -30,14 +31,14 @@
     api_password: "{{ proxmox_api_password | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     clone: "{{ vm_template }}"
     newid: "{{ vm_id }}"
     name: "{{ vm_name }}"
     full: true # Cria um clone completo (não um linked clone)
     state: present # Garante que a VM clonada exista
     timeout: 600 # Timeout para a operação de clone em segundos (10 minutos)
-  when: not vm_info_check.proxmox_kvm_info or vm_info_check.proxmox_kvm_info.status == "unknown" # Só clona se não existir
+  when: vm_info_check.proxmox_vms | length == 0 # Só clona se não existir
   delegate_to: localhost
   notify: Configure VM settings # Handler para configurar após o clone (ou se já existir)
 
@@ -47,9 +48,9 @@
     api_password: "{{ proxmox_api_password | default(omit) }}"
     api_token_id: "{{ proxmox_api_token_id | default(omit) }}"
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
-    api_host: "{{ groups['proxmox_hosts'][0] }}"
+    api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     vmid: "{{ vm_id }}"
-    node: "{{ (vm_info_check.proxmox_kvm_info.node if vm_info_check.proxmox_kvm_info else omit) | default(omit) }}" # Necessário para algumas operações de update
+    node: "{{ vm_info_check.proxmox_vms[0].node if vm_info_check.proxmox_vms else omit }}" # Necessário para algumas operações de update
 
     # Recursos da VM
     cores: "{{ vm_cores }}"

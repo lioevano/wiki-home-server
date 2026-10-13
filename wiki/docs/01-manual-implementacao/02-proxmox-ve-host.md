@@ -199,8 +199,8 @@ Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os ar
 
 Este arquivo define as tarefas a serem executadas no host Proxmox.
 
-!!! bug "Problema conhecido — revisar na refatoração"
-    As tarefas de firewall usam `community.proxmox.pve_firewall_global` e `community.proxmox.pve_firewall_rules`, que **não existem** na coleção `community.proxmox`. O `--syntax-check` (e o `python tools/dev.py lint`) falha neste role até que elas sejam reescritas com módulos reais (ex.: `proxmox_cluster_firewall_options`, `proxmox_firewall`).
+!!! info "Firewall do Proxmox"
+    As regras de entrada (SSH e Web UI) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é o hostname real do Proxmox (`ansible_facts['hostname']`), não o nome lógico `proxmox_main_host`.
 
 ```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
@@ -257,29 +257,30 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     state: started
     enabled: yes
 
-- name: "Configurar Firewall Proxmox (PVE Firewall) - Políticas Globais"
-  community.proxmox.pve_firewall_global: # Módulo correto para PVE Firewall global
-    enable: true # Habilita o firewall globalmente
-    input_policy: DROP # Política padrão para tráfego de entrada
-    output_policy: ACCEPT # Política padrão para tráfego de saída
+# Regras primeiro: ligar o firewall com DROP antes delas cortaria o acesso ao host.
+- name: "Permitir SSH e Web UI no Firewall do Host Proxmox"
+  community.proxmox.proxmox_firewall:
+    level: node
+    node: "{{ ansible_facts['hostname'] }}" # Nome real do nó no Proxmox (não o nome lógico do inventário)
+    state: present
+    update: true # Regras identificadas por 'pos': reexecutar atualiza em vez de duplicar
+    rules:
+      - { pos: 0, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ proxmox_ssh_allowed_cidrs }}", dport: "22", proto: tcp, comment: "Allow SSH from Local LAN" }
+      - { pos: 1, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ proxmox_web_ui_allowed_cidrs }}", dport: "8006", proto: tcp, comment: "Allow Proxmox WebUI from Local LAN" }
     api_user: "{{ proxmox_api_user }}" # Do vault.yml
     api_password: "{{ proxmox_api_password }}" # Do vault.yml
-    api_host: "{{ inventory_hostname }}" # Conecta ao host Proxmox que está sendo configurado
+    api_host: "{{ ansible_host }}" # IP do host Proxmox no inventário
   notify: Reload PVE Firewall
   when: ansible_distribution == 'Proxmox VE'
 
-- name: "Permitir SSH e Web UI no Firewall do Host Proxmox"
-  community.proxmox.pve_firewall_rules: # Módulo para regras de firewall
-    node: "{{ inventory_hostname_short | lower }}" # Nome curto do host Proxmox (e.g., 'proxmox_main_host')
-    type: group # Aplica a um grupo de regras (security group, não é o caso aqui, mas pode ser usado)
-                 # Para regras individuais, omita 'type: group' e defina 'direction', 'action', etc. diretamente.
-                 # Vamos definir regras individuais
-    rules:
-      - { dir: 'in', action: 'ACCEPT', enable: 1, interface: '{{ proxmox_default_bridge }}', source: '{{ proxmox_ssh_allowed_cidrs }}', dport: '22', proto: 'tcp', comment: 'Allow SSH from Local LAN' }
-      - { dir: 'in', action: 'ACCEPT', enable: 1, interface: '{{ proxmox_default_bridge }}', source: '{{ proxmox_web_ui_allowed_cidrs }}', dport: '8006', proto: 'tcp', comment: 'Allow Proxmox WebUI from Local LAN' }
+- name: "Configurar Firewall Proxmox (PVE Firewall) - Políticas Globais"
+  community.proxmox.proxmox_cluster_firewall_options:
+    state: enabled # Habilita o firewall no datacenter
+    input_policy: DROP # Política padrão para tráfego de entrada
+    output_policy: ACCEPT # Política padrão para tráfego de saída
     api_user: "{{ proxmox_api_user }}"
     api_password: "{{ proxmox_api_password }}"
-    api_host: "{{ inventory_hostname }}"
+    api_host: "{{ ansible_host }}"
   notify: Reload PVE Firewall
   when: ansible_distribution == 'Proxmox VE'
 
