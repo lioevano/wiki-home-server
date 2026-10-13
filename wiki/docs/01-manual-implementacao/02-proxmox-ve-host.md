@@ -200,7 +200,7 @@ Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os ar
 Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 !!! info "Firewall do Proxmox"
-    As regras de entrada (SSH e Web UI) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é o hostname real do Proxmox (`ansible_facts['hostname']`), não o nome lógico `proxmox_main_host`.
+    As regras de entrada (SSH e Web UI) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é `proxmox_node_name` (`group_vars/all/main.yml`), não o nome lógico `proxmox_main_host`.
 
 ```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
@@ -261,7 +261,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 - name: "Permitir SSH e Web UI no Firewall do Host Proxmox"
   community.proxmox.proxmox_firewall:
     level: node
-    node: "{{ ansible_facts['hostname'] }}" # Nome real do nó no Proxmox (não o nome lógico do inventário)
+    node: "{{ proxmox_node_name }}" # Nome do nó no Proxmox (group_vars), não o nome lógico do inventário
     state: present
     update: true # Regras identificadas por 'pos': reexecutar atualiza em vez de duplicar
     rules:

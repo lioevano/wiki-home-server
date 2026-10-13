@@ -215,7 +215,7 @@ vm_qemu_args: ""
 Tarefas para criar/configurar a VM.
 
 !!! info "Verificação de existência e acesso à API"
-    A existência da VM é verificada com `community.proxmox.proxmox_vm_info`, que devolve a lista `proxmox_vms` (vazia quando o `vmid` não existe). A API é acessada pelo IP do primeiro host de `proxmox_hosts` no inventário (`hostvars[...].ansible_host`), não pelo nome lógico `proxmox_main_host`.
+    A existência da VM é verificada com `community.proxmox.proxmox_vm_info`, que devolve a lista `proxmox_vms` (vazia quando o `vmid` não existe). A API é acessada pelo IP do primeiro host de `proxmox_hosts` no inventário (`hostvars[...].ansible_host`), não pelo nome lógico `proxmox_main_host`. O nó de destino (obrigatório para clonar e configurar) é `proxmox_node_name`, definido em `ansible/inventories/home/group_vars/all/main.yml`.
 
 ```yaml title="ansible/roles/infra/proxmox-vm/tasks/main.yml"
 # ansible/roles/infra/proxmox-vm/tasks/main.yml
@@ -255,6 +255,7 @@ Tarefas para criar/configurar a VM.
     clone: "{{ vm_template }}"
     newid: "{{ vm_id }}"
     name: "{{ vm_name }}"
+    node: "{{ proxmox_node_name }}" # Obrigatório para clonar (state: present)
     full: true # Cria um clone completo (não um linked clone)
     state: present # Garante que a VM clonada exista
     timeout: 600 # Timeout para a operação de clone em segundos (10 minutos)
@@ -270,7 +271,7 @@ Tarefas para criar/configurar a VM.
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     vmid: "{{ vm_id }}"
-    node: "{{ vm_info_check.proxmox_vms[0].node if vm_info_check.proxmox_vms else omit }}" # Necessário para algumas operações de update
+    node: "{{ proxmox_node_name }}" # Necessário para algumas operações de update
 
     # Recursos da VM
     cores: "{{ vm_cores }}"
@@ -343,7 +344,7 @@ Handlers para o role `proxmox-vm`.
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     vmid: "{{ vm_id }}"
-    node: "{{ vm_info_check.proxmox_vms[0].node if vm_info_check.proxmox_vms else omit }}" # Necessário para start
+    node: "{{ proxmox_node_name }}" # Necessário para start
     state: started # Garante que a VM esteja rodando
     timeout: 120 # Timeout para iniciar a VM
   delegate_to: localhost

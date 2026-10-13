@@ -37,8 +37,8 @@ Uma seção pode ter subseções extras **de referência** (ex.: `### Origem dos
 | Manual | — |
 
 ### Regras
-- **ROT-1** — o serviço principal tem `traefik.enable: "true"` e um router com regra ``Host(`<Subdomínio>.${BASE_DOMAIN_FROM_VAULT}`)`` (ou ``Host(`<Subdomínio>.{{ base_domain }}`)`` em role Ansible; `${N8N_SUBDOMAIN}` conta como o subdomínio `n8n`). *Evidência:* labels do serviço.
-- **ROT-2** — o serviço principal está na rede `proxy`. *Evidência:* `networks:` do serviço (para role Ansible: `networks` do task do container).
+- **ROT-1** — o serviço principal tem `traefik.enable: "true"` e um router com regra ``Host(`<Subdomínio>.${BASE_DOMAIN_FROM_VAULT}`)`` (ou ``Host(`<Subdomínio>.{{ base_domain }}`)`` em role Ansible; `${N8N_SUBDOMAIN}` conta como o subdomínio `n8n`). Aplicação em **outra VM** que não a do Traefik: em vez das labels, um router no *file provider* (`ansible/roles/infra/traefik-config/templates/*.yml.j2`) com essa regra, apontando para `http://<ip da VM>:<porta publicada no compose>`. *Evidência:* labels do serviço ou template do *file provider*.
+- **ROT-2** — o serviço principal está na rede `proxy`; aplicação em outra VM, roteada pelo *file provider*, publica a porta no IP da VM (`${<VM>_IP}:<porta>:<porta do container>`). *Evidência:* `networks:`/`ports:` do serviço (para role Ansible: `networks` do task do container).
 - **ROT-3 (sobra)** — nenhum router (por label **ou** por arquivo do *file provider*) pertence a aplicação `interna`, a serviço fora do catálogo, ou usa subdomínio diferente do catálogo. *Evidência:* labels de todos os composes e roles, e `ansible/roles/infra/traefik-config/templates/*.yml.j2`.
 
 ### Ao adicionar (por consumidor)
@@ -138,13 +138,13 @@ Remover `prometheus.yml.j2` e as tarefas que o renderizam no `setup-monitoring-s
 |---|---|
 | Provedor | `loki` (coleta pelo `promtail`) |
 | Aplica-se a | todas |
-| Arquivos | compose do consumidor; `ansible/templates/promtail-config.yml.j2` |
-| Páginas | `01-manual-implementacao/07-deploy-apps.md` |
+| Arquivos | compose do consumidor; `ansible/templates/promtail-config.yml.j2` (renderizado por `setup-monitoring-stack-volumes.yml` e, na VM de IA, por `setup-ai-volumes.yml`) |
+| Páginas | `01-manual-implementacao/07-deploy-apps.md`; `01-manual-implementacao/08-stack-ia.md` (`promtail_ai`) |
 | Manual | — |
 
 ### Regras
 - **LOG-1** — nenhum serviço da aplicação sobrescreve `logging:` (o Promtail lê os logs JSON padrão do Docker em `/var/lib/docker/containers`). *Evidência:* compose do serviço.
-- **LOG-2** — há um `promtail` rodando na **mesma VM** da aplicação (hoje só na `core-services-vm`, stack `apps`). *Evidência:* catálogo (Stack/VM do `promtail`) × Stack/VM da aplicação.
+- **LOG-2** — há um `promtail` rodando na **mesma VM** da aplicação (hoje na `core-services-vm`, serviço `promtail` da stack `apps`, e na `ai-desktop-vm`, serviço `promtail_ai` da stack `ai`, que envia ao Loki pela porta 3100 publicada no IP da `core-services-vm`). *Evidência:* catálogo (Stack/VM do `promtail`) × Stack/VM da aplicação.
 
 ### Ao adicionar (por consumidor)
 1. Não definir `logging:` no compose.
@@ -285,12 +285,8 @@ Não se aplica.
 
 ## Pendências da auditoria inicial
 
-Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) já foram corrigidos pela skill `fix-integrations`; os demais aguardam decisão.
+Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) foram corrigidos pela skill `fix-integrations`.
 
-| Regra | Aplicação | Desvio | Tipo |
-|---|---|---|---|
-| ⚠️ ROT-3 | `open-webui` | router por arquivo `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` para aplicação `interna`, apontando para a porta 8080 (o compose publica 3000) | decisão: remover o router ou tornar `protegida` |
-| ⚠️ MET-2 | (fora do catálogo) | job `glances` em `ansible/templates/prometheus.yml.j2` sem aplicação | decisão: remover o job ou catalogar o Glances |
-| ❌ LOG-2 | `ollama`, `litellm`, `open-webui`, `openclaw`, `openclaude` | sem `promtail` na `ai-desktop-vm` | decisão: Promtail na VM de IA ou `-logs` em Ajustes |
+Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (Promtail na VM de IA, Open WebUI `protegida`, job `glances` removido).
 
-**Fora das regras** (registrados para a refatoração): LiteLLM aponta o Ollama para `ai_desktop_vm_ip_var:11434`, mas o Ollama escuta só em `127.0.0.1` (usar `http://ollama:11434`); `cloudflared` sem `--metrics` para o job `cloudflared:2000`; sobras do Plex em `setup-media-stack-volumes.yml`; `MONITORING_GRAFANA_PROVISIONING_PATH` gerada e não usada; `authentication_backend` comentado no `configuration.yml.j2`; `full-deploy.yml` não importa os playbooks de monitoramento e produtividade; a stack `apps` é um compose único, mas recebe cinco `.env` separados (hoje unidos à mão num `apps.env`, ver página 07); n8n com `N8N_BASIC_AUTH_ACTIVE=true` além do forward-auth do Authelia (login duplo); role `proxmox-vm` clona e reconfigura a VM sem `node` (o `proxmox_kvm` exige `node` com `state: present`; falta uma variável com o nome do nó Proxmox); middleware `nextcloud-headers` em `nextcloud_middleware.yml.j2` usa a chave `pass: true`, que não parece ser opção válida de `headers` no Traefik (validar).
+**Fora das regras** (registrados para a refatoração): LiteLLM aponta o Ollama para `ai_desktop_vm_ip_var:11434`, mas o Ollama escuta só em `127.0.0.1` (usar `http://ollama:11434`); `cloudflared` sem `--metrics` para o job `cloudflared:2000`; sobras do Plex em `setup-media-stack-volumes.yml`; `MONITORING_GRAFANA_PROVISIONING_PATH` gerada e não usada; `authentication_backend` comentado no `configuration.yml.j2`; `full-deploy.yml` não importa os playbooks de monitoramento e produtividade; a stack `apps` é um compose único, mas recebe cinco `.env` separados (hoje unidos à mão num `apps.env`, ver página 07); n8n com `N8N_BASIC_AUTH_ACTIVE=true` além do forward-auth do Authelia (login duplo); Public Hostname do túnel: o índice (acesso-externo) diz `https://traefik:443` e a página 05 manda `http://traefik:80`; a página 08 cita o Ollama em `http://ai-desktop-ip:11434`, mas ele só escuta em `127.0.0.1`, e o exemplo de `config.yaml` do LiteLLM na página difere do template; Open WebUI recebe `LITELLM_API_BASE`, que não parece ser variável reconhecida (o Open WebUI usa `OPENAI_API_BASE_URL`/`OPENAI_API_KEY`; validar); Grafana não monta a pasta de provisioning, então os datasources gerados pelo playbook não carregam; `litellm` publica `4000` em todas as interfaces sendo `interna`; portas publicadas pelo Docker (ex.: Loki 3100) contornam o UFW — a restrição real é a LAN; middleware `nextcloud-headers` em `nextcloud_middleware.yml.j2` usa a chave `pass: true`, que não parece ser opção válida de `headers` no Traefik (validar).

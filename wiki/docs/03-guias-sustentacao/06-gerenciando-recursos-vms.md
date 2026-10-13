@@ -204,8 +204,6 @@ Se você precisar de um espaço de armazenamento separado dentro de uma VM (e n�
 *   **Stack de Monitoramento (Prometheus e Grafana):**
     *   O **Node Exporter** (instalado em cada VM e no host Proxmox) coleta métricas detalhadas do sistema.
     *   **Grafana Dashboards:** Você pode (e deve) importar ou criar dashboards no Grafana para visualizar essas métricas por VM. Dashboards populares como "Node Exporter Full" (ID 1860 no grafana.com/dashboards) ou "Proxmox VE Host and VM stats" (ID 10347) são excelentes pontos de partida.
-*   **Glances:**
-    *   A interface web do Glances (`https://glances.{{ base_domain }}`) fornece uma visão geral em tempo real dos recursos da `core-services-vm` (onde ele roda).
 *   **Dentro da VM (Linha de Comando):**
     *   `htop` ou `top`: Uso de CPU e RAM por processo.
     *   `free -h`: Uso de memória RAM e swap.

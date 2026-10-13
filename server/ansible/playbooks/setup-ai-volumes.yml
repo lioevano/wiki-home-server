@@ -68,6 +68,28 @@
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/config"
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory"
 
+    # --- Promtail (envia logs ao Loki da core-services-vm) ---
+    - name: Criar diretórios do Promtail da VM de IA no NFS
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail-ai/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - config
+        - positions
+
+    - name: Gerar config.yml do Promtail da VM de IA
+      ansible.builtin.template:
+        src: ../templates/promtail-config.yml.j2
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail-ai/config/config.yml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+      vars:
+        promtail_loki_push_url: "http://{{ core_services_vm_ip_var }}:3100/loki/api/v1/push"
+
     # --- .env para Portainer ---
     - name: Garantir diretório de envs do Portainer
       ansible.builtin.file:
@@ -93,6 +115,8 @@
           - { name: 'AI_STACK_OPENCLAW_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaw/config" }
           - { name: 'AI_STACK_OPENCLAUDE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/config" }
           - { name: 'AI_STACK_OPENCLAUDE_MEMORY_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory" }
+          - { name: 'AI_STACK_PROMTAIL_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail-ai/config" }
+          - { name: 'AI_STACK_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail-ai/positions" }
           - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
           - { name: 'LITELLM_MASTER_KEY', value: "{{ litellm_master_key }}" }
           - { name: 'OPENAI_API_KEY', value: "{{ llm_api_keys.openai }}" }

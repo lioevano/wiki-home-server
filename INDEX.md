@@ -34,12 +34,12 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `n8n` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
 | `nextcloud` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
 | `ollama` | ai / ai-desktop-vm | logs, dados, variaveis, documentacao | `01-manual-implementacao/08-stack-ia.md` |
-| `open-webui` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao | `01-manual-implementacao/08-stack-ia.md` |
+| `open-webui` | ai / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, llm, documentacao | `01-manual-implementacao/08-stack-ia.md` |
 | `openclaude` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao | `01-manual-implementacao/08-stack-ia.md` |
 | `openclaw` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao | `01-manual-implementacao/08-stack-ia.md` |
 | `portainer` | ansible:infra/docker / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, documentacao | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `prometheus` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, metricas, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
-| `promtail` | apps / core-services-vm | dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
+| `promtail` | apps / core-services-vm; ai / ai-desktop-vm | dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
 | `qbittorrent` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
 | `radarr` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
 | `sonarr` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
@@ -149,7 +149,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/traefik-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
-| `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/traefik.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
@@ -158,7 +158,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
-| `ansible/templates/promtail-config.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/promtail-config.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` |
 | `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |

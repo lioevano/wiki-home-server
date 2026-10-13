@@ -138,8 +138,6 @@ Este arquivo contém as tarefas principais do role `common`.
       - { rule: 'allow', port: '443', proto: 'tcp', comment: 'Allow HTTPS for Traefik' }
       # Portas para Node Exporter (Prometheus scrape)
       - { rule: 'allow', port: '9100', proto: 'tcp', comment: 'Allow Node Exporter' }
-      # Porta para Glances WebUI (se não acessado via Traefik)
-      - { rule: 'allow', port: '61208', proto: 'tcp', comment: 'Allow Glances WebUI' }
       # Para VNC na ai-desktop-vm se GUI_ENABLED=true
       # Esta regra só será efetiva se o UFW for aplicado na ai-desktop-vm.
       - { rule: 'allow', port: '5901', proto: 'tcp', comment: 'Allow VNC :1 (TCP port for display 1)' }
@@ -306,7 +304,7 @@ Handlers para o role `common`.
     * Criar o grupo `{{ docker_group_name_on_vm }}` com o GID `{{ docker_pgid }}`.
     * Criar o usuário `{{ docker_user_name_on_vm }}` com o UID `{{ docker_puid }}`, associado ao grupo acima, e com uma senha definida.
     * Adicionar o usuário Ansible da VM (`{{ vm_ansible_user_name }}`) também ao grupo `{{ docker_group_name_on_vm }}`.
-  * **Configurar Firewall UFW:** Habilitar UFW com política padrão `deny` e permitir portas essenciais (SSH, HTTP/S para Traefik, Node Exporter, Glances, VNC se GUI habilitada).
+  * **Configurar Firewall UFW:** Habilitar UFW com política padrão `deny` e permitir portas essenciais (SSH, HTTP/S para Traefik, Node Exporter, VNC se GUI habilitada).
   * **Instalar Node Exporter (VM):** Baixar, instalar e configurar o serviço systemd para o Node Exporter, usando o template `node_exporter_vm.service.j2`.
 
 ## 4.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)

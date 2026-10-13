@@ -35,6 +35,7 @@
     clone: "{{ vm_template }}"
     newid: "{{ vm_id }}"
     name: "{{ vm_name }}"
+    node: "{{ proxmox_node_name }}" # Obrigatório para clonar (state: present)
     full: true # Cria um clone completo (não um linked clone)
     state: present # Garante que a VM clonada exista
     timeout: 600 # Timeout para a operação de clone em segundos (10 minutos)
@@ -50,7 +51,7 @@
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     vmid: "{{ vm_id }}"
-    node: "{{ vm_info_check.proxmox_vms[0].node if vm_info_check.proxmox_vms else omit }}" # Necessário para algumas operações de update
+    node: "{{ proxmox_node_name }}" # Necessário para algumas operações de update
 
     # Recursos da VM
     cores: "{{ vm_cores }}"

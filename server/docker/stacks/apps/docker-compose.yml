@@ -257,6 +257,8 @@ services:
     restart: unless-stopped
     networks:
       - internal_services
+    ports:
+      - "${CORE_SERVICES_VM_IP_VAR}:3100:3100" # Recebe logs do promtail_ai (ai-desktop-vm); só na LAN, sem rota no Traefik
     volumes:
       - "${MONITORING_LOKI_CONFIG_PATH}/loki-local-config.yaml:/etc/loki/config.yaml:ro"
       - "${MONITORING_LOKI_DATA_PATH}:/loki"

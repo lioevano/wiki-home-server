@@ -56,7 +56,7 @@
 - name: "Permitir SSH e Web UI no Firewall do Host Proxmox"
   community.proxmox.proxmox_firewall:
     level: node
-    node: "{{ ansible_facts['hostname'] }}" # Nome real do nó no Proxmox (não o nome lógico do inventário)
+    node: "{{ proxmox_node_name }}" # Nome do nó no Proxmox (group_vars), não o nome lógico do inventário
     state: present
     update: true # Regras identificadas por 'pos': reexecutar atualiza em vez de duplicar
     rules:

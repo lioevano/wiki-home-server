@@ -16,9 +16,10 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
 
 - **Ollama**: Executa modelos LLM locais. Baixe modelos com `ollama pull llama3.2`, `ollama pull phi3`, etc.
 - **LiteLLM**: Proxy OpenAI-compatible. Roteia requisições entre Ollama e APIs externas com fallback automático.
-- **Open WebUI**: Interface web para chat com LLMs. Acessível em `http://ai-desktop-ip:3000`.
+- **Open WebUI**: Interface web para chat com LLMs. Acessível em `https://openwebui.seudominio.com` (Traefik da `core-services-vm` + Authelia, router `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2`) ou na LAN em `http://ai-desktop-ip:3000`.
 - **OpenClaw**: CLI agent para terminal. Conecta ao LiteLLM.
 - **OpenClaude**: Assistente AI com memória persistente e integração com ferramentas locais.
+- **Promtail (`promtail_ai`)**: Envia os logs dos containers e do sistema desta VM ao Loki da `core-services-vm` (`http://<core_services_vm_ip_var>:3100`). A configuração é gerada de `ansible/templates/promtail-config.yml.j2` pelo `setup-ai-volumes.yml`.
 
 ## Deploy
 
@@ -47,7 +48,7 @@ O `ai.env` é gerado por `ansible/playbooks/setup-ai-volumes.yml` (via `ansible/
 | Variável | Origem |
 |---|---|
 | `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE` | comuns (vault) |
-| `AI_STACK_*_PATH` | `vm_nfs_mount_base_path` + `zfs_docker_volumes_dataset_name` |
+| `AI_STACK_*_PATH` (inclui `AI_STACK_PROMTAIL_*`) | `vm_nfs_mount_base_path` + `zfs_docker_volumes_dataset_name` |
 | `AI_DESKTOP_VM_IP` | `ai_desktop_vm_ip_var` do `hosts.ini` |
 | `LITELLM_MASTER_KEY` | vault `litellm_master_key` |
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | vault `llm_api_keys.openai`, `.anthropic`, `.google_gemini` |
@@ -108,7 +109,7 @@ docker exec -it ollama ollama list
 
 | Serviço | URL | Porta |
 |---|---|---|
-| Open WebUI | `http://ai-desktop-ip:3000` | 3000 |
+| Open WebUI | `https://openwebui.seudominio.com` (Authelia) ou `http://ai-desktop-ip:3000` | 3000 |
 | LiteLLM API | `http://ai-desktop-ip:4000` | 4000 |
 | Ollama API | `http://ai-desktop-ip:11434` | 11434 |
 | OpenClaw | Terminal (via `docker exec -it openclaw sh`) | N/A |

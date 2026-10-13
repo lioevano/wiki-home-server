@@ -101,7 +101,7 @@ homeserver/                 # repositório lioevano/wiki-home-server
 │   │   ├── .env.template
 │   │   ├── core/               # Traefik, Cloudflared, Authelia
 │   │   ├── apps/               # Nextcloud, mídia, monitoramento, n8n, Home Assistant
-│   │   └── ai/                 # Ollama, LiteLLM, Open WebUI
+│   │   └── ai/                 # Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Promtail
 │   └── scripts/
 │       ├── bootstrap.sh
 │       ├── restore.sh
@@ -230,7 +230,7 @@ N8N_ADMIN_USER_FROM_PORTAINER_ENV=
 N8N_ADMIN_PASSWORD_FROM_PORTAINER_ENV=
 AUTO_STACK_HOMEASSISTANT_CONFIG_PATH=
 
-# --- Stack ai (Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude) ---
+# --- Stack ai (Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Promtail) ---
 AI_DESKTOP_VM_IP=
 AI_STACK_OLLAMA_MODELS_PATH=
 AI_STACK_LITELLM_CONFIG_PATH=
@@ -238,6 +238,8 @@ AI_STACK_OPENWEBUI_DATA_PATH=
 AI_STACK_OPENCLAW_CONFIG_PATH=
 AI_STACK_OPENCLAUDE_CONFIG_PATH=
 AI_STACK_OPENCLAUDE_MEMORY_PATH=
+AI_STACK_PROMTAIL_CONFIG_PATH=
+AI_STACK_PROMTAIL_POSITIONS_PATH=
 LITELLM_MASTER_KEY=
 OPENWEBUI_SECRET_KEY=
 OPENAI_API_KEY=

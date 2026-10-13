@@ -26,9 +26,9 @@ http:
     openwebui-svc-dynamic: # Serviço Traefik para OpenWebUI
       loadBalancer:
         servers:
-          # Aponta para o IP da ai-desktop-vm e a porta interna do container OpenWebUI.
+          # Aponta para o IP da ai-desktop-vm e a porta que o compose da stack ai publica (3000 -> 8080 no container).
           # A variável ai_desktop_vm_ip_var vem do inventário Ansible (hosts.ini).
-          - url: "http://{{ ai_desktop_vm_ip_var }}:8080" # Porta que OpenWebUI expõe na ai-desktop-vm
+          - url: "http://{{ ai_desktop_vm_ip_var }}:3000"
 
     # opennotebooklm-svc-dynamic:
     #   loadBalancer:

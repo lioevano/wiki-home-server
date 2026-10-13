@@ -20,7 +20,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 |---|---|
 | Aplicação | id único em kebab-case |
 | Categoria | `infra` · `produtividade` · `mídia` · `monitoramento` · `automação` · `ia` |
-| Stack / VM | `<stack>` / `<vm>` — stack = pasta em `docker/stacks/` ou `ansible:<role>` |
+| Stack / VM | `<stack>` / `<vm>` — stack = pasta em `docker/stacks/` ou `ansible:<role>`; aplicação presente em mais de uma VM lista cada par separado por `;` |
 | Serviços | nomes exatos no compose; o primeiro é o principal |
 | Exposição | `publica` (internet, sem login) · `protegida` (internet, com Authelia) · `interna` (só rede local/Docker) |
 | Subdomínio | subdomínio em `<sub>.<domínio>`, ou `—` se `interna` |
@@ -46,10 +46,10 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `ollama` | ia | ai / ai-desktop-vm | `ollama` | interna | — | nfs | não | — | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `openclaude` | ia | ai / ai-desktop-vm | `openclaude` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `openclaw` | ia | ai / ai-desktop-vm | `openclaw` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
-| `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
+| `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | protegida | `openwebui` | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | protegida | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |
 | `prometheus` | monitoramento | apps / core-services-vm | `prometheus` | protegida | `prometheus` | nfs | sim | `metricas` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
-| `promtail` | monitoramento | apps / core-services-vm | `promtail` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
+| `promtail` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `promtail`, `promtail_ai` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `qbittorrent` | mídia | apps / core-services-vm | `qbittorrent` | protegida | `qbittorrent` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `radarr` | mídia | apps / core-services-vm | `radarr` | protegida | `radarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `sonarr` | mídia | apps / core-services-vm | `sonarr` | protegida | `sonarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |

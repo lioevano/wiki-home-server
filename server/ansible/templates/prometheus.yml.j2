@@ -36,9 +36,3 @@ scrape_configs:
         labels:
           instance: 'cloudflared_tunnel_metrics'
 
-  - job_name: 'glances'
-    static_configs:
-      - targets: ['glances:61208']
-        metrics_path: /api/3/metrics
-        labels:
-          instance: 'glances_core_services_vm'

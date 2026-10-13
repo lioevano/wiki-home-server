@@ -96,8 +96,7 @@ Utilize ativamente a Stack de Monitoramento (Prometheus, Grafana, Loki) — veja
     *   Tráfego de Rede (por interface, por VM).
     *   Status e Performance do Pool ZFS (saúde, capacidade, IOPS, latência, ARC stats).
     *   Métricas do Node Exporter de cada sistema.
-    *   Métricas do Glances.
-    *   Métricas de containers Docker (se você adicionar cAdvisor ou usar métricas do Glances Docker).
+    *   Métricas de containers Docker (se você adicionar um exportador como o cAdvisor).
     *   Métricas do Cloudflare Tunnel.
 *   **Alertas (Prometheus Alertmanager / Grafana Alerting):**
     *   Configure alertas para condições críticas que exigem sua atenção imediata:
@@ -106,7 +105,6 @@ Utilize ativamente a Stack de Monitoramento (Prometheus, Grafana, Loki) — veja
         *   Serviço ou VM offline.
         *   Pool ZFS degradado ou com erros.
         *   Falha em backups.
-*   **Glances WebUI:** Para uma visão geral rápida e em tempo real (`https://glances.{{ base_domain }}`).
 *   **Frequência:** Verifique dashboards importantes diariamente ou configure alertas para ser notificado proativamente sobre problemas.
 
 ## 5. Verificação da Saúde do Pool ZFS (Host Proxmox)

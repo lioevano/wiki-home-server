@@ -86,6 +86,6 @@ Para desativar um serviço que não usa, adicione `enabled: false` nas labels do
 - **Jellyfin**: Hardware transcoding via `/dev/dri` (iGPU). Se usar CPU, remova o device.
 - **Sonarr/Radarr**: Dependem do qBittorrent para downloads. Configure o client de torrent no Sonarr/Radarr após o deploy.
 - **Grafana**: Login inicial `admin` / senha definida no `.env`. Adicione o datasource Prometheus apontando para `http://prometheus:9090`.
-- **Loki/Promtail**: Coletam logs de containers para visualizar no Grafana.
+- **Loki/Promtail**: Coletam logs de containers para visualizar no Grafana. O Loki publica a porta 3100 no IP da `core-services-vm` (`${CORE_SERVICES_VM_IP_VAR}:3100`) para receber os logs do `promtail_ai` da `ai-desktop-vm`; ele não tem autenticação, então a porta só deve ser alcançável pela LAN (não crie rota no Traefik nem no túnel para ela). Portas publicadas pelo Docker não passam pelo UFW da VM, então a proteção é a própria LAN.
 - **n8n**: Webhook URL configurado automaticamente para `https://n8n.seudominio.com/`.
 - **Home Assistant**: `devices` para USB (Zigbee/Zwave). Ajuste `/dev/ttyUSB0` para seu dispositivo.

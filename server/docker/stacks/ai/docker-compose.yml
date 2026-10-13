@@ -1,5 +1,5 @@
 # docker/stacks/ai/docker-compose.yml
-# Stack de IA: Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude
+# Stack de IA: Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude (+ Promtail para logs)
 # Roda na ai-desktop-vm
 version: '3.9'
 
@@ -98,3 +98,16 @@ services:
       - TZ=${SYSTEM_TIMEZONE}
     depends_on:
       - litellm
+
+  promtail_ai:
+    image: grafana/promtail:latest
+    container_name: promtail_ai
+    restart: unless-stopped
+    networks:
+      - ai_network
+    volumes:
+      - "/var/log:/var/log:ro"
+      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
+      - "${AI_STACK_PROMTAIL_CONFIG_PATH}/config.yml:/etc/promtail/config.yml:ro"
+      - "${AI_STACK_PROMTAIL_POSITIONS_PATH}:/tmp/positions"
+    command: -config.file=/etc/promtail/config.yml

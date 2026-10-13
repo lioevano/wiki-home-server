@@ -358,6 +358,7 @@ proxmox_ssh_allowed_cidrs: "192.168.15.0/24"
 proxmox_web_ui_allowed_cidrs: "192.168.15.0/24"
 # Bridge de rede padrão no Proxmox (geralmente vmbr0, conectada à sua LAN).
 proxmox_default_bridge: "vmbr0"
+proxmox_node_name: "pve" # Nome do nó no Proxmox (Datacenter > nó); usado pela API para clonar VMs e criar regras de firewall
 # Storage no Proxmox onde os discos virtuais das VMs serão armazenados (geralmente 'local-lvm' no SSD NVMe).
 proxmox_storage_vm_disks: "local-lvm"
 # Storage no Proxmox onde ISOs e templates de VM são armazenados (geralmente 'local' no SSD NVMe).

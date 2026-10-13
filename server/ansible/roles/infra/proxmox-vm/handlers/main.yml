@@ -11,7 +11,7 @@
     api_token_secret: "{{ proxmox_api_token_secret | default(omit) }}"
     api_host: "{{ hostvars[groups['proxmox_hosts'][0]].ansible_host }}"
     vmid: "{{ vm_id }}"
-    node: "{{ vm_info_check.proxmox_vms[0].node if vm_info_check.proxmox_vms else omit }}" # Necessário para start
+    node: "{{ proxmox_node_name }}" # Necessário para start
     state: started # Garante que a VM esteja rodando
     timeout: 120 # Timeout para iniciar a VM
   delegate_to: localhost
