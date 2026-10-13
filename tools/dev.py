@@ -9,7 +9,6 @@ Tarefas:
   build   mkdocs build --strict
   check   wikisync check   (verifica wiki <-> server)
   sync    wikisync apply   (dry-run; use --yes para gravar, --path para um arquivo)
-  index   wikisync index   (gera INDEX.md e index.json)
   test    testes do wikisync
   lint    yamllint, ansible-lint, syntax-check e docker compose config
 
@@ -92,10 +91,6 @@ def task_sync(args: list[str]) -> int:
     return _wikisync("apply", args)
 
 
-def task_index(args: list[str]) -> int:
-    return _wikisync("index", args)
-
-
 def task_test(args: list[str]) -> int:
     env = dict(os.environ, PYTHONPATH=str(repo_root() / "tools"), PYTHONUTF8="1")
     return run([_require_venv(), "-m", "pytest", "tools/wikisync/tests", "-q", *args], cwd=repo_root(), env=env)
@@ -136,7 +131,6 @@ TASKS = {
     "build": task_build,
     "check": task_check,
     "sync": task_sync,
-    "index": task_index,
     "test": task_test,
     "lint": task_lint,
 }

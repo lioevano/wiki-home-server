@@ -110,7 +110,7 @@ homeserver/                 # repositório lioevano/wiki-home-server
 ├── tools/                  # dev.py (tarefas) e wikisync (wiki -> server)
 ├── .claude/                # skills e permissões do Claude Code
 ├── CLAUDE.md               # contexto do projeto para o Claude
-├── INDEX.md / index.json   # índice gerado (não editar à mão)
+├── INDEX.md                # mapa do repositório (mantido pela skill update-index)
 ├── .gitignore
 └── README.md
 ```

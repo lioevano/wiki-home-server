@@ -19,7 +19,7 @@ A wiki (`wiki/docs/`) é a fonte da verdade; o `server/` só muda para refleti-l
 5. `python tools/dev.py sync` (dry-run), leia o diff, depois `python tools/dev.py sync --yes`.
 6. Edite à mão **apenas** os arquivos estruturais que a página agora descreve.
 7. Valide com a skill `validate-infra`.
-8. `python tools/dev.py index` (uma vez, no fim) e commit único: wiki + server + `INDEX.md`/`index.json`.
+8. Skill `update-index` (uma vez, no fim) e commit único: wiki + server + `INDEX.md`.
 
 ## Erros comuns
 

@@ -17,7 +17,7 @@ Toda mudança na infraestrutura começa na wiki:
 3. `python tools/dev.py check` — veja as divergências.
 4. `python tools/dev.py sync` (dry-run) → confira o diff → `python tools/dev.py sync --yes`.
 5. `python tools/dev.py build` e `python tools/dev.py lint`.
-6. `python tools/dev.py index` e commit (wiki + server + índice juntos).
+6. Skill `update-index` e commit (wiki + server + índice juntos).
 
 Nunca altere um arquivo do `server/` sem a página correspondente na wiki justificar a mudança.
 Use as skills do projeto (`.claude/skills/`) — elas descrevem esses fluxos passo a passo.
@@ -45,7 +45,6 @@ Na wiki, um bloco de código com `title="<caminho relativo a server/>"` (iniciad
 | `build` | `mkdocs build --strict` (falha com qualquer aviso) |
 | `check` | `wikisync check`: divergências wiki ↔ server (código 1 = há erros) |
 | `sync` | `wikisync apply` em dry-run; `--yes` grava; `--path <arquivo>` restringe |
-| `index` | regenera `INDEX.md` e `index.json` |
 | `test` | testes do `wikisync` |
 | `lint` | yamllint, ansible-lint, `--syntax-check` e `docker compose config` (Ansible só fora do Windows) |
 
@@ -54,8 +53,7 @@ são **erros**; `ORPHAN`, `UNMARKED`, `DESC` são avisos. Configuração em `too
 
 ## Onde procurar
 
-- **Antes de buscar no disco, leia `INDEX.md`** (ou `index.json` para consultas programáticas).
-  É gerado — nunca edite à mão; rode `dev.py index`.
+- **Antes de buscar no disco, leia `INDEX.md`.** Ele é mantido pela skill `update-index` — atualize-o por ela.
 - Convenções da wiki: `wiki/CLAUDE.md`. Convenções do Ansible/Docker: `server/CLAUDE.md`.
 - Decisões de projeto: `docs/superpowers/specs/` e `docs/superpowers/plans/`.
 

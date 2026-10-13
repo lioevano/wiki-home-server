@@ -24,4 +24,4 @@ description: Use when creating or restructuring an Ansible role, playbook, inven
 3. Grupo novo: atualize o bloco literal do `hosts.ini` na mesma página.
 4. `dev.py check` → `LIT-MISSING`/`LIT-DIFF` esperados → `dev.py sync` → `--yes`.
 5. Se o playbook entra no fluxo completo, inclua-o no bloco de `full-deploy.yml` (página `04-manutencao-recuperacao/03-cicd-basico-ansible.md`).
-6. Skill `validate-infra` (o `--syntax-check` do playbook novo precisa passar), `dev.py index`, commit.
+6. Skill `validate-infra` (o `--syntax-check` do playbook novo precisa passar), skill `update-index`, commit.
