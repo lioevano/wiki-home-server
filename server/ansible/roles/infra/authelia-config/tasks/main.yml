@@ -7,6 +7,14 @@
     group: "{{ docker_pgid }}"
     mode: '0750' # Authelia só precisa ler (e talvez escrever logs se configurado para arquivos)
 
+- name: "Garantir que o diretório de dados do PostgreSQL do Authelia exista na VM (via NFS)"
+  ansible.builtin.file:
+    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db_pg"
+    state: directory
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0775' # mesmo padrão do db_pg do Nextcloud; o entrypoint do Postgres ajusta o dono ao iniciar
+
 - name: "Copiar configuração principal do Authelia (configuration.yml)"
   ansible.builtin.template:
     src: configuration.yml.j2

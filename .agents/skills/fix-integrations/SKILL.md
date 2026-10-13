@@ -42,6 +42,7 @@ Regras do plano:
 - Blocos literais mudam **na wiki** (ex.: `vault.yml.example` na página 01, `.env.template` na página 00, roles com bloco literal); arquivos estruturais (playbooks sem bloco literal) mudam direto, citados na página da stack.
 - Segredo: placeholder no `vault.yml.example`; o playbook carrega o vault e grava o `.env` com `mode: '0600'`.
 - Nunca escrever valor real de segredo em nenhum arquivo.
+- Passos manuais (preencher o vault real, rodar playbook com `--check` antes, redeploy no Portainer) ficam **na página da stack na wiki**, numa subseção "Passos manuais ao mudar variáveis ou segredos" — não só no relatório.
 
 ## 4. Aprovação
 

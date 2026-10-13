@@ -77,3 +77,5 @@ llm_api_keys:
   openai: "SUA_CHAVE_OPENAI"
   anthropic: "SUA_CHAVE_ANTHROPIC"
   google_gemini: "SUA_CHAVE_GEMINI"
+# Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
+openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"

@@ -9,12 +9,6 @@ DOCKER_PGID={{ docker_pgid }}
 SYSTEM_TIMEZONE={{ system_timezone }}
 BASE_DOMAIN_FROM_VAULT={{ base_domain }}
 
-{% if CORE_SERVICES_VM_IP_VAR is defined %}
-CORE_SERVICES_VM_IP_VAR={{ CORE_SERVICES_VM_IP_VAR }}
-{% endif %}
-{% if AI_DESKTOP_VM_IP_VAR is defined %}
-AI_DESKTOP_VM_IP_VAR={{ AI_DESKTOP_VM_IP_VAR }}
-{% endif %}
 
 # --- Caminhos de Volume Base (montados via NFS do Proxmox Host) ---
 VM_NFS_MOUNT_BASE_PATH={{ vm_nfs_mount_base_path }}

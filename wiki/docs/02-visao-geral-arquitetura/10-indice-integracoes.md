@@ -285,14 +285,12 @@ Não se aplica.
 
 ## Pendências da auditoria inicial
 
-Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. A skill `fix-integrations` trata os mecânicos; os demais aguardam decisão.
+Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) já foram corrigidos pela skill `fix-integrations`; os demais aguardam decisão.
 
 | Regra | Aplicação | Desvio | Tipo |
 |---|---|---|---|
 | ⚠️ ROT-3 | `open-webui` | router por arquivo `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` para aplicação `interna`, apontando para a porta 8080 (o compose publica 3000) | decisão: remover o router ou tornar `protegida` |
 | ⚠️ MET-2 | (fora do catálogo) | job `glances` em `ansible/templates/prometheus.yml.j2` sem aplicação | decisão: remover o job ou catalogar o Glances |
 | ❌ LOG-2 | `ollama`, `litellm`, `open-webui`, `openclaw`, `openclaude` | sem `promtail` na `ai-desktop-vm` | decisão: Promtail na VM de IA ou `-logs` em Ajustes |
-| ❌ VAR-2 | `nextcloud`, `grafana`, `n8n`, `litellm`, `openclaw`, `openclaude`, `open-webui` | segredos `*_FROM_PORTAINER_ENV`, `LITELLM_MASTER_KEY`, `OPENWEBUI_SECRET_KEY`, `*_API_KEY` não gerados; `AI_DESKTOP_VM_IP` emitido como `AI_DESKTOP_VM_IP_VAR`; `CORE_SERVICES_VM_IP_VAR` só emitido sob condição | mecânico (`fix-integrations`) |
-| ❌ DAD-3 | `authelia` | diretório `authelia/db_pg` não é criado por playbook/role | mecânico (`fix-integrations`) |
 
-**Fora das regras** (registrados para a refatoração): LiteLLM aponta o Ollama para `ai_desktop_vm_ip_var:11434`, mas o Ollama escuta só em `127.0.0.1` (usar `http://ollama:11434`); `cloudflared` sem `--metrics` para o job `cloudflared:2000`; sobras do Plex em `setup-media-stack-volumes.yml`; `MONITORING_GRAFANA_PROVISIONING_PATH` gerada e não usada; `authentication_backend` comentado no `configuration.yml.j2`; `full-deploy.yml` não importa os playbooks de monitoramento e produtividade; `.env` com segredos gravados com `mode: '0644'`.
+**Fora das regras** (registrados para a refatoração): LiteLLM aponta o Ollama para `ai_desktop_vm_ip_var:11434`, mas o Ollama escuta só em `127.0.0.1` (usar `http://ollama:11434`); `cloudflared` sem `--metrics` para o job `cloudflared:2000`; sobras do Plex em `setup-media-stack-volumes.yml`; `MONITORING_GRAFANA_PROVISIONING_PATH` gerada e não usada; `authentication_backend` comentado no `configuration.yml.j2`; `full-deploy.yml` não importa os playbooks de monitoramento e produtividade; a stack `apps` é um compose único, mas recebe cinco `.env` separados (hoje unidos à mão num `apps.env`, ver página 07); n8n com `N8N_BASIC_AUTH_ACTIVE=true` além do forward-auth do Authelia (login duplo); middleware `nextcloud-headers` em `nextcloud_middleware.yml.j2` usa a chave `pass: true`, que não parece ser opção válida de `headers` no Traefik (validar).

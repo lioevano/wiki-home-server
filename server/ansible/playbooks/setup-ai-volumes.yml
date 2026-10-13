@@ -83,7 +83,7 @@
         dest: "{{ portainer_env_files_dest_path_on_vm }}/ai.env"
         owner: root
         group: root
-        mode: '0644'
+        mode: '0600'
       vars:
         stack_name: ai
         stack_configs:
@@ -93,3 +93,9 @@
           - { name: 'AI_STACK_OPENCLAW_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaw/config" }
           - { name: 'AI_STACK_OPENCLAUDE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/config" }
           - { name: 'AI_STACK_OPENCLAUDE_MEMORY_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory" }
+          - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'LITELLM_MASTER_KEY', value: "{{ litellm_master_key }}" }
+          - { name: 'OPENAI_API_KEY', value: "{{ llm_api_keys.openai }}" }
+          - { name: 'ANTHROPIC_API_KEY', value: "{{ llm_api_keys.anthropic }}" }
+          - { name: 'GEMINI_API_KEY', value: "{{ llm_api_keys.google_gemini }}" }
+          - { name: 'OPENWEBUI_SECRET_KEY', value: "{{ openwebui_secret_key }}" }

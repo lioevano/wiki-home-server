@@ -31,16 +31,37 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
    - Adicione o endpoint da ai-desktop-vm no Portainer (via Portainer Agent ou TCP)
    - **Stacks** > **Add Stack** > Nome: `ai`
    - Cole o conteúdo de `docker/stacks/ai/docker-compose.yml`
-   - Carregue `/opt/portainer_stack_envs/ai.env`
-   - Adicione manualmente: `LITELLM_MASTER_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
+   - Carregue `/opt/portainer_stack_envs/ai.env` (já traz todos os segredos; nada a adicionar à mão)
    - **Deploy**
 
 3. **Se deploy manual via CLI (na ai-desktop-vm):**
    ```bash
    cd /path/to/docker/stacks/ai
-   export LITELLM_MASTER_KEY="sua-chave-master"
-   docker compose up -d
+   sudo docker compose --env-file /opt/portainer_stack_envs/ai.env up -d
    ```
+
+### Variáveis da stack
+
+O `ai.env` é gerado por `ansible/playbooks/setup-ai-volumes.yml` (via `ansible/templates/portainer_stack_env.j2`) com `mode: '0600'`, porque contém segredos.
+
+| Variável | Origem |
+|---|---|
+| `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE` | comuns (vault) |
+| `AI_STACK_*_PATH` | `vm_nfs_mount_base_path` + `zfs_docker_volumes_dataset_name` |
+| `AI_DESKTOP_VM_IP` | `ai_desktop_vm_ip_var` do `hosts.ini` |
+| `LITELLM_MASTER_KEY` | vault `litellm_master_key` |
+| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | vault `llm_api_keys.openai`, `.anthropic`, `.google_gemini` |
+| `OPENWEBUI_SECRET_KEY` | vault `openwebui_secret_key` |
+
+### Passos manuais ao mudar variáveis ou segredos
+
+1. Confira no vault real (`ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`) que `litellm_master_key`, `llm_api_keys.*` e `openwebui_secret_key` estão preenchidos; gere chaves novas com `openssl rand -hex 32`.
+2. Simule e depois aplique o playbook:
+   ```bash
+   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml --check --diff
+   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml
+   ```
+3. No Portainer, abra a stack `ai`, recarregue `/opt/portainer_stack_envs/ai.env` em **Env** e clique em **Update the stack**.
 
 O `setup-ai-volumes.yml` também aplica o role `ansible/roles/apps/ml-tools/` na `ai-desktop-vm` (ferramentas de ML e dependências da stack).
 

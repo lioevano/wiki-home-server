@@ -46,7 +46,7 @@
         dest: "{{ portainer_env_files_dest_path_on_vm }}/productivity.env"
         owner: root
         group: root
-        mode: '0644'
+        mode: '0600'
       vars:
         stack_name: productivity
         stack_configs:
@@ -54,6 +54,9 @@
           - { name: 'PROD_STACK_NEXTCLOUD_HTML_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/html" }
           - { name: 'PROD_STACK_NEXTCLOUD_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/data" }
           - { name: 'PROD_STACK_NEXTCLOUD_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/config" }
+          - { name: 'NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ nextcloud_db_password }}" }
+          - { name: 'NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV', value: "{{ nextcloud_admin_initial_password }}" }
+          - { name: 'CORE_SERVICES_VM_IP_VAR', value: "{{ core_services_vm_ip_var }}" }
 
     - name: Generate .env file for automation stack (Home Assistant)
       ansible.builtin.template:

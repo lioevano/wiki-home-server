@@ -149,7 +149,7 @@
         dest: "{{ portainer_env_files_dest_path_on_vm }}/monitoring.env"
         owner: root
         group: root
-        mode: '0644'
+        mode: '0600'
       vars:
         stack_name: monitoring
         stack_configs:
@@ -162,3 +162,5 @@
           - { name: 'MONITORING_LOKI_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/data" }
           - { name: 'MONITORING_PROMTAIL_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/config" }
           - { name: 'MONITORING_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/positions" }
+          - { name: 'GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_db_password }}" }
+          - { name: 'GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_admin_initial_password }}" }

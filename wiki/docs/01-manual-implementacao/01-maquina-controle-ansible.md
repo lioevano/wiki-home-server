@@ -266,6 +266,8 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       openai: "SUA_CHAVE_OPENAI"
       anthropic: "SUA_CHAVE_ANTHROPIC"
       google_gemini: "SUA_CHAVE_GEMINI"
+    # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
+    openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
     ```
     !!! important "Como Editar o Arquivo Vault no Futuro"
         Para editar o arquivo `vault.yml` após sua criação, SEMPRE use o comando:
