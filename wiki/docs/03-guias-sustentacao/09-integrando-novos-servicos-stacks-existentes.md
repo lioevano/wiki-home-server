@@ -136,7 +136,7 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `med
     *   Adicione uma task `ansible.builtin.file` para criar o diretório `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/bazarr/config`.
     *   Atualize a task `ansible.builtin.template` que gera `/opt/portainer_stack_envs/media.env` para incluir:
         ```env
-        # ... (variáveis existentes para Plex, Sonarr, etc.) ...
+        # ... (variáveis existentes para Jellyfin, Sonarr, etc.) ...
         MEDIA_STACK_BAZARR_CONFIG_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/bazarr/config
         ```
     *   Execute o playbook `setup-media-stack-volumes.yml` atualizado.
@@ -144,7 +144,7 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `med
 3.  **Modificar `docker/stacks/apps/docker-compose.yml`:**
     Adicione o serviço `bazarr`:
     ```yaml
-    # ... (serviços Plex, Jellyfin, Sonarr, Radarr, qBittorrent) ...
+    # ... (serviços Jellyfin, Sonarr, Radarr, qBittorrent) ...
 
       bazarr:
         image: lscr.io/linuxserver/bazarr:latest # Considere uma tag de versão específica

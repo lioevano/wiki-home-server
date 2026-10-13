@@ -79,7 +79,7 @@ Nesta arquitetura, utilizamos principalmente VMs KVM para isolamento completo de
 *   **O que é:** Permite que uma VM KVM tenha controle exclusivo sobre um dispositivo PCI físico do host, como uma placa gráfica.
 *   **Por que usar:**
     *   **Aceleração de IA/ML:** Muitos frameworks de Machine Learning (como os usados por Ollama) podem utilizar GPUs para acelerar o treinamento e a inferência de modelos. A RX 5600XT é passada para a `ai-desktop-vm` para este fim.
-    *   **Transcoding de Mídia:** Servidores de mídia como Plex ou Jellyfin podem usar GPUs para acelerar o transcoding de vídeo (embora neste guia, a iGPU do host seja uma opção mais simples para Jellyfin na `core-services-vm`).
+    *   **Transcoding de Mídia:** Servidores de mídia como o Jellyfin podem usar GPUs para acelerar o transcoding de vídeo (embora neste guia, a iGPU do host seja uma opção mais simples para Jellyfin na `core-services-vm`).
     *   **VM Desktop com Performance Gráfica:** Se a `ai-desktop-vm` for usada como uma estação de trabalho virtual com GUI, o passthrough da GPU fornece performance gráfica nativa.
 *   **Complexidade:**
     *   Requer suporte de hardware (CPU e Chipset com IOMMU).

@@ -169,7 +169,7 @@ Traefik e Authelia são componentes críticos da nossa camada de rede e seguran�
         *   **Traefik:** Verifique se todos os seus serviços roteados pelo Traefik ainda estão acessíveis, se o SSL está funcionando para todos eles, e se o dashboard do Traefik está operacional.
         *   **Authelia:** Tente logar em um serviço protegido por Authelia. Verifique se o 2FA funciona. Teste diferentes cenários de acesso definidos nas suas políticas.
 
-## Atualizando Aplicações Docker Individuais (e.g., Nextcloud, Plex, Sonarr)
+## Atualizando Aplicações Docker Individuais (e.g., Nextcloud, Jellyfin, Sonarr)
 
 Este processo é geralmente menos arriscado que os componentes de infraestrutura, mas ainda requer cuidado.
 

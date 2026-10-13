@@ -78,7 +78,7 @@ O playbook de monitoramento renderiza as configurações a partir de `ansible/te
 
 Para desativar um serviço que não usa, adicione `enabled: false` nas labels do Traefik do serviço no compose, ou comente o bloco inteiro do serviço.
 
-**Exemplo: remover Plex** — o compose consolidado já inclui apenas Jellyfin. Se preferir Plex, substitua o bloco `jellyfin` por `plex` (veja a seção de referência rápida para configurações).
+**Plex em vez de Jellyfin** — o compose consolidado inclui apenas o Jellyfin. Para trocar, use as skills `remove-app` (jellyfin) e `add-app` (plex), que ajustam compose, playbook de volumes, variáveis, catálogo e integrações juntos.
 
 ## Notas por Serviço
 

@@ -129,7 +129,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
 9.  **Testar Tudo Exaustivamente:**
     *   Verifique o acesso a todos os seus serviços web através dos seus subdomínios.
     *   Teste a autenticação com Authelia.
-    *   Verifique a funcionalidade de cada aplicação principal (Nextcloud, Plex/Jellyfin, Home Assistant, Grafana, etc.).
+    *   Verifique a funcionalidade de cada aplicação principal (Nextcloud, Jellyfin, Home Assistant, Grafana, etc.).
     *   Confirme que os dados estão presentes e corretos.
     *   Verifique os logs de todos os componentes (Proxmox, VMs, containers) por quaisquer novos erros ou avisos.
     *   Se você configurou GPU passthrough, teste-o na `ai-desktop-vm` (e.g., rodando Ollama com um modelo que use a GPU).

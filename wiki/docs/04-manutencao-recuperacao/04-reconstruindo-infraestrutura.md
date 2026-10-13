@@ -125,7 +125,7 @@ Siga estes passos metodicamente:
 9.  **Testar Tudo Exaustivamente:**
     *   Verifique o acesso a cada serviço web via seu subdomínio Cloudflare.
     *   Teste a autenticação com Authelia.
-    *   Verifique a funcionalidade de cada aplicação (Nextcloud, Plex/Jellyfin, Home Assistant, Grafana, etc.).
+    *   Verifique a funcionalidade de cada aplicação (Nextcloud, Jellyfin, Home Assistant, Grafana, etc.).
     *   Confirme que os dados estão presentes e corretos.
     *   Verifique os logs de todos os componentes (Proxmox, VMs, containers) por quaisquer novos erros.
 

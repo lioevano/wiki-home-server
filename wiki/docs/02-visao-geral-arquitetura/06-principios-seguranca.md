@@ -109,7 +109,7 @@ graph TD
 ## Gerenciamento de Segredos
 
 *   **Ansible Vault:** Todas as senhas, tokens de API e outros dados sensíveis usados pela automação Ansible são armazenados de forma criptografada no arquivo `ansible/inventories/home/group_vars/all/vault.yml`.
-*   **Secrets no Portainer:** Senhas específicas de aplicações que não são gerenciadas diretamente pelo Ansible (como `PLEX_CLAIM_TOKEN`) são adicionadas como variáveis de ambiente diretamente na UI do Portainer ao implantar uma stack.
+*   **Secrets das stacks:** Todo segredo de aplicação fica no `vault.yml` e é gravado pelo Ansible no `.env` da stack (`/opt/portainer_stack_envs/*.env`, `mode: '0600'`), que o Portainer carrega no deploy. Nada é digitado à mão na UI do Portainer (ver "Origem dos valores" no índice de integrações).
 
 ## Resiliência de Dados e Backups
 

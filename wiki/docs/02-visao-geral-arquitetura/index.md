@@ -38,7 +38,7 @@ graph LR
     end
 
     subgraph "Camada de Aplicações (Docker na core-services-vm)"
-        Traefik --> AppDocker[Serviços Docker: Nextcloud, Plex, etc.]
+        Traefik --> AppDocker[Serviços Docker: Nextcloud, Jellyfin, etc.]
         AppDocker -- Dados Persistentes --> NFS_Mount_VM[Montagem NFS na VM]
     end
 

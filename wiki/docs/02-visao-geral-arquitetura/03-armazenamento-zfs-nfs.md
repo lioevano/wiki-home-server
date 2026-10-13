@@ -86,7 +86,7 @@ graph TD
 
 *   **Performance do NFS:** NFS sobre uma rede Gigabit local geralmente oferece performance suficiente para a maioria das aplicações de homelab. Para cargas de trabalho muito intensivas em I/O (como bancos de dados muito ativos ou transcodificação de vídeo frequente), o NFS pode se tornar um gargalo.
     *   **Otimizações:** Usar `vers=4.2` (ou a versão mais alta suportada), ajustar `rsize` e `wsize` nas opções de montagem, e garantir uma rede estável pode ajudar.
-    *   **Localização de Transcode:** Para Plex/Jellyfin, o diretório de transcodificação (`/transcode`) foi mapeado para um subdiretório em `docker-volumes`. Se a performance de transcodificação via NFS for um problema, alternativas incluem:
+    *   **Localização de Transcode:** O Jellyfin transcodifica dentro do seu volume de configuração (em `docker-volumes`, via NFS). Se a performance de transcodificação via NFS for um problema, alternativas incluem:
         *   Usar o armazenamento local da VM (no SSD NVMe) para transcodificação (e.g., mapear para `/tmp/transcode` na VM). Isso é mais rápido mas consome espaço no SSD da VM e os dados são perdidos se a VM for recriada sem esse diretório.
         *   Usar o `/tmp` do próprio container (que reside na RAM da VM, se houver RAM suficiente).
 *   **Alternativas ao NFS para Compartilhamento com VMs:**
