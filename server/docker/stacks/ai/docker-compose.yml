@@ -10,7 +10,7 @@ networks:
 
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:rocm # GPU AMD (RX 5600 XT) via ROCm; sem GPU suportada o Ollama roda em CPU
     container_name: ollama
     restart: unless-stopped
     networks:
@@ -19,13 +19,9 @@ services:
       - "${AI_STACK_OLLAMA_MODELS_PATH}:/root/.ollama"
     ports:
       - "127.0.0.1:11434:11434"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    devices: # GPU AMD passada para a VM (driver instalado pelo role ml-tools)
+      - /dev/kfd
+      - /dev/dri
 
   litellm:
     image: ghcr.io/berriai/litellm:main-latest

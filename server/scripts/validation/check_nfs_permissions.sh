@@ -197,33 +197,23 @@ fi
 # 6. Check for common issues with specific services
 print_section "6. Service-Specific Checks"
 
-# Check Ollama (if AI VM)
-if command -v ollama &>/dev/null; then
-    OLLAMA_USER=$(ps aux | grep ollama | grep -v grep | awk '{print $1}' | head -1)
-    
-    if [[ -n "${OLLAMA_USER}" ]]; then
-        OLLAMA_UID=$(id -u "${OLLAMA_USER}" 2>/dev/null || echo "unknown")
-        OLLAMA_GID=$(id -g "${OLLAMA_USER}" 2>/dev/null || echo "unknown")
-        
-        echo "Ollama running as: ${OLLAMA_USER} (${OLLAMA_UID}:${OLLAMA_GID})"
-        
-        OLLAMA_MODELS_DIR="${NFS_MOUNT_PATH}/rag_sources/ollama_models"
-        if [[ -d "${OLLAMA_MODELS_DIR}" ]]; then
-            DIR_UID=$(stat -c "%u" "${OLLAMA_MODELS_DIR}")
-            DIR_GID=$(stat -c "%g" "${OLLAMA_MODELS_DIR}")
-            
-            if [[ "${OLLAMA_UID}" == "${DIR_UID}" ]] || [[ "${OLLAMA_UID}" == "${EXPECTED_PUID}" ]]; then
-                print_ok "Ollama can write to models directory"
-            else
-                print_error "Ollama UID (${OLLAMA_UID}) doesn't match directory owner (${DIR_UID})"
-                
-                if [[ "${CAN_FIX}" == true ]]; then
-                    print_warn "Fixing Ollama directory permissions..."
-                    chown -R "${OLLAMA_UID}:${OLLAMA_GID}" "${OLLAMA_MODELS_DIR}"
-                    print_ok "Permissions updated"
-                fi
+# Check Ollama (if AI VM) — roda em container (stack ai), com modelos em docker-volumes/ollama/models
+if command -v docker &>/dev/null && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx ollama; then
+    OLLAMA_MODELS_DIR="${NFS_MOUNT_PATH}/docker-volumes/ollama/models"
+    if [[ -d "${OLLAMA_MODELS_DIR}" ]]; then
+        DIR_UID=$(stat -c "%u" "${OLLAMA_MODELS_DIR}")
+        echo "Ollama container running; models directory owner UID: ${DIR_UID}"
+        if [[ "${DIR_UID}" == "${EXPECTED_PUID}" ]]; then
+            print_ok "Ollama models directory owned by PUID ${EXPECTED_PUID}"
+        else
+            print_warn "Ollama models directory owner (${DIR_UID}) differs from PUID ${EXPECTED_PUID}"
+            if [[ "${CAN_FIX}" == true ]]; then
+                chown -R "${EXPECTED_PUID}:${EXPECTED_PGID}" "${OLLAMA_MODELS_DIR}"
+                print_ok "Permissions updated"
             fi
         fi
+    else
+        print_warn "Ollama models directory not found: ${OLLAMA_MODELS_DIR} (run setup-ai-volumes.yml)"
     fi
 fi
 

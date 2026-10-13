@@ -240,16 +240,12 @@ main() {
     print_header "9️⃣  AI Services (Optional)"
     
     if ping -c 1 "${AI_VM_IP}" &> /dev/null; then
-        print_test "Checking Ollama service..."
-        OLLAMA_STATUS=$(curl -s "http://${AI_VM_IP}:11434/api/tags" || echo "")
-        
-        if [[ -n "${OLLAMA_STATUS}" ]]; then
-            print_pass "Ollama is running"
-            
-            MODEL_COUNT=$(echo "${OLLAMA_STATUS}" | jq -r '.models | length' 2>/dev/null || echo "0")
-            print_info "Models installed: ${MODEL_COUNT}"
+        # O Ollama (container) só escuta dentro da VM; da LAN, o ponto de entrada da stack é o LiteLLM.
+        print_test "Checking LiteLLM proxy (stack ai)..."
+        if curl -sf "http://${AI_VM_IP}:4000/health/liveliness" &> /dev/null; then
+            print_pass "LiteLLM is running"
         else
-            print_warn "Ollama is not responding"
+            print_warn "LiteLLM is not responding (check the ai stack and Ollama logs: docker logs ollama)"
         fi
     else
         print_info "AI VM not reachable (skipping AI services check)"

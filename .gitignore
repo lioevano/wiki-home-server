@@ -26,6 +26,7 @@ server/docker/stacks/*/.env
 .superpowers/
 
 # Sistema operacional e editores
+.obsidian/
 .DS_Store
 Thumbs.db
 .vscode/

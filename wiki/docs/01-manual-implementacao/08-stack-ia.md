@@ -64,7 +64,10 @@ O `ai.env` é gerado por `ansible/playbooks/setup-ai-volumes.yml` (via `ansible/
    ```
 3. No Portainer, abra a stack `ai`, recarregue `/opt/portainer_stack_envs/ai.env` em **Env** e clique em **Update the stack**.
 
-O `setup-ai-volumes.yml` também aplica o role `ansible/roles/apps/ml-tools/` na `ai-desktop-vm` (ferramentas de ML e dependências da stack).
+O `setup-ai-volumes.yml` também aplica o role `ansible/roles/apps/ml-tools/` na `ai-desktop-vm`: ele instala o driver AMD/ROCm da GPU (RX 5600 XT) e desativa uma eventual instalação nativa antiga do Ollama. O Ollama roda **só em container** (`ollama/ollama:rocm`, com `/dev/kfd` e `/dev/dri`).
+
+!!! warning "Suporte da RX 5600 XT"
+    A RX 5600 XT (RDNA1, `gfx1010`) não está na lista oficial de GPUs AMD do Ollama; se ela não for reconhecida, o Ollama roda em CPU (veja `docker logs ollama`). O resto da stack funciona igual.
 
 ## Configuração do LiteLLM
 

@@ -15,14 +15,3 @@
     pre_reboot_delay: 0
     post_reboot_delay: 60
     test_command: uptime
-
-- name: Reload systemd and restart Ollama
-  ansible.builtin.systemd:
-    daemon_reload: yes
-  notify: Restart Ollama service
-
-- name: Restart Ollama service
-  ansible.builtin.systemd_service:
-    name: ollama
-    state: restarted
-    enabled: yes
