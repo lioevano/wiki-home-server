@@ -106,14 +106,14 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
         *   Acesse o **Dashboard do Traefik** (`https://traefik.{{ base_domain }}` - você precisará autenticar com Authelia).
             *   **Routers:** O roteador para `meuservico.{{ base_domain }}` existe e está com status verde? A `Rule` está correta (`Host(\`meuservico.{{ base_domain }}\`)`)? Os `EntryPoints` (`websecure`) estão corretos?
             *   **Services:** O serviço backend associado ao roteador está saudável? Ele aponta para o(s) container(es) correto(s) do `meuservico` e para a porta interna correta que o `meuservico` escuta?
-            *   **Middlewares:** Os middlewares aplicados ao roteador (e.g., `authelia@docker`, `securityHeaders@file`) estão corretos e sem erros?
+            *   **Middlewares:** Os middlewares aplicados ao roteador (e.g., `authelia-forwardauth@docker`, `securityHeaders@file`) estão corretos e sem erros?
         *   Verifique as **labels Docker** do container `meuservico` no seu `docker-compose.yml`. Estão corretas quanto ao nome do host, entrypoint, nome do serviço Traefik, e a porta interna do container (`loadbalancer.server.port`)?
         *   Examine os **logs do Traefik** (`docker logs traefik`) para erros específicos relacionados a este serviço, problemas com certificados SSL, ou falhas ao conectar ao backend.
     4.  **Authelia (se o serviço estiver protegido por ele):**
         *   O container `authelia` e seu banco de dados (`authelia_db`) estão rodando?
         *   Você consegue acessar o portal Authelia (`https://auth.{{ base_domain }}`)?
         *   Examine os **logs do Authelia** (`docker logs authelia`) para erros de autenticação, problemas com as regras de acesso (`access_control` no `configuration.yml`), ou falhas de conexão com o banco de dados.
-        *   A configuração do middleware `authelia@docker` no Traefik (definida no `docker-compose.yml` do Authelia) está correta?
+        *   A configuração do middleware `authelia-forwardauth@docker` no Traefik (definida no `docker-compose.yml` do Authelia) está correta?
     5.  **Container do Serviço de Destino (`meuservico`):**
         *   O container `meuservico` está rodando na `core-services-vm` (ou `ai-desktop-vm` se aplicável)?
         *   Ele está conectado à rede Docker correta (geralmente `proxy` se exposto via Traefik)?
@@ -204,9 +204,9 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
         *   Use as Developer Tools do navegador (F12 -> Aba Application/Storage -> Cookies) para inspecionar o cookie de sessão do Authelia (geralmente chamado `homelab_authelia_session` ou o que você definiu em `session.name`). Ele está sendo definido para o domínio correto?
     5.  **Sincronia de Relógio:**
         *   Certifique-se de que o relógio na `core-services-vm` (e, portanto, nos containers) está sincronizado corretamente com um servidor NTP. Desvios significativos de tempo podem afetar a validação de códigos TOTP para 2FA.
-    6.  **Configuração do Middleware `authelia@docker` no Traefik:**
-        *   No `docker-compose.yml` da stack Authelia (Seção 5.3), a definição do middleware `traefik.http.middlewares.authelia.forwardauth.address` está correta, apontando para `http://authelia:9091/api/verify...`?
-        *   Os serviços que você quer proteger no Traefik estão referenciando este middleware corretamente (e.g., `middlewares: "authelia@docker"`)?
+    6.  **Configuração do Middleware `authelia-forwardauth@docker` no Traefik:**
+        *   No `docker-compose.yml` da stack Authelia (Seção 5.3), a definição do middleware `traefik.http.middlewares.authelia-forwardauth.forwardauth.address` está correta, apontando para `http://authelia:9091/api/verify...`?
+        *   Os serviços que você quer proteger no Traefik estão referenciando este middleware corretamente (e.g., `middlewares: "authelia-forwardauth@docker"`)?
 
 ### 5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)
 

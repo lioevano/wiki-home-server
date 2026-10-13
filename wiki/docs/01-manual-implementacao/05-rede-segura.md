@@ -25,7 +25,7 @@ Antes de mergulharmos na configuração, é vital entender como o tráfego de um
     * Traefik escuta nas portas `80` (HTTP) e `443` (HTTPS) na `core-services-vm` (mapeadas do host da VM para o container Traefik).
     * **Redirecionamento HTTP para HTTPS:** Traefik está configurado para redirecionar automaticamente todo o tráfego chegando na porta `80` para HTTPS na porta `443`.
     * **Roteamento Baseado em Host:** Traefik inspeciona o cabeçalho `Host` da requisição HTTP (e.g., `nextcloud.meuhomelab.com`).
-    * **Middleware de Autenticação (Authelia):** Se a rota do Traefik para o serviço estiver configurada com o middleware Authelia (e.g., `authelia@docker`), Traefik primeiro consulta o container Authelia para verificar a autenticação do usuário.
+    * **Middleware de Autenticação (Authelia):** Se a rota do Traefik para o serviço estiver configurada com o middleware Authelia (e.g., `authelia-forwardauth@docker`), Traefik primeiro consulta o container Authelia para verificar a autenticação do usuário.
         * Se o usuário não estiver logado, Authelia instrui Traefik a redirecionar o usuário para o portal de login do Authelia (e.g., `https://auth.meuhomelab.com`).
         * Após o login bem-sucedido (incluindo 2FA), Authelia estabelece uma sessão (via cookie) e informa ao Traefik que o usuário está autenticado.
     * **Gerenciamento de Certificados SSL/TLS (Let's Encrypt):** Traefik automaticamente solicita, renova e gerencia certificados SSL/TLS da Let's Encrypt para todos os seus subdomínios expostos. Ele utiliza o **desafio DNS-01** com a API da Cloudflare (usando o token API que configuraremos), o que é robusto e não requer que portas HTTP estejam abertas para o mundo. Os certificados são armazenados no arquivo `acme.json` (em um volume NFS).
@@ -203,10 +203,10 @@ services:
       traefik.http.services.authelia-svc.loadbalancer.server.port: "9091" # Porta interna do Authelia
       # --- Middleware de Forward Authentication Authelia ---
       # Este middleware será referenciado por outros serviços que precisam ser protegidos.
-      # O nome 'authelia@docker' é como outros containers (via suas labels) referenciarão este middleware.
-      traefik.http.middlewares.authelia.forwardauth.address: "http://authelia:9091/api/verify?rd=https://auth.${BASE_DOMAIN_FROM_VAULT}/"
-      traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: "true" # Confia nos headers X-Forwarded-* do Traefik
-      traefik.http.middlewares.authelia.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email" # Headers a serem passados para o serviço backend após auth
+      # O nome 'authelia-forwardauth@docker' é como outros containers (via suas labels) referenciarão este middleware.
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/verify?rd=https://auth.${BASE_DOMAIN_FROM_VAULT}/"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.trustForwardHeader: "true" # Confia nos headers X-Forwarded-* do Traefik
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email" # Headers a serem passados para o serviço backend após auth
 
   authelia_db: # Banco de dados PostgreSQL para Authelia
     image: postgres:15.6-alpine # Use uma versão específica e estável.
@@ -447,7 +447,7 @@ http:
       tls:
         certResolver: "letsencrypt" # Usa Let's Encrypt
       middlewares:
-        - "authelia@docker" # Protegido por Authelia (middleware definido no compose do Authelia)
+        - "authelia-forwardauth@docker" # Protegido por Authelia (middleware definido no compose do Authelia)
 
     # Adicione aqui roteadores para outros serviços RAG/AI na ai-desktop-vm se necessário
     # Exemplo para um hipotético OpenNotebookLM
@@ -456,7 +456,7 @@ http:
     #   rule: "Host(`notebooklm.{{ base_domain }}`)"
     #   service: "opennotebooklm-svc-dynamic"
     #   tls: { certResolver: "letsencrypt" }
-    #   middlewares: ["authelia@docker"]
+    #   middlewares: ["authelia-forwardauth@docker"]
 
   services:
     openwebui-svc-dynamic: # Serviço Traefik para OpenWebUI
@@ -492,10 +492,10 @@ http:
         # X-Robots-Tag: none
         # X-XSS-Protection: 1; mode=block (já tratado globalmente)
         # Adicione outros específicos se Nextcloud evoluir suas recomendações.
-        # Este middleware pode ser combinado com 'authelia@docker' e 'securityHeaders@file'
+        # Este middleware pode ser combinado com 'authelia-forwardauth@docker' e 'securityHeaders@file'
         # usando um chain middleware se necessário, ou aplicado diretamente.
         # Exemplo:
-        # traefik.http.routers.nextcloud.middlewares: "authelia@docker,nextcloud-headers@file"
+        # traefik.http.routers.nextcloud.middlewares: "authelia-forwardauth@docker,nextcloud-headers@file"
         # Se os headers globais já cobrem, este middleware pode não ser estritamente necessário,
         # mas pode ser usado para ajustes finos específicos para Nextcloud.
         # Por enquanto, pode ser deixado vazio ou com headers muito específicos que não são globais.

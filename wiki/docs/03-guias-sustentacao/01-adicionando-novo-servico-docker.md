@@ -109,8 +109,8 @@ Siga estes passos para garantir uma integração suave e bem-sucedida:
               traefik.http.routers.novoservico.tls.certresolver: "letsencrypt" # Usa Let's Encrypt para SSL
 
               # Middlewares (e.g., Authelia para proteção, headers de segurança)
-              # Se precisar de múltiplos middlewares, separe por vírgula: "authelia@docker,securityHeaders@file"
-              traefik.http.routers.novoservico.middlewares: "authelia@docker" # Se for proteger com Authelia
+              # Se precisar de múltiplos middlewares, separe por vírgula: "authelia-forwardauth@docker,securityHeaders@file"
+              traefik.http.routers.novoservico.middlewares: "authelia-forwardauth@docker" # Se for proteger com Authelia
 
               # Serviço (como Traefik deve se conectar ao container internamente)
               traefik.http.services.novoservico.loadbalancer.server.port: "8000" # Porta INTERNA que o container 'novoservico' escuta
@@ -206,7 +206,7 @@ FileBrowser é um gerenciador de arquivos web simples e eficaz. Vamos revisitar 
           traefik.http.routers.filebrowser.rule: "Host(`files.{{ base_domain }}`)"
           traefik.http.routers.filebrowser.entrypoints: "websecure"
           traefik.http.routers.filebrowser.tls.certresolver: "letsencrypt"
-          traefik.http.routers.filebrowser.middlewares: "authelia@docker" # Protegido por Authelia
+          traefik.http.routers.filebrowser.middlewares: "authelia-forwardauth@docker" # Protegido por Authelia
           traefik.http.services.filebrowser.loadbalancer.server.port: "80" # FileBrowser escuta na porta 80 internamente
     ```
 

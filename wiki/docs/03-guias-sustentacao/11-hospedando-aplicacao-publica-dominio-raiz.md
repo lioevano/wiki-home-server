@@ -27,7 +27,7 @@ Hospedar uma aplicação publicamente, especialmente no domínio raiz que é fre
     *   **Mitigação:**
         1.  **Regra de Roteador Traefik Muito Específica:** Crie uma regra de roteador no Traefik **exclusivamente** para o domínio raiz (e.g., `Host(\`meudominio.com\`)`).
         2.  **Prioridade de Roteadores:** Se você tiver outras regras mais genéricas (como um wildcard `HostS(\`*.meudominio.com\`)` para Authelia), certifique-se de que a regra do domínio raiz tenha uma **prioridade mais alta** (um número maior no Traefik) para ser correspondida primeiro, evitando que a regra wildcard "capture" o tráfego do domínio raiz indevidamente.
-        3.  **NÃO Aplicar Authelia ao Blog Público:** A menos que partes específicas do seu blog público exijam login (o que é incomum para a página principal de um blog), **não** aplique o middleware `authelia@docker` ao roteador do Traefik para o seu domínio raiz. Aplique apenas middlewares essenciais, como os de headers de segurança.
+        3.  **NÃO Aplicar Authelia ao Blog Público:** A menos que partes específicas do seu blog público exijam login (o que é incomum para a página principal de um blog), **não** aplique o middleware `authelia-forwardauth@docker` ao roteador do Traefik para o seu domínio raiz. Aplique apenas middlewares essenciais, como os de headers de segurança.
 
 *   **Ataques de Negação de Serviço (DDoS) ou Abuso na Aplicação Pública:**
     *   **Risco:** Um ataque direcionado à sua aplicação no domínio raiz poderia consumir recursos do seu servidor (CPU, RAM, largura de banda da sua conexão de internet).
@@ -128,7 +128,7 @@ Para máxima segurança, performance e mínimo consumo de recursos ao hospedar u
               # Prioridade ALTA para garantir que esta regra mais específica (domínio raiz)
               # seja correspondida antes de quaisquer regras wildcard (e.g., para Authelia em *.{{ base_domain }}).
               traefik.http.routers.meu_blog_raiz.priority: "100" # Um número alto significa maior prioridade
-              # Middlewares: NÃO inclua 'authelia@docker' para um blog público.
+              # Middlewares: NÃO inclua 'authelia-forwardauth@docker' para um blog público.
               # Você PODE (e deve) incluir seus headers de segurança globais.
               traefik.http.routers.meu_blog_raiz.middlewares: "securityHeaders@file"
               # Serviço Traefik (como Traefik se conecta ao container Nginx)
@@ -151,7 +151,7 @@ Independentemente de você usar um blog estático ou uma aplicação dinâmica (
     *   `traefik.http.routers.NOMEDOROUTEADOR.priority: "100"` (ou outro número alto)
         *   Isso é importante se você tem outras regras mais genéricas (como uma regra wildcard `HostS(\`*.{{ base_domain }}\`)` que pode ser usada pelo Authelia ou outros serviços). A prioridade mais alta garante que a regra específica para o domínio raiz seja avaliada e correspondida primeiro.
     *   **Middlewares:**
-        *   **NÃO inclua `authelia@docker`** para um blog ou site que deve ser publicamente acessível sem login.
+        *   **NÃO inclua `authelia-forwardauth@docker`** para um blog ou site que deve ser publicamente acessível sem login.
         *   Você **DEVE** incluir seus middlewares de segurança globais (e.g., `securityHeaders@file`, que foi definido na [Seção 5.4](../01-manual-implementacao/05-rede-segura.md#templatessecurity_headersymlj2-middleware-de-segurança)) para aplicar headers de segurança importantes.
             Exemplo: `traefik.http.routers.meu_blog_raiz.middlewares: "securityHeaders@file"`
 

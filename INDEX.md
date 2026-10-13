@@ -36,7 +36,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `open-webui` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao | `01-manual-implementacao/08-stack-ia.md` |
 | `openclaude` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao | `01-manual-implementacao/08-stack-ia.md` |
 | `openclaw` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao | `01-manual-implementacao/08-stack-ia.md` |
-| `portainer` | ansible:infra/docker / core-services-vm | roteamento?, autenticacao?, acesso-externo?, logs, dados, documentacao | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `portainer` | ansible:infra/docker / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, documentacao | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `prometheus` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, metricas, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
 | `promtail` | apps / core-services-vm | dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |
 | `qbittorrent` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao | `01-manual-implementacao/07-deploy-apps.md` |

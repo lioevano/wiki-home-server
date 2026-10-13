@@ -11,7 +11,7 @@ http:
       tls:
         certResolver: "letsencrypt" # Usa Let's Encrypt
       middlewares:
-        - "authelia@docker" # Protegido por Authelia (middleware definido no compose do Authelia)
+        - "authelia-forwardauth@docker" # Protegido por Authelia (middleware definido no compose do Authelia)
 
     # Adicione aqui roteadores para outros serviços RAG/AI na ai-desktop-vm se necessário
     # Exemplo para um hipotético OpenNotebookLM
@@ -20,7 +20,7 @@ http:
     #   rule: "Host(`notebooklm.{{ base_domain }}`)"
     #   service: "opennotebooklm-svc-dynamic"
     #   tls: { certResolver: "letsencrypt" }
-    #   middlewares: ["authelia@docker"]
+    #   middlewares: ["authelia-forwardauth@docker"]
 
   services:
     openwebui-svc-dynamic: # Serviço Traefik para OpenWebUI

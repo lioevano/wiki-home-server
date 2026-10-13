@@ -167,7 +167,7 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `med
           traefik.http.routers.bazarr.rule: "Host(`bazarr.{{ base_domain }}`)"
           traefik.http.routers.bazarr.entrypoints: "websecure"
           traefik.http.routers.bazarr.tls.certresolver: "letsencrypt"
-          traefik.http.routers.bazarr.middlewares: "authelia@docker"
+          traefik.http.routers.bazarr.middlewares: "authelia-forwardauth@docker"
           traefik.http.services.bazarr.loadbalancer.server.port: "6767" # Porta interna do Bazarr
         depends_on: # Bazarr geralmente precisa que Sonarr/Radarr estejam disponíveis
           - sonarr

@@ -419,7 +419,7 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
       traefik.http.services.portainer-svc.loadbalancer.server.scheme: "https" # Esquema para o backend
       # Middleware de Autenticação Authelia
       # Refere-se ao middleware Authelia que será definido no docker-compose do Authelia (Seção 5).
-      traefik.http.routers.portainer.middlewares: "authelia@docker"
+      traefik.http.routers.portainer.middlewares: "authelia-forwardauth@docker"
 ```
 
 ### `handlers/main.yml`

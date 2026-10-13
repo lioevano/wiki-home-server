@@ -47,13 +47,10 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `openclaude` | ia | ai / ai-desktop-vm | `openclaude` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `openclaw` | ia | ai / ai-desktop-vm | `openclaw` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
-| `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | ? | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |
+| `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | protegida | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |
 | `prometheus` | monitoramento | apps / core-services-vm | `prometheus` | protegida | `prometheus` | nfs | sim | `metricas` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `promtail` | monitoramento | apps / core-services-vm | `promtail` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `qbittorrent` | mídia | apps / core-services-vm | `qbittorrent` | protegida | `qbittorrent` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `radarr` | mídia | apps / core-services-vm | `radarr` | protegida | `radarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `sonarr` | mídia | apps / core-services-vm | `sonarr` | protegida | `sonarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `traefik` | infra | core / core-services-vm | `traefik` | protegida | `traefik` | nfs | não | `roteamento` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
-
-!!! question "Pendente de decisão"
-    `portainer` — **Exposição `?`**: o Portainer tem router no Traefik (`portainer.<domínio>`) mas sem o middleware do Authelia, e também publica as portas 9443/9000 na rede local. Defina se ele deve ser `protegida` ou `interna`.
