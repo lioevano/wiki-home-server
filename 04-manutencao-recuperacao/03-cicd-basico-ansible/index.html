@@ -1,12 +1,9 @@
-
-<!doctype html>
-<html lang="pt" class="no-js">
-  <head>
+<!DOCTYPE html><html lang="pt" class="no-js"><head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.">
+        <meta name="description" content="CI/CD básico para a infraestrutura como código: lint, testes e execução controlada dos playbooks Ansible.">
       
       
         <meta name="author" content="Léo Ivan">
@@ -21,19 +18,22 @@
         <link rel="next" href="../04-reconstruindo-infraestrutura/">
       
       
+        
+      
+      
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
-        <title>CI/CD Básico Ansible - Wiki do Servidor do Léo Ivan</title>
+        <title>CI/CD Ansible - Wiki do Servidor do Léo Ivan</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -46,13 +46,11 @@
       
         
         
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-    
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -60,17 +58,17 @@
 
     
     
-    
-   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
-    html.glightbox-open { overflow: initial; height: 100%; }
-    .gslide-title { margin-top: 0px; user-select: text; }
-    .gslide-desc { color: #666; user-select: text; }
-    .gslide-image img { background: white; }
-    .gscrollbar-fixer { padding-right: 15px; }
-    .gdesc-inner { font-size: 0.75rem; }
-    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
-    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
-    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
   
   
     
@@ -98,10 +96,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
-    
     
       
 
@@ -110,12 +104,12 @@
     <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -127,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              CI/CD Básico Ansible
+              CI/CD Ansible
             
           </span>
         </div>
@@ -140,20 +134,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
       </label>
     
   
@@ -169,24 +163,24 @@
       
         <label class="md-header__button md-icon" for="__search">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         </label>
         <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
       </label>
       <nav class="md-search__options" aria-label="Pesquisar">
         
         <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
         </button>
       </nav>
       
@@ -194,7 +188,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Inicializando a pesquisa
@@ -212,7 +206,7 @@
         <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -340,38 +334,17 @@
   
   
   
-    
-    
-      <li class="md-tabs__item">
-        <a href="../../05-guia-estudos/" class="md-tabs__link">
-          
-  
-  
-  📚 Guia de Estudos
-
-        </a>
-      </li>
-    
-  
-
-      
+    <li class="md-tabs__item">
+      <a href="../../05-referencia-rapida/" class="md-tabs__link">
         
   
   
-  
-  
     
-    
-      <li class="md-tabs__item">
-        <a href="../../06-solucoes-alternativas/" class="md-tabs__link">
-          
   
-  
-  🔄 Soluções Alternativas
+  📎 Referência
 
-        </a>
-      </li>
-    
+      </a>
+    </li>
   
 
       
@@ -386,7 +359,7 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -400,7 +373,7 @@
     <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
     Wiki do Servidor do Léo Ivan
@@ -410,7 +383,7 @@
       <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -418,7 +391,7 @@
 </a>
     </div>
   
-  <ul class="md-nav__list" data-md-scrollfix>
+  <ul class="md-nav__list" data-md-scrollfix="">
     
       
       
@@ -432,9 +405,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Introdução
+  
+
     
   </span>
+  
   
 
       </a>
@@ -464,7 +442,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2">
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -472,9 +450,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     🚀 Implementação
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -483,9 +466,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            🚀 Implementação
+            
+  
+    🚀 Implementação
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -499,9 +486,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -522,9 +514,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Preparação e Planejamento
+  
+
     
   </span>
+  
   
 
       </a>
@@ -545,9 +542,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Máquina de Controle Ansible
+  
+
     
   </span>
+  
   
 
       </a>
@@ -568,9 +570,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Proxmox VE Host
+  
+
     
   </span>
+  
   
 
       </a>
@@ -591,9 +598,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Provisionamento de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -614,9 +626,14 @@
   
   
   <span class="md-ellipsis">
-    Configuração Base das VMs Ubuntu
+    
+  
+    Configuração Base das VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -637,9 +654,14 @@
   
   
   <span class="md-ellipsis">
-    Rede Segura (Traefik, Cloudflare, Authelia)
+    
+  
+    Rede Segura
+  
+
     
   </span>
+  
   
 
       </a>
@@ -655,14 +677,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/06-deploy-portainer-geral/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/06-deploy-core/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Deploy Geral com Portainer
+    
+  
+    Deploy Core
+  
+
     
   </span>
+  
   
 
       </a>
@@ -678,14 +705,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/07-stack-ia-rag/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/07-deploy-apps/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Stack de IA & RAG
+    
+  
+    Deploy de Apps
+  
+
     
   </span>
+  
   
 
       </a>
@@ -701,60 +733,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/08-stack-midia/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/08-stack-ia/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Stack de Mídia
+    
+  
+    Stack de IA
+  
+
     
   </span>
   
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/09-stack-produtividade-automacao/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Stack de Produtividade & Automação
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/10-stack-monitoramento/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Stack de Monitoramento
-    
-  </span>
   
 
       </a>
@@ -792,7 +783,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3">
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -800,9 +791,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     💡 Arquitetura
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -811,9 +807,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            💡 Arquitetura
+            
+  
+    💡 Arquitetura
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -827,9 +827,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -850,9 +855,14 @@
   
   
   <span class="md-ellipsis">
-    Fluxo de Rede e Acesso Externo
+    
+  
+    Fluxo de Rede
+  
+
     
   </span>
+  
   
 
       </a>
@@ -873,9 +883,14 @@
   
   
   <span class="md-ellipsis">
-    Virtualização (Proxmox)
+    
+  
+    Virtualização
+  
+
     
   </span>
+  
   
 
       </a>
@@ -896,9 +911,14 @@
   
   
   <span class="md-ellipsis">
-    Armazenamento (ZFS, NFS)
+    
+  
+    Armazenamento
+  
+
     
   </span>
+  
   
 
       </a>
@@ -919,9 +939,14 @@
   
   
   <span class="md-ellipsis">
-    Automação (Ansible)
+    
+  
+    Automação
+  
+
     
   </span>
+  
   
 
       </a>
@@ -942,9 +967,14 @@
   
   
   <span class="md-ellipsis">
-    Gerenciamento de Containers (Docker)
+    
+  
+    Containers
+  
+
     
   </span>
+  
   
 
       </a>
@@ -965,9 +995,98 @@
   
   
   <span class="md-ellipsis">
-    Princípios de Segurança Aplicados
+    
+  
+    Segurança
+  
+
     
   </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estratégia LLM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catálogo de Aplicações
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/10-indice-integracoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Índice de Integrações
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -1005,7 +1124,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4">
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -1013,9 +1132,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     🛠️ Sustentação
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -1024,9 +1148,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            🛠️ Sustentação
+            
+  
+    🛠️ Sustentação
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1040,9 +1168,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1063,9 +1196,14 @@
   
   
   <span class="md-ellipsis">
-    Adicionando Novo Serviço Docker
+    
+  
+    Novo Serviço Docker
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1086,9 +1224,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Modificando Configurações
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1109,9 +1252,14 @@
   
   
   <span class="md-ellipsis">
-    Troubleshooting Comum
+    
+  
+    Troubleshooting
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1132,9 +1280,14 @@
   
   
   <span class="md-ellipsis">
-    Gerenciando Redes Docker
+    
+  
+    Redes Docker
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1155,9 +1308,14 @@
   
   
   <span class="md-ellipsis">
-    Passthrough de Hardware Adicional
+    
+  
+    Passthrough de Hardware
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1178,9 +1336,14 @@
   
   
   <span class="md-ellipsis">
-    6. Gerenciando Recursos de VMs
+    
+  
+    Recursos de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1201,9 +1364,14 @@
   
   
   <span class="md-ellipsis">
-    7. Cenários Específicos de Criação de VMs
+    
+  
+    Cenários de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1224,9 +1392,14 @@
   
   
   <span class="md-ellipsis">
-    8. Compartilhando Recursos entre VMs
+    
+  
+    Recursos entre VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1247,9 +1420,14 @@
   
   
   <span class="md-ellipsis">
-    9. Integrando Novos Serviços a Stacks Existentes
+    
+  
+    Integrando Serviços
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1270,9 +1448,14 @@
   
   
   <span class="md-ellipsis">
-    10. Atualização Segura de Componentes Críticos
+    
+  
+    Atualização Segura
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1293,9 +1476,70 @@
   
   
   <span class="md-ellipsis">
-    11. Hospedando Aplicação Pública no Domínio
+    
+  
+    App no Domínio Raiz
+  
+
     
   </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/13-usando-geminicli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini CLI
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -1336,7 +1580,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked="">
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
@@ -1344,9 +1588,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     ⚙️ Manutenção
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -1355,9 +1604,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção
+            
+  
+    ⚙️ Manutenção
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1371,9 +1624,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1394,9 +1652,14 @@
   
   
   <span class="md-ellipsis">
-    Rotinas de Manutenção
+    
+  
+    Rotinas
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1417,9 +1680,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Backup e Restore
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1449,9 +1717,14 @@
   
   
   <span class="md-ellipsis">
-    CI/CD Básico Ansible
+    
+  
+    CI/CD Ansible
+  
+
     
   </span>
+  
   
 
           <span class="md-nav__icon md-icon"></span>
@@ -1462,9 +1735,14 @@
   
   
   <span class="md-ellipsis">
-    CI/CD Básico Ansible
+    
+  
+    CI/CD Ansible
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1482,30 +1760,36 @@
       <span class="md-nav__icon md-icon"></span>
       Índice
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#fluxo-de-trabalho-com-git-e-ansible" class="md-nav__link">
+  <a href="#fluxo-de-trabalho-com-git-e-ansible-para-gerenciamento-de-mudancas" class="md-nav__link">
     <span class="md-ellipsis">
-      Fluxo de Trabalho com Git e Ansible
+      
+        Fluxo de Trabalho com Git e Ansible para Gerenciamento de Mudanças
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#playbook-ansibleplaybooksfull-deployyml-orquestrador" class="md-nav__link">
+  <a href="#playbook-ansibleplaybooksfull-deployyml-o-orquestrador-principal" class="md-nav__link">
     <span class="md-ellipsis">
-      Playbook ansible/playbooks/full-deploy.yml (Orquestrador)
+      
+        Playbook ansible/playbooks/full-deploy.yml (O Orquestrador Principal)
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#script-scriptsrestoresh-facilitador-para-deploy-completo" class="md-nav__link">
+  <a href="#script-scriptsrestoresh-facilitador-para-deploy-completo-com-ansible" class="md-nav__link">
     <span class="md-ellipsis">
-      Script scripts/restore.sh (Facilitador para Deploy Completo)
+      
+        Script scripts/restore.sh (Facilitador para Deploy Completo com Ansible)
+      
     </span>
   </a>
   
@@ -1532,9 +1816,14 @@
   
   
   <span class="md-ellipsis">
-    Reconstruindo a Infraestrutura
+    
+  
+    Reconstruindo
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1555,9 +1844,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Migrando Hardware/Rede
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1579,537 +1873,23 @@
   
   
   
-    
-    
-    
-    
-      
-      
+    <li class="md-nav__item">
+      <a href="../../05-referencia-rapida/" class="md-nav__link">
         
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
   
   
   <span class="md-ellipsis">
-    📚 Guia de Estudos
     
-  </span>
+  
+    📎 Referência
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
-            📚 Guia de Estudos
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Visão Geral
     
   </span>
+  
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    1. Aprofundamento em Proxmox VE
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/02-aprofundamento-zfs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    2. Aprofundamento em ZFS
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/03-aprofundamento-ansible/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    3. Aprofundamento em Ansible
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/04-aprofundamento-docker-networking/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    4. Aprofundamento em Docker Networking
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    5. Aprofundamento em Traefik e Authelia
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/06-seguranca-avancada-homelab/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    6. Aprofundamento em Segurança Avançada para Homelab
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/07-introducao-kubernetes-k3s/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    7. Aprofundamento em Kubernetes
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    8. Gerenciamento Avançado de Segredos
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    🔄 Soluções Alternativas
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
-            <span class="md-nav__icon md-icon"></span>
-            🔄 Soluções Alternativas
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Visão Geral
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/01-hypervisors/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    1. Hypervisors
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/02-automacao-config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    2. Automação de Configurações
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/03-gerenciamento-containers/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    3. Gerenciamento de Containers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/04-proxy-reverso/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    4. Proxy Reverso
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/05-acesso-externo/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    5. Acesso Externo
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/06-autenticacao-sso/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    6. Autenticação SSO
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/07-servidores-midia/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    7. Servidores de Mídia
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    8. Sincronização de Arquivos
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/09-monitoramento-logs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    9. Monitoramento e Logs
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -2122,7 +1902,7 @@
             
             
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -2138,30 +1918,36 @@
       <span class="md-nav__icon md-icon"></span>
       Índice
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#fluxo-de-trabalho-com-git-e-ansible" class="md-nav__link">
+  <a href="#fluxo-de-trabalho-com-git-e-ansible-para-gerenciamento-de-mudancas" class="md-nav__link">
     <span class="md-ellipsis">
-      Fluxo de Trabalho com Git e Ansible
+      
+        Fluxo de Trabalho com Git e Ansible para Gerenciamento de Mudanças
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#playbook-ansibleplaybooksfull-deployyml-orquestrador" class="md-nav__link">
+  <a href="#playbook-ansibleplaybooksfull-deployyml-o-orquestrador-principal" class="md-nav__link">
     <span class="md-ellipsis">
-      Playbook ansible/playbooks/full-deploy.yml (Orquestrador)
+      
+        Playbook ansible/playbooks/full-deploy.yml (O Orquestrador Principal)
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#script-scriptsrestoresh-facilitador-para-deploy-completo" class="md-nav__link">
+  <a href="#script-scriptsrestoresh-facilitador-para-deploy-completo-com-ansible" class="md-nav__link">
     <span class="md-ellipsis">
-      Script scripts/restore.sh (Facilitador para Deploy Completo)
+      
+        Script scripts/restore.sh (Facilitador para Deploy Completo com Ansible)
+      
     </span>
   </a>
   
@@ -2177,6 +1963,7 @@
           
           
             <div class="md-content" data-md-component="content">
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -2186,116 +1973,171 @@
   
 
 
-<h1 id="cicd-basico-para-infraestrutura-como-codigo-ansible">CI/CD Básico para Infraestrutura como Código (Ansible)<a class="headerlink" href="#cicd-basico-para-infraestrutura-como-codigo-ansible" title="Permanent link">&para;</a></h1>
-<p>Gerenciar sua infraestrutura como código (IaC) com Ansible e Git permite um fluxo de trabalho similar ao de desenvolvimento de software, incluindo conceitos de Integração Contínua (CI) e Entrega Contínua (CD), mesmo que de forma simplificada para um homelab.</p>
-<p>O objetivo é ter um processo confiável e automatizável para aplicar mudanças na sua infraestrutura.</p>
-<h2 id="fluxo-de-trabalho-com-git-e-ansible">Fluxo de Trabalho com Git e Ansible<a class="headerlink" href="#fluxo-de-trabalho-com-git-e-ansible" title="Permanent link">&para;</a></h2>
+<h1 id="cicd-basico-para-infraestrutura-como-codigo-ansible">CI/CD Básico para Infraestrutura como Código (Ansible)<a class="headerlink" href="#cicd-basico-para-infraestrutura-como-codigo-ansible" title="Permanent link">¶</a></h1>
+<p>Gerenciar sua infraestrutura de servidor doméstico como código (IaC) com Ansible e versioná-la com Git não apenas torna sua configuração repetível e documentada, mas também abre a porta para um fluxo de trabalho similar ao de desenvolvimento de software, incluindo conceitos de Integração Contínua (CI) e Entrega/Deploy Contínuo (CD) – mesmo que de forma simplificada para um ambiente de homelab.</p>
+<p>O objetivo principal é ter um processo confiável, testável e, idealmente, automatizável para aplicar mudanças e atualizações na sua infraestrutura.</p>
+<h2 id="fluxo-de-trabalho-com-git-e-ansible-para-gerenciamento-de-mudancas">Fluxo de Trabalho com Git e Ansible para Gerenciamento de Mudanças<a class="headerlink" href="#fluxo-de-trabalho-com-git-e-ansible-para-gerenciamento-de-mudancas" title="Permanent link">¶</a></h2>
+<p>Este é o fluxo de trabalho recomendado ao fazer alterações na sua configuração Ansible:</p>
 <ol>
 <li>
-<p><strong>Desenvolvimento Local (na Máquina de Controle Ansible):</strong></p>
+<p><strong>Desenvolvimento e Modificação Local (na sua Máquina de Controle Ansible):</strong></p>
 <ul>
-<li><strong>Branching (Opcional, mas Boa Prática):</strong> Para mudanças significativas, crie uma nova branch no Git: <code>git checkout -b feature/nova-config-x</code>.</li>
-<li><strong>Modificações:</strong> Edite seus arquivos Ansible (<code>.yml</code>, <code>.ini</code>, templates <code>.j2</code>).</li>
-<li><strong>Adicionar Novos Roles/Playbooks:</strong> Crie a estrutura necessária.</li>
+<li><strong>Branching no Git (Opcional, mas Altamente Recomendado para Mudanças Maiores):</strong>
+    Para mudanças significativas, experimentações, ou ao adicionar novas funcionalidades, é uma excelente prática criar uma nova branch no Git antes de começar a editar os arquivos. Isso isola suas mudanças da branch principal (<code>main</code> ou <code>master</code>) até que você esteja pronto para integrá-las.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Na raiz do seu projeto home-server/</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>checkout<span class="w"> </span>main<span class="w">  </span><span class="c1"># Certifique-se de estar na branch principal</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main<span class="w"> </span><span class="c1"># Atualize sua branch principal local</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feature/configurar-novo-servico-X<span class="w"> </span><span class="c1"># Crie e mude para uma nova branch</span>
+</span></code></pre></div></li>
+<li><strong>Realize as Modificações:</strong>
+    Edite seus arquivos Ansible conforme necessário:<ul>
+<li>Playbooks (<code>*.yml</code> em <code>ansible/playbooks/</code>)</li>
+<li>Roles (tasks, templates <code>.j2</code>, handlers, defaults, vars em <code>ansible/roles/NOME_DO_ROLE/</code>)</li>
+<li>Inventário (<code>ansible/inventories/home/hosts.ini</code>)</li>
+<li>Variáveis de grupo (<code>ansible/inventories/home/group_vars/all/main.yml</code> ou <code>vault.yml</code> - use <code>ansible-vault edit</code> para este último)</li>
+</ul>
+</li>
 </ul>
 </li>
 <li>
-<p><strong>Teste Local:</strong>
-    Antes de aplicar as mudanças no ambiente "real", teste o máximo possível localmente:</p>
+<p><strong>Teste Local das Mudanças Ansible (CI - Integração Contínua Simplificada):</strong>
+    Antes de aplicar as mudanças no seu ambiente de "produção" (seu servidor doméstico), teste o máximo possível localmente na sua máquina de controle. Isso é a nossa forma de "Integração Contínua" simplificada.</p>
 <ul>
-<li><strong>Linting (Verificação de Sintaxe e Estilo):</strong><ul>
-<li><code>ansible-lint</code>: Analisa seus playbooks e roles em busca de erros, más práticas e problemas de estilo.
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Instale se não tiver: pip install ansible-lint</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ansible-lint<span class="w"> </span>playbooks/meu_playbook.yml
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>ansible-lint<span class="w"> </span>roles/meu_role/
+<li><strong>Linting (Verificação de Sintaxe e Estilo):</strong>
+    Ferramentas de linting ajudam a pegar erros de sintaxe, inconsistências e más práticas antes mesmo de executar o código.<ul>
+<li><strong><code>ansible-lint</code>:</strong> Analisa seus playbooks e roles Ansible.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Instale se ainda não tiver: pip install ansible-lint</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># Rode na raiz do seu diretório ansible/ ou em arquivos/diretórios específicos</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>ansible-lint<span class="w"> </span>ansible/playbooks/meu_playbook_modificado.yml
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ansible-lint<span class="w"> </span>ansible/roles/meu_role_modificado/
 </span></code></pre></div></li>
-<li><code>yamllint</code>: Verifica a sintaxe de arquivos YAML.
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Instale se não tiver: pip install yamllint</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>yamllint<span class="w"> </span>.
+<li><strong><code>yamllint</code>:</strong> Verifica a sintaxe de todos os seus arquivos YAML (playbooks, vars, etc.).
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Instale se ainda não tiver: pip install yamllint</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Pode ser rodado na raiz do projeto para verificar todos os YAMLs</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>yamllint<span class="w"> </span>.
 </span></code></pre></div></li>
 </ul>
 </li>
 <li><strong>Syntax Check do Ansible:</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ansible-playbook<span class="w"> </span>playbooks/meu_playbook.yml<span class="w"> </span>--syntax-check
+    O próprio Ansible pode verificar a sintaxe dos seus playbooks.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/meu_playbook_modificado.yml<span class="w"> </span>--syntax-check
 </span></code></pre></div></li>
-<li><strong>Dry Run (Modo de Verificação):</strong>
-    Simula a execução do playbook sem fazer alterações reais. Útil para ver o que <em>seria</em> alterado.
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>playbooks/meu_playbook.yml<span class="w"> </span>--check<span class="w"> </span>--diff<span class="w"> </span>--ask-vault-pass
+<li><strong>Dry Run (Modo de Verificação <code>--check</code>):</strong>
+    Este é um passo crucial. O modo <code>--check</code> simula a execução do playbook sem fazer alterações reais nos seus sistemas. Use junto com <code>--diff</code> para ver quais mudanças <em>seriam</em> feitas.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/meu_playbook_modificado.yml<span class="w"> </span>--check<span class="w"> </span>--diff<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div><ul>
-<li><code>--check</code>: Modo Dry Run.</li>
-<li><code>--diff</code>: Mostra as diferenças (o que mudaria nos arquivos de configuração).</li>
+<li><code>--check</code>: Ativa o modo Dry Run.</li>
+<li><code>--diff</code>: Mostra as diferenças (o que mudaria nos arquivos de configuração ou estado dos serviços).
+Analise a saída cuidadosamente para garantir que as mudanças propostas são as que você espera.</li>
 </ul>
 </li>
 </ul>
 </li>
 <li>
-<p><strong>Commit e Push para o Repositório Git Remoto:</strong></p>
+<p><strong>Commit e Push das Mudanças para o Repositório Git Remoto:</strong>
+    Uma vez que você está satisfeito com seus testes locais:</p>
 <ul>
-<li>Adicione suas mudanças ao stage: <code>git add .</code> (ou arquivos específicos).</li>
-<li>Faça o commit com uma mensagem descritiva: <code>git commit -m "Adiciona configuração para o serviço X e corrige bug Y"</code>.</li>
-<li>Envie para o seu repositório remoto (e.g., GitHub, GitLab): <code>git push origin main</code> (ou o nome da sua branch).</li>
-<li>Se estiver usando branches, crie um Pull Request/Merge Request para revisar as mudanças antes de mesclar na branch principal.</li>
-</ul>
-</li>
-<li>
-<p><strong>Aplicação das Mudanças na Infraestrutura (Deploy):</strong></p>
-<p>Este é o passo "CD" (Entrega Contínua ou Deploy Contínuo, no nosso caso, mais para Deploy).</p>
-<ul>
-<li><strong>Opção A: Aplicação Manual (Recomendado para Controle Inicial)</strong><ol>
-<li>Na sua máquina de controle Ansible, certifique-se de que seu repositório local está atualizado com a branch principal do remoto:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>main<span class="w"> </span><span class="c1"># Ou sua branch principal</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main
+<li>Adicione suas mudanças ao "stage" do Git:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>git<span class="w"> </span>add<span class="w"> </span>.<span class="w">  </span><span class="c1"># Adiciona todas as mudanças no diretório de trabalho</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># Ou adicione arquivos específicos:</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># git add ansible/playbooks/meu_playbook_modificado.yml ansible/roles/meu_role_modificado/</span>
 </span></code></pre></div></li>
-<li>Execute o playbook Ansible relevante para aplicar as mudanças. Frequentemente, será o playbook mestre <code>full-deploy.yml</code> para garantir a consistência de toda a infraestrutura, ou um playbook mais específico se a mudança for isolada.
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/full-deploy.yml<span class="w"> </span>--ask-vault-pass
+<li>Faça o commit das mudanças com uma mensagem clara e descritiva:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">"Feature: Adiciona configuração para o serviço X e otimiza role Y"</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># Ou, se for uma correção:</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># git commit -m "Fix: Corrige bug na task de configuração do firewall"</span>
+</span></code></pre></div></li>
+<li>Envie suas mudanças para o seu repositório Git remoto (e.g., GitHub, GitLab):
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>feature/configurar-novo-servico-X<span class="w"> </span><span class="c1"># Envia a sua branch</span>
+</span></code></pre></div></li>
+<li><strong>Pull Request / Merge Request (Se estiver usando branches e/ou colaborando):</strong>
+    Se você trabalhou em uma feature branch, agora é o momento de criar um Pull Request (GitHub) ou Merge Request (GitLab) no seu repositório remoto. Isso permite uma revisão das suas mudanças (por você mesmo ou por outros, se aplicável) antes de mesclá-las na branch principal (<code>main</code>).</li>
+</ul>
+</li>
+<li>
+<p><strong>Aplicação das Mudanças na Infraestrutura (CD - Deploy Contínuo ou Controlado):</strong>
+    Este é o passo de "Entrega Contínua" ou, mais realisticamente para um homelab, "Deploy Controlado".</p>
+<ul>
+<li><strong>Opção A: Aplicação Manual (Recomendado para a Maioria dos Homelabs para Máximo Controle):</strong><ol>
+<li><strong>Sincronize sua Máquina de Controle:</strong> Na sua máquina de controle Ansible, certifique-se de que seu repositório local está na branch principal (<code>main</code>) e atualizado com as últimas mudanças do repositório remoto (que agora incluem suas alterações mescladas).
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>main
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main
+</span></code></pre></div></li>
+<li><strong>Execute o Playbook Ansible Relevante:</strong>
+    Execute o playbook Ansible que aplica as mudanças que você fez. Frequentemente, para garantir a consistência de toda a infraestrutura, pode ser o playbook mestre <code>full-deploy.yml</code>. Se a mudança for muito isolada e você tiver certeza do seu escopo, pode executar um playbook mais específico.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/full-deploy.yml<span class="w"> </span>--ask-vault-pass
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># Ou, se a mudança foi apenas no setup-core-networking.yml:</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># ansible-playbook ansible/playbooks/setup-core-networking.yml --ask-vault-pass</span>
 </span></code></pre></div></li>
 </ol>
 </li>
-<li><strong>Opção B: Aplicação Automatizada (Cron Job - Avançado, com ressalvas)</strong>
-    Você pode configurar um cron job na sua máquina de controle Ansible para periodicamente puxar as últimas mudanças do Git e executar o <code>full-deploy.yml</code>.<ul>
-<li><strong>Script Exemplo (<code>/opt/homelab_scripts/run_ansible_update.sh</code> na máquina de controle):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># /opt/homelab_scripts/run_ansible_update.sh</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nv">REPO_PATH</span><span class="o">=</span><span class="s2">&quot;/caminho/completo/para/seu/repo/infra-servidor-domestico&quot;</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nv">LOG_FILE</span><span class="o">=</span><span class="s2">&quot;/var/log/ansible_autodeploy.log&quot;</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="c1"># Caminho para o arquivo contendo a senha do Ansible Vault</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># !!! CUIDADO COM A SEGURANÇA DESTE ARQUIVO !!!</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="nv">VAULT_PASS_FILE</span><span class="o">=</span><span class="s2">&quot;/home/seu_usuario_ansible/.ansible_vault_pass.txt&quot;</span><span class="w"> </span><span class="c1"># Proteja com chmod 400</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;----------------------------------------------------&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Iniciando atualização da infraestrutura Ansible - </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$REPO_PATH</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERRO: Diretório do repositório não encontrado: </span><span class="nv">$REPO_PATH</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Puxando últimas mudanças do Git...&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main<span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
-</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERRO: Falha ao executar git pull.&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">    </span><span class="c1"># Adicione notificação aqui se desejar</span>
-</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
-</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="k">fi</span>
-</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="c1"># Opcional: Logar o último commit para rastreabilidade</span>
-</span><span id="__span-6-22"><a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>git<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span>format:<span class="s2">&quot;Último commit: %h - %an, %ar : %s&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-23"><a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>
-</span><span id="__span-6-24"><a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Executando playbook full-deploy.yml...&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-25"><a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a><span class="c1"># Use --vault-password-file para automação</span>
-</span><span id="__span-6-26"><a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/full-deploy.yml<span class="w"> </span>--vault-password-file<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$VAULT_PASS_FILE</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
-</span><span id="__span-6-27"><a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-6-28"><a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERRO: Playbook Ansible falhou. Verifique o log completo.&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-29"><a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a><span class="w">    </span><span class="c1"># Adicione notificação aqui</span>
-</span><span id="__span-6-30"><a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
-</span><span id="__span-6-31"><a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a><span class="k">fi</span>
-</span><span id="__span-6-32"><a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>
-</span><span id="__span-6-33"><a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Atualização Ansible concluída com sucesso - </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-34"><a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;----------------------------------------------------&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$LOG_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-6-35"><a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a><span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
+<li><strong>Opção B: Aplicação Automatizada via Cron Job (Avançado - Use com Cautela):</strong>
+    Você pode configurar um <code>cron</code> job na sua máquina de controle Ansible para, periodicamente (e.g., diariamente em um horário de baixa atividade), puxar as últimas mudanças da branch <code>main</code> do seu repositório Git e executar automaticamente o playbook <code>full-deploy.yml</code>.<ul>
+<li><strong>Exemplo de Script (<code>/opt/homelab_scripts/run_ansible_autodeploy.sh</code> na máquina de controle):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="c1"># /opt/homelab_scripts/run_ansible_autodeploy.sh</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="nv">REPO_PATH</span><span class="o">=</span><span class="s2">"/caminho/completo/para/seu/repo/home-server"</span><span class="w"> </span><span class="c1"># Ajuste este caminho!</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nv">LOG_FILE</span><span class="o">=</span><span class="s2">"/var/log/ansible_autodeploy.log"</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="c1"># Caminho para o arquivo contendo a senha do Ansible Vault.</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="c1"># !!! CUIDADO MÁXIMO COM A SEGURANÇA DESTE ARQUIVO !!!</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nv">VAULT_PASS_FILE</span><span class="o">=</span><span class="s2">"/home/seu_usuario_ansible_control/.ansible_vault_pass.txt"</span><span class="w"> </span><span class="c1"># Proteja com chmod 400 ou 600</span>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="c1"># Função para logar com timestamp</span>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a>log_msg<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>date<span class="w"> </span><span class="s1">'+%Y-%m-%d %H:%M:%S'</span><span class="k">)</span><span class="s2"> - </span><span class="nv">$1</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$LOG_FILE</span><span class="s2">"</span>
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="o">}</span>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>log_msg<span class="w"> </span><span class="s2">"----------------------------------------------------"</span>
+</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>log_msg<span class="w"> </span><span class="s2">"Iniciando auto-deploy da infraestrutura Ansible..."</span>
+</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="nv">$REPO_PATH</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">{</span><span class="w"> </span>log_msg<span class="w"> </span><span class="s2">"ERRO: Diretório do repositório não encontrado: </span><span class="nv">$REPO_PATH</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>
+</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>log_msg<span class="w"> </span><span class="s2">"Verificando branch atual e puxando últimas mudanças do Git (branch main)..."</span>
+</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="nv">CURRENT_BRANCH</span><span class="o">=</span><span class="k">$(</span>git<span class="w"> </span>rev-parse<span class="w"> </span>--abbrev-ref<span class="w"> </span>HEAD<span class="k">)</span>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="nv">$CURRENT_BRANCH</span><span class="s2">"</span><span class="w"> </span>!<span class="o">=</span><span class="w"> </span><span class="s2">"main"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span><span class="w"> </span><span class="c1"># Ou sua branch principal</span>
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">    </span>log_msg<span class="w"> </span><span class="s2">"AVISO: Não está na branch 'main'. Tentando checkout para 'main'."</span>
+</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">    </span>git<span class="w"> </span>checkout<span class="w"> </span>main<span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$LOG_FILE</span><span class="s2">"</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">        </span>log_msg<span class="w"> </span><span class="s2">"ERRO: Falha ao fazer checkout para a branch 'main'."</span>
+</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">        </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">    </span><span class="k">fi</span>
+</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="k">fi</span>
+</span><span id="__span-10-29"><a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main<span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$LOG_FILE</span><span class="s2">"</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+</span><span id="__span-10-30"><a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-10-31"><a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span class="w">    </span>log_msg<span class="w"> </span><span class="s2">"ERRO: Falha ao executar git pull na branch 'main'."</span>
+</span><span id="__span-10-32"><a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-10-33"><a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="k">fi</span>
+</span><span id="__span-10-34"><a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a>git<span class="w"> </span>log<span class="w"> </span>-1<span class="w"> </span>--pretty<span class="o">=</span>format:<span class="s2">"Último commit para deploy: %h - %an, %ar : %s"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$LOG_FILE</span><span class="s2">"</span>
+</span><span id="__span-10-35"><a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a>
+</span><span id="__span-10-36"><a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a>log_msg<span class="w"> </span><span class="s2">"Executando playbook 'full-deploy.yml'..."</span>
+</span><span id="__span-10-37"><a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a><span class="c1"># Use --vault-password-file para automação.</span>
+</span><span id="__span-10-38"><a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="c1"># Adicione -i para especificar o inventário se não estiver no ansible.cfg</span>
+</span><span id="__span-10-39"><a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a>ansible-playbook<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">REPO_PATH</span><span class="si">}</span><span class="s2">/ansible/playbooks/full-deploy.yml"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-10-40"><a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">                 </span>-i<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">REPO_PATH</span><span class="si">}</span><span class="s2">/ansible/inventories/home/"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-10-41"><a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">                 </span>--vault-password-file<span class="w"> </span><span class="s2">"</span><span class="nv">$VAULT_PASS_FILE</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$LOG_FILE</span><span class="s2">"</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+</span><span id="__span-10-42"><a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a><span class="nv">ANSIBLE_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
+</span><span id="__span-10-43"><a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a>
+</span><span id="__span-10-44"><a id="__codelineno-10-44" name="__codelineno-10-44" href="#__codelineno-10-44"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">ANSIBLE_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-ne<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-10-45"><a id="__codelineno-10-45" name="__codelineno-10-45" href="#__codelineno-10-45"></a><span class="w">    </span>log_msg<span class="w"> </span><span class="s2">"ERRO: Playbook Ansible falhou com código de saída </span><span class="si">${</span><span class="nv">ANSIBLE_EXIT_CODE</span><span class="si">}</span><span class="s2">. Verifique o log completo."</span>
+</span><span id="__span-10-46"><a id="__codelineno-10-46" name="__codelineno-10-46" href="#__codelineno-10-46"></a><span class="w">    </span><span class="c1"># Adicione aqui um mecanismo de notificação (e.g., enviar email, mensagem no Discord/Telegram)</span>
+</span><span id="__span-10-47"><a id="__codelineno-10-47" name="__codelineno-10-47" href="#__codelineno-10-47"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-10-48"><a id="__codelineno-10-48" name="__codelineno-10-48" href="#__codelineno-10-48"></a><span class="k">fi</span>
+</span><span id="__span-10-49"><a id="__codelineno-10-49" name="__codelineno-10-49" href="#__codelineno-10-49"></a>
+</span><span id="__span-10-50"><a id="__codelineno-10-50" name="__codelineno-10-50" href="#__codelineno-10-50"></a>log_msg<span class="w"> </span><span class="s2">"Auto-deploy Ansible concluído com sucesso."</span>
+</span><span id="__span-10-51"><a id="__codelineno-10-51" name="__codelineno-10-51" href="#__codelineno-10-51"></a>log_msg<span class="w"> </span><span class="s2">"----------------------------------------------------"</span>
+</span><span id="__span-10-52"><a id="__codelineno-10-52" name="__codelineno-10-52" href="#__codelineno-10-52"></a><span class="nb">exit</span><span class="w"> </span><span class="m">0</span>
 </span></code></pre></div></li>
-<li><strong>Agendamento com <code>cron</code>:</strong>
-    <code>0 5 * * * /opt/homelab_scripts/run_ansible_update.sh</code> (Todo dia às 5 AM).</li>
+<li><strong>Agendamento com <code>cron</code> (e.g., <code>crontab -e</code>):</strong>
+    <code>0 5 * * * /opt/homelab_scripts/run_ansible_autodeploy.sh</code> (Executa todo dia às 5 AM).</li>
 <li>
 <div class="admonition danger">
-<p class="admonition-title">Segurança do Arquivo de Senha do Vault</p>
-Usar <code>--vault-password-file</code> em um script automatizado requer que a senha do vault esteja armazenada em texto plano em um arquivo. <strong>Este arquivo deve ser protegido com permissões muito restritas</strong> (e.g., <code>chmod 400 arquivo_de_senha</code> e pertencente ao usuário que roda o cron). Mesmo assim, representa um risco de segurança se a máquina de controle for comprometida. Para ambientes mais críticos, soluções como HashiCorp Vault ou chaves SSH com <code>ssh-agent</code> e forwarding (para playbooks que não precisam de vault para <em>conexão</em>, mas para <em>conteúdo</em>) seriam mais seguras, mas adicionam complexidade.</div>
+<p class="admonition-title">Riscos da Automação Total e Segurança do Arquivo de Senha do Vault</p>
+Automatizar completamente o deploy com <code>cron</code> é conveniente, mas introduz riscos:<ul>
+<li><strong>Segurança do Arquivo de Senha:</strong> Armazenar a senha do Ansible Vault em texto plano em um arquivo (<code>VAULT_PASS_FILE</code>) é um risco de segurança. Esse arquivo deve ter permissões extremamente restritas (e.g., <code>chmod 400</code> ou <code>600</code>, e ser propriedade apenas do usuário que roda o cron). Se a máquina de controle for comprometida, a senha do vault também será.</li>
+<li><strong>Deploy de Mudanças Quebradiças:</strong> Se uma mudança com erro for mesclada na branch <code>main</code>, o cron job a aplicará automaticamente, podendo quebrar sua infraestrutura sem intervenção manual imediata.</li>
+<li>Para ambientes mais críticos (mesmo homelabs se você depende muito deles), um "deploy controlado" (manual após revisão) é geralmente mais seguro. Se optar pela automação, invista em testes robustos (Molecule, etc.) e um bom sistema de notificação de falhas.</li>
+</ul>
+</div>
 </li>
 </ul>
 </li>
@@ -2304,133 +2146,99 @@ Usar <code>--vault-password-file</code> em um script automatizado requer que a s
 <li>
 <p><strong>Monitoramento Pós-Deploy:</strong></p>
 <ul>
-<li>Após aplicar as mudanças (manual ou automaticamente), verifique os logs dos serviços afetados e o status geral da infraestrutura usando sua <a href="../../01-manual-implementacao/10-stack-monitoramento/">Stack de Monitoramento</a> para garantir que tudo está funcionando como esperado.</li>
+<li>Independentemente de o deploy ser manual ou automatizado, após a aplicação das mudanças Ansible, <strong>sempre verifique:</strong><ul>
+<li>Os logs dos serviços que foram modificados.</li>
+<li>A funcionalidade das aplicações afetadas.</li>
+<li>O status geral da sua infraestrutura usando o Grafana/Prometheus (veja <a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de Apps</a>).</li>
+</ul>
+</li>
 </ul>
 </li>
 </ol>
-<h2 id="playbook-ansibleplaybooksfull-deployyml-orquestrador">Playbook <code>ansible/playbooks/full-deploy.yml</code> (Orquestrador)<a class="headerlink" href="#playbook-ansibleplaybooksfull-deployyml-orquestrador" title="Permanent link">&para;</a></h2>
-<p>Este playbook é o ponto de entrada principal para garantir que toda a infraestrutura base esteja configurada conforme definido no seu código Ansible.</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># ansible/playbooks/full-deploy.yml</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># Orquestra a configuração completa da infraestrutura base.</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># As stacks Docker específicas são implantadas via Portainer após a execução bem-sucedida</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># dos playbooks que preparam seus volumes e arquivos .env.</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">1:</span><span class="nv"> </span><span class="s">Configurar</span><span class="nv"> </span><span class="s">Host</span><span class="nv"> </span><span class="s">Proxmox</span><span class="nv"> </span><span class="s">VE</span><span class="nv"> </span><span class="s">(NFS,</span><span class="nv"> </span><span class="s">Firewall,</span><span class="nv"> </span><span class="s">etc.)&quot;</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-proxmox-host.yml</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">2:</span><span class="nv"> </span><span class="s">Provisionar</span><span class="nv"> </span><span class="s">Máquinas</span><span class="nv"> </span><span class="s">Virtuais</span><span class="nv"> </span><span class="s">(core-services-vm,</span><span class="nv"> </span><span class="s">ai-desktop-vm)&quot;</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">vm-deploy.yml</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">3:</span><span class="nv"> </span><span class="s">Configurar</span><span class="nv"> </span><span class="s">Base</span><span class="nv"> </span><span class="s">das</span><span class="nv"> </span><span class="s">VMs</span><span class="nv"> </span><span class="s">Ubuntu</span><span class="nv"> </span><span class="s">(Docker,</span><span class="nv"> </span><span class="s">Portainer,</span><span class="nv"> </span><span class="s">NFS</span><span class="nv"> </span><span class="s">Client,</span><span class="nv"> </span><span class="s">GUI</span><span class="nv"> </span><span class="s">opcional)&quot;</span>
-</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-base-ubuntu.yml</span>
-</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>
-</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">4:</span><span class="nv"> </span><span class="s">Configurar</span><span class="nv"> </span><span class="s">Stack</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">Rede</span><span class="nv"> </span><span class="s">Core</span><span class="nv"> </span><span class="s">(Traefik,</span><span class="nv"> </span><span class="s">Cloudflare</span><span class="nv"> </span><span class="s">Tunnel,</span><span class="nv"> </span><span class="s">Authelia)&quot;</span>
-</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-core-networking.yml</span>
-</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>
-</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="c1"># Os playbooks abaixo preparam os diretórios NFS e os arquivos .env para o Portainer.</span>
-</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="c1"># A implantação real das stacks Docker é feita via Portainer (Seções 6 a 10 do Manual).</span>
-</span><span id="__span-7-20"><a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
-</span><span id="__span-7-21"><a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">5.1:</span><span class="nv"> </span><span class="s">Preparar</span><span class="nv"> </span><span class="s">Volumes</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">.env</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Stack</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">Mídia&quot;</span>
-</span><span id="__span-7-22"><a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-media-stack-volumes.yml</span>
-</span><span id="__span-7-23"><a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&#39;core-services-vm&#39;</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">groups[&#39;virtual_machines&#39;]&quot;</span><span class="w"> </span><span class="c1"># Só executa se a VM existir no inventário</span>
-</span><span id="__span-7-24"><a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a>
-</span><span id="__span-7-25"><a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">5.2:</span><span class="nv"> </span><span class="s">Preparar</span><span class="nv"> </span><span class="s">Volumes</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">.env</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Stacks</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">Produtividade</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">Automação&quot;</span>
-</span><span id="__span-7-26"><a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-productivity-automation-volumes.yml</span>
-</span><span id="__span-7-27"><a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&#39;core-services-vm&#39;</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">groups[&#39;virtual_machines&#39;]&quot;</span>
-</span><span id="__span-7-28"><a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a>
-</span><span id="__span-7-29"><a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">5.3:</span><span class="nv"> </span><span class="s">Preparar</span><span class="nv"> </span><span class="s">Volumes,</span><span class="nv"> </span><span class="s">.env</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">Configs</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Stack</span><span class="nv"> </span><span class="s">RAG/LLM&quot;</span>
-</span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-rag-llm-volumes.yml</span>
-</span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&#39;ai-desktop-vm&#39;</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">groups[&#39;virtual_machines&#39;]&quot;</span><span class="w"> </span><span class="c1"># Só executa se a VM existir</span>
-</span><span id="__span-7-32"><a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a>
-</span><span id="__span-7-33"><a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Etapa</span><span class="nv"> </span><span class="s">5.4:</span><span class="nv"> </span><span class="s">Preparar</span><span class="nv"> </span><span class="s">Volumes</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">.env</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Stack</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">Monitoramento&quot;</span>
-</span><span id="__span-7-34"><a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="w">  </span><span class="nt">ansible.builtin.import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-monitoring-stack-volumes.yml</span>
-</span><span id="__span-7-35"><a id="__codelineno-7-35" name="__codelineno-7-35" href="#__codelineno-7-35"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&#39;core-services-vm&#39;</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">groups[&#39;virtual_machines&#39;]&quot;</span>
-</span><span id="__span-7-36"><a id="__codelineno-7-36" name="__codelineno-7-36" href="#__codelineno-7-36"></a>
-</span><span id="__span-7-37"><a id="__codelineno-7-37" name="__codelineno-7-37" href="#__codelineno-7-37"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Conclusão</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">Deploy</span><span class="nv"> </span><span class="s">da</span><span class="nv"> </span><span class="s">Infraestrutura</span><span class="nv"> </span><span class="s">Base</span><span class="nv"> </span><span class="s">Ansible&quot;</span>
-</span><span id="__span-7-38"><a id="__codelineno-7-38" name="__codelineno-7-38" href="#__codelineno-7-38"></a><span class="w">  </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span><span class="w"> </span><span class="c1"># Roda na máquina de controle</span>
-</span><span id="__span-7-39"><a id="__codelineno-7-39" name="__codelineno-7-39" href="#__codelineno-7-39"></a><span class="w">  </span><span class="nt">gather_facts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">no</span>
-</span><span id="__span-7-40"><a id="__codelineno-7-40" name="__codelineno-7-40" href="#__codelineno-7-40"></a><span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
-</span><span id="__span-7-41"><a id="__codelineno-7-41" name="__codelineno-7-41" href="#__codelineno-7-41"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Mensagem</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">Conclusão&quot;</span>
-</span><span id="__span-7-42"><a id="__codelineno-7-42" name="__codelineno-7-42" href="#__codelineno-7-42"></a><span class="w">      </span><span class="nt">ansible.builtin.debug</span><span class="p">:</span>
-</span><span id="__span-7-43"><a id="__codelineno-7-43" name="__codelineno-7-43" href="#__codelineno-7-43"></a><span class="w">        </span><span class="nt">msg</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-</span><span id="__span-7-44"><a id="__codelineno-7-44" name="__codelineno-7-44" href="#__codelineno-7-44"></a><span class="w">          </span><span class="no">Deploy da infraestrutura base via Ansible CONCLUÍDO.</span>
-</span><span id="__span-7-45"><a id="__codelineno-7-45" name="__codelineno-7-45" href="#__codelineno-7-45"></a><span class="w">          </span><span class="no">PRÓXIMO PASSO (se for setup inicial ou se as stacks Docker não estiverem rodando):</span>
-</span><span id="__span-7-46"><a id="__codelineno-7-46" name="__codelineno-7-46" href="#__codelineno-7-46"></a><span class="w">          </span><span class="no">Implante as stacks de serviços Docker via Portainer, conforme Seções 6 a 10 do Manual de Implementação.</span>
-</span><span id="__span-7-47"><a id="__codelineno-7-47" name="__codelineno-7-47" href="#__codelineno-7-47"></a><span class="w">          </span><span class="no">Lembre-se de configurar os registros CNAME ou Ingress Rules no DNS da Cloudflare para cada serviço exposto.</span>
-</span><span id="__span-7-48"><a id="__codelineno-7-48" name="__codelineno-7-48" href="#__codelineno-7-48"></a><span class="w">          </span><span class="no">Verifique os logs dos containers no Portainer após o deploy de cada stack.</span>
+<h2 id="playbook-ansibleplaybooksfull-deployyml-o-orquestrador-principal">Playbook <code>ansible/playbooks/full-deploy.yml</code> (O Orquestrador Principal)<a class="headerlink" href="#playbook-ansibleplaybooksfull-deployyml-o-orquestrador-principal" title="Permanent link">¶</a></h2>
+<p>Este playbook é o ponto de entrada principal para garantir que toda a sua infraestrutura base (configuração do host Proxmox, VMs, Docker, rede core, preparação de volumes para stacks) esteja configurada conforme definido no seu código Ansible. Ele importa e executa os outros playbooks de setup em uma sequência lógica.</p>
+<div class="language-yaml highlight"><span class="filename">ansible/playbooks/full-deploy.yml</span><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># ansible/playbooks/full-deploy.yml</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="c1"># Orquestra a configuração completa da infraestrutura.</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-proxmox-host.yml</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-base-ubuntu.yml</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-core-networking.yml</span>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-media-stack-volumes.yml</span>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-n8n-volumes.yml</span>
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">import_playbook</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">setup-ai-volumes.yml</span>
 </span></code></pre></div>
-<h2 id="script-scriptsrestoresh-facilitador-para-deploy-completo">Script <code>scripts/restore.sh</code> (Facilitador para Deploy Completo)<a class="headerlink" href="#script-scriptsrestoresh-facilitador-para-deploy-completo" title="Permanent link">&para;</a></h2>
-<p>Este script é um wrapper conveniente para executar o <code>full-deploy.yml</code>.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1"># scripts/restore.sh</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Executa o playbook Ansible &#39;full-deploy.yml&#39; para configurar a infraestrutura base.</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Assume que o Proxmox VE já está instalado e a máquina de controle Ansible está pronta</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># (com &#39;bootstrap.sh&#39; executado e chaves SSH configuradas).</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="nb">set</span><span class="w"> </span>-e<span class="w"> </span><span class="c1"># Encerra o script imediatamente se um comando falhar.</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="c1"># Determina o caminho raiz do repositório onde o script está localizado</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="nv">SCRIPT_DIR</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>dirname<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">BASH_SOURCE</span><span class="p">[0]</span><span class="si">}</span><span class="s2">&quot;</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="nv">REPO_ROOT</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">SCRIPT_DIR</span><span class="si">}</span><span class="s2">/..&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="c1"># Vai um nível acima do diretório do script</span>
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="nv">ANSIBLE_DIR</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">REPO_ROOT</span><span class="si">}</span><span class="s2">/ansible&quot;</span>
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
-</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># Localização padrão do arquivo com a senha do Ansible Vault (se não usar --ask-vault-pass)</span>
-</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.ansible_vault_pass.txt&quot;</span><span class="w"> </span><span class="c1"># Exemplo</span>
-</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
-</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🚀 Iniciando restauração/deploy da infraestrutura base Ansible...&quot;</span>
-</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot; Repositório Raiz: </span><span class="si">${</span><span class="nv">REPO_ROOT</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot; Playbooks Ansible em: </span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/playbooks&quot;</span>
-</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot; Inventário Ansible em: </span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/inventories/home&quot;</span>
-</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
-</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1"># Permite passar um argumento para o script, como --ask-vault-pass</span>
-</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="c1"># ou o caminho para um arquivo de senha do vault diferente.</span>
-</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="nv">VAULT_PASS_ARG</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span>
-</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="c1"># Opções adicionais para o comando ansible-playbook</span>
-</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>
-</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-8-28"><a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$VAULT_PASS_FILE_DEFAULT</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-8-29"><a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a><span class="w">        </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">&quot;--vault-password-file </span><span class="si">${</span><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-8-30"><a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🔐 Usando arquivo de senha do Ansible Vault padrão: </span><span class="si">${</span><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-8-31"><a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="w">    </span><span class="k">else</span>
-</span><span id="__span-8-32"><a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;⚠️ Arquivo de senha padrão do Vault (&#39;</span><span class="si">${</span><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="si">}</span><span class="s2">&#39;) não encontrado.&quot;</span>
-</span><span id="__span-8-33"><a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;➡️  O Ansible solicitará a senha do Vault interativamente.&quot;</span>
-</span><span id="__span-8-34"><a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a><span class="w">        </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">&quot;--ask-vault-pass&quot;</span>
-</span><span id="__span-8-35"><a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a><span class="w">    </span><span class="k">fi</span>
-</span><span id="__span-8-36"><a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">&quot;--ask-vault-pass&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-8-37"><a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a><span class="w">    </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">&quot;--ask-vault-pass&quot;</span>
-</span><span id="__span-8-38"><a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;➡️  O Ansible solicitará a senha do Vault interativamente.&quot;</span>
-</span><span id="__span-8-39"><a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-8-40"><a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a><span class="w">    </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">&quot;--vault-password-file </span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">&quot;</span>
-</span><span id="__span-8-41"><a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🔐 Usando arquivo de senha do Ansible Vault especificado: </span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">&quot;</span>
-</span><span id="__span-8-42"><a id="__codelineno-8-42" name="__codelineno-8-42" href="#__codelineno-8-42"></a><span class="k">else</span>
-</span><span id="__span-8-43"><a id="__codelineno-8-43" name="__codelineno-8-43" href="#__codelineno-8-43"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;❌ ERRO: Argumento para senha do Vault (&#39;</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">&#39;) não é &#39;--ask-vault-pass&#39; nem um arquivo válido.&quot;</span>
-</span><span id="__span-8-44"><a id="__codelineno-8-44" name="__codelineno-8-44" href="#__codelineno-8-44"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;   Use &#39;--ask-vault-pass&#39; para digitar a senha, ou forneça um caminho válido para o arquivo de senha.&quot;</span>
-</span><span id="__span-8-45"><a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
-</span><span id="__span-8-46"><a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a><span class="k">fi</span>
-</span><span id="__span-8-47"><a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a>
-</span><span id="__span-8-48"><a id="__codelineno-8-48" name="__codelineno-8-48" href="#__codelineno-8-48"></a><span class="c1"># Comando para executar o playbook Ansible &#39;full-deploy.yml&#39;</span>
-</span><span id="__span-8-49"><a id="__codelineno-8-49" name="__codelineno-8-49" href="#__codelineno-8-49"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🛠️  Executando playbook &#39;full-deploy.yml&#39;...&quot;</span>
-</span><span id="__span-8-50"><a id="__codelineno-8-50" name="__codelineno-8-50" href="#__codelineno-8-50"></a><span class="c1"># -i especifica o caminho para o diretório de inventário.</span>
-</span><span id="__span-8-51"><a id="__codelineno-8-51" name="__codelineno-8-51" href="#__codelineno-8-51"></a><span class="c1"># Ansible procurará por ansible.cfg na raiz do projeto ou no diretório atual.</span>
-</span><span id="__span-8-52"><a id="__codelineno-8-52" name="__codelineno-8-52" href="#__codelineno-8-52"></a><span class="c1"># Se seu ansible.cfg estiver em ansible/, você pode precisar de `cd ansible` antes</span>
-</span><span id="__span-8-53"><a id="__codelineno-8-53" name="__codelineno-8-53" href="#__codelineno-8-53"></a><span class="c1"># ou especificar o caminho do inventário de forma mais absoluta.</span>
-</span><span id="__span-8-54"><a id="__codelineno-8-54" name="__codelineno-8-54" href="#__codelineno-8-54"></a><span class="c1"># Assumindo que o playbook é executado da raiz do REPO_ROOT:</span>
-</span><span id="__span-8-55"><a id="__codelineno-8-55" name="__codelineno-8-55" href="#__codelineno-8-55"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/inventories/home/&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-8-56"><a id="__codelineno-8-56" name="__codelineno-8-56" href="#__codelineno-8-56"></a><span class="w">                 </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/playbooks/full-deploy.yml&quot;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-8-57"><a id="__codelineno-8-57" name="__codelineno-8-57" href="#__codelineno-8-57"></a><span class="w">                 </span><span class="si">${</span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="si">}</span>
-</span><span id="__span-8-58"><a id="__codelineno-8-58" name="__codelineno-8-58" href="#__codelineno-8-58"></a>
-</span><span id="__span-8-59"><a id="__codelineno-8-59" name="__codelineno-8-59" href="#__codelineno-8-59"></a><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;\n✅ Restauração/deploy da infraestrutura base via Ansible CONCLUÍDA.&quot;</span>
-</span><span id="__span-8-60"><a id="__codelineno-8-60" name="__codelineno-8-60" href="#__codelineno-8-60"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;➡️  PRÓXIMO PASSO (se setup inicial): Implante as stacks de serviços Docker via Portainer (Seções 6-10 do Manual).&quot;</span>
-</span><span id="__span-8-61"><a id="__codelineno-8-61" name="__codelineno-8-61" href="#__codelineno-8-61"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🔗 LEMBRE-SE de configurar os registros DNS na Cloudflare para cada serviço exposto.&quot;</span>
-</span><span id="__span-8-62"><a id="__codelineno-8-62" name="__codelineno-8-62" href="#__codelineno-8-62"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🔎 Verifique os logs dos containers no Portainer após o deploy de cada stack.&quot;</span>
+<h2 id="script-scriptsrestoresh-facilitador-para-deploy-completo-com-ansible">Script <code>scripts/restore.sh</code> (Facilitador para Deploy Completo com Ansible)<a class="headerlink" href="#script-scriptsrestoresh-facilitador-para-deploy-completo-com-ansible" title="Permanent link">¶</a></h2>
+<p>Este script é um wrapper conveniente para executar o playbook <code>full-deploy.yml</code>, especialmente útil para o setup inicial ou para garantir que toda a infraestrutura gerenciada pelo Ansible esteja no estado desejado.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1"># scripts/restore.sh</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># Executa o playbook Ansible 'full-deploy.yml' para configurar a infraestrutura base.</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="c1"># Assume que o Proxmox VE já está instalado e a máquina de controle Ansible está pronta</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># (com 'bootstrap.sh' executado e chaves SSH configuradas).</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="nb">set</span><span class="w"> </span>-e<span class="w"> </span><span class="c1"># Encerra o script imediatamente se um comando falhar.</span>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a>
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="c1"># Determina o caminho raiz do repositório onde o script está localizado</span>
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="nv">SCRIPT_DIR</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>dirname<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">BASH_SOURCE</span><span class="p">[0]</span><span class="si">}</span><span class="s2">"</span><span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span><span class="s2">"</span>
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="nv">REPO_ROOT</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span><span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">SCRIPT_DIR</span><span class="si">}</span><span class="s2">/.."</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">pwd</span><span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="c1"># Vai um nível acima do diretório do script</span>
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="nv">ANSIBLE_DIR</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">REPO_ROOT</span><span class="si">}</span><span class="s2">/ansible"</span>
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
+</span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a><span class="c1"># Localização padrão do arquivo com a senha do Ansible Vault (se não usar --ask-vault-pass)</span>
+</span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span><span class="s2">/.ansible_vault_pass.txt"</span><span class="w"> </span><span class="c1"># Exemplo</span>
+</span><span id="__span-12-16"><a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>
+</span><span id="__span-12-17"><a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"🚀 Iniciando restauração/deploy da infraestrutura base Ansible..."</span>
+</span><span id="__span-12-18"><a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">" Repositório Raiz: </span><span class="si">${</span><span class="nv">REPO_ROOT</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-12-19"><a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">" Playbooks Ansible em: </span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/playbooks"</span>
+</span><span id="__span-12-20"><a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">" Inventário Ansible em: </span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/inventories/home"</span>
+</span><span id="__span-12-21"><a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>
+</span><span id="__span-12-22"><a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a><span class="c1"># Permite passar um argumento para o script, como --ask-vault-pass</span>
+</span><span id="__span-12-23"><a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a><span class="c1"># ou o caminho para um arquivo de senha do vault diferente.</span>
+</span><span id="__span-12-24"><a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a><span class="nv">VAULT_PASS_ARG</span><span class="o">=</span><span class="s2">"</span><span class="nv">$1</span><span class="s2">"</span>
+</span><span id="__span-12-25"><a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">""</span><span class="w"> </span><span class="c1"># Opções adicionais para o comando ansible-playbook</span>
+</span><span id="__span-12-26"><a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>
+</span><span id="__span-12-27"><a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-z<span class="w"> </span><span class="s2">"</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-12-28"><a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">"</span><span class="nv">$VAULT_PASS_FILE_DEFAULT</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-12-29"><a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a><span class="w">        </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">"--vault-password-file </span><span class="si">${</span><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-12-30"><a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"🔐 Usando arquivo de senha do Ansible Vault padrão: </span><span class="si">${</span><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-12-31"><a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a><span class="w">    </span><span class="k">else</span>
+</span><span id="__span-12-32"><a id="__codelineno-12-32" name="__codelineno-12-32" href="#__codelineno-12-32"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"⚠️ Arquivo de senha padrão do Vault ('</span><span class="si">${</span><span class="nv">VAULT_PASS_FILE_DEFAULT</span><span class="si">}</span><span class="s2">') não encontrado."</span>
+</span><span id="__span-12-33"><a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"➡️  O Ansible solicitará a senha do Vault interativamente."</span>
+</span><span id="__span-12-34"><a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a><span class="w">        </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">"--ask-vault-pass"</span>
+</span><span id="__span-12-35"><a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a><span class="w">    </span><span class="k">fi</span>
+</span><span id="__span-12-36"><a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">"</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"--ask-vault-pass"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-12-37"><a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a><span class="w">    </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">"--ask-vault-pass"</span>
+</span><span id="__span-12-38"><a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"➡️  O Ansible solicitará a senha do Vault interativamente."</span>
+</span><span id="__span-12-39"><a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a><span class="k">elif</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">"</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-12-40"><a id="__codelineno-12-40" name="__codelineno-12-40" href="#__codelineno-12-40"></a><span class="w">    </span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="o">=</span><span class="s2">"--vault-password-file </span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">"</span>
+</span><span id="__span-12-41"><a id="__codelineno-12-41" name="__codelineno-12-41" href="#__codelineno-12-41"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"🔐 Usando arquivo de senha do Ansible Vault especificado: </span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">"</span>
+</span><span id="__span-12-42"><a id="__codelineno-12-42" name="__codelineno-12-42" href="#__codelineno-12-42"></a><span class="k">else</span>
+</span><span id="__span-12-43"><a id="__codelineno-12-43" name="__codelineno-12-43" href="#__codelineno-12-43"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"❌ ERRO: Argumento para senha do Vault ('</span><span class="nv">$VAULT_PASS_ARG</span><span class="s2">') não é '--ask-vault-pass' nem um arquivo válido."</span>
+</span><span id="__span-12-44"><a id="__codelineno-12-44" name="__codelineno-12-44" href="#__codelineno-12-44"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"   Use '--ask-vault-pass' para digitar a senha, ou forneça um caminho válido para o arquivo de senha."</span>
+</span><span id="__span-12-45"><a id="__codelineno-12-45" name="__codelineno-12-45" href="#__codelineno-12-45"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-12-46"><a id="__codelineno-12-46" name="__codelineno-12-46" href="#__codelineno-12-46"></a><span class="k">fi</span>
+</span><span id="__span-12-47"><a id="__codelineno-12-47" name="__codelineno-12-47" href="#__codelineno-12-47"></a>
+</span><span id="__span-12-48"><a id="__codelineno-12-48" name="__codelineno-12-48" href="#__codelineno-12-48"></a><span class="c1"># Comando para executar o playbook Ansible 'full-deploy.yml'</span>
+</span><span id="__span-12-49"><a id="__codelineno-12-49" name="__codelineno-12-49" href="#__codelineno-12-49"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"🛠️  Executando playbook 'full-deploy.yml'..."</span>
+</span><span id="__span-12-50"><a id="__codelineno-12-50" name="__codelineno-12-50" href="#__codelineno-12-50"></a><span class="c1"># -i especifica o caminho para o diretório de inventário.</span>
+</span><span id="__span-12-51"><a id="__codelineno-12-51" name="__codelineno-12-51" href="#__codelineno-12-51"></a><span class="c1"># Ansible procurará por ansible.cfg na raiz do projeto ou no diretório atual.</span>
+</span><span id="__span-12-52"><a id="__codelineno-12-52" name="__codelineno-12-52" href="#__codelineno-12-52"></a><span class="c1"># Se seu ansible.cfg estiver em ansible/, você pode precisar de `cd ansible` antes</span>
+</span><span id="__span-12-53"><a id="__codelineno-12-53" name="__codelineno-12-53" href="#__codelineno-12-53"></a><span class="c1"># ou especificar o caminho do inventário de forma mais absoluta.</span>
+</span><span id="__span-12-54"><a id="__codelineno-12-54" name="__codelineno-12-54" href="#__codelineno-12-54"></a><span class="c1"># Assumindo que o playbook é executado da raiz do REPO_ROOT:</span>
+</span><span id="__span-12-55"><a id="__codelineno-12-55" name="__codelineno-12-55" href="#__codelineno-12-55"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/inventories/home/"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-56"><a id="__codelineno-12-56" name="__codelineno-12-56" href="#__codelineno-12-56"></a><span class="w">                 </span><span class="s2">"</span><span class="si">${</span><span class="nv">ANSIBLE_DIR</span><span class="si">}</span><span class="s2">/playbooks/full-deploy.yml"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-12-57"><a id="__codelineno-12-57" name="__codelineno-12-57" href="#__codelineno-12-57"></a><span class="w">                 </span><span class="si">${</span><span class="nv">ANSIBLE_CMD_OPTIONS</span><span class="si">}</span>
+</span><span id="__span-12-58"><a id="__codelineno-12-58" name="__codelineno-12-58" href="#__codelineno-12-58"></a>
+</span><span id="__span-12-59"><a id="__codelineno-12-59" name="__codelineno-12-59" href="#__codelineno-12-59"></a><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">"\n✅ Restauração/deploy da infraestrutura base via Ansible CONCLUÍDA."</span>
+</span><span id="__span-12-60"><a id="__codelineno-12-60" name="__codelineno-12-60" href="#__codelineno-12-60"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"➡️  PRÓXIMO PASSO (se setup inicial): Implante as stacks de serviços Docker via Portainer (Seções 6-10 do Manual)."</span>
+</span><span id="__span-12-61"><a id="__codelineno-12-61" name="__codelineno-12-61" href="#__codelineno-12-61"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"🔗 LEMBRE-SE de configurar os registros DNS na Cloudflare para cada serviço exposto."</span>
+</span><span id="__span-12-62"><a id="__codelineno-12-62" name="__codelineno-12-62" href="#__codelineno-12-62"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"🔎 Verifique os logs dos containers no Portainer após o deploy de cada stack."</span>
 </span></code></pre></div>
-<p><strong>Como usar <code>scripts/restore.sh</code> para o setup inicial (após <code>bootstrap.sh</code> e configuração SSH):</strong>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Na raiz do projeto infra-servidor-domestico/</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>bash<span class="w"> </span>scripts/restore.sh<span class="w"> </span><span class="c1"># Solicitará a senha do vault interativamente</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Ou, se você criou um arquivo de senha:</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># bash scripts/restore.sh /caminho/para/seu/arquivo_de_senha.txt</span>
-</span></code></pre></div></p>
-<p>Este fluxo de trabalho básico de CI/CD, mesmo que simplificado, traz disciplina e confiabilidade ao gerenciamento da sua infraestrutura como código.</p>
+<p><strong>Como usar <code>scripts/restore.sh</code> para o setup inicial (após o <code>bootstrap.sh</code> na máquina de controle e a configuração SSH inicial no host Proxmox):</strong>
+</p><div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Navegue para a raiz do seu projeto home-server/ na máquina de controle</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>bash<span class="w"> </span>scripts/restore.sh<span class="w"> </span><span class="c1"># Por padrão, solicitará a senha do vault interativamente</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Ou, se você criou um arquivo de senha do vault (e.g., ~/.ansible_vault_pass.txt):</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># bash scripts/restore.sh ~/.ansible_vault_pass.txt</span>
+</span></code></pre></div><p></p>
+<p>Este fluxo de trabalho básico de CI/CD, mesmo que simplificado para um ambiente de homelab (com mais foco no "D" de Deploy do que no "CI" formal), traz uma disciplina valiosa, aumenta a confiabilidade e torna o gerenciamento da sua infraestrutura como código muito mais robusto e rastreável.</p>
 
 
 
@@ -2449,9 +2257,9 @@ Usar <code>--vault-password-file</code> em um script automatizado requer que a s
       
   <span class="md-source-file__fact">
     <span class="md-icon" title="Última atualização">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
   </span>
 
     
@@ -2474,9 +2282,9 @@ Usar <code>--vault-password-file</code> em um script automatizado requer que a s
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
   Voltar ao topo
 </button>
         
@@ -2496,7 +2304,8 @@ Usar <code>--vault-password-file</code> em um script automatizado requer que a s
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -2506,7 +2315,7 @@ Usar <code>--vault-password-file</code> em um script automatizado requer que a s
       
     
     <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
     </a>
   
     
@@ -2517,7 +2326,7 @@ Usar <code>--vault-password-file</code> em um script automatizado requer que a s
       
     
     <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
     </a>
   
 </div>
@@ -2534,13 +2343,14 @@ Usar <code>--vault-password-file</code> em um script automatizado requer que a s
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": {"provider": "mike"}}</script>
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
-  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
-document$.subscribe(() => { lightbox.reload() });
-</script></body>
-</html>
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

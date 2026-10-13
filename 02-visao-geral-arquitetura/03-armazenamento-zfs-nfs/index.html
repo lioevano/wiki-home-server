@@ -1,35 +1,32 @@
-
 <!DOCTYPE html>
-
-<html class="no-js" lang="pt">
-<head>
+<html class="no-js" lang="pt"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<meta content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare." name="description"/>
+<meta content="Estratégia de armazenamento: pool ZFS no host Proxmox, datasets e compartilhamento com as VMs via NFS." name="description"/>
 <meta content="Léo Ivan" name="author"/>
 <link href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/03-armazenamento-zfs-nfs/" rel="canonical"/>
 <link href="../02-virtualizacao-proxmox/" rel="prev"/>
 <link href="../04-automacao-ansible/" rel="next"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
-<meta content="mkdocs-1.6.1, mkdocs-material-9.6.14" name="generator"/>
-<title>Armazenamento (ZFS, NFS) - Wiki do Servidor do Léo Ivan</title>
-<link href="../../assets/stylesheets/main.342714a4.min.css" rel="stylesheet"/>
-<link href="../../assets/stylesheets/palette.06af60db.min.css" rel="stylesheet"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.1" name="generator"/>
+<title>Armazenamento - Wiki do Servidor do Léo Ivan</title>
+<link href="../../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
 <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
-<link href="../../stylesheets/extra.css" rel="stylesheet"/>
 <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
-<link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><style>
-    html.glightbox-open { overflow: initial; height: 100%; }
-    .gslide-title { margin-top: 0px; user-select: text; }
-    .gslide-desc { color: #666; user-select: text; }
-    .gslide-image img { background: white; }
-    .gscrollbar-fixer { padding-right: 15px; }
-    .gdesc-inner { font-size: 0.75rem; }
-    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
-    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
-    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></link></head>
+<link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
 <body data-md-color-accent="indigo" data-md-color-primary="blue" data-md-color-scheme="slate" dir="ltr">
 <input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
@@ -40,8 +37,6 @@
         </a>
 </div>
 <div data-md-component="announce">
-</div>
-<div data-md-color-scheme="default" data-md-component="outdated" hidden="">
 </div>
 <header class="md-header" data-md-component="header">
 <nav aria-label="Cabeçalho" class="md-header__inner md-grid">
@@ -61,7 +56,7 @@
 <div class="md-header__topic" data-md-component="header-topic">
 <span class="md-ellipsis">
             
-              Armazenamento (ZFS, NFS)
+              Armazenamento
             
           </span>
 </div>
@@ -112,7 +107,7 @@
 <div class="md-header__source">
 <a class="md-source" data-md-component="source" href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório">
 <div class="md-source__icon md-icon">
-<svg viewbox="0 0 496 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
 </div>
 <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -173,22 +168,15 @@
         </a>
 </li>
 <li class="md-tabs__item">
-<a class="md-tabs__link" href="../../05-guia-estudos/">
-          
+<a class="md-tabs__link" href="../../05-referencia-rapida/">
+        
   
   
-  📚 Guia de Estudos
+    
+  
+  📎 Referência
 
-        </a>
-</li>
-<li class="md-tabs__item">
-<a class="md-tabs__link" href="../../06-solucoes-alternativas/">
-          
-  
-  
-  🔄 Soluções Alternativas
-
-        </a>
+      </a>
 </li>
 </ul>
 </div>
@@ -208,7 +196,7 @@
 <div class="md-nav__source">
 <a class="md-source" data-md-component="source" href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório">
 <div class="md-source__icon md-icon">
-<svg viewbox="0 0 496 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
 </div>
 <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -219,7 +207,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../..">
 <span class="md-ellipsis">
+    
+  
     Introdução
+  
+
     
   </span>
 </a>
@@ -228,7 +220,11 @@
 <input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_2" type="checkbox"/>
 <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
 <span class="md-ellipsis">
+    
+  
     🚀 Implementação
+  
+
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -236,13 +232,21 @@
 <nav aria-expanded="false" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_2">
 <span class="md-nav__icon md-icon"></span>
-            🚀 Implementação
+            
+  
+    🚀 Implementação
+  
+
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../01-manual-implementacao/">
 <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
 </a>
@@ -250,7 +254,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../01-manual-implementacao/00-preparacao-planejamento/">
 <span class="md-ellipsis">
+    
+  
     Preparação e Planejamento
+  
+
     
   </span>
 </a>
@@ -258,7 +266,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../01-manual-implementacao/01-maquina-controle-ansible/">
 <span class="md-ellipsis">
+    
+  
     Máquina de Controle Ansible
+  
+
     
   </span>
 </a>
@@ -266,7 +278,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../01-manual-implementacao/02-proxmox-ve-host/">
 <span class="md-ellipsis">
+    
+  
     Proxmox VE Host
+  
+
     
   </span>
 </a>
@@ -274,7 +290,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../01-manual-implementacao/03-provisionamento-vms/">
 <span class="md-ellipsis">
+    
+  
     Provisionamento de VMs
+  
+
     
   </span>
 </a>
@@ -282,7 +302,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../01-manual-implementacao/04-configuracao-base-vms-ubuntu/">
 <span class="md-ellipsis">
-    Configuração Base das VMs Ubuntu
+    
+  
+    Configuração Base das VMs
+  
+
     
   </span>
 </a>
@@ -290,47 +314,47 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../01-manual-implementacao/05-rede-segura/">
 <span class="md-ellipsis">
-    Rede Segura (Traefik, Cloudflare, Authelia)
+    
+  
+    Rede Segura
+  
+
     
   </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../../01-manual-implementacao/06-deploy-portainer-geral/">
+<a class="md-nav__link" href="../../01-manual-implementacao/06-deploy-core/">
 <span class="md-ellipsis">
-    Deploy Geral com Portainer
+    
+  
+    Deploy Core
+  
+
     
   </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../../01-manual-implementacao/07-stack-ia-rag/">
+<a class="md-nav__link" href="../../01-manual-implementacao/07-deploy-apps/">
 <span class="md-ellipsis">
-    Stack de IA &amp; RAG
+    
+  
+    Deploy de Apps
+  
+
     
   </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../../01-manual-implementacao/08-stack-midia/">
+<a class="md-nav__link" href="../../01-manual-implementacao/08-stack-ia/">
 <span class="md-ellipsis">
-    Stack de Mídia
     
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../01-manual-implementacao/09-stack-produtividade-automacao/">
-<span class="md-ellipsis">
-    Stack de Produtividade &amp; Automação
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../01-manual-implementacao/10-stack-monitoramento/">
-<span class="md-ellipsis">
-    Stack de Monitoramento
+  
+    Stack de IA
+  
+
     
   </span>
 </a>
@@ -342,7 +366,11 @@
 <input checked="" class="md-nav__toggle md-toggle" id="__nav_3" type="checkbox"/>
 <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
 <span class="md-ellipsis">
+    
+  
     💡 Arquitetura
+  
+
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -350,13 +378,21 @@
 <nav aria-expanded="true" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_3">
 <span class="md-nav__icon md-icon"></span>
-            💡 Arquitetura
+            
+  
+    💡 Arquitetura
+  
+
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
 <a class="md-nav__link" href="../">
 <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
 </a>
@@ -364,7 +400,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../01-fluxo-rede-acesso-externo/">
 <span class="md-ellipsis">
-    Fluxo de Rede e Acesso Externo
+    
+  
+    Fluxo de Rede
+  
+
     
   </span>
 </a>
@@ -372,7 +412,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../02-virtualizacao-proxmox/">
 <span class="md-ellipsis">
-    Virtualização (Proxmox)
+    
+  
+    Virtualização
+  
+
     
   </span>
 </a>
@@ -381,14 +425,22 @@
 <input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
 <label class="md-nav__link md-nav__link--active" for="__toc">
 <span class="md-ellipsis">
-    Armazenamento (ZFS, NFS)
+    
+  
+    Armazenamento
+  
+
     
   </span>
 <span class="md-nav__icon md-icon"></span>
 </label>
 <a class="md-nav__link md-nav__link--active" href="./">
 <span class="md-ellipsis">
-    Armazenamento (ZFS, NFS)
+    
+  
+    Armazenamento
+  
+
     
   </span>
 </a>
@@ -401,7 +453,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#zfs-zettabyte-file-system-no-host-proxmox">
 <span class="md-ellipsis">
-      ZFS (Zettabyte File System) no Host Proxmox
+      
+        ZFS (Zettabyte File System) no Host Proxmox
+      
     </span>
 </a>
 <nav aria-label="ZFS (Zettabyte File System) no Host Proxmox" class="md-nav">
@@ -409,7 +463,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#pool-data-e-seus-datasets">
 <span class="md-ellipsis">
-      Pool /data e Seus Datasets
+      
+        Pool /data e Seus Datasets
+      
     </span>
 </a>
 </li>
@@ -419,7 +475,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#nfs-network-file-system-para-compartilhamento-com-vms">
 <span class="md-ellipsis">
-      NFS (Network File System) para Compartilhamento com VMs
+      
+        NFS (Network File System) para Compartilhamento com VMs
+      
     </span>
 </a>
 <nav aria-label="NFS (Network File System) para Compartilhamento com VMs" class="md-nav">
@@ -427,7 +485,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#fluxo-de-dados-para-volumes-docker">
 <span class="md-ellipsis">
-      Fluxo de Dados para Volumes Docker
+      
+        Fluxo de Dados para Volumes Docker
+      
     </span>
 </a>
 </li>
@@ -437,7 +497,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#consideracoes-de-performance-e-alternativas">
 <span class="md-ellipsis">
-      Considerações de Performance e Alternativas
+      
+        Considerações de Performance e Alternativas
+      
     </span>
 </a>
 </li>
@@ -447,7 +509,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../04-automacao-ansible/">
 <span class="md-ellipsis">
-    Automação (Ansible)
+    
+  
+    Automação
+  
+
     
   </span>
 </a>
@@ -455,7 +521,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../05-gerenciamento-containers/">
 <span class="md-ellipsis">
-    Gerenciamento de Containers (Docker)
+    
+  
+    Containers
+  
+
     
   </span>
 </a>
@@ -463,7 +533,47 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../06-principios-seguranca/">
 <span class="md-ellipsis">
-    Princípios de Segurança Aplicados
+    
+  
+    Segurança
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../08-apis-llm-estrategia/">
+<span class="md-ellipsis">
+    
+  
+    Estratégia LLM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../09-catalogo-aplicacoes/">
+<span class="md-ellipsis">
+    
+  
+    Catálogo de Aplicações
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../10-indice-integracoes/">
+<span class="md-ellipsis">
+    
+  
+    Índice de Integrações
+  
+
     
   </span>
 </a>
@@ -475,7 +585,11 @@
 <input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_4" type="checkbox"/>
 <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
 <span class="md-ellipsis">
+    
+  
     🛠️ Sustentação
+  
+
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -483,13 +597,21 @@
 <nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_4">
 <span class="md-nav__icon md-icon"></span>
-            🛠️ Sustentação
+            
+  
+    🛠️ Sustentação
+  
+
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/">
 <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
 </a>
@@ -497,7 +619,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/01-adicionando-novo-servico-docker/">
 <span class="md-ellipsis">
-    Adicionando Novo Serviço Docker
+    
+  
+    Novo Serviço Docker
+  
+
     
   </span>
 </a>
@@ -505,7 +631,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/02-modificando-configuracoes-existentes/">
 <span class="md-ellipsis">
+    
+  
     Modificando Configurações
+  
+
     
   </span>
 </a>
@@ -513,7 +643,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/03-troubleshooting-comum/">
 <span class="md-ellipsis">
-    Troubleshooting Comum
+    
+  
+    Troubleshooting
+  
+
     
   </span>
 </a>
@@ -521,7 +655,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/04-gerenciando-redes-docker/">
 <span class="md-ellipsis">
-    Gerenciando Redes Docker
+    
+  
+    Redes Docker
+  
+
     
   </span>
 </a>
@@ -529,7 +667,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/05-passthrough-hardware-adicional/">
 <span class="md-ellipsis">
-    Passthrough de Hardware Adicional
+    
+  
+    Passthrough de Hardware
+  
+
     
   </span>
 </a>
@@ -537,7 +679,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/">
 <span class="md-ellipsis">
-    6. Gerenciando Recursos de VMs
+    
+  
+    Recursos de VMs
+  
+
     
   </span>
 </a>
@@ -545,7 +691,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/">
 <span class="md-ellipsis">
-    7. Cenários Específicos de Criação de VMs
+    
+  
+    Cenários de VMs
+  
+
     
   </span>
 </a>
@@ -553,7 +703,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/">
 <span class="md-ellipsis">
-    8. Compartilhando Recursos entre VMs
+    
+  
+    Recursos entre VMs
+  
+
     
   </span>
 </a>
@@ -561,7 +715,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/">
 <span class="md-ellipsis">
-    9. Integrando Novos Serviços a Stacks Existentes
+    
+  
+    Integrando Serviços
+  
+
     
   </span>
 </a>
@@ -569,7 +727,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/">
 <span class="md-ellipsis">
-    10. Atualização Segura de Componentes Críticos
+    
+  
+    Atualização Segura
+  
+
     
   </span>
 </a>
@@ -577,7 +739,35 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/">
 <span class="md-ellipsis">
-    11. Hospedando Aplicação Pública no Domínio
+    
+  
+    App no Domínio Raiz
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/12-guia-snapshots-zfs/">
+<span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/13-usando-geminicli/">
+<span class="md-ellipsis">
+    
+  
+    Gemini CLI
+  
+
     
   </span>
 </a>
@@ -589,7 +779,11 @@
 <input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
 <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
 <span class="md-ellipsis">
+    
+  
     ⚙️ Manutenção
+  
+
     
   </span>
 <span class="md-nav__icon md-icon"></span>
@@ -597,13 +791,21 @@
 <nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
 <label class="md-nav__title" for="__nav_5">
 <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção
+            
+  
+    ⚙️ Manutenção
+  
+
           </label>
 <ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../04-manutencao-recuperacao/">
 <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
 </a>
@@ -611,7 +813,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../04-manutencao-recuperacao/01-rotinas-manutencao/">
 <span class="md-ellipsis">
-    Rotinas de Manutenção
+    
+  
+    Rotinas
+  
+
     
   </span>
 </a>
@@ -619,7 +825,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/">
 <span class="md-ellipsis">
+    
+  
     Backup e Restore
+  
+
     
   </span>
 </a>
@@ -627,7 +837,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../04-manutencao-recuperacao/03-cicd-basico-ansible/">
 <span class="md-ellipsis">
-    CI/CD Básico Ansible
+    
+  
+    CI/CD Ansible
+  
+
     
   </span>
 </a>
@@ -635,7 +849,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../04-manutencao-recuperacao/04-reconstruindo-infraestrutura/">
 <span class="md-ellipsis">
-    Reconstruindo a Infraestrutura
+    
+  
+    Reconstruindo
+  
+
     
   </span>
 </a>
@@ -643,7 +861,11 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="../../04-manutencao-recuperacao/05-migrando-hardware-rede/">
 <span class="md-ellipsis">
+    
+  
     Migrando Hardware/Rede
+  
+
     
   </span>
 </a>
@@ -651,193 +873,17 @@
 </ul>
 </nav>
 </li>
-<li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_6" type="checkbox"/>
-<label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-<span class="md-ellipsis">
-    📚 Guia de Estudos
-    
-  </span>
-<span class="md-nav__icon md-icon"></span>
-</label>
-<nav aria-expanded="false" aria-labelledby="__nav_6_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_6">
-<span class="md-nav__icon md-icon"></span>
-            📚 Guia de Estudos
-          </label>
-<ul class="md-nav__list" data-md-scrollfix="">
 <li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/">
+<a class="md-nav__link" href="../../05-referencia-rapida/">
 <span class="md-ellipsis">
-    Visão Geral
+    
+  
+    📎 Referência
+  
+
     
   </span>
 </a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/">
-<span class="md-ellipsis">
-    1. Aprofundamento em Proxmox VE
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/02-aprofundamento-zfs/">
-<span class="md-ellipsis">
-    2. Aprofundamento em ZFS
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/03-aprofundamento-ansible/">
-<span class="md-ellipsis">
-    3. Aprofundamento em Ansible
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/04-aprofundamento-docker-networking/">
-<span class="md-ellipsis">
-    4. Aprofundamento em Docker Networking
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/">
-<span class="md-ellipsis">
-    5. Aprofundamento em Traefik e Authelia
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/06-seguranca-avancada-homelab/">
-<span class="md-ellipsis">
-    6. Aprofundamento em Segurança Avançada para Homelab
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/07-introducao-kubernetes-k3s/">
-<span class="md-ellipsis">
-    7. Aprofundamento em Kubernetes
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/">
-<span class="md-ellipsis">
-    8. Gerenciamento Avançado de Segredos
-    
-  </span>
-</a>
-</li>
-</ul>
-</nav>
-</li>
-<li class="md-nav__item md-nav__item--nested">
-<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_7" type="checkbox"/>
-<label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
-<span class="md-ellipsis">
-    🔄 Soluções Alternativas
-    
-  </span>
-<span class="md-nav__icon md-icon"></span>
-</label>
-<nav aria-expanded="false" aria-labelledby="__nav_7_label" class="md-nav" data-md-level="1">
-<label class="md-nav__title" for="__nav_7">
-<span class="md-nav__icon md-icon"></span>
-            🔄 Soluções Alternativas
-          </label>
-<ul class="md-nav__list" data-md-scrollfix="">
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/">
-<span class="md-ellipsis">
-    Visão Geral
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/01-hypervisors/">
-<span class="md-ellipsis">
-    1. Hypervisors
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/02-automacao-config/">
-<span class="md-ellipsis">
-    2. Automação de Configurações
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/03-gerenciamento-containers/">
-<span class="md-ellipsis">
-    3. Gerenciamento de Containers
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/04-proxy-reverso/">
-<span class="md-ellipsis">
-    4. Proxy Reverso
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/05-acesso-externo/">
-<span class="md-ellipsis">
-    5. Acesso Externo
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/06-autenticacao-sso/">
-<span class="md-ellipsis">
-    6. Autenticação SSO
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/07-servidores-midia/">
-<span class="md-ellipsis">
-    7. Servidores de Mídia
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/">
-<span class="md-ellipsis">
-    8. Sincronização de Arquivos
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../06-solucoes-alternativas/09-monitoramento-logs/">
-<span class="md-ellipsis">
-    9. Monitoramento e Logs
-    
-  </span>
-</a>
-</li>
-</ul>
-</nav>
 </li>
 </ul>
 </nav>
@@ -856,7 +902,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#zfs-zettabyte-file-system-no-host-proxmox">
 <span class="md-ellipsis">
-      ZFS (Zettabyte File System) no Host Proxmox
+      
+        ZFS (Zettabyte File System) no Host Proxmox
+      
     </span>
 </a>
 <nav aria-label="ZFS (Zettabyte File System) no Host Proxmox" class="md-nav">
@@ -864,7 +912,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#pool-data-e-seus-datasets">
 <span class="md-ellipsis">
-      Pool /data e Seus Datasets
+      
+        Pool /data e Seus Datasets
+      
     </span>
 </a>
 </li>
@@ -874,7 +924,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#nfs-network-file-system-para-compartilhamento-com-vms">
 <span class="md-ellipsis">
-      NFS (Network File System) para Compartilhamento com VMs
+      
+        NFS (Network File System) para Compartilhamento com VMs
+      
     </span>
 </a>
 <nav aria-label="NFS (Network File System) para Compartilhamento com VMs" class="md-nav">
@@ -882,7 +934,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#fluxo-de-dados-para-volumes-docker">
 <span class="md-ellipsis">
-      Fluxo de Dados para Volumes Docker
+      
+        Fluxo de Dados para Volumes Docker
+      
     </span>
 </a>
 </li>
@@ -892,7 +946,9 @@
 <li class="md-nav__item">
 <a class="md-nav__link" href="#consideracoes-de-performance-e-alternativas">
 <span class="md-ellipsis">
-      Considerações de Performance e Alternativas
+      
+        Considerações de Performance e Alternativas
+      
     </span>
 </a>
 </li>
@@ -1004,7 +1060,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
 </span>
 </aside>
 </article>
@@ -1030,10 +1086,10 @@
 </div>
 <div class="md-social">
 <a class="md-social__link" href="https://github.com/lioevano" rel="noopener" target="_blank" title="github.com">
-<svg viewbox="0 0 496 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
 </a>
 <a class="md-social__link" href="https://instagram.com/lioevano" rel="noopener" target="_blank" title="instagram.com">
-<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
 </a>
 </div>
 </div>
@@ -1043,9 +1099,8 @@
 <div class="md-dialog" data-md-component="dialog">
 <div class="md-dialog__inner md-typeset"></div>
 </div>
-<script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": {"provider": "mike"}}</script>
-<script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+<script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+<script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
 <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
-document$.subscribe(() => { lightbox.reload() });
-</script></body>
-</html>
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

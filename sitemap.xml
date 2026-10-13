@@ -2,230 +2,170 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
+    </url>
+    <url>
+         <loc>https://lioevano.github.io/wiki-home-server/05-referencia-rapida/</loc>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/00-preparacao-planejamento/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/01-maquina-controle-ansible/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/02-proxmox-ve-host/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/03-provisionamento-vms/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/04-configuracao-base-vms-ubuntu/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/05-rede-segura/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
-         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/06-deploy-portainer-geral/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/06-deploy-core/</loc>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
-         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/07-stack-ia-rag/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/07-deploy-apps/</loc>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
-         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/08-stack-midia/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/09-stack-produtividade-automacao/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/10-stack-monitoramento/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <loc>https://lioevano.github.io/wiki-home-server/01-manual-implementacao/08-stack-ia/</loc>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/02-virtualizacao-proxmox/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/03-armazenamento-zfs-nfs/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/04-automacao-ansible/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/05-gerenciamento-containers/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/06-principios-seguranca/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
+    </url>
+    <url>
+         <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/08-apis-llm-estrategia/</loc>
+         <lastmod>2026-10-13</lastmod>
+    </url>
+    <url>
+         <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/09-catalogo-aplicacoes/</loc>
+         <lastmod>2026-10-13</lastmod>
+    </url>
+    <url>
+         <loc>https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/10-indice-integracoes/</loc>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/01-adicionando-novo-servico-docker/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/02-modificando-configuracoes-existentes/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/03-troubleshooting-comum/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/04-gerenciando-redes-docker/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/05-passthrough-hardware-adicional/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/06-gerenciando-recursos-vms/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/07-cenarios-especificos-criacao-vms/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/08-compartilhando-recursos-entre-vms/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
+    </url>
+    <url>
+         <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/12-guia-snapshots-zfs/</loc>
+         <lastmod>2026-10-13</lastmod>
+    </url>
+    <url>
+         <loc>https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/13-usando-geminicli/</loc>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/01-rotinas-manutencao/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/02-backup-restore-estrategia/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/03-cicd-basico-ansible/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/04-reconstruindo-infraestrutura/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
     <url>
          <loc>https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/05-migrando-hardware-rede/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/01-aprofundamento-proxmox-ve/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/02-aprofundamento-zfs/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/03-aprofundamento-ansible/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/04-aprofundamento-docker-networking/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/05-aprofundamento-traefik-authelia/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/06-seguranca-avancada-homelab/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/07-introducao-kubernetes-k3s/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/05-guia-estudos/08-gerenciamento-segredos-avancado/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/01-hypervisors/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/02-automacao-config/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/03-gerenciamento-containers/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/04-proxy-reverso/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/05-acesso-externo/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/06-autenticacao-sso/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/07-servidores-midia/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/08-sincronizacao-arquivos/</loc>
-         <lastmod>2025-06-03</lastmod>
-    </url>
-    <url>
-         <loc>https://lioevano.github.io/wiki-home-server/06-solucoes-alternativas/09-monitoramento-logs/</loc>
-         <lastmod>2025-06-03</lastmod>
+         <lastmod>2026-10-13</lastmod>
     </url>
 </urlset>

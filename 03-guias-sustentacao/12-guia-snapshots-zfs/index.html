@@ -1,0 +1,2596 @@
+<!DOCTYPE html><html lang="pt" class="no-js"><head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Guia prático de snapshots ZFS: criar, listar, reverter, automatizar e usá-los antes de mudanças arriscadas.">
+      
+      
+        <meta name="author" content="Léo Ivan">
+      
+      
+        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/12-guia-snapshots-zfs/">
+      
+      
+        <link rel="prev" href="../11-hospedando-aplicacao-publica-dominio-raiz/">
+      
+      
+        <link rel="next" href="../13-usando-geminicli/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Snapshots ZFS - Wiki do Servidor do Léo Ivan</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#guia-pratico-de-snapshots-zfs" class="md-skip">
+          Ir para o conteúdo
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabeçalho">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Wiki do Servidor do Léo Ivan
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Snapshots ZFS
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Pesquisar">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando a pesquisa
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    lioevano/wiki-home-server
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Abas" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Introdução
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../01-manual-implementacao/" class="md-tabs__link">
+          
+  
+  
+  🚀 Implementação
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../02-visao-geral-arquitetura/" class="md-tabs__link">
+          
+  
+  
+  💡 Arquitetura
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  🛠️ Sustentação
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../04-manutencao-recuperacao/" class="md-tabs__link">
+          
+  
+  
+  ⚙️ Manutenção
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../05-referencia-rapida/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  📎 Referência
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegação" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+
+    </a>
+    Wiki do Servidor do Léo Ivan
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+  </div>
+  <div class="md-source__repository">
+    lioevano/wiki-home-server
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix="">
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introdução
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2">
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🚀 Implementação
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    🚀 Implementação
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/00-preparacao-planejamento/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preparação e Planejamento
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/01-maquina-controle-ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Máquina de Controle Ansible
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/02-proxmox-ve-host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Proxmox VE Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/03-provisionamento-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provisionamento de VMs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/04-configuracao-base-vms-ubuntu/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuração Base das VMs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/05-rede-segura/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rede Segura
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/06-deploy-core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy Core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/07-deploy-apps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy de Apps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/08-stack-ia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stack de IA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3">
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    💡 Arquitetura
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    💡 Arquitetura
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fluxo de Rede
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/02-virtualizacao-proxmox/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Virtualização
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/03-armazenamento-zfs-nfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Armazenamento
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/04-automacao-ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Automação
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/05-gerenciamento-containers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/06-principios-seguranca/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Segurança
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estratégia LLM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catálogo de Aplicações
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/10-indice-integracoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Índice de Integrações
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked="">
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🛠️ Sustentação
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    🛠️ Sustentação
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-adicionando-novo-servico-docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Novo Serviço Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-modificando-configuracoes-existentes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modificando Configurações
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-troubleshooting-comum/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-gerenciando-redes-docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redes Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-passthrough-hardware-adicional/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Passthrough de Hardware
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-gerenciando-recursos-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursos de VMs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-cenarios-especificos-criacao-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cenários de VMs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-compartilhando-recursos-entre-vms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursos entre VMs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrando Serviços
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Atualização Segura
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    App no Domínio Raiz
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#1-o-que-e-e-o-que-nao-e-um-snapshot-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. O Que é (e o que NÃO é) um Snapshot ZFS?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-comandos-essenciais-para-gerenciamento-de-snapshots-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Comandos Essenciais para Gerenciamento de Snapshots ZFS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Comandos Essenciais para Gerenciamento de Snapshots ZFS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#criando-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Criando Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listando-snapshots-existentes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listando Snapshots Existentes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#destruindo-deletando-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Destruindo (Deletando) Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renomeando-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Renomeando Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-utilizando-snapshots-para-recuperacao-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Utilizando Snapshots para Recuperação de Dados
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Utilizando Snapshots para Recuperação de Dados">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rollback-de-um-dataset-inteiro-para-um-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollback de um Dataset Inteiro para um Snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acessando e Recuperando Arquivos Individuais de um Snapshot (Método Seguro)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clonando-um-snapshot-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clonando um Snapshot ZFS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Automação de Snapshots ZFS com zfs-auto-snapshot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-consideracoes-importantes-ao-trabalhar-com-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Considerações Importantes ao Trabalhar com Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-usando-geminicli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ⚙️ Manutenção
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ⚙️ Manutenção
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix="">
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-manutencao-recuperacao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-manutencao-recuperacao/01-rotinas-manutencao/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rotinas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backup e Restore
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-manutencao-recuperacao/03-cicd-basico-ansible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI/CD Ansible
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-manutencao-recuperacao/04-reconstruindo-infraestrutura/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reconstruindo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../04-manutencao-recuperacao/05-migrando-hardware-rede/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migrando Hardware/Rede
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../05-referencia-rapida/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    📎 Referência
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Índice">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+      
+        <li class="md-nav__item">
+  <a href="#1-o-que-e-e-o-que-nao-e-um-snapshot-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. O Que é (e o que NÃO é) um Snapshot ZFS?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-comandos-essenciais-para-gerenciamento-de-snapshots-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Comandos Essenciais para Gerenciamento de Snapshots ZFS
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Comandos Essenciais para Gerenciamento de Snapshots ZFS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#criando-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Criando Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#listando-snapshots-existentes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listando Snapshots Existentes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#destruindo-deletando-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Destruindo (Deletando) Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renomeando-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Renomeando Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-utilizando-snapshots-para-recuperacao-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Utilizando Snapshots para Recuperação de Dados
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Utilizando Snapshots para Recuperação de Dados">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rollback-de-um-dataset-inteiro-para-um-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollback de um Dataset Inteiro para um Snapshot
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Acessando e Recuperando Arquivos Individuais de um Snapshot (Método Seguro)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clonando-um-snapshot-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clonando um Snapshot ZFS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Automação de Snapshots ZFS com zfs-auto-snapshot
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-consideracoes-importantes-ao-trabalhar-com-snapshots" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Considerações Importantes ao Trabalhar com Snapshots
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="guia-pratico-de-snapshots-zfs">Guia Prático de Snapshots ZFS<a class="headerlink" href="#guia-pratico-de-snapshots-zfs" title="Permanent link">¶</a></h1>
+<p>Os snapshots ZFS são uma das funcionalidades mais poderosas e distintivas do ZFS, oferecendo uma maneira incrivelmente eficiente e rápida de capturar o estado de um dataset (seja um sistema de arquivos ZFS ou um ZVOL - ZFS Volume) em um ponto específico no tempo. Eles são uma ferramenta crucial para:</p>
+<ul>
+<li><strong>Proteção contra Erros Humanos:</strong> Deleção acidental de arquivos, modificações incorretas.</li>
+<li><strong>Recuperação de Corrupção de Software:</strong> Se uma atualização de software ou uma configuração errada corromper dados.</li>
+<li><strong>Base para Estratégias de Backup Eficientes:</strong> Especialmente para backups incrementais com <code>zfs send</code> e <code>zfs recv</code>.</li>
+<li><strong>Testes e Rollbacks:</strong> Permitem testar mudanças e reverter facilmente se algo der errado.</li>
+</ul>
+<p>Este guia prático foca em como criar, listar, gerenciar e utilizar snapshots ZFS no seu <strong>host Proxmox VE</strong>, onde reside nosso pool ZFS principal <code>/data</code> e seus datasets (como <code>data/docker-volumes</code>, <code>data/media</code>, etc.).</p>
+<h2 id="1-o-que-e-e-o-que-nao-e-um-snapshot-zfs">1. O Que é (e o que NÃO é) um Snapshot ZFS?<a class="headerlink" href="#1-o-que-e-e-o-que-nao-e-um-snapshot-zfs" title="Permanent link">¶</a></h2>
+<ul>
+<li><strong>Cópia Point-in-Time Read-Only:</strong> Um snapshot ZFS é uma imagem <strong>somente leitura</strong> do estado exato de um dataset no exato momento em que o snapshot é criado. Você não pode modificar diretamente o conteúdo de um snapshot existente.</li>
+<li><strong>Extremamente Eficiente em Espaço (Inicialmente):</strong><ul>
+<li>Graças ao mecanismo de <strong>Copy-on-Write (CoW)</strong> do ZFS, a criação de um snapshot é quase instantânea e, inicialmente, não consome quase nenhum espaço adicional no disco.</li>
+<li>Quando os dados no dataset ativo (o sistema de arquivos "ao vivo") são modificados ou deletados <em>após</em> a criação do snapshot, o ZFS preserva os blocos de dados originais que o snapshot referencia. As novas escritas vão para novos blocos no pool.</li>
+<li>O snapshot então "consome" espaço apenas para os blocos de dados que foram alterados ou deletados no dataset ativo desde a sua criação, mas que ele precisa manter para preservar o estado daquele ponto no tempo.</li>
+</ul>
+</li>
+<li><strong>NÃO é um Backup Completo (Isoladamente):</strong><ul>
+<li>Embora sejam excelentes para recuperação rápida local e proteção contra muitos tipos de perda de dados, os snapshots ZFS residem no <strong>mesmo pool ZFS</strong> que os dados originais.</li>
+<li>Se o pool ZFS inteiro falhar (e.g., falha de múltiplos discos além da capacidade de redundância do seu RAIDZ ou espelho, ou uma falha catastrófica do controlador), os snapshots também serão perdidos.</li>
+<li>Portanto, snapshots devem ser <em>parte</em> de uma estratégia de backup mais ampla que inclua <a href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/">cópias dos seus dados (e idealmente dos snapshots) para um pool ZFS diferente, um disco externo, ou um local off-site</a>.</li>
+</ul>
+</li>
+<li><strong>Base Fundamental para Replicação ZFS:</strong> Snapshots são a unidade fundamental para usar os comandos <code>zfs send</code> e <code>zfs recv</code>, que permitem backups incrementais extremamente eficientes para outros pools ZFS ou outros hosts ZFS.</li>
+</ul>
+<h2 id="2-comandos-essenciais-para-gerenciamento-de-snapshots-zfs">2. Comandos Essenciais para Gerenciamento de Snapshots ZFS<a class="headerlink" href="#2-comandos-essenciais-para-gerenciamento-de-snapshots-zfs" title="Permanent link">¶</a></h2>
+<p>Execute estes comandos no <strong>shell do seu host Proxmox VE</strong>, como usuário <code>root</code> (ou usando <code>sudo</code>).</p>
+<h3 id="criando-snapshots">Criando Snapshots<a class="headerlink" href="#criando-snapshots" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Sintaxe Básica:</strong>
+    <code>zfs snapshot &lt;pool_ou_dataset&gt;/&lt;filesystem_ou_volume&gt;@&lt;nome_do_snapshot&gt;</code></li>
+<li><strong>Convenção de Nomenclatura para Snapshots:</strong><ul>
+<li>Use nomes descritivos e consistentes. Incluir data e hora é uma prática comum.</li>
+<li>Ex: <code>@backup_diario_2023-08-15</code>, <code>@antes_upgrade_app_X</code>, <code>@config_estavel_v1</code></li>
+</ul>
+</li>
+<li><strong>Exemplos Práticos:</strong><ul>
+<li>Tirar um snapshot do dataset <code>docker-volumes</code> antes de uma grande atualização de containers:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span>data/docker-volumes@pre_atualizacao_containers_20230815
+</span></code></pre></div></li>
+<li>Tirar um snapshot do dataset <code>media</code> usando a data e hora atuais no nome:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Usando substituição de comando para gerar o nome do snapshot</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span>data/media@<span class="k">$(</span>date<span class="w"> </span>+%Y-%m-%d_%H-%M-%S<span class="k">)</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Isso criaria algo como: data/media@2023-08-15_14-30-00</span>
+</span></code></pre></div></li>
+<li><strong>Snapshot Recursivo (<code>-r</code>):</strong>
+    Esta opção é muito útil. Ela tira um snapshot de um dataset pai e, simultaneamente, de <strong>todos os seus datasets filhos (aninhados)</strong>, usando o mesmo nome de snapshot para todos.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Tira um snapshot de 'data/docker-volumes' e de quaisquer datasets filhos que ele possa ter</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># (e.g., se você tivesse data/docker-volumes/nextcloud_data como um dataset separado)</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span>-r<span class="w"> </span>data/docker-volumes@checkpoint_semanal
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Tira um snapshot de TODO o pool 'data' e de TODOS os seus datasets</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># (docker-volumes, media, downloads, rag_sources, backups)</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span>-r<span class="w"> </span>data@backup_sistema_completo_20230815
+</span></code></pre></div></li>
+</ul>
+</li>
+</ul>
+<h3 id="listando-snapshots-existentes">Listando Snapshots Existentes<a class="headerlink" href="#listando-snapshots-existentes" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Sintaxe Principal:</strong> <code>zfs list -t snapshot</code></li>
+<li><strong>Exemplos:</strong><ul>
+<li>Listar <strong>todos</strong> os snapshots em todos os pools ZFS do sistema:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>list<span class="w"> </span>-t<span class="w"> </span>snapshot
+</span></code></pre></div></li>
+<li>Listar snapshots apenas para o dataset <code>data/docker-volumes</code> (e seus filhos, se houver, devido ao comportamento padrão de <code>zfs list</code> para datasets):
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>list<span class="w"> </span>-t<span class="w"> </span>snapshot<span class="w"> </span>-r<span class="w"> </span>data/docker-volumes
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Para ver apenas os snapshots do dataset data/docker-volumes e não de seus filhos:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># (Este comando pode não mostrar nada se não houver snapshots *diretamente* nesse dataset</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># sem também usar -r se os snapshots estiverem em filhos)</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># A forma mais precisa de listar snapshots de um dataset específico,</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># incluindo os de seus filhos se o snapshot foi feito recursivamente, é:</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># sudo zfs list -t snapshot | grep '^data/docker-volumes@' # Se snapshots não recursivos</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="c1"># sudo zfs list -t snapshot | grep 'data/docker-volumes.*@' # Se snapshots recursivos</span>
+</span></code></pre></div>
+    Uma forma mais simples e comum de ver todos os snapshots <em>relacionados</em> a um dataset é:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>list<span class="w"> </span>-r<span class="w"> </span>-t<span class="w"> </span>snapshot<span class="w"> </span>data/docker-volumes
+</span></code></pre></div></li>
+<li><strong>Visualizar o Espaço Usado por Snapshots:</strong>
+    A saída de <code>zfs list -t snapshot</code> inclui colunas importantes:<ul>
+<li><code>NAME</code>: O nome completo do snapshot (e.g., <code>data/docker-volumes@snap1</code>).</li>
+<li><code>USED</code>: O espaço em disco que está sendo consumido <strong>exclusivamente</strong> por este snapshot. São os blocos de dados que foram modificados ou deletados no dataset ativo desde que este snapshot foi criado, e que este snapshot (e possivelmente outros mais antigos) ainda precisa preservar.</li>
+<li><code>REFER</code>: O tamanho dos dados que o snapshot referenciava no momento da sua criação (o tamanho do dataset naquele ponto no tempo).</li>
+<li><code>MOUNTPOINT</code>: Snapshots não têm pontos de montagem diretos da mesma forma que datasets.</li>
+</ul>
+</li>
+<li><strong>Ordenar Snapshots por Data de Criação:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>list<span class="w"> </span>-r<span class="w"> </span>-t<span class="w"> </span>snapshot<span class="w"> </span>-o<span class="w"> </span>name,creation<span class="w"> </span>-S<span class="w"> </span>creation<span class="w"> </span>data/docker-volumes
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="c1"># -o name,creation: mostra apenas nome e data de criação</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="c1"># -S creation: ordena pela data de criação (maiúscula S para descendente, minúscula s para ascendente)</span>
+</span></code></pre></div></li>
+</ul>
+</li>
+</ul>
+<h3 id="destruindo-deletando-snapshots">Destruindo (Deletando) Snapshots<a class="headerlink" href="#destruindo-deletando-snapshots" title="Permanent link">¶</a></h3>
+<p>Quando um snapshot não é mais necessário (e.g., é muito antigo, ou você já fez um backup dele para outro local), você pode destruí-lo para liberar o espaço em disco que ele estava ocupando (os blocos de dados que ele estava exclusivamente preservando).</p>
+<ul>
+<li><strong>Sintaxe:</strong> <code>sudo zfs destroy &lt;pool&gt;/&lt;dataset&gt;@&lt;nome_do_snapshot&gt;</code></li>
+<li>
+<p><strong>Exemplos:</strong></p>
+<ul>
+<li>Destruir um snapshot específico:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>destroy<span class="w"> </span>data/docker-volumes@snapshot_antigo_e_desnecessario
+</span></code></pre></div></li>
+<li><strong>Destruir Recursivamente (<code>-r</code>):</strong> Destruir um snapshot com o mesmo nome em um dataset pai e em todos os seus datasets filhos. Útil se você criou snapshots recursivos.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>destroy<span class="w"> </span>-r<span class="w"> </span>data/docker-volumes@checkpoint_semanal_obsoleto
+</span></code></pre></div></li>
+<li><strong>Destruir Múltiplos Snapshots (e.g., um range ou por padrão):</strong>
+    ZFS não tem um comando nativo para destruir um range de snapshots diretamente por nome (e.g., <code>snap1%snap5</code>). Você precisaria listar e destruir individualmente ou usar scripting.<ul>
+<li><strong>Para destruir todos os snapshots entre <code>snapA</code> e <code>snapB</code> (inclusive <code>snapA</code>, exclusivo <code>snapB</code>) em um dataset:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Use com CUIDADO EXTREMO. TESTE COM 'echo' primeiro!</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># sudo zfs list -H -t snapshot -o name -S creation data/meudataset | \</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1">#   awk -v snapA="data/meudataset@snapA" -v snapB="data/meudataset@snapB" \</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1">#   '$0 == snapA {p=1} $0 == snapB {exit} p {print}' | \</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1">#   xargs -n 1 sudo zfs destroy -v</span>
+</span></code></pre></div>
+    Ferramentas como <code>zfs-destroy-snapshots.sh</code> (disponíveis online) ou scripts customizados são melhores para gerenciamento complexo de poda. <code>sanoid</code> (discutido abaixo) também lida com isso.</li>
+<li><strong>Destruir o snapshot mais antigo de um dataset:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># sudo zfs list -H -t snapshot -o name -s creation data/meudataset | head -n 1 | xargs sudo zfs destroy -v</span>
+</span></code></pre></div></li>
+</ul>
+</li>
+</ul>
+<div class="admonition danger">
+<p class="admonition-title">A Destruição de Snapshots é IRREVERSÍVEL!</p>
+<p>Uma vez que um snapshot é destruído, os dados que eram exclusivamente referenciados por ele (e não por outros snapshots ou pelo dataset ativo) são marcados como espaço livre e serão eventualmente sobrescritos. <strong>Não há lixeira.</strong> Certifique-se de que você está destruindo o snapshot correto e que não precisa mais dos dados daquele ponto no tempo.</p>
+</div>
+</li>
+</ul>
+<h3 id="renomeando-snapshots">Renomeando Snapshots<a class="headerlink" href="#renomeando-snapshots" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Sintaxe:</strong> <code>sudo zfs rename &lt;pool&gt;/&lt;dataset&gt;@&lt;nome_antigo&gt; &lt;pool&gt;/&lt;dataset&gt;@&lt;nome_novo&gt;</code></li>
+<li><strong>Recursivo (<code>-r</code>):</strong> Para renomear snapshots com o mesmo nome antigo para o mesmo nome novo em datasets filhos também.</li>
+<li><strong>Exemplo:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>rename<span class="w"> </span>data/docker-volumes@temp_snap_123<span class="w"> </span>data/docker-volumes@backup_importante_20230815
+</span></code></pre></div></li>
+</ul>
+<h2 id="3-utilizando-snapshots-para-recuperacao-de-dados">3. Utilizando Snapshots para Recuperação de Dados<a class="headerlink" href="#3-utilizando-snapshots-para-recuperacao-de-dados" title="Permanent link">¶</a></h2>
+<p>A principal utilidade dos snapshots é a capacidade de recuperar dados ou reverter o estado de um sistema.</p>
+<h3 id="rollback-de-um-dataset-inteiro-para-um-snapshot">Rollback de um Dataset Inteiro para um Snapshot<a class="headerlink" href="#rollback-de-um-dataset-inteiro-para-um-snapshot" title="Permanent link">¶</a></h3>
+<p>O comando <code>zfs rollback</code> reverte um dataset (sistema de arquivos) inteiro para o estado exato de um snapshot específico.</p>
+<ul>
+<li><strong>Sintaxe:</strong> <code>sudo zfs rollback [-rR] &lt;pool&gt;/&lt;dataset&gt;@&lt;nome_do_snapshot&gt;</code></li>
+<li><strong>Opções Importantes:</strong><ul>
+<li><code>-r</code>: <strong>Destrói quaisquer snapshots que foram tirados <em>depois</em> do snapshot para o qual você está revertendo.</strong></li>
+<li><code>-R</code>: Similar ao <code>-r</code>, mas também destrói quaisquer <strong>clones</strong> que foram criados a partir desses snapshots mais recentes.</li>
+</ul>
+</li>
+<li><strong>Exemplo:</strong>
+    Suponha que você fez uma alteração desastrosa no seu dataset <code>data/docker-volumes</code> e quer reverter para um estado anterior salvo no snapshot <code>data/docker-volumes@config_estavel_antes_da_mudanca</code>.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="c1"># 1. (Opcional, mas Recomendado) Faça um NOVO snapshot do estado ATUAL antes do rollback,</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="c1">#    caso você se arrependa do rollback ou precise de algo do estado atual.</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span>data/docker-volumes@antes_do_rollback_para_config_estavel
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="c1"># 2. Verifique os snapshots existentes para confirmar o nome e a data do snapshot de destino.</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>list<span class="w"> </span>-r<span class="w"> </span>-t<span class="w"> </span>snapshot<span class="w"> </span>-o<span class="w"> </span>name,creation<span class="w"> </span>-S<span class="w"> </span>creation<span class="w"> </span>data/docker-volumes
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>
+</span><span id="__span-12-8"><a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="c1"># 3. Execute o rollback.</span>
+</span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a><span class="c1">#    CUIDADO: Este comando DESTRUIRÁ quaisquer snapshots feitos DEPOIS de '@config_estavel_antes_da_mudanca'</span>
+</span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a><span class="c1">#    (a menos que você omita -r e não haja snapshots posteriores).</span>
+</span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="c1">#    E, mais importante, todas as MUDANÇAS no dataset data/docker-volumes feitas DEPOIS</span>
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="c1">#    daquele snapshot serão PERDIDAS e substituídas pelo conteúdo do snapshot.</span>
+</span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>rollback<span class="w"> </span>-r<span class="w"> </span>data/docker-volumes@config_estavel_antes_da_mudanca
+</span></code></pre></div>
+    !!! danger "Rollback é uma Operação Destrutiva para Mudanças Posteriores!"
+        O <code>zfs rollback</code> é poderoso, mas <strong>apaga irreversivelmente todas as alterações e snapshots feitos <em>após</em> o snapshot para o qual você está revertendo</strong> (se a opção <code>-r</code> for usada, o que geralmente é necessário se existem snapshots posteriores). Use com extrema cautela e apenas se tiver certeza absoluta de que quer perder essas mudanças posteriores. Ter um snapshot do estado <em>imediatamente antes</em> do rollback (como no passo 1 do exemplo) é uma boa rede de segurança.</li>
+</ul>
+<h3 id="acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro">Acessando e Recuperando Arquivos Individuais de um Snapshot (Método Seguro)<a class="headerlink" href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro" title="Permanent link">¶</a></h3>
+<p>Esta é a maneira <strong>mais segura e comum</strong> de recuperar arquivos ou diretórios específicos de um snapshot, sem reverter o dataset inteiro.</p>
+<ul>
+<li><strong>Como Funciona:</strong> Para cada dataset ZFS que tem snapshots, o ZFS automaticamente torna os snapshots acessíveis através de um diretório oculto especial chamado <code>.zfs/snapshot/</code> localizado no ponto de montagem do dataset. Dentro deste diretório <code>.zfs/snapshot/</code>, cada snapshot aparece como um subdiretório somente leitura, contendo os arquivos como eles estavam no momento da criação daquele snapshot.</li>
+<li>
+<p><strong>Exemplo Prático:</strong>
+    Suponha que você deletou acidentalmente o arquivo <code>/data/docker-volumes/nextcloud/config/config.php</code> no seu dataset ativo.
+    Felizmente, você tem um snapshot recente chamado <code>data/docker-volumes@backup_diario_20230815_0300</code>.</p>
+<ol>
+<li><strong>Navegue até o diretório do snapshot dentro do ponto de montagem do dataset:</strong>
+    O dataset <code>data/docker-volumes</code> está montado em <code>/data/docker-volumes</code>.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># No shell do host Proxmox</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nb">cd</span><span class="w"> </span>/data/docker-volumes/.zfs/snapshot/backup_diario_20230815_0300/nextcloud/config/
+</span></code></pre></div></li>
+<li><strong>Liste os arquivos:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>ls<span class="w"> </span>-l
+</span></code></pre></div>
+    Você deve ver o arquivo <code>config.php</code> como ele existia no momento em que o snapshot <code>backup_diario_20230815_0300</code> foi tirado.</li>
+<li><strong>Copie o arquivo de volta para o dataset ativo (o local original):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>sudo<span class="w"> </span>cp<span class="w"> </span>config.php<span class="w"> </span>/data/docker-volumes/nextcloud/config/config.php
+</span></code></pre></div>
+    Verifique as permissões do arquivo copiado e ajuste se necessário.</li>
+<li>Este método é <strong>não destrutivo</strong> para o estado atual do seu dataset ativo; você está apenas copiando arquivos de uma versão "congelada" do passado.</li>
+</ol>
+</li>
+</ul>
+<h3 id="clonando-um-snapshot-zfs">Clonando um Snapshot ZFS<a class="headerlink" href="#clonando-um-snapshot-zfs" title="Permanent link">¶</a></h3>
+<p>Um clone ZFS cria um novo dataset <strong>gravável</strong> que inicialmente compartilha todos os seus blocos de dados com o snapshot de origem (usando copy-on-write). Alterações feitas no clone são escritas em novos blocos, não afetando o snapshot original nem o dataset de onde o snapshot veio.</p>
+<ul>
+<li><strong>Sintaxe:</strong> <code>sudo zfs clone &lt;pool&gt;/&lt;dataset&gt;@&lt;snapshot_de_origem&gt; &lt;pool&gt;/&lt;novo_dataset_para_o_clone&gt;</code></li>
+<li><strong>Exemplo:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># Criar um clone do estado de 'data/docker-volumes@config_estavel_antes_da_mudanca'</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="c1"># para um novo dataset chamado 'data/docker-volumes_teste_recuperacao'</span>
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>clone<span class="w"> </span>data/docker-volumes@config_estavel_antes_da_mudanca<span class="w"> </span>data/docker-volumes_teste_recuperacao
+</span></code></pre></div></li>
+<li><strong>Casos de Uso:</strong><ul>
+<li><strong>Testar atualizações de software ou configurações arriscadas:</strong> Crie um clone do seu dataset de produção, monte o clone, e realize os testes nele. Se algo der errado, você pode simplesmente destruir o clone sem afetar os dados originais.</li>
+<li><strong>Recuperação de dados granular:</strong> Monte o clone, navegue pelos arquivos, copie o que precisa, e depois destrua o clone.</li>
+<li><strong>Provisionar ambientes de desenvolvimento/teste rapidamente.</strong></li>
+</ul>
+</li>
+<li><strong>Importante sobre Clones e Snapshots de Origem:</strong><ul>
+<li>Um clone mantém uma dependência do seu snapshot de origem. Você <strong>não pode destruir o snapshot de origem</strong> enquanto um clone dele existir.</li>
+<li>Para tornar um clone um dataset independente (rompendo a dependência do snapshot de origem), você pode "promover" o clone usando <code>sudo zfs promote &lt;pool&gt;/&lt;dataset_do_clone&gt;</code>. Após a promoção, o dataset original (de onde o snapshot veio) se torna um clone do dataset promovido, e o snapshot original pode ser destruído se não houver outros dependentes. Isso é mais avançado e geralmente usado em cenários de failover ou divisão de datasets.</li>
+</ul>
+</li>
+</ul>
+<h2 id="4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot">4. Automação de Snapshots ZFS com <code>zfs-auto-snapshot</code><a class="headerlink" href="#4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot" title="Permanent link">¶</a></h2>
+<p>Manter snapshots manualmente é funcional para ações pontuais, mas para uma proteção contínua, a automação é essencial. O pacote <code>zfs-auto-snapshot</code> (geralmente incluído com <code>zfsutils-linux</code> no Debian/Ubuntu, ou disponível como um pacote separado) é uma forma simples de automatizar a criação e a poda (deleção) de snapshots.</p>
+<ul>
+<li><strong>Como Funciona:</strong><ul>
+<li>O pacote <code>zfs-auto-snapshot</code> instala scripts <code>cron</code> que rodam em intervalos predefinidos (e.g., a cada 15 minutos, hora, dia, semana, mês).</li>
+<li>Esses scripts automaticamente tiram snapshots de todos os seus datasets ZFS (a menos que um dataset seja explicitamente excluído) com nomes padronizados que incluem o intervalo e o timestamp (e.g., <code>...@zfs-auto-snap_hourly-2023-08-15-1400</code>).</li>
+<li>Os mesmos scripts também <strong>podam (destroem) snapshots antigos</strong> com base em uma política de retenção configurável (e.g., manter X snapshots horários mais recentes, Y diários, Z semanais, etc.).</li>
+</ul>
+</li>
+<li><strong>Configuração e Uso:</strong><ol>
+<li><strong>Verifique se está Instalado:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>dpkg<span class="w"> </span>-l<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>zfs-auto-snapshot
+</span></code></pre></div>
+    Se não estiver, instale: <code>sudo apt update &amp;&amp; sudo apt install zfs-auto-snapshot</code>.</li>
+<li><strong>Verifique os Scripts Cron:</strong>
+    Olhe em diretórios como <code>/etc/cron.hourly/</code>, <code>/etc/cron.daily/</code>, <code>/etc/cron.weekly/</code>, <code>/etc/cron.monthly/</code> por scripts chamados <code>zfs-auto-snapshot</code>.</li>
+<li><strong>Configuração da Retenção (Pode Variar):</strong><ul>
+<li>A política de retenção (quantos snapshots de cada tipo manter) pode ser definida de algumas maneiras, dependendo da versão/distribuição:<ul>
+<li>Editando diretamente os scripts cron (e.g., <code>/etc/cron.daily/zfs-auto-snapshot</code>). Eles geralmente têm variáveis no topo para <code>HOURLY</code>, <code>DAILY</code>, <code>WEEKLY</code>, <code>MONTHLY</code> que definem quantos manter.</li>
+<li>Algumas instalações podem usar um arquivo de configuração central como <code>/etc/default/zfs-auto-snapshot</code> ou <code>/etc/conf.d/zfs-auto-snapshot</code>.</li>
+<li>Você também pode controlar a política por dataset usando propriedades ZFS, mas isso é menos comum para <code>zfs-auto-snapshot</code> e mais para <code>sanoid</code>.</li>
+</ul>
+</li>
+<li><strong>Exemplo de Retenção (Comum):</strong> Manter 24 snapshots horários, 7 diários, 4 semanais, e 3 mensais. Ajuste conforme suas necessidades de retenção e espaço em disco.</li>
+</ul>
+</li>
+<li><strong>Desabilitar Snapshots Automáticos para um Dataset Específico:</strong>
+    Se você tem um dataset para o qual não quer snapshots automáticos (e.g., um dataset de swap temporário, ou um dataset que já tem sua própria política de snapshot muito específica), você pode desabilitá-los:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span><span class="nb">set</span><span class="w"> </span>com.sun:auto-snapshot<span class="o">=</span><span class="nb">false</span><span class="w"> </span>data/meu_dataset_sem_auto_snap
+</span></code></pre></div>
+    Para habilitar novamente (o padrão é <code>true</code> se a propriedade não estiver definida ou se for herdada):
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Para herdar do pai (se o pai tiver auto-snapshot=true)</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>inherit<span class="w"> </span>com.sun:auto-snapshot<span class="w"> </span>data/meu_dataset_sem_auto_snap
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="c1"># Ou para definir explicitamente como true</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="c1"># sudo zfs set com.sun:auto-snapshot=true data/meu_dataset_sem_auto_snap</span>
+</span></code></pre></div></li>
+<li><strong>Verificando Snapshots Automáticos:</strong>
+    Use <code>sudo zfs list -t snapshot</code> e procure por snapshots com nomes como <code>...@zfs-auto-snap_daily-...</code>.</li>
+</ol>
+</li>
+</ul>
+<div class="admonition tip">
+<p class="admonition-title">Considerando <code>sanoid</code> para Gerenciamento Avançado de Snapshots e Replicação</p>
+<p>Para políticas de snapshot e retenção ainda mais granulares, considere a combinação <a href="https://github.com/jimsalterjrs/sanoid"><strong>Sanoid e Syncoid</strong></a>.</p>
+</div>
+<h2 id="5-consideracoes-importantes-ao-trabalhar-com-snapshots">5. Considerações Importantes ao Trabalhar com Snapshots<a class="headerlink" href="#5-consideracoes-importantes-ao-trabalhar-com-snapshots" title="Permanent link">¶</a></h2>
+<ul>
+<li><strong>Consumo de Espaço em Disco:</strong><ul>
+<li>Snapshots consomem espaço em disco à medida que os dados no dataset ativo divergem do estado capturado pelo snapshot. Se você fizer muitas alterações ou deletar muitos dados, os snapshots mais antigos podem "segurar" uma quantidade significativa de espaço.</li>
+<li><strong>Monitore o espaço usado pelos snapshots regularmente:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>list<span class="w"> </span>-r<span class="w"> </span>-t<span class="w"> </span>snapshot<span class="w"> </span>-o<span class="w"> </span>name,used,refer,creation<span class="w"> </span>-S<span class="w"> </span>used<span class="w"> </span>data
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="c1"># -S used: ordena pelo espaço 'USED' pelo snapshot, do maior para o menor</span>
+</span></code></pre></div></li>
+<li>Ajuste suas políticas de retenção de snapshots (seja do <code>zfs-auto-snapshot</code> ou <code>sanoid</code>) para equilibrar a profundidade do histórico de snapshots com o espaço em disco disponível no seu pool.</li>
+</ul>
+</li>
+<li><strong>Impacto na Performance (Mínimo para a Maioria dos Casos):</strong><ul>
+<li>Tirar um snapshot é uma operação quase instantânea e tem impacto mínimo na performance.</li>
+<li>Ter um número <em>extremamente</em> grande de snapshots (muitos milhares) em um dataset pode, teoricamente, adicionar um pequeno overhead a algumas operações de metadados ZFS. No entanto, para a maioria dos homelabs e com políticas de retenção sensatas (e.g., algumas centenas de snapshots por dataset), isso raramente é um problema perceptível.</li>
+</ul>
+</li>
+<li><strong>Snapshots e Backups são Complementares, Não Substitutos:</strong><ul>
+<li>Reafirmando: Snapshots são fantásticos para recuperação rápida local de erros ou deleções acidentais.</li>
+<li>Eles <strong>NÃO</strong> protegem contra falha física do pool ZFS inteiro (e.g., múltiplos discos falhando além da redundância, falha do controlador, desastre físico no local).</li>
+<li><strong>Sua estratégia de backup completa DEVE incluir a cópia dos seus dados importantes (e/ou dos snapshots ZFS via <code>zfs send</code>) para um local de armazenamento fisicamente separado (outro pool ZFS, um HD externo, um servidor de backup remoto, ou armazenamento em nuvem).</strong></li>
+</ul>
+</li>
+</ul>
+<p>Dominar os snapshots ZFS é uma habilidade valiosa que lhe dará uma grande confiança na integridade dos seus dados e na capacidade de se recuperar de imprevistos. Use-os de forma inteligente e como parte de uma estratégia de proteção de dados mais ampla!</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Última atualização">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+  </span>
+
+    
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Voltar ao topo
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

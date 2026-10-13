@@ -1,12 +1,9 @@
-
-<!doctype html>
-<html lang="pt" class="no-js">
-  <head>
+<!DOCTYPE html><html lang="pt" class="no-js"><head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.">
+        <meta name="description" content="Estratégia de backup 3-2-1 e procedimentos de restauração de VMs, volumes e configurações.">
       
       
         <meta name="author" content="Léo Ivan">
@@ -21,8 +18,11 @@
         <link rel="next" href="../03-cicd-basico-ansible/">
       
       
+        
+      
+      
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
@@ -30,10 +30,10 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -46,13 +46,11 @@
       
         
         
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-    
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -60,17 +58,17 @@
 
     
     
-    
-   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
-    html.glightbox-open { overflow: initial; height: 100%; }
-    .gslide-title { margin-top: 0px; user-select: text; }
-    .gslide-desc { color: #666; user-select: text; }
-    .gslide-image img { background: white; }
-    .gscrollbar-fixer { padding-right: 15px; }
-    .gdesc-inner { font-size: 0.75rem; }
-    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
-    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
-    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
   
   
     
@@ -98,10 +96,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
-    
     
       
 
@@ -110,12 +104,12 @@
     <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -140,20 +134,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
       </label>
     
   
@@ -169,24 +163,24 @@
       
         <label class="md-header__button md-icon" for="__search">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         </label>
         <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
       </label>
       <nav class="md-search__options" aria-label="Pesquisar">
         
         <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
         </button>
       </nav>
       
@@ -194,7 +188,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Inicializando a pesquisa
@@ -212,7 +206,7 @@
         <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -340,38 +334,17 @@
   
   
   
-    
-    
-      <li class="md-tabs__item">
-        <a href="../../05-guia-estudos/" class="md-tabs__link">
-          
-  
-  
-  📚 Guia de Estudos
-
-        </a>
-      </li>
-    
-  
-
-      
+    <li class="md-tabs__item">
+      <a href="../../05-referencia-rapida/" class="md-tabs__link">
         
   
   
-  
-  
     
-    
-      <li class="md-tabs__item">
-        <a href="../../06-solucoes-alternativas/" class="md-tabs__link">
-          
   
-  
-  🔄 Soluções Alternativas
+  📎 Referência
 
-        </a>
-      </li>
-    
+      </a>
+    </li>
   
 
       
@@ -386,7 +359,7 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -400,7 +373,7 @@
     <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
     Wiki do Servidor do Léo Ivan
@@ -410,7 +383,7 @@
       <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -418,7 +391,7 @@
 </a>
     </div>
   
-  <ul class="md-nav__list" data-md-scrollfix>
+  <ul class="md-nav__list" data-md-scrollfix="">
     
       
       
@@ -432,9 +405,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Introdução
+  
+
     
   </span>
+  
   
 
       </a>
@@ -464,7 +442,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2">
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -472,9 +450,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     🚀 Implementação
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -483,9 +466,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            🚀 Implementação
+            
+  
+    🚀 Implementação
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -499,9 +486,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -522,9 +514,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Preparação e Planejamento
+  
+
     
   </span>
+  
   
 
       </a>
@@ -545,9 +542,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Máquina de Controle Ansible
+  
+
     
   </span>
+  
   
 
       </a>
@@ -568,9 +570,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Proxmox VE Host
+  
+
     
   </span>
+  
   
 
       </a>
@@ -591,9 +598,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Provisionamento de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -614,9 +626,14 @@
   
   
   <span class="md-ellipsis">
-    Configuração Base das VMs Ubuntu
+    
+  
+    Configuração Base das VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -637,9 +654,14 @@
   
   
   <span class="md-ellipsis">
-    Rede Segura (Traefik, Cloudflare, Authelia)
+    
+  
+    Rede Segura
+  
+
     
   </span>
+  
   
 
       </a>
@@ -655,14 +677,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/06-deploy-portainer-geral/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/06-deploy-core/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Deploy Geral com Portainer
+    
+  
+    Deploy Core
+  
+
     
   </span>
+  
   
 
       </a>
@@ -678,14 +705,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/07-stack-ia-rag/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/07-deploy-apps/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Stack de IA & RAG
+    
+  
+    Deploy de Apps
+  
+
     
   </span>
+  
   
 
       </a>
@@ -701,60 +733,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/08-stack-midia/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/08-stack-ia/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Stack de Mídia
+    
+  
+    Stack de IA
+  
+
     
   </span>
   
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/09-stack-produtividade-automacao/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Stack de Produtividade & Automação
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/10-stack-monitoramento/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Stack de Monitoramento
-    
-  </span>
   
 
       </a>
@@ -792,7 +783,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3">
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -800,9 +791,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     💡 Arquitetura
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -811,9 +807,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            💡 Arquitetura
+            
+  
+    💡 Arquitetura
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -827,9 +827,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -850,9 +855,14 @@
   
   
   <span class="md-ellipsis">
-    Fluxo de Rede e Acesso Externo
+    
+  
+    Fluxo de Rede
+  
+
     
   </span>
+  
   
 
       </a>
@@ -873,9 +883,14 @@
   
   
   <span class="md-ellipsis">
-    Virtualização (Proxmox)
+    
+  
+    Virtualização
+  
+
     
   </span>
+  
   
 
       </a>
@@ -896,9 +911,14 @@
   
   
   <span class="md-ellipsis">
-    Armazenamento (ZFS, NFS)
+    
+  
+    Armazenamento
+  
+
     
   </span>
+  
   
 
       </a>
@@ -919,9 +939,14 @@
   
   
   <span class="md-ellipsis">
-    Automação (Ansible)
+    
+  
+    Automação
+  
+
     
   </span>
+  
   
 
       </a>
@@ -942,9 +967,14 @@
   
   
   <span class="md-ellipsis">
-    Gerenciamento de Containers (Docker)
+    
+  
+    Containers
+  
+
     
   </span>
+  
   
 
       </a>
@@ -965,9 +995,98 @@
   
   
   <span class="md-ellipsis">
-    Princípios de Segurança Aplicados
+    
+  
+    Segurança
+  
+
     
   </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estratégia LLM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catálogo de Aplicações
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/10-indice-integracoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Índice de Integrações
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -1005,7 +1124,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4">
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
@@ -1013,9 +1132,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     🛠️ Sustentação
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -1024,9 +1148,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            🛠️ Sustentação
+            
+  
+    🛠️ Sustentação
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1040,9 +1168,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1063,9 +1196,14 @@
   
   
   <span class="md-ellipsis">
-    Adicionando Novo Serviço Docker
+    
+  
+    Novo Serviço Docker
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1086,9 +1224,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Modificando Configurações
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1109,9 +1252,14 @@
   
   
   <span class="md-ellipsis">
-    Troubleshooting Comum
+    
+  
+    Troubleshooting
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1132,9 +1280,14 @@
   
   
   <span class="md-ellipsis">
-    Gerenciando Redes Docker
+    
+  
+    Redes Docker
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1155,9 +1308,14 @@
   
   
   <span class="md-ellipsis">
-    Passthrough de Hardware Adicional
+    
+  
+    Passthrough de Hardware
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1178,9 +1336,14 @@
   
   
   <span class="md-ellipsis">
-    6. Gerenciando Recursos de VMs
+    
+  
+    Recursos de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1201,9 +1364,14 @@
   
   
   <span class="md-ellipsis">
-    7. Cenários Específicos de Criação de VMs
+    
+  
+    Cenários de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1224,9 +1392,14 @@
   
   
   <span class="md-ellipsis">
-    8. Compartilhando Recursos entre VMs
+    
+  
+    Recursos entre VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1247,9 +1420,14 @@
   
   
   <span class="md-ellipsis">
-    9. Integrando Novos Serviços a Stacks Existentes
+    
+  
+    Integrando Serviços
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1270,9 +1448,14 @@
   
   
   <span class="md-ellipsis">
-    10. Atualização Segura de Componentes Críticos
+    
+  
+    Atualização Segura
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1293,9 +1476,70 @@
   
   
   <span class="md-ellipsis">
-    11. Hospedando Aplicação Pública no Domínio
+    
+  
+    App no Domínio Raiz
+  
+
     
   </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../03-guias-sustentacao/13-usando-geminicli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini CLI
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -1336,7 +1580,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked="">
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
@@ -1344,9 +1588,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     ⚙️ Manutenção
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -1355,9 +1604,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção
+            
+  
+    ⚙️ Manutenção
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1371,9 +1624,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1394,9 +1652,14 @@
   
   
   <span class="md-ellipsis">
-    Rotinas de Manutenção
+    
+  
+    Rotinas
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1426,9 +1689,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Backup e Restore
+  
+
     
   </span>
+  
   
 
           <span class="md-nav__icon md-icon"></span>
@@ -1439,9 +1707,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Backup e Restore
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1459,40 +1732,48 @@
       <span class="md-nav__icon md-icon"></span>
       Índice
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#a-regra-de-ouro-3-2-1" class="md-nav__link">
+  <a href="#a-regra-de-ouro-dos-backups-3-2-1" class="md-nav__link">
     <span class="md-ellipsis">
-      A Regra de Ouro: 3-2-1
+      
+        A Regra de Ouro dos Backups: 3-2-1
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#o-que-fazer-backup-e-como" class="md-nav__link">
+  <a href="#o-que-fazer-backup-e-como-implementar" class="md-nav__link">
     <span class="md-ellipsis">
-      O Que Fazer Backup e Como
+      
+        O Que Fazer Backup e Como Implementar
+      
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="O Que Fazer Backup e Como">
+    <nav class="md-nav" aria-label="O Que Fazer Backup e Como Implementar">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#1-configuracao-do-host-proxmox-ve" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Configuração do Host Proxmox VE
+      
+        1. Configuração do Host Proxmox VE
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-maquinas-virtuais-vms-do-proxmox" class="md-nav__link">
+  <a href="#2-maquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Máquinas Virtuais (VMs) do Proxmox
+      
+        2. Máquinas Virtuais (VMs) do Proxmox (core-services-vm, ai-desktop-vm)
+      
     </span>
   </a>
   
@@ -1501,34 +1782,42 @@
           <li class="md-nav__item">
   <a href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Dados Persistentes dos Containers Docker (Volumes NFS)
+      
+        3. Dados Persistentes dos Containers Docker (Volumes NFS)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-zfs-snapshots-no-host-proxmox" class="md-nav__link">
+  <a href="#4-zfs-snapshots-protecao-local-rapida-no-host-proxmox" class="md-nav__link">
     <span class="md-ellipsis">
-      4. ZFS Snapshots (no Host Proxmox)
+      
+        4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-repositorio-ansible-git" class="md-nav__link">
+  <a href="#5-repositorio-ansible-git-home-server" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Repositório Ansible Git
+      
+        5. Repositório Ansible Git (home-server/)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-copia-off-site-essencial-para-a-regra-3-2-1" class="md-nav__link">
+  <a href="#6-copia-off-site-essencial-para-cumprir-a-regra-3-2-1" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Cópia Off-site (Essencial para a Regra 3-2-1)
+      
+        6. Cópia Off-site (Essencial para Cumprir a Regra 3-2-1)
+      
     </span>
   </a>
   
@@ -1540,11 +1829,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testando-seus-backups" class="md-nav__link">
+  <a href="#testando-seus-backups-e-procedimentos-de-restauracao" class="md-nav__link">
     <span class="md-ellipsis">
-      Testando Seus Backups
+      
+        Testando Seus Backups e Procedimentos de Restauração
+      
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Testando Seus Backups e Procedimentos de Restauração">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5-backup-off-site-para-a-nuvem-google-cloud-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Backup Off-site para a Nuvem (Google Cloud Storage)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1569,9 +1877,14 @@
   
   
   <span class="md-ellipsis">
-    CI/CD Básico Ansible
+    
+  
+    CI/CD Ansible
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1592,9 +1905,14 @@
   
   
   <span class="md-ellipsis">
-    Reconstruindo a Infraestrutura
+    
+  
+    Reconstruindo
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1615,9 +1933,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Migrando Hardware/Rede
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1639,537 +1962,23 @@
   
   
   
-    
-    
-    
-    
-      
-      
+    <li class="md-nav__item">
+      <a href="../../05-referencia-rapida/" class="md-nav__link">
         
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
   
   
   <span class="md-ellipsis">
-    📚 Guia de Estudos
     
-  </span>
+  
+    📎 Referência
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
-            📚 Guia de Estudos
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Visão Geral
     
   </span>
+  
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    1. Aprofundamento em Proxmox VE
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/02-aprofundamento-zfs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    2. Aprofundamento em ZFS
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/03-aprofundamento-ansible/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    3. Aprofundamento em Ansible
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/04-aprofundamento-docker-networking/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    4. Aprofundamento em Docker Networking
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    5. Aprofundamento em Traefik e Authelia
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/06-seguranca-avancada-homelab/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    6. Aprofundamento em Segurança Avançada para Homelab
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/07-introducao-kubernetes-k3s/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    7. Aprofundamento em Kubernetes
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    8. Gerenciamento Avançado de Segredos
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    🔄 Soluções Alternativas
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
-            <span class="md-nav__icon md-icon"></span>
-            🔄 Soluções Alternativas
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Visão Geral
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/01-hypervisors/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    1. Hypervisors
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/02-automacao-config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    2. Automação de Configurações
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/03-gerenciamento-containers/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    3. Gerenciamento de Containers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/04-proxy-reverso/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    4. Proxy Reverso
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/05-acesso-externo/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    5. Acesso Externo
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/06-autenticacao-sso/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    6. Autenticação SSO
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/07-servidores-midia/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    7. Servidores de Mídia
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    8. Sincronização de Arquivos
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/09-monitoramento-logs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    9. Monitoramento e Logs
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -2182,7 +1991,7 @@
             
             
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -2198,40 +2007,48 @@
       <span class="md-nav__icon md-icon"></span>
       Índice
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#a-regra-de-ouro-3-2-1" class="md-nav__link">
+  <a href="#a-regra-de-ouro-dos-backups-3-2-1" class="md-nav__link">
     <span class="md-ellipsis">
-      A Regra de Ouro: 3-2-1
+      
+        A Regra de Ouro dos Backups: 3-2-1
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#o-que-fazer-backup-e-como" class="md-nav__link">
+  <a href="#o-que-fazer-backup-e-como-implementar" class="md-nav__link">
     <span class="md-ellipsis">
-      O Que Fazer Backup e Como
+      
+        O Que Fazer Backup e Como Implementar
+      
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="O Que Fazer Backup e Como">
+    <nav class="md-nav" aria-label="O Que Fazer Backup e Como Implementar">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#1-configuracao-do-host-proxmox-ve" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Configuração do Host Proxmox VE
+      
+        1. Configuração do Host Proxmox VE
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-maquinas-virtuais-vms-do-proxmox" class="md-nav__link">
+  <a href="#2-maquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Máquinas Virtuais (VMs) do Proxmox
+      
+        2. Máquinas Virtuais (VMs) do Proxmox (core-services-vm, ai-desktop-vm)
+      
     </span>
   </a>
   
@@ -2240,34 +2057,42 @@
           <li class="md-nav__item">
   <a href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Dados Persistentes dos Containers Docker (Volumes NFS)
+      
+        3. Dados Persistentes dos Containers Docker (Volumes NFS)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-zfs-snapshots-no-host-proxmox" class="md-nav__link">
+  <a href="#4-zfs-snapshots-protecao-local-rapida-no-host-proxmox" class="md-nav__link">
     <span class="md-ellipsis">
-      4. ZFS Snapshots (no Host Proxmox)
+      
+        4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#5-repositorio-ansible-git" class="md-nav__link">
+  <a href="#5-repositorio-ansible-git-home-server" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Repositório Ansible Git
+      
+        5. Repositório Ansible Git (home-server/)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#6-copia-off-site-essencial-para-a-regra-3-2-1" class="md-nav__link">
+  <a href="#6-copia-off-site-essencial-para-cumprir-a-regra-3-2-1" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Cópia Off-site (Essencial para a Regra 3-2-1)
+      
+        6. Cópia Off-site (Essencial para Cumprir a Regra 3-2-1)
+      
     </span>
   </a>
   
@@ -2279,11 +2104,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testando-seus-backups" class="md-nav__link">
+  <a href="#testando-seus-backups-e-procedimentos-de-restauracao" class="md-nav__link">
     <span class="md-ellipsis">
-      Testando Seus Backups
+      
+        Testando Seus Backups e Procedimentos de Restauração
+      
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Testando Seus Backups e Procedimentos de Restauração">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5-backup-off-site-para-a-nuvem-google-cloud-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Backup Off-site para a Nuvem (Google Cloud Storage)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2297,6 +2141,7 @@
           
           
             <div class="md-content" data-md-component="content">
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -2306,296 +2151,472 @@
   
 
 
-<h1 id="estrategia-de-backup-e-procedimentos-de-restauracao">Estratégia de Backup e Procedimentos de Restauração<a class="headerlink" href="#estrategia-de-backup-e-procedimentos-de-restauracao" title="Permanent link">&para;</a></h1>
-<p>Uma estratégia de backup abrangente e testada é a sua rede de segurança contra perda de dados devido a falhas de hardware, corrupção de software, erros humanos ou ataques maliciosos (como ransomware). Este guia detalha o que fazer backup, como fazê-lo e, crucialmente, como restaurar.</p>
-<h2 id="a-regra-de-ouro-3-2-1">A Regra de Ouro: 3-2-1<a class="headerlink" href="#a-regra-de-ouro-3-2-1" title="Permanent link">&para;</a></h2>
-<p>Lembre-se sempre da regra 3-2-1 para backups:</p>
+<h1 id="estrategia-de-backup-e-procedimentos-de-restauracao">Estratégia de Backup e Procedimentos de Restauração<a class="headerlink" href="#estrategia-de-backup-e-procedimentos-de-restauracao" title="Permanent link">¶</a></h1>
+<p>Uma estratégia de backup abrangente, bem planejada e regularmente testada é a sua apólice de seguro mais valiosa contra a perda de dados. Falhas de hardware, corrupção de software, erros humanos, ou até mesmo eventos maliciosos como ransomware podem ocorrer, e ter backups confiáveis é o que determinará se você pode se recuperar completamente ou se enfrentará uma perda de dados catastrófica.</p>
+<p>Este guia detalha o que fazer backup em nossa arquitetura de servidor doméstico, como implementar os backups para cada componente, e, crucialmente, os procedimentos para restaurar a partir desses backups.</p>
+<h2 id="a-regra-de-ouro-dos-backups-3-2-1">A Regra de Ouro dos Backups: 3-2-1<a class="headerlink" href="#a-regra-de-ouro-dos-backups-3-2-1" title="Permanent link">¶</a></h2>
+<p>Lembre-se sempre da <strong>regra 3-2-1</strong> para backups, um princípio fundamental na proteção de dados:</p>
 <ul>
-<li><strong>3 Cópias dos Dados:</strong> Tenha pelo menos três cópias de qualquer dado importante (o original + dois backups).</li>
-<li><strong>2 Mídias Diferentes:</strong> Armazene as cópias em pelo menos dois tipos diferentes de mídia de armazenamento (e.g., HD interno, HD externo, fita, armazenamento em nuvem).</li>
-<li><strong>1 Cópia Off-site:</strong> Mantenha pelo menos uma cópia do backup fisicamente separada do local original (e.g., na nuvem, na casa de um amigo/familiar, em um cofre).</li>
+<li><strong>3 Cópias dos Dados:</strong> Mantenha pelo menos <strong>TRÊS</strong> cópias de qualquer dado importante. Isso inclui o dado original (em produção) e pelo menos dois backups.</li>
+<li><strong>2 Mídias Diferentes:</strong> Armazene essas cópias em pelo menos <strong>DOIS</strong> tipos diferentes de mídia de armazenamento. Por exemplo:<ul>
+<li>HD interno do servidor (para o original).</li>
+<li>HDs do pool ZFS <code>/data</code> (para backups locais de VMs, snapshots ZFS).</li>
+<li>Um HD externo USB.</li>
+<li>Armazenamento em nuvem.</li>
+<li>Outro servidor NAS na sua rede.</li>
+</ul>
+</li>
+<li><strong>1 Cópia Off-site:</strong> Mantenha pelo menos <strong>UMA</strong> cópia do backup fisicamente separada do local original do seu servidor (e.g., na nuvem, na casa de um amigo ou familiar de confiança, em um cofre à prova de fogo em outro local). Isso protege contra desastres locais como incêndio, roubo ou inundação.</li>
 </ul>
 <div class="admonition critical">
-<p class="admonition-title">Teste Seus Backups!</p>
-<p>Um backup não testado é pouco melhor que nenhum backup. <strong>Regularmente teste seu processo de restauração</strong> para garantir que você pode recuperar seus dados quando precisar.</p>
+<p class="admonition-title">Backups Não Testados São Backups Que Podem Falhar!</p>
+<p>Um backup só é útil se você sabe que pode restaurá-lo com sucesso. <strong>TESTE SEUS PROCEDIMENTOS DE RESTAURAÇÃO REGULARMENTE!</strong> Não espere um desastre real para descobrir que seus backups estão corrompidos ou que você não sabe como usá-los. Consulte a seção <a href="../01-rotinas-manutencao/#6-verificação-e-teste-de-backups">Rotinas de Manutenção Essenciais</a> para dicas sobre testes.</p>
 </div>
-<h2 id="o-que-fazer-backup-e-como">O Que Fazer Backup e Como<a class="headerlink" href="#o-que-fazer-backup-e-como" title="Permanent link">&para;</a></h2>
-<p>Vamos detalhar o backup para cada componente crítico da nossa infraestrutura:</p>
-<h3 id="1-configuracao-do-host-proxmox-ve">1. Configuração do Host Proxmox VE<a class="headerlink" href="#1-configuracao-do-host-proxmox-ve" title="Permanent link">&para;</a></h3>
-<p>Isto inclui as configurações do próprio hypervisor, rede, ZFS, NFS, etc.</p>
+<h2 id="o-que-fazer-backup-e-como-implementar">O Que Fazer Backup e Como Implementar<a class="headerlink" href="#o-que-fazer-backup-e-como-implementar" title="Permanent link">¶</a></h2>
+<p>Vamos detalhar a estratégia de backup para cada componente crítico da nossa infraestrutura:</p>
+<h3 id="1-configuracao-do-host-proxmox-ve">1. Configuração do Host Proxmox VE<a class="headerlink" href="#1-configuracao-do-host-proxmox-ve" title="Permanent link">¶</a></h3>
+<p>Isto inclui as configurações do próprio hypervisor Proxmox VE, definições de rede do host, configurações ZFS, NFS, e outros arquivos de sistema importantes.</p>
 <ul>
-<li><strong>O Que Fazer Backup:</strong><ul>
-<li><code>/etc/pve/</code> (configurações de VMs, storage, cluster)</li>
-<li><code>/etc/hostname</code>, <code>/etc/hosts</code></li>
-<li><code>/etc/network/interfaces</code> (configuração de rede do host)</li>
-<li><code>/etc/resolv.conf</code> (se não gerenciado por DHCP/systemd-resolved)</li>
-<li><code>/etc/default/grub</code>, <code>/etc/kernel/cmdline</code> (opções de boot)</li>
-<li><code>/etc/modules</code>, <code>/etc/modprobe.d/</code> (módulos do kernel, blacklists)</li>
-<li><code>/etc/cron*</code> (tarefas agendadas do host)</li>
-<li><code>/etc/ssh/sshd_config</code> (configuração do servidor SSH)</li>
-<li><code>/etc/smartd.conf</code> (configuração do S.M.A.R.T.)</li>
-<li><code>/etc/zfs/</code> (configuração do ZFS, embora o pool em si seja mais importante)</li>
-<li><code>/etc/exports</code> (configuração do servidor NFS)</li>
-<li>Outros arquivos de configuração importantes que você possa ter modificado.</li>
+<li><strong>O Que Fazer Backup (Arquivos e Diretórios Chave no Host Proxmox):</strong><ul>
+<li><code>/etc/pve/</code> (Contém a configuração do cluster Proxmox, definições de VMs, storage, etc. <strong>MUITO IMPORTANTE!</strong>)</li>
+<li><code>/etc/hostname</code></li>
+<li><code>/etc/hosts</code></li>
+<li><code>/etc/network/interfaces</code> (Configuração de rede do host)</li>
+<li><code>/etc/resolv.conf</code> (Se não for gerenciado dinamicamente)</li>
+<li><code>/etc/default/grub</code> (Opções de boot do kernel, importantes para IOMMU)</li>
+<li><code>/etc/kernel/cmdline</code> (Se usado para opções de kernel)</li>
+<li><code>/etc/modules</code> e <code>/etc/modprobe.d/</code> (Módulos do kernel e blacklists, importantes para passthrough)</li>
+<li><code>/etc/cron*</code> (Tarefas agendadas do host)</li>
+<li><code>/etc/ssh/sshd_config</code> (Configuração do servidor SSH do host)</li>
+<li><code>/etc/smartd.conf</code> (Configuração do monitoramento S.M.A.R.T. de discos)</li>
+<li><code>/etc/zfs/</code> (Configuração do ZFS, embora os metadados do pool estejam nos discos)</li>
+<li><code>/etc/exports</code> (Configuração do servidor NFS, gerada por Ansible)</li>
+<li><code>/etc/systemd/system/ollama.service.d/override.conf</code> (Se você instalou Ollama diretamente no host e customizou o serviço)</li>
+<li>Quaisquer outros arquivos de configuração importantes que você tenha modificado manualmente no host.</li>
 </ul>
 </li>
 <li><strong>Como Fazer Backup (Script Agendado no Host Proxmox):</strong><ul>
-<li>Crie um script, por exemplo, <code>/usr/local/sbin/backup_proxmox_host_config.sh</code>:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ch">#!/bin/bash</span>
+<li>Use um script para arquivar esses arquivos e diretórios importantes em um arquivo <code>.tar.gz</code> e salvá-lo no seu dataset de backups ZFS (e.g., <code>/data/backups/proxmox_host_config/</code>).</li>
+<li><strong>Exemplo de Script (<code>/usr/local/sbin/backup_proxmox_host_config.sh</code> no host Proxmox):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ch">#!/bin/bash</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># /usr/local/sbin/backup_proxmox_host_config.sh</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Destino do backup (no pool ZFS /data/backups)</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nv">BACKUP_BASE_DIR</span><span class="o">=</span><span class="s2">&quot;{{ zfs_base_pool_path }}/{{ zfs_backups_dataset_name }}&quot;</span><span class="w"> </span><span class="c1"># e.g., /data/backups</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nv">BACKUP_DEST</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">BACKUP_BASE_DIR</span><span class="si">}</span><span class="s2">/proxmox_host_config&quot;</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nv">TIMESTAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nv">FILENAME</span><span class="o">=</span><span class="s2">&quot;proxmox_etc_backup_</span><span class="si">${</span><span class="nv">TIMESTAMP</span><span class="si">}</span><span class="s2">.tar.gz&quot;</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DEST</span><span class="s2">&quot;</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Iniciando backup da configuração do host Proxmox para </span><span class="si">${</span><span class="nv">BACKUP_DEST</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="s2">...&quot;</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Destino do backup (no pool ZFS /data/backups, que deve ser um dataset separado)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># As variáveis {{ zfs_base_pool_path }} e {{ zfs_backups_dataset_name }} são do Ansible,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># aqui usamos os valores literais ou definimos variáveis no script.</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nv">ZFS_BASE_POOL_PATH</span><span class="o">=</span><span class="s2">"/data"</span><span class="w"> </span><span class="c1"># Ou o que você definiu</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nv">ZFS_BACKUPS_DATASET_NAME</span><span class="o">=</span><span class="s2">"backups"</span><span class="w"> </span><span class="c1"># Ou o que você definiu</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nv">BACKUP_DEST_PARENT</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">ZFS_BASE_POOL_PATH</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">ZFS_BACKUPS_DATASET_NAME</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="nv">BACKUP_DEST</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">BACKUP_DEST_PARENT</span><span class="si">}</span><span class="s2">/proxmox_host_config"</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nv">TIMESTAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nv">FILENAME</span><span class="o">=</span><span class="s2">"proxmox_etc_backup_</span><span class="si">${</span><span class="nv">TIMESTAMP</span><span class="si">}</span><span class="s2">.tar.gz"</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>tar<span class="w"> </span>czfP<span class="w"> </span><span class="si">${</span><span class="nv">BACKUP_DEST</span><span class="si">}</span>/<span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span>/etc/pve<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span>/etc/hostname<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span>/etc/hosts<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span>/etc/network/interfaces<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span>/etc/resolv.conf<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">    </span>/etc/default/grub<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">    </span>/etc/kernel/cmdline<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">    </span>/etc/modules<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">    </span>/etc/modprobe.d<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">    </span>/etc/cron*<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span>/etc/issue*<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">    </span>/etc/ssh/sshd_config<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">    </span>/etc/smartd.conf<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">    </span>/etc/zfs<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">    </span>/etc/exports<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">    </span>/etc/systemd/system/ollama.service.d/override.conf<span class="w"> </span><span class="c1"># Se Ollama no host</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">    </span><span class="c1"># Adicione outros arquivos/diretórios importantes</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Backup da configuração do host Proxmox concluído com sucesso.&quot;</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">  </span><span class="c1"># Opcional: Remover backups antigos (e.g., manter os últimos 7)</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">  </span>find<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_DEST</span><span class="s2">&quot;</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;proxmox_etc_backup_*.tar.gz&quot;</span><span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="k">else</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERRO: Backup da configuração do host Proxmox falhou.&quot;</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="w">  </span><span class="c1"># Adicione notificação por email aqui se desejar</span>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="k">fi</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Garante que o diretório de destino exista</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_DEST</span><span class="s2">"</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Iniciando backup da configuração do host Proxmox para </span><span class="si">${</span><span class="nv">BACKUP_DEST</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="s2">..."</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Lista de arquivos e diretórios a serem backupeados</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># O -P no tar preserva os caminhos absolutos, mas ao restaurar é melhor</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1"># extrair para um local temporário e copiar seletivamente.</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># Usar --transform='s,^etc,etc_backup,' pode ser mais seguro para extração.</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1"># Para simplicidade aqui, vamos usar caminhos relativos a /etc ou absolutos com cuidado.</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1"># É mais seguro fazer backup de /etc e depois selecionar o que restaurar.</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="c1"># Ou listar explicitamente:</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="nv">PATHS_TO_BACKUP</span><span class="o">=</span><span class="s2">"</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="s2">/etc/pve</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="s2">/etc/hostname</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="s2">/etc/hosts</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="s2">/etc/network/interfaces</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="s2">/etc/resolv.conf</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="s2">/etc/default/grub</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="s2">/etc/kernel/cmdline</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="s2">/etc/modules</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="s2">/etc/modprobe.d</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="s2">/etc/cron.allow</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="s2">/etc/cron.deny</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="s2">/etc/cron.d</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="s2">/etc/cron.daily</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="s2">/etc/cron.hourly</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="s2">/etc/cron.monthly</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="s2">/etc/cron.weekly</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="s2">/etc/crontab</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="s2">/etc/issue</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="s2">/etc/issue.net</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="s2">/etc/ssh/sshd_config</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="s2">/etc/smartd.conf</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="s2">/etc/zfs</span>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="s2">/etc/exports</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="s2">/etc/systemd/system/ollama.service.d/override.conf</span>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="s2">"</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="c1"># Outros locais importantes podem incluir /root (para scripts), /usr/local/sbin (para scripts customizados)</span>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>tar<span class="w"> </span>czfP<span class="w"> </span><span class="si">${</span><span class="nv">BACKUP_DEST</span><span class="si">}</span>/<span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">PATHS_TO_BACKUP</span><span class="si">}</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="c1"># Alternativa mais segura para restauração: cd / &amp;&amp; tar czf ${BACKUP_DEST}/${FILENAME} etc/pve etc/hostname ...</span>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a>
+</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup da configuração do host Proxmox concluído com sucesso: </span><span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a><span class="w">  </span><span class="c1"># Opcional: Remover backups antigos deste tipo (e.g., manter os últimos 7)</span>
+</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a><span class="w">  </span>find<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_DEST</span><span class="s2">"</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">"proxmox_etc_backup_*.tar.gz"</span><span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete
+</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a><span class="k">else</span>
+</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup da configuração do host Proxmox falhou."</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a><span class="w">  </span><span class="c1"># Adicione aqui uma notificação por email ou outro método, se desejar.</span>
+</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64" href="#__codelineno-0-64"></a><span class="k">fi</span>
 </span></code></pre></div></li>
-<li>Torne executável: <code>sudo chmod +x /usr/local/sbin/backup_proxmox_host_config.sh</code>.</li>
-<li>Agende com <code>cron</code> (e.g., <code>sudo crontab -e</code>):
-    <code>0 3 * * * /usr/local/sbin/backup_proxmox_host_config.sh</code> (Todo dia às 3 AM).</li>
+<li><strong>Agendamento:</strong> Torne o script executável (<code>sudo chmod +x ...</code>) e agende-o com <code>cron</code> para rodar diariamente (e.g., <code>sudo crontab -e</code> e adicione <code>0 3 * * * /usr/local/sbin/backup_proxmox_host_config.sh</code>).</li>
 </ul>
 </li>
-<li><strong>Como Restaurar:</strong><ol>
-<li>Após uma reinstalação limpa do Proxmox VE (mesma versão ou compatível).</li>
-<li>Copie o arquivo <code>.tar.gz</code> de backup para o novo host.</li>
-<li>Extraia com cuidado os arquivos para seus locais originais. <strong>Seja MUITO CUIDADOSO ao sobrescrever arquivos existentes.</strong> É melhor restaurar seletivamente o que você precisa.</li>
-<li>Pode ser necessário ajustar configurações (e.g., <code>interfaces</code> de rede se o hardware mudou).</li>
-<li>Reboot.</li>
+<li><strong>Como Restaurar a Configuração do Host Proxmox:</strong><ol>
+<li>Este é um cenário de recuperação de desastre, geralmente após uma reinstalação limpa do Proxmox VE no mesmo hardware ou em um novo (consulte <a href="../04-reconstruindo-infraestrutura/">Reconstruindo a Infraestrutura</a>).</li>
+<li>Copie o arquivo <code>.tar.gz</code> de backup mais recente para o novo host Proxmox (e.g., para <code>/tmp</code>).</li>
+<li><strong>Com MUITO CUIDADO</strong>, extraia seletivamente os arquivos e diretórios necessários. <strong>Não sobrescreva tudo cegamente</strong>, especialmente se o hardware ou a versão do Proxmox mudaram.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>/tmp
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>tar<span class="w"> </span>xzf<span class="w"> </span>proxmox_etc_backup_YYYYMMDD-HHMMSS.tar.gz
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Agora você terá uma estrutura como etc/pve, etc/network, etc. em /tmp</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Copie seletivamente para os locais corretos, e.g.:</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># sudo cp -ar /tmp/etc/pve/* /etc/pve/  (MUITO CUIDADO com este, pode ser melhor restaurar VMs de seus backups)</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># sudo cp /tmp/etc/network/interfaces /etc/network/interfaces (Verifique se os nomes das interfaces são os mesmos)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># sudo cp /tmp/etc/exports /etc/exports</span>
+</span></code></pre></div></li>
+<li>Pode ser necessário ajustar configurações (e.g., nomes de interface de rede em <code>/etc/network/interfaces</code> se o hardware mudou) antes de reiniciar serviços ou o host.</li>
+<li>Reboot o host Proxmox após restaurar arquivos críticos do sistema.</li>
 </ol>
 </li>
 </ul>
-<h3 id="2-maquinas-virtuais-vms-do-proxmox">2. Máquinas Virtuais (VMs) do Proxmox<a class="headerlink" href="#2-maquinas-virtuais-vms-do-proxmox" title="Permanent link">&para;</a></h3>
-<p>Proxmox VE tem um sistema de backup integrado excelente.</p>
+<h3 id="2-maquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm">2. Máquinas Virtuais (VMs) do Proxmox (<code>core-services-vm</code>, <code>ai-desktop-vm</code>)<a class="headerlink" href="#2-maquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm" title="Permanent link">¶</a></h3>
+<p>Proxmox VE tem um sistema de backup integrado robusto para VMs.</p>
 <ul>
-<li><strong>Como Fazer Backup:</strong><ul>
-<li><strong>Via Interface Web do Proxmox:</strong><ol>
-<li>Datacenter -&gt; Backup -&gt; Add.</li>
-<li><strong>Node:</strong> Selecione seu host Proxmox.</li>
-<li><strong>Storage:</strong> Selecione o storage de destino para os backups. Crie um "Directory" storage no Proxmox apontando para o seu dataset ZFS de backups (e.g., <code>/data/backups/vms</code>).</li>
-<li><strong>Schedule:</strong> Defina a frequência (e.g., diário, semanal).</li>
-<li><strong>Selection mode:</strong> Escolha as VMs a serem incluídas.</li>
-<li><strong>Mode:</strong> <code>Snapshot</code> (consistente para VMs rodando). <code>Suspend</code> ou <code>Stop</code> são mais consistentes mas causam downtime.</li>
-<li><strong>Compression:</strong> <code>ZSTD (good)</code> é uma boa escolha.</li>
-<li><strong>Retention:</strong> Defina quantas cópias manter (e.g., 7 diárias, 4 semanais, 3 mensais).</li>
+<li><strong>Como Fazer Backup (Recomendado: via UI Proxmox para Agendamento):</strong><ol>
+<li><strong>Configure um Storage de Backup no Proxmox:</strong><ul>
+<li>Na UI web do Proxmox: Datacenter -&gt; Storage -&gt; Add -&gt; Directory.</li>
+<li><strong>ID:</strong> Dê um nome (e.g., <code>local_zfs_backups</code>).</li>
+<li><strong>Directory:</strong> Especifique o caminho no host Proxmox para o seu dataset ZFS de backups (e.g., <code>{{ zfs_base_pool_path }}/{{ zfs_backups_dataset_name }}/vms</code> que seria <code>/data/backups/vms</code>). Crie este subdiretório <code>vms</code> se não existir.</li>
+<li><strong>Content:</strong> Selecione <strong>APENAS "VZDump backup file"</strong>.</li>
+<li><strong>Max Backups:</strong> Você pode definir uma retenção aqui, mas é melhor gerenciar a retenção no próprio job de backup.</li>
+</ul>
+</li>
+<li><strong>Crie um Job de Backup Agendado:</strong><ul>
+<li>Na UI web do Proxmox: Datacenter -&gt; Backup -&gt; Add.</li>
+<li><strong>Node:</strong> Selecione seu nó Proxmox (<code>pve</code>).</li>
+<li><strong>Storage:</strong> Escolha o storage de backup que você acabou de configurar (e.g., <code>local_zfs_backups</code>).</li>
+<li><strong>Schedule:</strong> Defina a frequência (e.g., <code>Diariamente às 02:00</code>).</li>
+<li><strong>Selection mode:</strong> "Include selected VMs". Selecione suas VMs (<code>core-services-vm</code>, <code>ai-desktop-vm</code>).</li>
+<li><strong>Mode:</strong><ul>
+<li><code>Snapshot</code>: Recomendado. Cria um snapshot da VM em execução e faz o backup a partir dele. Consistente para a maioria das cargas de trabalho. Mínimo downtime.</li>
+<li><code>Suspend</code>: Suspende a VM, faz o backup e depois retoma. Mais consistente, mas causa um breve downtime.</li>
+<li><code>Stop</code>: Desliga a VM, faz o backup e depois religa (se configurado). Máxima consistência, maior downtime.</li>
+</ul>
+</li>
+<li><strong>Compression:</strong> <code>ZSTD (good)</code> é geralmente uma boa escolha, oferecendo boa compressão com velocidade razoável.</li>
+<li><strong>Retention:</strong> Configure quantas cópias de backup manter (e.g., Keep last: 7 diárias, Keep weekly: 4, Keep monthly: 3). Proxmox podará os backups antigos automaticamente.</li>
+<li><strong>Email Notification:</strong> Configure para receber emails sobre o status dos backups.</li>
+</ul>
+</li>
 </ol>
 </li>
-<li><strong>Via Linha de Comando (<code>vzdump</code> no host Proxmox):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Exemplo para fazer backup da VM 100 para /data/backups/vms</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>vzdump<span class="w"> </span><span class="m">100</span><span class="w"> </span>--storage<span class="w"> </span>local_backup_storage<span class="w"> </span>--mode<span class="w"> </span>snapshot<span class="w"> </span>--compress<span class="w"> </span>zstd<span class="w"> </span>--notes-template<span class="w"> </span><span class="s2">&quot;Backup {{vmid}} {{ ટકાવારી }}&quot;</span>
-</span></code></pre></div>
-    (Assumindo que <code>local_backup_storage</code> está configurado no Proxmox para <code>/data/backups/vms</code>).</li>
+<li><strong>Como Restaurar uma VM:</strong><ol>
+<li>Na UI web do Proxmox:<ul>
+<li>Selecione o <strong>storage de backup</strong> na árvore à esquerda (e.g., <code>local_zfs_backups</code>).</li>
+<li>A aba "Backups" listará os arquivos de backup disponíveis.</li>
+<li>Selecione o arquivo de backup da VM que você deseja restaurar.</li>
+<li>Clique no botão "<strong>Restore</strong>".</li>
 </ul>
 </li>
-<li><strong>Como Restaurar:</strong><ul>
-<li><strong>Via Interface Web do Proxmox:</strong><ol>
-<li>Selecione o storage de backup onde o arquivo de backup da VM está.</li>
-<li>Encontre o arquivo de backup -&gt; "Restore".</li>
-<li>Escolha o VMID para a VM restaurada (pode ser o original ou um novo).</li>
-<li>Configure outras opções se necessário.</li>
+<li>No diálogo "Restore":<ul>
+<li><strong>VM ID:</strong> Você pode restaurar para o VM ID original (sobrescrevendo a VM existente, se houver e estiver desligada) ou para um <strong>novo VM ID</strong> (criando uma nova VM a partir do backup).</li>
+<li><strong>Storage:</strong> Escolha onde o disco da VM restaurada será armazenado (e.g., <code>local-lvm</code>).</li>
+<li>Outras opções como <code>MAC address</code> (gerar novo ou usar o do backup), <code>Start after restore</code>.</li>
+</ul>
+</li>
+<li>Clique em "Restore". Monitore a tarefa na parte inferior da UI.</li>
 </ol>
 </li>
-<li><strong>Via Linha de Comando (<code>qmrestore</code> no host Proxmox):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Exemplo para restaurar um backup para a VM 105</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>qmrestore<span class="w"> </span>/data/backups/vms/vzdump-qemu-100-YYYY_MM_DD-HH_MM_SS.vma.zst<span class="w"> </span><span class="m">105</span>
-</span></code></pre></div></li>
 </ul>
-</li>
-</ul>
-<h3 id="3-dados-persistentes-dos-containers-docker-volumes-nfs">3. Dados Persistentes dos Containers Docker (Volumes NFS)<a class="headerlink" href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" title="Permanent link">&para;</a></h3>
-<p>Estes são os dados armazenados nos seus datasets ZFS como <code>/data/docker-volumes</code>, <code>/data/media</code>, etc., que são montados nas VMs via NFS.</p>
-<h4 id="bancos-de-dados-postgresql-de-authelia-nextcloud-grafana">Bancos de Dados (PostgreSQL de Authelia, Nextcloud, Grafana)<a class="headerlink" href="#bancos-de-dados-postgresql-de-authelia-nextcloud-grafana" title="Permanent link">&para;</a></h4>
-<p>É crucial fazer backup dos bancos de dados de forma consistente.</p>
+<h3 id="3-dados-persistentes-dos-containers-docker-volumes-nfs">3. Dados Persistentes dos Containers Docker (Volumes NFS)<a class="headerlink" href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" title="Permanent link">¶</a></h3>
+<p>Estes são os dados críticos que residem nos seus datasets ZFS (e.g., <code>/data/docker-volumes</code>, <code>/data/media</code>, <code>/data/downloads</code>, <code>/data/rag_sources</code>) e são montados nas VMs via NFS para os containers Docker.</p>
+<h4 id="a-bancos-de-dados-das-aplicacoes-postgresql-para-authelia-nextcloud-grafana">A. Bancos de Dados das Aplicações (PostgreSQL para Authelia, Nextcloud, Grafana)<a class="headerlink" href="#a-bancos-de-dados-das-aplicacoes-postgresql-para-authelia-nextcloud-grafana" title="Permanent link">¶</a></h4>
+<p>É <strong>altamente recomendado</strong> fazer dumps lógicos dos seus bancos de dados, além do backup do volume ZFS onde os arquivos do banco de dados residem. Dumps lógicos são mais portáteis e podem ser mais fáceis de restaurar para diferentes versões do PostgreSQL.</p>
 <ul>
 <li><strong>Como Fazer Backup (Scripts Agendados na <code>core-services-vm</code>):</strong><ul>
-<li>Para cada banco de dados, crie um script que use <code>docker exec</code> para rodar <code>pg_dump</code> dentro do container do banco de dados.</li>
-<li>Salve os dumps em um subdiretório de <code>/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/</code> (que é o montado NFS para o dataset de backups do Proxmox).</li>
-<li><strong>Exemplo de script (<code>/opt/homelab_scripts/backup_postgres_nextcloud.sh</code> na <code>core-services-vm</code>):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nv">DB_CONTAINER_NAME</span><span class="o">=</span><span class="s2">&quot;nextcloud_db&quot;</span><span class="w"> </span><span class="c1"># Nome do container Docker do DB Nextcloud</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nv">DB_USER</span><span class="o">=</span><span class="s2">&quot;nextcloud&quot;</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nv">DB_NAME</span><span class="o">=</span><span class="s2">&quot;nextcloud&quot;</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Caminho NFS para o diretório de backups de DB</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nv">BACKUP_BASE_DIR</span><span class="o">=</span><span class="s2">&quot;/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps&quot;</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nv">APP_BACKUP_DIR</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">BACKUP_BASE_DIR</span><span class="si">}</span><span class="s2">/nextcloud&quot;</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nv">TIMESTAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nv">BACKUP_FILE</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">APP_BACKUP_DIR</span><span class="si">}</span><span class="s2">/nextcloud_db_</span><span class="si">${</span><span class="nv">TIMESTAMP</span><span class="si">}</span><span class="s2">.sql.gz&quot;</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APP_BACKUP_DIR</span><span class="s2">&quot;</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Fazendo backup do banco de dados Nextcloud (</span><span class="nv">$DB_NAME</span><span class="s2">) para </span><span class="nv">$BACKUP_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="c1"># Garante que o comando pg_dump tenha o $PGPASSWORD (se necessário e não no .pgpass)</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="c1"># A senha é passada via variável de ambiente para o comando pg_dump dentro do container.</span>
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># A variável NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV é a senha real do DB.</span>
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># Este script precisaria ter acesso a essa senha de alguma forma segura,</span>
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1"># ou assumir que o .pgpass está configurado dentro do container (menos provável para setups simples).</span>
-</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="c1"># Para este exemplo, vamos assumir que o usuário &#39;nextcloud&#39; pode dumpar sem senha explícita</span>
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="c1"># se conectado localmente, ou que a senha foi configurada de outra forma.</span>
-</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="c1"># Uma forma mais segura seria usar um arquivo de senha do pg_dump se suportado.</span>
-</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="c1"># Simplificando aqui:</span>
-</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DB_CONTAINER_NAME</span><span class="s2">&quot;</span><span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DB_USER</span><span class="s2">&quot;</span><span class="w"> </span>-d<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DB_NAME</span><span class="s2">&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$BACKUP_FILE</span><span class="s2">&quot;</span>
-</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>
-</span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Backup do Nextcloud DB concluído com sucesso.&quot;</span>
-</span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">  </span>find<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$APP_BACKUP_DIR</span><span class="s2">&quot;</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">&quot;nextcloud_db_*.sql.gz&quot;</span><span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete<span class="w"> </span><span class="c1"># Mantém 7 dias</span>
-</span><span id="__span-3-28"><a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="k">else</span>
-</span><span id="__span-3-29"><a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ERRO: Backup do Nextcloud DB falhou.&quot;</span>
-</span><span id="__span-3-30"><a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">  </span><span class="c1"># Adicione notificação</span>
-</span><span id="__span-3-31"><a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="k">fi</span>
-</span></code></pre></div></li>
-<li>Crie scripts similares para <code>authelia_db</code> e <code>grafana_db</code>.</li>
-<li>Agende-os com <code>cron</code> na <code>core-services-vm</code>. Ex: <code>0 4 * * * /opt/homelab_scripts/backup_postgres_nextcloud.sh</code>.</li>
+<li>Para cada banco de dados (Authelia, Nextcloud, Grafana), crie um script shell na <code>core-services-vm</code> que use <code>docker exec</code> para executar o comando <code>pg_dump</code> dentro do container Docker do respectivo banco de dados.</li>
+<li>Salve os arquivos de dump (<code>.sql.gz</code>) em um subdiretório do seu montado NFS de backups (e.g., <code>/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/nextcloud/</code>, <code>/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/authelia/</code>, etc.).</li>
+<li><strong>Exemplo de Script para Nextcloud DB (já detalhado na subseção desta própria página sobre backup lógico do PostgreSQL e na <a href="../01-rotinas-manutencao/#exemplo-de-script-backup_postgres_nextcloudsh">Rotina de Manutenção 01</a>):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># /opt/homelab_scripts/backup_postgres_nextcloud.sh (na core-services-vm)</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">DB_CONTAINER_NAME</span><span class="o">=</span><span class="s2">"nextcloud_db"</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nv">DB_USER</span><span class="o">=</span><span class="s2">"nextcloud"</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nv">DB_NAME</span><span class="o">=</span><span class="s2">"nextcloud"</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nv">BACKUP_DEST_PARENT</span><span class="o">=</span><span class="s2">"/mnt/pve_data_zfs/backups/db_dumps"</span><span class="w"> </span><span class="c1"># Ajuste se seu dataset de backup for diferente</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nv">APP_BACKUP_DIR</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">BACKUP_DEST_PARENT</span><span class="si">}</span><span class="s2">/nextcloud"</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nv">TIMESTAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nv">BACKUP_FILE</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">APP_BACKUP_DIR</span><span class="si">}</span><span class="s2">/nextcloud_db_</span><span class="si">${</span><span class="nv">TIMESTAMP</span><span class="si">}</span><span class="s2">.sql.gz"</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$APP_BACKUP_DIR</span><span class="s2">"</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Fazendo backup do Nextcloud DB (</span><span class="nv">$DB_NAME</span><span class="s2">) para </span><span class="nv">$BACKUP_FILE</span><span class="s2">..."</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1"># Assumindo que a senha está em uma variável de ambiente ou .pgpass dentro do container</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="c1"># ou que o usuário pode dumpar localmente sem senha.</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># Se NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV foi usado para criar o usuário no DB,</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="c1"># essa senha é necessária aqui. Uma forma é passá-la para o script de forma segura,</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1"># ou usar .pgpass no container (mais complexo de automatizar com Ansible).</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="c1"># Exemplo tentando usar PGPASSWORD (verifique se sua imagem postgres suporta isso para pg_dump):</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="c1"># docker exec -e PGPASSWORD="${NEXTCLOUD_DB_PASSWORD_PLAIN}" \</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1">#   -t "$DB_CONTAINER_NAME" pg_dump -U "$DB_USER" -d "$DB_NAME" -h localhost | gzip &gt; "$BACKUP_FILE"</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="c1"># Simplificando, assumindo que a conexão local do usuário funciona:</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span><span class="s2">"</span><span class="nv">$DB_CONTAINER_NAME</span><span class="s2">"</span><span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span><span class="s2">"</span><span class="nv">$DB_USER</span><span class="s2">"</span><span class="w"> </span>-d<span class="w"> </span><span class="s2">"</span><span class="nv">$DB_NAME</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_FILE</span><span class="s2">"</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup do Nextcloud DB concluído: </span><span class="si">${</span><span class="nv">BACKUP_FILE</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="w">  </span>find<span class="w"> </span><span class="s2">"</span><span class="nv">$APP_BACKUP_DIR</span><span class="s2">"</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">"nextcloud_db_*.sql.gz"</span><span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete<span class="w"> </span><span class="c1"># Retenção de 7 dias</span>
+</span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="k">else</span>
+</span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup do Nextcloud DB falhou."</span>
+</span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="k">fi</span>
+</span></code></pre></div>
+    Adapte e crie scripts similares para <code>authelia_db</code> e <code>grafana_db</code>.</li>
+<li>Agende esses scripts com <code>cron</code> na <code>core-services-vm</code> para rodarem diariamente.</li>
 </ul>
 </li>
-<li><strong>Como Restaurar um Banco de Dados PostgreSQL:</strong><ol>
-<li>Certifique-se que o container do banco de dados e o schema/usuário existem.</li>
-<li>Copie o arquivo de dump <code>.sql.gz</code> para a VM.</li>
-<li>Execute (exemplo para Nextcloud):
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Na core-services-vm</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>gunzip<span class="w"> </span>&lt;<span class="w"> </span>nextcloud_db_YYYYMMDD-HHMMSS.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>nextcloud_db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>nextcloud<span class="w"> </span>-d<span class="w"> </span>nextcloud
-</span></code></pre></div></li>
+<li><strong>Como Restaurar um Banco de Dados PostgreSQL de um Dump:</strong><ol>
+<li>Certifique-se de que o container do banco de dados e o usuário/banco de dados vazios existem na stack Docker (o <code>docker-compose.yml</code> deve criá-los se não existirem ao iniciar).</li>
+<li>Copie o arquivo de dump <code>.sql.gz</code> mais recente para a <code>core-services-vm</code> (e.g., para <code>/tmp</code>).</li>
+<li>Execute o comando de restauração (exemplo para Nextcloud):
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Na core-services-vm</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>gunzip<span class="w"> </span>&lt;<span class="w"> </span>/tmp/nextcloud_db_YYYYMMDD-HHMMSS.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>nextcloud_db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>nextcloud<span class="w"> </span>-d<span class="w"> </span>nextcloud
+</span></code></pre></div>
+    (Substitua os nomes e usuários conforme o banco de dados que está restaurando).</li>
 </ol>
 </li>
 </ul>
-<h4 id="volumes-de-arquivos-configs-docker-midia-etc">Volumes de Arquivos (Configs Docker, Mídia, etc.)<a class="headerlink" href="#volumes-de-arquivos-configs-docker-midia-etc" title="Permanent link">&para;</a></h4>
-<p>Estes são os diretórios nos seus datasets ZFS (e.g., <code>/data/docker-volumes</code>, <code>/data/media</code>).</p>
+<h4 id="b-volumes-de-arquivos-configs-docker-midia-downloads-modelos-rag">B. Volumes de Arquivos (Configs Docker, Mídia, Downloads, Modelos RAG)<a class="headerlink" href="#b-volumes-de-arquivos-configs-docker-midia-downloads-modelos-rag" title="Permanent link">¶</a></h4>
+<p>Estes são os diretórios e arquivos dentro dos seus datasets ZFS (<code>/data/docker-volumes</code>, <code>/data/media</code>, etc.).</p>
 <ul>
-<li><strong>Como Fazer Backup (Ferramentas no Host Proxmox):</strong><ul>
-<li><strong><code>borgbackup</code> (Altamente Recomendado):</strong><ul>
-<li><strong>Vantagens:</strong> Backups incrementais (apenas mudanças são salvas), deduplicação (economiza espaço), compressão, criptografia.</li>
-<li><strong>Setup:</strong><ol>
-<li>Instale Borg: <code>sudo apt install borgbackup</code> no host Proxmox.</li>
-<li>Inicialize um repositório Borg (pode ser em um HD externo conectado ao Proxmox, ou um destino remoto via SSH):
-    <code>borg init --encryption=repokey /caminho/para/repo_borg</code></li>
-<li>Crie um script de backup (e.g., <code>/usr/local/sbin/backup_zfs_data_with_borg.sh</code>):
+<li><strong>Como Fazer Backup (Ferramentas Executadas no Host Proxmox, que tem acesso direto aos datasets ZFS):</strong><ul>
+<li><strong>Opção 1: <code>borgbackup</code> (Altamente Recomendado para Eficiência e Criptografia):</strong><ul>
+<li><strong>Vantagens:</strong> Backups incrementais (apenas blocos alterados são enviados após o primeiro backup completo), deduplicação global (economiza muito espaço se houver dados repetidos entre os backups), compressão e criptografia do lado do cliente (seus dados são criptografados antes de saírem do seu servidor).</li>
+<li><strong>Setup Básico:</strong><ol>
+<li><strong>Instale Borg no host Proxmox:</strong> <code>sudo apt install borgbackup</code>.</li>
+<li><strong>Inicialize um Repositório Borg:</strong> Este repositório pode estar em um HD externo conectado ao Proxmox, em outro servidor na sua LAN com acesso SSH, ou em um storage remoto (como Backblaze B2 via <code>rclone</code> como backend para Borg, mais avançado).
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Exemplo para um HD externo montado em /mnt/borg_backup_repo</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Use --encryption=repokey (requer passphrase na primeira vez e para cada acesso)</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># ou --encryption=keyfile (requer um arquivo de chave exportado). repokey é comum.</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_PASSPHRASE</span><span class="o">=</span><span class="s1">'SUA_PASSPHRASE_FORTE_E_UNICA_PARA_O_REPO_BORG'</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>borg<span class="w"> </span>init<span class="w"> </span>--encryption<span class="o">=</span>repokey<span class="w"> </span>/mnt/borg_backup_repo/meu_repo_borg_data
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nb">unset</span><span class="w"> </span>BORG_PASSPHRASE<span class="w"> </span><span class="c1"># Boa prática</span>
+</span></code></pre></div></li>
+<li><strong>Crie um Script de Backup com Borg (e.g., <code>/usr/local/sbin/backup_zfs_data_with_borg.sh</code>):</strong>
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_REPO</span><span class="o">=</span><span class="s1">&#39;/caminho/para/repo_borg&#39;</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_PASSPHRASE</span><span class="o">=</span><span class="s1">&#39;sua_passphrase_do_repo_borg_aqui&#39;</span><span class="w"> </span><span class="c1"># Ou use BORG_PASSCOMMAND</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>borg<span class="w"> </span>create<span class="w"> </span>--verbose<span class="w"> </span>--stats<span class="w"> </span>--compression<span class="w"> </span>lz4<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span>::<span class="s1">&#39;{hostname}-{now:%Y-%m-%d_%H:%M:%S}&#39;</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">    </span>/data/docker-volumes<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">    </span>/data/media<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span>/data/downloads<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span>/data/rag_sources<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="c1"># Exclua o dataset de backups de VMs para não fazer backup de backups</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span>--exclude<span class="w"> </span><span class="s1">&#39;/data/backups&#39;</span>
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1"># Poda de backups antigos (ex: manter 7 diários, 4 semanais, 3 mensais)</span>
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>borg<span class="w"> </span>prune<span class="w"> </span>-v<span class="w"> </span>--list<span class="w"> </span>--keep-daily<span class="o">=</span><span class="m">7</span><span class="w"> </span>--keep-weekly<span class="o">=</span><span class="m">4</span><span class="w"> </span>--keep-monthly<span class="o">=</span><span class="m">3</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_REPO</span><span class="o">=</span><span class="s1">'/mnt/borg_backup_repo/meu_repo_borg_data'</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Para automação, é melhor usar BORG_PASSCOMMAND para buscar a passphrase de um local seguro,</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># ou uma chave SSH se o repo Borg for remoto. Para simplicidade aqui, assumimos BORG_PASSPHRASE.</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># CUIDADO: Não deixe a passphrase em texto plano em um script sem permissões restritas.</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_PASSPHRASE</span><span class="o">=</span><span class="s1">'SUA_PASSPHRASE_FORTE_E_UNICA_PARA_O_REPO_BORG'</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># Nome do arquivo de backup (archive)</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nv">ARCHIVE_NAME</span><span class="o">=</span><span class="s2">"homelab_data-{now:%Y-%m-%d_%H-%M-%S}"</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Iniciando backup Borg para o repositório </span><span class="si">${</span><span class="nv">BORG_REPO</span><span class="si">}</span><span class="s2"> como </span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">..."</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>borg<span class="w"> </span>create<span class="w"> </span>--verbose<span class="w"> </span>--stats<span class="w"> </span>--list<span class="w"> </span>--progress<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span>--compression<span class="w"> </span>lz4<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span>::<span class="s2">"</span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/docker-volumes<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/media<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/downloads<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/rag_sources<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span>--exclude<span class="w"> </span><span class="s1">'{{ zfs_base_pool_path }}/backups'</span><span class="w"> </span><span class="c1"># NÃO FAÇA BACKUP DO DIRETÓRIO DE BACKUPS EM SI!</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="c1"># Adicione outros --exclude para caches, arquivos temporários grandes, etc.</span>
+</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="c1"># Ex: --exclude '**/node_modules' --exclude '**/*.pyc' --exclude '**/cache'</span>
+</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>
+</span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="nv">BACKUP_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
+</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>
+</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="c1"># Poda de backups antigos (exemplo: manter 7 diários, 4 semanais, 3 mensais)</span>
+</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Podando backups antigos do repositório </span><span class="si">${</span><span class="nv">BORG_REPO</span><span class="si">}</span><span class="s2">..."</span>
+</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>borg<span class="w"> </span>prune<span class="w"> </span>-v<span class="w"> </span>--list<span class="w"> </span>--show-rc<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">    </span>--keep-daily<span class="o">=</span><span class="m">7</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span>--keep-weekly<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">    </span>--keep-monthly<span class="o">=</span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">    </span>--keep-yearly<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="c1"># Opcional: manter 1 anual</span>
+</span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a>
+</span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="nv">PRUNE_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
+</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a>
+</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="c1"># Verificar integridade do repositório (opcional, mas bom de vez em quando)</span>
+</span><span id="__span-5-37"><a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="c1"># borg check -v --show-rc</span>
+</span><span id="__span-5-38"><a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a>
+</span><span id="__span-5-39"><a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a><span class="nb">unset</span><span class="w"> </span>BORG_PASSPHRASE
+</span><span id="__span-5-40"><a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a>
+</span><span id="__span-5-41"><a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-5-42"><a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup Borg e poda concluídos com sucesso."</span>
+</span><span id="__span-5-43"><a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="k">else</span>
+</span><span id="__span-5-44"><a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup Borg ou poda falhou. Código de saída do Backup: </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="s2">, Poda: </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-5-45"><a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a><span class="k">fi</span>
+</span></code></pre></div></li>
+<li>Torne o script executável e agende-o com <code>cron</code>.</li>
+</ol>
+</li>
+</ul>
+</li>
+<li><strong>Opção 2: <code>rsync</code> (Mais Simples, para Sincronização/Cópia Direta):</strong><ul>
+<li>Bom para criar uma cópia espelhada dos seus dados em outro local (e.g., HD externo, outro servidor NAS). Não oferece deduplicação ou versionamento histórico como Borg, a menos que combinado com snapshots ou outras lógicas.</li>
+<li><strong>Exemplo de Script (sincronizar <code>/data/docker-volumes</code> para um HD externo):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">SOURCE_DIR</span><span class="o">=</span><span class="s2">"{{ zfs_base_pool_path }}/docker-volumes/"</span><span class="w"> </span><span class="c1"># Note a barra no final!</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nv">DEST_DIR</span><span class="o">=</span><span class="s2">"/mnt/meu_hd_externo_backup/docker-volumes/"</span><span class="w"> </span><span class="c1"># Note a barra no final!</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nv">LOG_FILE</span><span class="o">=</span><span class="s2">"/var/log/rsync_backup_docker_volumes.log"</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Iniciando rsync de </span><span class="si">${</span><span class="nv">SOURCE_DIR</span><span class="si">}</span><span class="s2"> para </span><span class="si">${</span><span class="nv">DEST_DIR</span><span class="si">}</span><span class="s2"> em </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--delete<span class="w"> </span>--human-readable<span class="w"> </span>--info<span class="o">=</span>progress2<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="s2">"</span><span class="si">${</span><span class="nv">SOURCE_DIR</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="s2">"</span><span class="si">${</span><span class="nv">DEST_DIR</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># --delete: remove arquivos no destino que não existem mais na origem</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># -a: modo archive (preserva permissões, links, etc.)</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1"># -v: verboso</span>
+</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># -z: compressão durante a transferência</span>
+</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
+</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Rsync de docker-volumes concluído com sucesso em </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="k">else</span>
+</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Rsync de docker-volumes falhou em </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="k">fi</span>
 </span></code></pre></div></li>
 <li>Agende com <code>cron</code>.</li>
-</ol>
-</li>
-</ul>
-</li>
-<li><strong><code>rsync</code> (Mais Simples, para Sincronização):</strong><ul>
-<li>Bom para criar uma cópia espelhada em outro local (e.g., HD externo, outro servidor).</li>
-<li>Exemplo: <code>rsync -avz --delete /data/docker-volumes/ /mnt/hd_externo_backup/docker-volumes/</code></li>
 </ul>
 </li>
 </ul>
 </li>
 <li><strong>Como Restaurar Volumes de Arquivos:</strong><ul>
-<li><strong>Borg:</strong> <code>borg extract /caminho/para/repo_borg::archive_name caminho/para/restaurar</code> ou <code>borg mount</code> para navegar.</li>
-<li><strong>Rsync:</strong> Copie os arquivos de volta do destino do rsync.</li>
+<li><strong>BorgBackup:</strong><ul>
+<li>Listar arquivos: <code>borg list /caminho/para/repo_borg::nome_do_archive</code></li>
+<li>Montar um archive como sistema de arquivos (para navegar e copiar):
+    <code>borg mount /caminho/para/repo_borg::nome_do_archive /mnt/borg_restore_temp</code>
+    (Depois <code>fusermount -u /mnt/borg_restore_temp</code> para desmontar).</li>
+<li>Extrair (restaurar) arquivos/diretórios para um local:
+    <code>borg extract --verbose --list /caminho/para/repo_borg::nome_do_archive caminho_relativo_dentro_do_archive</code>
+    (Extrai para o diretório atual, ou use <code>--target /caminho/destino/absoluto</code>).</li>
+</ul>
+</li>
+<li><strong>Rsync:</strong> Simplesmente copie os arquivos de volta do seu destino de backup rsync para o local original.</li>
 </ul>
 </li>
 </ul>
-<h3 id="4-zfs-snapshots-no-host-proxmox">4. ZFS Snapshots (no Host Proxmox)<a class="headerlink" href="#4-zfs-snapshots-no-host-proxmox" title="Permanent link">&para;</a></h3>
-<p>Snapshots ZFS são uma forma rápida e eficiente de proteger seus datasets contra erros humanos (deleção acidental) ou corrupção de software. Eles não substituem backups completos (especialmente off-site), mas são uma ótima primeira linha de defesa.</p>
+<h3 id="4-zfs-snapshots-protecao-local-rapida-no-host-proxmox">4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)<a class="headerlink" href="#4-zfs-snapshots-protecao-local-rapida-no-host-proxmox" title="Permanent link">¶</a></h3>
+<p>Como detalhado no <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/">Guia Prático de Snapshots ZFS</a>, os snapshots ZFS são uma forma rápida e eficiente de proteger seus datasets (<code>/data/docker-volumes</code>, <code>/data/media</code>, etc.) contra erros humanos (deleção acidental) ou corrupção de software.</p>
 <ul>
 <li><strong>Como Fazer Snapshots:</strong><ul>
-<li><strong>Manual:</strong> <code>sudo zfs snapshot data/docker-volumes@meu_snapshot_manual</code></li>
-<li><strong>Automatizado com <code>zfs-auto-snapshot</code>:</strong><ol>
-<li>Instale no host Proxmox: <code>sudo apt install zfs-auto-snapshot</code></li>
-<li>Este pacote instala scripts cron em <code>/etc/cron.hourly/</code>, <code>/etc/cron.daily/</code>, etc., que automaticamente tiram snapshots dos seus pools ZFS.</li>
-<li>Você pode configurar a frequência e retenção editando esses scripts ou as variáveis em <code>/etc/default/zfs-auto-snapshot</code> (se existir) ou diretamente nos scripts cron.</li>
-</ol>
+<li><strong>Manual (para ações pontuais):</strong> <code>sudo zfs snapshot data/docker-volumes@antes_de_uma_mudanca_arriscada</code></li>
+<li><strong>Automatizado com <code>zfs-auto-snapshot</code> (ou <code>sanoid</code>):</strong><ul>
+<li>O pacote <code>zfs-auto-snapshot</code> (geralmente instalado com <code>zfsutils-linux</code> no Debian/Ubuntu) configura scripts cron para tirar e podar snapshots automaticamente (e.g., horários, diários, semanais, mensais).</li>
+<li>Verifique a configuração em <code>/etc/cron.*/zfs-auto-snapshot</code> e, se existir, <code>/etc/default/zfs-auto-snapshot</code>.</li>
+<li>Para controle mais avançado e integração com replicação, considere <a href="https://github.com/jimsalterjrs/sanoid">Sanoid/Syncoid</a>.</li>
+</ul>
 </li>
 </ul>
 </li>
 <li><strong>Como Restaurar de um Snapshot ZFS:</strong><ul>
-<li><strong>Listar Snapshots:</strong> <code>sudo zfs list -t snapshot</code></li>
-<li><strong>Rollback (Reverte o dataset inteiro para o estado do snapshot - CUIDADO, PERDE MUDANÇAS POSTERIORES):</strong>
-    <code>sudo zfs rollback data/docker-volumes@nome_do_snapshot</code></li>
-<li><strong>Clonar Snapshot (Cria uma cópia gravável do snapshot):</strong>
-    <code>sudo zfs clone data/docker-volumes@nome_do_snapshot data/docker-volumes-restaurado</code></li>
-<li><strong>Acessar Arquivos de um Snapshot (Sem Rollback):</strong>
-    Snapshots são montados automaticamente em um diretório <code>.zfs/snapshot/</code> dentro do ponto de montagem do dataset.
-    Ex: <code>cd /data/docker-volumes/.zfs/snapshot/nome_do_snapshot/</code>
-    Você pode então copiar arquivos de lá para o dataset ativo.</li>
+<li><strong>Rollback (Reverte o dataset inteiro - CUIDADO!):</strong> <code>sudo zfs rollback data/docker-volumes@nome_do_snapshot</code></li>
+<li><strong>Acessar Arquivos de um Snapshot (Método Seguro, Não Destrutivo):</strong>
+    Os snapshots são montados automaticamente em um diretório oculto <code>.zfs/snapshot/</code> dentro do ponto de montagem do dataset ativo.
+    Exemplo: Para restaurar <code>/data/docker-volumes/meuapp/config.txt</code> do snapshot <code>@snap1</code>:
+    <code>sudo cp /data/docker-volumes/.zfs/snapshot/snap1/meuapp/config.txt /data/docker-volumes/meuapp/config.txt</code></li>
 </ul>
 </li>
 </ul>
-<h3 id="5-repositorio-ansible-git">5. Repositório Ansible Git<a class="headerlink" href="#5-repositorio-ansible-git" title="Permanent link">&para;</a></h3>
+<h3 id="5-repositorio-ansible-git-home-server">5. Repositório Ansible Git (<code>home-server/</code>)<a class="headerlink" href="#5-repositorio-ansible-git-home-server" title="Permanent link">¶</a></h3>
+<p>Sua configuração de Infraestrutura como Código é um ativo crítico.</p>
 <ul>
-<li>Seu repositório <code>infra-servidor-domestico</code> (contendo toda a configuração Ansible) é um componente crítico.</li>
-<li><strong>Como Fazer Backup:</strong> Regularmente faça <code>git push</code> para um repositório Git remoto (GitHub, GitLab, Gitea auto-hospedado). Isso serve como backup off-site da sua configuração de infraestrutura.</li>
-<li><strong>Como Restaurar:</strong> <code>git clone</code> do repositório remoto para uma nova máquina de controle Ansible.</li>
+<li><strong>Como Fazer Backup:</strong><ul>
+<li>Regularmente (após cada mudança significativa) execute <code>git add .</code>, <code>git commit -m "Sua mensagem descritiva"</code>, e <strong><code>git push</code> para um repositório Git remoto</strong> (e.g., GitHub, GitLab, Gitea auto-hospedado).</li>
+<li>Isso serve como seu backup principal e off-site para toda a lógica de configuração da sua infraestrutura.</li>
 </ul>
-<h3 id="6-copia-off-site-essencial-para-a-regra-3-2-1">6. Cópia Off-site (Essencial para a Regra 3-2-1)<a class="headerlink" href="#6-copia-off-site-essencial-para-a-regra-3-2-1" title="Permanent link">&para;</a></h3>
-<p>Ter uma cópia dos seus backups mais importantes fora da sua residência protege contra desastres locais (incêndio, roubo, inundação).</p>
+</li>
+<li><strong>Como Restaurar:</strong><ul>
+<li>Em uma nova máquina de controle Ansible (ou na mesma, se o diretório local foi perdido), simplesmente execute <code>git clone URL_DO_SEU_REPO_REMOTO</code>.</li>
+<li>Certifique-se de ter sua senha do Ansible Vault para descriptografar o <code>vault.yml</code>.</li>
+</ul>
+</li>
+</ul>
+<h3 id="6-copia-off-site-essencial-para-cumprir-a-regra-3-2-1">6. Cópia Off-site (Essencial para Cumprir a Regra 3-2-1)<a class="headerlink" href="#6-copia-off-site-essencial-para-cumprir-a-regra-3-2-1" title="Permanent link">¶</a></h3>
+<p>Ter pelo menos uma cópia dos seus backups mais importantes <strong>fora da sua residência</strong> é o que protege contra desastres locais (incêndio, roubo, inundação, surto elétrico que destrói tudo).</p>
 <ul>
-<li><strong>Métodos:</strong><ul>
-<li><strong><code>rclone</code> para Armazenamento em Nuvem:</strong><ul>
-<li><code>rclone</code> é uma ferramenta de linha de comando poderosa para sincronizar arquivos e diretórios com diversos provedores de armazenamento em nuvem (Backblaze B2, Amazon S3, Google Drive, etc.).</li>
+<li><strong>O Que Enviar Off-site:</strong><ul>
+<li>Seu repositório Borg (se usar Borg para os volumes ZFS).</li>
+<li>Os arquivos de backup das VMs Proxmox (<code>.vma.zst</code>).</li>
+<li>Os dumps dos seus bancos de dados.</li>
+<li>O backup da configuração do host Proxmox.</li>
+<li>Seu repositório Git Ansible (o <code>git push</code> para um remote já é off-site).</li>
+</ul>
+</li>
+<li><strong>Métodos para Cópia Off-site:</strong><ul>
+<li><strong><code>rclone</code> para Armazenamento em Nuvem (Recomendado para Automação):</strong><ul>
+<li><a href="https://rclone.org/">rclone</a> é uma ferramenta de linha de comando extremamente versátil para sincronizar arquivos e diretórios com dezenas de provedores de armazenamento em nuvem (e.g., Backblaze B2, Amazon S3/Glacier, Google Cloud Storage, Wasabi, Storj, etc.).</li>
 <li><strong>Setup:</strong><ol>
-<li>Instale <code>rclone</code>.</li>
-<li>Configure um "remote" para o seu provedor de nuvem: <code>rclone config</code>.</li>
-<li>Use <code>rclone sync</code> ou <code>rclone copy</code> para enviar seus backups locais (e.g., os arquivos de backup de VMs do Proxmox, os dumps de DB, o repositório Borg) para o remote na nuvem.</li>
-<li><strong>Criptografia:</strong> <code>rclone</code> suporta criptografia do lado do cliente (<code>crypt</code> remote), para que seus dados sejam enviados para a nuvem já criptografados.</li>
+<li>Instale <code>rclone</code> no seu host Proxmox (ou em uma VM dedicada para backups).</li>
+<li>Configure um "remote" no <code>rclone</code> para o seu provedor de nuvem escolhido: <code>rclone config</code>. Siga as instruções para autenticar.</li>
+<li><strong>Use a Criptografia do <code>rclone</code> (<code>crypt</code> remote):</strong> É <strong>altamente recomendado</strong> criar um remote do tipo <code>crypt</code> que fica "em cima" do seu remote do provedor de nuvem. Isso garante que seus dados sejam criptografados <strong>antes</strong> de serem enviados para a nuvem, e apenas você tem a chave de descriptografia.</li>
 </ol>
 </li>
-<li>Agende com <code>cron</code>.</li>
+<li><strong>Comandos para Sincronizar/Copiar:</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Exemplo: Sincronizar o diretório de backups de VMs para um remote crypt 'nuvem_criptografada:'</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># que aponta para um bucket no Backblaze B2.</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>rclone<span class="w"> </span>sync<span class="w"> </span>/data/backups/vms/<span class="w"> </span>nuvem_criptografada:meu_servidor/proxmox_vm_backups/<span class="w"> </span>--progress<span class="w"> </span>--checksum<span class="w"> </span>--transfers<span class="o">=</span><span class="m">4</span><span class="w"> </span>--checkers<span class="o">=</span><span class="m">8</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># --checksum: verifica arquivos baseados em checksum em vez de apenas tamanho/modtime</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># --transfers, --checkers: ajusta paralelismo</span>
+</span></code></pre></div></li>
+<li>Agende seus comandos <code>rclone</code> com <code>cron</code> no host Proxmox para rodar após seus backups locais serem concluídos.</li>
 </ul>
 </li>
-<li><strong>HD Externo Rotacionado:</strong> Mantenha um HD externo com backups e guarde-o em um local seguro fora de casa, atualizando-o periodicamente.</li>
-<li><strong>Servidor de Backup Remoto (Outro Local):</strong> Se você tiver acesso a outro local com um servidor, pode usar <code>rsync</code> sobre SSH ou Borg para fazer backups remotos.</li>
+<li><strong>HD Externo Rotacionado Fisicamente:</strong><ul>
+<li>Mantenha um (ou mais) HDs externos USB.</li>
+<li>Regularmente (e.g., semanalmente), conecte o HD ao host Proxmox, copie seus backups locais para ele (usando <code>rsync</code> ou Borg para um repositório no HD externo).</li>
+<li><strong>Guarde o HD externo em um local seguro e fisicamente separado</strong> da sua casa (e.g., casa de um familiar, trabalho, cofre bancário). Rotacione com outro HD externo.</li>
+</ul>
+</li>
+<li><strong>Servidor de Backup Remoto (Outro Local Físico):</strong>
+    Se você tiver acesso a outro servidor em um local diferente (e.g., casa de um amigo, outro escritório), você pode usar:<ul>
+<li><code>rsync</code> sobre SSH.</li>
+<li>Borg com um repositório remoto via SSH.</li>
+<li><code>zfs send/recv</code> via SSH (se o destino também for ZFS).</li>
 </ul>
 </li>
 </ul>
-<h2 id="testando-seus-backups">Testando Seus Backups<a class="headerlink" href="#testando-seus-backups" title="Permanent link">&para;</a></h2>
-<p>Repetindo: <strong>TESTE SEUS PROCEDIMENTOS DE RESTAURAÇÃO REGULARMENTE!</strong></p>
+</li>
+</ul>
+<h2 id="testando-seus-backups-e-procedimentos-de-restauracao">Testando Seus Backups e Procedimentos de Restauração<a class="headerlink" href="#testando-seus-backups-e-procedimentos-de-restauracao" title="Permanent link">¶</a></h2>
+<p>Repetindo pela última vez (mas não menos importante): <strong>TESTE, TESTE, TESTE!</strong></p>
 <ul>
-<li>Escolha um serviço não crítico ou crie um ambiente de teste.</li>
-<li>Simule uma falha (e.g., delete um arquivo de configuração, pare um container, delete uma VM de teste).</li>
-<li>Siga seu procedimento de restauração documentado para recuperar o serviço/dados.</li>
-<li>Verifique se tudo voltou ao normal.</li>
-<li>Anote quaisquer problemas encontrados e refine seu processo de backup/restauração.</li>
+<li><strong>Agende Testes de Restauração:</strong> Pelo menos uma vez por trimestre, ou após qualquer mudança significativa na sua estratégia de backup ou nos sistemas que você está backupeando.</li>
+<li><strong>Simule Cenários de Falha:</strong><ul>
+<li>"Perdi um arquivo importante no Nextcloud." -&gt; Tente restaurá-lo de um snapshot ZFS ou do dump do banco de dados + backup de arquivos do Nextcloud.</li>
+<li>"Minha VM <code>core-services-vm</code> não inicia mais." -&gt; Tente restaurá-la de um backup do Proxmox para um novo VM ID.</li>
+<li>"O host Proxmox inteiro morreu, mas meus HDDs do pool <code>/data</code> estão OK (ou tenho backup off-site)." -&gt; Siga os passos de <a href="../04-reconstruindo-infraestrutura/">Reconstruindo a Infraestrutura</a>.</li>
 </ul>
-<p>Uma estratégia de backup bem planejada e testada é o que lhe dará tranquilidade sabendo que seus dados e sua infraestrutura estão protegidos.</p>
+</li>
+<li><strong>Documente Seus Procedimentos de Restauração:</strong> Enquanto você testa, anote os passos exatos. Em uma emergência real, você estará sob pressão e ter um guia passo a passo documentado por você mesmo será inestimável.</li>
+</ul>
+<p>Uma estratégia de backup bem implementada e regularmente testada é o que lhe dará a verdadeira tranquilidade e a capacidade de se recuperar de quase qualquer eventualidade com seu servidor doméstico.</p>
+<h3 id="5-backup-off-site-para-a-nuvem-google-cloud-storage">5. Backup Off-site para a Nuvem (Google Cloud Storage)<a class="headerlink" href="#5-backup-off-site-para-a-nuvem-google-cloud-storage" title="Permanent link">¶</a></h3>
+<p>Esta é a etapa que completa nossa regra 3-2-1, garantindo que tenhamos uma cópia dos nossos dados mais críticos em um local geograficamente separado.</p>
+<ul>
+<li>
+<p><strong>O Que Fazer Backup:</strong></p>
+<ul>
+<li>Os backups da <strong>configuração do host Proxmox</strong> gerados pelo script local.</li>
+<li>Os backups das <strong>VMs</strong> gerados pelo Proxmox.</li>
+<li>Os <strong>snapshots ZFS</strong> dos seus datasets de dados.</li>
+</ul>
+</li>
+<li>
+<p><strong>Como Fazer Backup:</strong></p>
+<ul>
+<li>Use <code>rclone</code> para sincronizar os backups para outro disco ou servidor remoto.</li>
+</ul>
+</li>
+<li>
+<p><strong>Como Restaurar:</strong></p>
+<ul>
+<li>Reconstrua o host Proxmox do zero, importe os backups de VM e restaure os snapshots ZFS conforme descrito em <a href="../04-reconstruindo-infraestrutura/">Reconstruindo a Infraestrutura</a>.</li>
+</ul>
+</li>
+</ul>
 
 
 
@@ -2614,9 +2635,9 @@
       
   <span class="md-source-file__fact">
     <span class="md-icon" title="Última atualização">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
   </span>
 
     
@@ -2639,9 +2660,9 @@
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
   Voltar ao topo
 </button>
         
@@ -2661,7 +2682,8 @@
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -2671,7 +2693,7 @@
       
     
     <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
     </a>
   
     
@@ -2682,7 +2704,7 @@
       
     
     <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
     </a>
   
 </div>
@@ -2699,13 +2721,14 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": {"provider": "mike"}}</script>
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
-  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
-document$.subscribe(() => { lightbox.reload() });
-</script></body>
-</html>
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

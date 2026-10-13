@@ -1,12 +1,9 @@
-
-<!doctype html>
-<html lang="pt" class="no-js">
-  <head>
+<!DOCTYPE html><html lang="pt" class="no-js"><head>
     
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Guia completo para implementação e manutenção de um servidor doméstico otimizado, utilizando Proxmox, Ansible, Docker, ZFS e Cloudflare.">
+        <meta name="description" content="Ferramentas e soluções para os problemas mais comuns: rede, containers, NFS, Traefik, Authelia e VMs.">
       
       
         <meta name="author" content="Léo Ivan">
@@ -21,19 +18,22 @@
         <link rel="next" href="../04-gerenciando-redes-docker/">
       
       
+        
+      
+      
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
     
     
       
-        <title>Troubleshooting Comum - Wiki do Servidor do Léo Ivan</title>
+        <title>Troubleshooting - Wiki do Servidor do Léo Ivan</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -46,13 +46,11 @@
       
         
         
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback">
         <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
       
     
-    
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
     <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
@@ -60,17 +58,17 @@
 
     
     
-    
-   <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><style>
-    html.glightbox-open { overflow: initial; height: 100%; }
-    .gslide-title { margin-top: 0px; user-select: text; }
-    .gslide-desc { color: #666; user-select: text; }
-    .gslide-image img { background: white; }
-    .gscrollbar-fixer { padding-right: 15px; }
-    .gdesc-inner { font-size: 0.75rem; }
-    body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color);}
-    body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color);}
-    body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color);}</style> <script src="../../assets/javascripts/glightbox.min.js"></script></head>
+  <link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
   
   
     
@@ -98,10 +96,6 @@
       
     </div>
     
-      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
-        
-      </div>
-    
     
       
 
@@ -110,12 +104,12 @@
     <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
     </label>
     <div class="md-header__title" data-md-component="header-title">
       <div class="md-header__ellipsis">
@@ -127,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Troubleshooting Comum
+              Troubleshooting
             
           </span>
         </div>
@@ -140,20 +134,20 @@
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to light mode" type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
       </label>
     
   
     
     
     
-    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo" aria-label="Switch to dark mode" type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden="">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
       </label>
     
   
@@ -169,24 +163,24 @@
       
         <label class="md-header__button md-icon" for="__search">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         </label>
         <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <input type="text" class="md-search__input" name="query" aria-label="Buscar" placeholder="Buscar" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required="">
       <label class="md-search__icon md-icon" for="__search">
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
         
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
       </label>
       <nav class="md-search__options" aria-label="Pesquisar">
         
         <button type="reset" class="md-search__icon md-icon" title="Limpar" aria-label="Limpar" tabindex="-1">
           
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
         </button>
       </nav>
       
@@ -194,7 +188,7 @@
       
     </form>
     <div class="md-search__output">
-      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix="">
         <div class="md-search-result" data-md-component="search-result">
           <div class="md-search-result__meta">
             Inicializando a pesquisa
@@ -212,7 +206,7 @@
         <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -340,38 +334,17 @@
   
   
   
-    
-    
-      <li class="md-tabs__item">
-        <a href="../../05-guia-estudos/" class="md-tabs__link">
-          
-  
-  
-  📚 Guia de Estudos
-
-        </a>
-      </li>
-    
-  
-
-      
+    <li class="md-tabs__item">
+      <a href="../../05-referencia-rapida/" class="md-tabs__link">
         
   
   
-  
-  
     
-    
-      <li class="md-tabs__item">
-        <a href="../../06-solucoes-alternativas/" class="md-tabs__link">
-          
   
-  
-  🔄 Soluções Alternativas
+  📎 Referência
 
-        </a>
-      </li>
-    
+      </a>
+    </li>
   
 
       
@@ -386,7 +359,7 @@
           
             
               
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -400,7 +373,7 @@
     <a href="../.." title="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" aria-label="Wiki do Servidor do Léo Ivan" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
 
     </a>
     Wiki do Servidor do Léo Ivan
@@ -410,7 +383,7 @@
       <a href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
   </div>
   <div class="md-source__repository">
     lioevano/wiki-home-server
@@ -418,7 +391,7 @@
 </a>
     </div>
   
-  <ul class="md-nav__list" data-md-scrollfix>
+  <ul class="md-nav__list" data-md-scrollfix="">
     
       
       
@@ -432,9 +405,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Introdução
+  
+
     
   </span>
+  
   
 
       </a>
@@ -464,7 +442,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2">
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -472,9 +450,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     🚀 Implementação
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -483,9 +466,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            🚀 Implementação
+            
+  
+    🚀 Implementação
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -499,9 +486,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -522,9 +514,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Preparação e Planejamento
+  
+
     
   </span>
+  
   
 
       </a>
@@ -545,9 +542,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Máquina de Controle Ansible
+  
+
     
   </span>
+  
   
 
       </a>
@@ -568,9 +570,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Proxmox VE Host
+  
+
     
   </span>
+  
   
 
       </a>
@@ -591,9 +598,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Provisionamento de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -614,9 +626,14 @@
   
   
   <span class="md-ellipsis">
-    Configuração Base das VMs Ubuntu
+    
+  
+    Configuração Base das VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -637,9 +654,14 @@
   
   
   <span class="md-ellipsis">
-    Rede Segura (Traefik, Cloudflare, Authelia)
+    
+  
+    Rede Segura
+  
+
     
   </span>
+  
   
 
       </a>
@@ -655,14 +677,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/06-deploy-portainer-geral/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/06-deploy-core/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Deploy Geral com Portainer
+    
+  
+    Deploy Core
+  
+
     
   </span>
+  
   
 
       </a>
@@ -678,14 +705,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/07-stack-ia-rag/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/07-deploy-apps/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Stack de IA & RAG
+    
+  
+    Deploy de Apps
+  
+
     
   </span>
+  
   
 
       </a>
@@ -701,60 +733,19 @@
   
   
     <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/08-stack-midia/" class="md-nav__link">
+      <a href="../../01-manual-implementacao/08-stack-ia/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Stack de Mídia
+    
+  
+    Stack de IA
+  
+
     
   </span>
   
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/09-stack-produtividade-automacao/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Stack de Produtividade & Automação
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../01-manual-implementacao/10-stack-monitoramento/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Stack de Monitoramento
-    
-  </span>
   
 
       </a>
@@ -792,7 +783,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3">
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -800,9 +791,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     💡 Arquitetura
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -811,9 +807,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            💡 Arquitetura
+            
+  
+    💡 Arquitetura
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -827,9 +827,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -850,9 +855,14 @@
   
   
   <span class="md-ellipsis">
-    Fluxo de Rede e Acesso Externo
+    
+  
+    Fluxo de Rede
+  
+
     
   </span>
+  
   
 
       </a>
@@ -873,9 +883,14 @@
   
   
   <span class="md-ellipsis">
-    Virtualização (Proxmox)
+    
+  
+    Virtualização
+  
+
     
   </span>
+  
   
 
       </a>
@@ -896,9 +911,14 @@
   
   
   <span class="md-ellipsis">
-    Armazenamento (ZFS, NFS)
+    
+  
+    Armazenamento
+  
+
     
   </span>
+  
   
 
       </a>
@@ -919,9 +939,14 @@
   
   
   <span class="md-ellipsis">
-    Automação (Ansible)
+    
+  
+    Automação
+  
+
     
   </span>
+  
   
 
       </a>
@@ -942,9 +967,14 @@
   
   
   <span class="md-ellipsis">
-    Gerenciamento de Containers (Docker)
+    
+  
+    Containers
+  
+
     
   </span>
+  
   
 
       </a>
@@ -965,9 +995,98 @@
   
   
   <span class="md-ellipsis">
-    Princípios de Segurança Aplicados
+    
+  
+    Segurança
+  
+
     
   </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Estratégia LLM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catálogo de Aplicações
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../02-visao-geral-arquitetura/10-indice-integracoes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Índice de Integrações
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -1008,7 +1127,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked="">
         
           
           <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
@@ -1016,9 +1135,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     🛠️ Sustentação
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -1027,9 +1151,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            🛠️ Sustentação
+            
+  
+    🛠️ Sustentação
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1043,9 +1171,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1066,9 +1199,14 @@
   
   
   <span class="md-ellipsis">
-    Adicionando Novo Serviço Docker
+    
+  
+    Novo Serviço Docker
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1089,9 +1227,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Modificando Configurações
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1121,9 +1264,14 @@
   
   
   <span class="md-ellipsis">
-    Troubleshooting Comum
+    
+  
+    Troubleshooting
+  
+
     
   </span>
+  
   
 
           <span class="md-nav__icon md-icon"></span>
@@ -1134,9 +1282,14 @@
   
   
   <span class="md-ellipsis">
-    Troubleshooting Comum
+    
+  
+    Troubleshooting
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1154,12 +1307,14 @@
       <span class="md-nav__icon md-icon"></span>
       Índice
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
   <a href="#ferramentas-essenciais-de-diagnostico" class="md-nav__link">
     <span class="md-ellipsis">
-      Ferramentas Essenciais de Diagnóstico
+      
+        Ferramentas Essenciais de Diagnóstico
+      
     </span>
   </a>
   
@@ -1168,7 +1323,9 @@
         <li class="md-nav__item">
   <a href="#problemas-comuns-e-estrategias-de-solucao" class="md-nav__link">
     <span class="md-ellipsis">
-      Problemas Comuns e Estratégias de Solução
+      
+        Problemas Comuns e Estratégias de Solução
+      
     </span>
   </a>
   
@@ -1176,36 +1333,44 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-servico-inacessivel-externamente-httpsmeuservico-base_domain" class="md-nav__link">
+  <a href="#1-servico-web-inacessivel-externamente-httpsmeuservico-base_domain" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Serviço Inacessível Externamente (https://meuservico.{{ base_domain }})
+      
+        1. Serviço Web Inacessível Externamente (https://meuservico.{{ base_domain }})
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-container-nao-inicia-ou-em-loop-de-crash-restarting" class="md-nav__link">
+  <a href="#2-container-nao-inicia-ou-fica-em-loop-de-crash-status-restarting" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Container Não Inicia ou em Loop de Crash (Restarting)
+      
+        2. Container Não Inicia ou Fica em Loop de Crash (Status "Restarting")
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-problemas-com-volumes-nfs" class="md-nav__link">
+  <a href="#3-problemas-com-volumes-nfs-persistencia-de-dados" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Problemas com Volumes NFS
+      
+        3. Problemas com Volumes NFS (Persistência de Dados)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-problemas-de-autenticacao-authelia" class="md-nav__link">
+  <a href="#4-problemas-de-autenticacao-com-authelia" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Problemas de Autenticação (Authelia)
+      
+        4. Problemas de Autenticação com Authelia
+      
     </span>
   </a>
   
@@ -1214,7 +1379,9 @@
           <li class="md-nav__item">
   <a href="#5-problemas-com-certificados-ssltls-lets-encrypt-via-traefik" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)
+      
+        5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)
+      
     </span>
   </a>
   
@@ -1246,9 +1413,14 @@
   
   
   <span class="md-ellipsis">
-    Gerenciando Redes Docker
+    
+  
+    Redes Docker
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1269,9 +1441,14 @@
   
   
   <span class="md-ellipsis">
-    Passthrough de Hardware Adicional
+    
+  
+    Passthrough de Hardware
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1292,9 +1469,14 @@
   
   
   <span class="md-ellipsis">
-    6. Gerenciando Recursos de VMs
+    
+  
+    Recursos de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1315,9 +1497,14 @@
   
   
   <span class="md-ellipsis">
-    7. Cenários Específicos de Criação de VMs
+    
+  
+    Cenários de VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1338,9 +1525,14 @@
   
   
   <span class="md-ellipsis">
-    8. Compartilhando Recursos entre VMs
+    
+  
+    Recursos entre VMs
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1361,9 +1553,14 @@
   
   
   <span class="md-ellipsis">
-    9. Integrando Novos Serviços a Stacks Existentes
+    
+  
+    Integrando Serviços
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1384,9 +1581,14 @@
   
   
   <span class="md-ellipsis">
-    10. Atualização Segura de Componentes Críticos
+    
+  
+    Atualização Segura
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1407,9 +1609,70 @@
   
   
   <span class="md-ellipsis">
-    11. Hospedando Aplicação Pública no Domínio
+    
+  
+    App no Domínio Raiz
+  
+
     
   </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-guia-snapshots-zfs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-usando-geminicli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini CLI
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -1447,7 +1710,7 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5">
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -1455,9 +1718,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     ⚙️ Manutenção
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -1466,9 +1734,13 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
-            ⚙️ Manutenção
+            
+  
+    ⚙️ Manutenção
+  
+
           </label>
-          <ul class="md-nav__list" data-md-scrollfix>
+          <ul class="md-nav__list" data-md-scrollfix="">
             
               
                 
@@ -1482,9 +1754,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Visão Geral
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1505,9 +1782,14 @@
   
   
   <span class="md-ellipsis">
-    Rotinas de Manutenção
+    
+  
+    Rotinas
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1528,9 +1810,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Backup e Restore
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1551,9 +1838,14 @@
   
   
   <span class="md-ellipsis">
-    CI/CD Básico Ansible
+    
+  
+    CI/CD Ansible
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1574,9 +1866,14 @@
   
   
   <span class="md-ellipsis">
-    Reconstruindo a Infraestrutura
+    
+  
+    Reconstruindo
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1597,9 +1894,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Migrando Hardware/Rede
+  
+
     
   </span>
+  
   
 
       </a>
@@ -1621,537 +1923,23 @@
   
   
   
-    
-    
-    
-    
-      
-      
+    <li class="md-nav__item">
+      <a href="../../05-referencia-rapida/" class="md-nav__link">
         
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
   
   
   <span class="md-ellipsis">
-    📚 Guia de Estudos
     
-  </span>
+  
+    📎 Referência
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
-            📚 Guia de Estudos
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Visão Geral
     
   </span>
+  
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/01-aprofundamento-proxmox-ve/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    1. Aprofundamento em Proxmox VE
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/02-aprofundamento-zfs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    2. Aprofundamento em ZFS
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/03-aprofundamento-ansible/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    3. Aprofundamento em Ansible
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/04-aprofundamento-docker-networking/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    4. Aprofundamento em Docker Networking
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/05-aprofundamento-traefik-authelia/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    5. Aprofundamento em Traefik e Authelia
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/06-seguranca-avancada-homelab/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    6. Aprofundamento em Segurança Avançada para Homelab
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/07-introducao-kubernetes-k3s/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    7. Aprofundamento em Kubernetes
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../05-guia-estudos/08-gerenciamento-segredos-avancado/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    8. Gerenciamento Avançado de Segredos
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    🔄 Soluções Alternativas
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
-            <span class="md-nav__icon md-icon"></span>
-            🔄 Soluções Alternativas
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Visão Geral
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/01-hypervisors/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    1. Hypervisors
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/02-automacao-config/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    2. Automação de Configurações
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/03-gerenciamento-containers/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    3. Gerenciamento de Containers
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/04-proxy-reverso/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    4. Proxy Reverso
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/05-acesso-externo/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    5. Acesso Externo
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/06-autenticacao-sso/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    6. Autenticação SSO
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/07-servidores-midia/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    7. Servidores de Mídia
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/08-sincronizacao-arquivos/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    8. Sincronização de Arquivos
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../06-solucoes-alternativas/09-monitoramento-logs/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    9. Monitoramento e Logs
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -2164,7 +1952,7 @@
             
             
               
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -2180,12 +1968,14 @@
       <span class="md-nav__icon md-icon"></span>
       Índice
     </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
   <a href="#ferramentas-essenciais-de-diagnostico" class="md-nav__link">
     <span class="md-ellipsis">
-      Ferramentas Essenciais de Diagnóstico
+      
+        Ferramentas Essenciais de Diagnóstico
+      
     </span>
   </a>
   
@@ -2194,7 +1984,9 @@
         <li class="md-nav__item">
   <a href="#problemas-comuns-e-estrategias-de-solucao" class="md-nav__link">
     <span class="md-ellipsis">
-      Problemas Comuns e Estratégias de Solução
+      
+        Problemas Comuns e Estratégias de Solução
+      
     </span>
   </a>
   
@@ -2202,36 +1994,44 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-servico-inacessivel-externamente-httpsmeuservico-base_domain" class="md-nav__link">
+  <a href="#1-servico-web-inacessivel-externamente-httpsmeuservico-base_domain" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Serviço Inacessível Externamente (https://meuservico.{{ base_domain }})
+      
+        1. Serviço Web Inacessível Externamente (https://meuservico.{{ base_domain }})
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-container-nao-inicia-ou-em-loop-de-crash-restarting" class="md-nav__link">
+  <a href="#2-container-nao-inicia-ou-fica-em-loop-de-crash-status-restarting" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Container Não Inicia ou em Loop de Crash (Restarting)
+      
+        2. Container Não Inicia ou Fica em Loop de Crash (Status "Restarting")
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-problemas-com-volumes-nfs" class="md-nav__link">
+  <a href="#3-problemas-com-volumes-nfs-persistencia-de-dados" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Problemas com Volumes NFS
+      
+        3. Problemas com Volumes NFS (Persistência de Dados)
+      
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-problemas-de-autenticacao-authelia" class="md-nav__link">
+  <a href="#4-problemas-de-autenticacao-com-authelia" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Problemas de Autenticação (Authelia)
+      
+        4. Problemas de Autenticação com Authelia
+      
     </span>
   </a>
   
@@ -2240,7 +2040,9 @@
           <li class="md-nav__item">
   <a href="#5-problemas-com-certificados-ssltls-lets-encrypt-via-traefik" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)
+      
+        5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)
+      
     </span>
   </a>
   
@@ -2261,6 +2063,7 @@
           
           
             <div class="md-content" data-md-component="content">
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -2270,213 +2073,339 @@
   
 
 
-<h1 id="guia-de-troubleshooting-comum">Guia de Troubleshooting Comum<a class="headerlink" href="#guia-de-troubleshooting-comum" title="Permanent link">&para;</a></h1>
-<p>Mesmo com uma configuração cuidadosa, problemas podem surgir. Este guia oferece um ponto de partida para diagnosticar e resolver alguns dos problemas mais comuns que você pode encontrar no seu servidor doméstico.</p>
-<h2 id="ferramentas-essenciais-de-diagnostico">Ferramentas Essenciais de Diagnóstico<a class="headerlink" href="#ferramentas-essenciais-de-diagnostico" title="Permanent link">&para;</a></h2>
-<p>Familiarize-se com estas ferramentas. Elas serão indispensáveis.</p>
+<h1 id="guia-de-troubleshooting-comum">Guia de Troubleshooting Comum<a class="headerlink" href="#guia-de-troubleshooting-comum" title="Permanent link">¶</a></h1>
+<p>Mesmo com uma configuração cuidadosa e automatizada, problemas podem (e irão!) surgir no seu servidor doméstico. Saber como diagnosticar e resolver esses problemas é uma habilidade essencial. Este guia oferece um ponto de partida com ferramentas, técnicas e soluções para alguns dos cenários de erro mais comuns que você pode encontrar.</p>
+<h2 id="ferramentas-essenciais-de-diagnostico">Ferramentas Essenciais de Diagnóstico<a class="headerlink" href="#ferramentas-essenciais-de-diagnostico" title="Permanent link">¶</a></h2>
+<p>Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o troubleshooting:</p>
+<ol>
+<li>
+<p><strong>Logs de Containers Docker:</strong></p>
 <ul>
-<li><strong>Logs de Containers Docker:</strong><ul>
-<li><strong>Via Portainer:</strong> Selecione o container -&gt; "Logs". Opções para ver logs desde um certo tempo, auto-refresh.</li>
-<li><strong>Via Linha de Comando (na VM onde o Docker roda):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>&lt;nome_do_container_ou_id&gt;
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>&lt;nome_do_container_ou_id&gt;<span class="w"> </span><span class="c1"># Para seguir os logs em tempo real</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">50</span><span class="w"> </span>&lt;nome_do_container_ou_id&gt;<span class="w"> </span><span class="c1"># Para ver as últimas 50 linhas</span>
+<li><strong>Via Portainer:</strong> A maneira mais fácil de visualizar logs de containers individuais.<ol>
+<li>Acesse o Portainer (<code>https://portainer.{{ base_domain }}</code>).</li>
+<li>Navegue até o endpoint Docker correto (e.g., <code>local</code> para <code>core-services-vm</code>).</li>
+<li>Vá para "Containers", selecione o container problemático.</li>
+<li>Clique no ícone de "Logs" (📄).</li>
+<li>Use as opções para filtrar por data/hora, habilitar auto-refresh, ou definir o número de linhas a serem exibidas.</li>
+</ol>
+</li>
+<li><strong>Via Linha de Comando (na VM onde o Docker roda, e.g., <code>core-services-vm</code>):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Ver todos os logs de um container</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>&lt;nome_do_container_ou_id&gt;
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Seguir os logs em tempo real (útil para ver o que acontece ao iniciar)</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>docker<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>&lt;nome_do_container_ou_id&gt;
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Ver as últimas N linhas (e.g., 100)</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">100</span><span class="w"> </span>&lt;nome_do_container_ou_id&gt;
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># Ver logs com timestamps</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>docker<span class="w"> </span>logs<span class="w"> </span>-t<span class="w"> </span>&lt;nome_do_container_ou_id&gt;
 </span></code></pre></div></li>
 </ul>
 </li>
-<li><strong>Dashboard do Traefik:</strong><ul>
-<li>Acessível em <code>https://traefik.{{ base_domain }}</code> (se configurado e protegido por Authelia).</li>
-<li>Mostra:<ul>
-<li><strong>Routers:</strong> Quais regras de host estão ativas, a que serviços estão ligadas, quais middlewares estão aplicados.</li>
-<li><strong>Services:</strong> Os backends (seus containers Docker) e seu status.</li>
-<li><strong>Middlewares:</strong> Quais middlewares estão configurados.</li>
-<li><strong>Entrypoints:</strong> Status dos seus pontos de entrada (HTTP, HTTPS).</li>
-<li>Pode mostrar erros de configuração do Traefik.</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>Logs do Traefik:</strong><ul>
-<li>No Portainer, veja os logs do container <code>traefik</code>.</li>
-<li>Procure por erros ao processar labels, obter certificados SSL, ou conectar-se a backends.</li>
-</ul>
-</li>
-<li><strong>Logs do Authelia:</strong><ul>
-<li>No Portainer, veja os logs do container <code>authelia</code>.</li>
-<li>Útil para problemas de login, 2FA, ou regras de acesso.</li>
-</ul>
-</li>
-<li><strong>Logs do Sistema (Host Proxmox e VMs):</strong><ul>
-<li><code>journalctl -xe</code> (para erros do systemd e do sistema).</li>
-<li><code>dmesg</code> (para mensagens do kernel, útil para problemas de hardware/drivers).</li>
-<li><code>/var/log/syslog</code>, <code>/var/log/auth.log</code> (na VM).</li>
-</ul>
-</li>
-<li><strong>Ferramentas de Rede (na máquina de controle ou dentro de uma VM/container para teste):</strong><ul>
-<li><code>ping &lt;hostname_ou_IP&gt;</code>: Testa conectividade básica.</li>
-<li><code>nslookup &lt;hostname&gt;</code> ou <code>dig &lt;hostname&gt;</code>: Verifica resolução DNS.</li>
-<li><code>curl -vL &lt;URL&gt;</code>: Faz uma requisição HTTP/S e mostra detalhes da conexão, headers e redirecionamentos. Muito útil para testar Traefik e Authelia.</li>
-<li><code>traceroute &lt;hostname_ou_IP&gt;</code> ou <code>mtr &lt;hostname_ou_IP&gt;</code>: Mostra o caminho de rede.</li>
-</ul>
-</li>
-<li><strong>Browser Developer Tools (F12 no seu navegador):</strong><ul>
-<li><strong>Aba Network:</strong> Inspecione todas as requisições feitas pela página, seus status, headers, tempos. Veja se há erros 4xx (cliente) ou 5xx (servidor).</li>
-<li><strong>Aba Console:</strong> Verifique por erros JavaScript que podem quebrar a funcionalidade da UI de um serviço.</li>
-</ul>
-</li>
-</ul>
-<h2 id="problemas-comuns-e-estrategias-de-solucao">Problemas Comuns e Estratégias de Solução<a class="headerlink" href="#problemas-comuns-e-estrategias-de-solucao" title="Permanent link">&para;</a></h2>
-<h3 id="1-servico-inacessivel-externamente-httpsmeuservico-base_domain">1. Serviço Inacessível Externamente (<code>https://meuservico.{{ base_domain }}</code>)<a class="headerlink" href="#1-servico-inacessivel-externamente-httpsmeuservico-base_domain" title="Permanent link">&para;</a></h3>
+<li>
+<p><strong>Dashboard e Logs do Traefik:</strong></p>
 <ul>
-<li><strong>Sintomas:</strong> Timeout, erro "Site não pode ser alcançado", erro 5xx da Cloudflare, erro 404 do Traefik.</li>
-<li><strong>Checklist de Diagnóstico:</strong><ol>
-<li><strong>DNS:</strong><ul>
-<li>O subdomínio está configurado corretamente na Cloudflare (CNAME para o túnel ou Ingress Rule)?</li>
-<li>A nuvem do proxy está Laranja (Proxied)?</li>
-<li>Use <code>nslookup meuservico.{{ base_domain }}</code> na sua máquina. Deve resolver para IPs da Cloudflare.</li>
+<li><strong>Dashboard Traefik:</strong> Acessível em <code>https://traefik.{{ base_domain }}</code> (protegido por Authelia).<ul>
+<li><strong>Routers:</strong> Verifique se o roteador para o seu serviço problemático existe, está ativo (verde), e se a regra (<code>Rule</code>) corresponde ao hostname esperado.</li>
+<li><strong>Services:</strong> Verifique se o serviço backend associado ao roteador está saudável e aponta para o(s) container(es) correto(s) e a porta interna correta.</li>
+<li><strong>Middlewares:</strong> Verifique se os middlewares esperados (e.g., Authelia, headers) estão aplicados ao roteador e se não há erros neles.</li>
+<li><strong>Entrypoints:</strong> Confirme se seus entrypoints (<code>web</code>, <code>websecure</code>) estão ativos.</li>
 </ul>
 </li>
-<li><strong>Cloudflare Tunnel:</strong><ul>
-<li>O container <code>cloudflared</code> está rodando na <code>core-services-vm</code>? (Verifique no Portainer).</li>
-<li>Veja os logs do <code>cloudflared</code>: <code>docker logs cloudflared</code>. Procure por erros de conexão com a Cloudflare ou com o Traefik (se estiver usando <code>--url http://traefik:80</code>).</li>
-<li>No dashboard Cloudflare Zero Trust, verifique o status do túnel e dos hostnames públicos.</li>
+<li><strong>Logs do Traefik:</strong> Acesse os logs do container <code>traefik</code> via Portainer ou <code>docker logs traefik</code>.<ul>
+<li>Procure por erros ao processar labels Docker, obter certificados SSL/TLS da Let's Encrypt, ou ao tentar se conectar aos serviços backend. Aumentar o nível de log do Traefik para <code>DEBUG</code> (no <code>traefik.yml</code> e reiniciar Traefik) pode fornecer mais detalhes.</li>
 </ul>
 </li>
-<li><strong>Traefik:</strong><ul>
-<li>O container <code>traefik</code> está rodando?</li>
-<li>Acesse o dashboard do Traefik (<code>https://traefik.{{ base_domain }}</code>).<ul>
-<li>O roteador para <code>meuservico.{{ base_domain }}</code> existe e está ativo?</li>
-<li>O serviço backend associado ao roteador está saudável (apontando para o container correto e a porta interna correta)?</li>
-<li>Há algum erro de middleware?</li>
 </ul>
 </li>
-<li>Verifique as labels Docker do container <code>meuservico</code> no seu <code>docker-compose.yml</code>. Estão corretas? (Nome do host, entrypoint, serviço, porta).</li>
-<li>Verifique os logs do Traefik para erros relacionados a este serviço.</li>
+<li>
+<p><strong>Logs do Authelia:</strong></p>
+<ul>
+<li>Acesse os logs do container <code>authelia</code> via Portainer ou <code>docker logs authelia</code>.</li>
+<li>Crucial para diagnosticar problemas de login, falhas de 2FA, ou erros em regras de controle de acesso. Aumentar o nível de log no <code>configuration.yml</code> do Authelia também pode ajudar.</li>
 </ul>
 </li>
-<li><strong>Authelia (se o serviço estiver protegido):</strong><ul>
-<li>O container <code>authelia</code> está rodando?</li>
+<li>
+<p><strong>Logs do Sistema (Host Proxmox e VMs):</strong>
+    Conecte-se via SSH ao host ou VM relevante.</p>
+<ul>
+<li><strong><code>journalctl</code> (Systemd Journal):</strong>
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>journalctl<span class="w"> </span>-xe<span class="w"> </span><span class="c1"># Mostra os últimos logs com explicações de erros</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>journalctl<span class="w"> </span>-f<span class="w"> </span><span class="c1"># Segue os logs do sistema em tempo real</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>journalctl<span class="w"> </span>-u<span class="w"> </span>nome_do_servico.service<span class="w"> </span><span class="c1"># Logs de um serviço systemd específico (e.g., sshd, nfs-kernel-server, ollama)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>journalctl<span class="w"> </span>-p<span class="w"> </span>err<span class="w"> </span><span class="c1"># Mostra apenas logs com prioridade de erro ou superior</span>
+</span></code></pre></div></li>
+<li><strong><code>dmesg</code>:</strong> Mostra mensagens do buffer do kernel. Útil para problemas de hardware, drivers, ou erros de baixo nível.
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>dmesg
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>dmesg<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-i<span class="w"> </span>error<span class="w"> </span><span class="c1"># Filtra por erros</span>
+</span></code></pre></div></li>
+<li><strong>Logs Tradicionais em <code>/var/log/</code>:</strong><ul>
+<li><code>/var/log/syslog</code> ou <code>/var/log/messages</code>: Logs gerais do sistema.</li>
+<li><code>/var/log/auth.log</code>: Logs de autenticação (logins SSH, sudo).</li>
+<li><code>/var/log/kern.log</code>: Logs do kernel.</li>
+<li>Logs específicos de aplicações instaladas nativamente.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Ferramentas de Rede (Execute na sua máquina de controle, ou dentro de uma VM/container para testes específicos):</strong></p>
+<ul>
+<li><strong><code>ping &lt;hostname_ou_IP&gt;</code>:</strong> Testa a conectividade de rede básica (ICMP).</li>
+<li><strong><code>nslookup &lt;hostname&gt;</code></strong> ou <strong><code>dig &lt;hostname&gt;</code>:</strong> Verifica a resolução DNS. Essencial para ver se <code>meuservico.{{ base_domain }}</code> está resolvendo para IPs da Cloudflare.</li>
+<li><strong><code>curl -vL &lt;URL&gt;</code>:</strong> Faz uma requisição HTTP/S e mostra detalhes verbosos da conexão, incluindo headers HTTP, códigos de status e redirecionamentos. Extremamente útil para testar Traefik, Authelia e o serviço backend.<ul>
+<li>Exemplo: <code>curl -vL https://nextcloud.{{ base_domain }}</code></li>
+</ul>
+</li>
+<li><strong><code>traceroute &lt;hostname_ou_IP&gt;</code></strong> (Linux/macOS) ou <strong><code>tracert &lt;hostname_ou_IP&gt;</code></strong> (Windows): Mostra o caminho (saltos de rede) que os pacotes levam para alcançar um destino.</li>
+<li><strong><code>mtr &lt;hostname_ou_IP&gt;</code>:</strong> Combina ping e traceroute, fornecendo uma visão contínua da qualidade da conexão em cada salto.</li>
+<li><strong><code>ss -tulnp</code></strong> (Linux) ou <strong><code>netstat -tulnp</code>:</strong> Mostra quais portas estão abertas e escutando em um sistema e quais processos as estão usando. Útil para verificar se um serviço está escutando na porta esperada dentro de uma VM ou container.</li>
+</ul>
+</li>
+<li>
+<p><strong>Browser Developer Tools (Geralmente F12 no seu navegador web):</strong></p>
+<ul>
+<li><strong>Aba Network:</strong> Inspecione todas as requisições HTTP/S feitas pela página web do seu serviço. Verifique:<ul>
+<li>Códigos de Status (200 OK, 3xx Redirecionamentos, 4xx Erros do Cliente, 5xx Erros do Servidor).</li>
+<li>Headers da Requisição e da Resposta.</li>
+<li>Tempos de carregamento de cada recurso.</li>
+<li>Se algum recurso (CSS, JS, imagem) está falhando ao carregar.</li>
+</ul>
+</li>
+<li><strong>Aba Console:</strong> Verifique por erros JavaScript que podem estar quebrando a funcionalidade da interface do usuário de um serviço web.</li>
+<li><strong>Aba Application (ou Storage):</strong> Inspecione cookies, local storage, session storage. Útil para depurar problemas de sessão com Authelia ou a própria aplicação.</li>
+</ul>
+</li>
+</ol>
+<h2 id="problemas-comuns-e-estrategias-de-solucao">Problemas Comuns e Estratégias de Solução<a class="headerlink" href="#problemas-comuns-e-estrategias-de-solucao" title="Permanent link">¶</a></h2>
+<h3 id="1-servico-web-inacessivel-externamente-httpsmeuservico-base_domain">1. Serviço Web Inacessível Externamente (<code>https://meuservico.{{ base_domain }}</code>)<a class="headerlink" href="#1-servico-web-inacessivel-externamente-httpsmeuservico-base_domain" title="Permanent link">¶</a></h3>
+<ul>
+<li><strong>Sintomas Comuns:</strong> Erro "Site não pode ser alcançado" no navegador, timeout, erro 5xx da Cloudflare (e.g., 502 Bad Gateway, 503 Service Unavailable), erro 404 "Not Found" do Traefik, página de login do Authelia não aparece ou dá erro.</li>
+<li><strong>Checklist de Diagnóstico (Siga a ordem do fluxo de tráfego):</strong><ol>
+<li><strong>DNS Público (Cloudflare):</strong><ul>
+<li>O subdomínio (<code>meuservico</code>) está configurado corretamente no seu painel DNS da Cloudflare?</li>
+<li>Se usa CNAME, ele aponta para o hostname correto do seu Cloudflare Tunnel (e.g., <code>UUID.cfargotunnel.com</code>)?</li>
+<li>Se usa Ingress Rules/Public Hostnames no Zero Trust Dashboard, a regra para <code>meuservico.{{ base_domain }}</code> existe e aponta para o serviço <code>http://traefik:80</code>?</li>
+<li>O "Proxy status" (nuvem laranja) está <strong>habilitado</strong> para o registro DNS?</li>
+<li>Use uma ferramenta online de DNS lookup (ou <code>nslookup meuservico.{{ base_domain }}</code> na sua máquina) para verificar se ele resolve para endereços IP da Cloudflare.</li>
+</ul>
+</li>
+<li><strong>Cloudflare Tunnel (<code>cloudflared</code> Agent):</strong><ul>
+<li>O container <code>cloudflared</code> está rodando na <code>core-services-vm</code>? Verifique no Portainer.</li>
+<li>Examine os logs do <code>cloudflared</code>: <code>docker logs cloudflared</code>. Procure por:<ul>
+<li>Erros de conexão com a Cloudflare ("Connection refused", "failed to connect to an edge").</li>
+<li>Erros ao encaminhar para o Traefik (se estiver usando <code>--url http://traefik:80</code>, ele deve conseguir resolver <code>traefik</code>).</li>
+</ul>
+</li>
+<li>No dashboard Cloudflare Zero Trust (Access -&gt; Tunnels), verifique o status do seu túnel. Deve estar "Healthy".</li>
+</ul>
+</li>
+<li><strong>Traefik (Proxy Reverso):</strong><ul>
+<li>O container <code>traefik</code> está rodando na <code>core-services-vm</code>?</li>
+<li>Acesse o <strong>Dashboard do Traefik</strong> (<code>https://traefik.{{ base_domain }}</code> - você precisará autenticar com Authelia).<ul>
+<li><strong>Routers:</strong> O roteador para <code>meuservico.{{ base_domain }}</code> existe e está com status verde? A <code>Rule</code> está correta (<code>Host(\</code>meuservico.{{ base_domain }}`)<code>)? Os</code>EntryPoints<code>(</code>websecure`) estão corretos?</li>
+<li><strong>Services:</strong> O serviço backend associado ao roteador está saudável? Ele aponta para o(s) container(es) correto(s) do <code>meuservico</code> e para a porta interna correta que o <code>meuservico</code> escuta?</li>
+<li><strong>Middlewares:</strong> Os middlewares aplicados ao roteador (e.g., <code>authelia-forwardauth@docker</code>, <code>securityHeaders@file</code>) estão corretos e sem erros?</li>
+</ul>
+</li>
+<li>Verifique as <strong>labels Docker</strong> do container <code>meuservico</code> no seu <code>docker-compose.yml</code>. Estão corretas quanto ao nome do host, entrypoint, nome do serviço Traefik, e a porta interna do container (<code>loadbalancer.server.port</code>)?</li>
+<li>Examine os <strong>logs do Traefik</strong> (<code>docker logs traefik</code>) para erros específicos relacionados a este serviço, problemas com certificados SSL, ou falhas ao conectar ao backend.</li>
+</ul>
+</li>
+<li><strong>Authelia (se o serviço estiver protegido por ele):</strong><ul>
+<li>O container <code>authelia</code> e seu banco de dados (<code>authelia_db</code>) estão rodando?</li>
 <li>Você consegue acessar o portal Authelia (<code>https://auth.{{ base_domain }}</code>)?</li>
-<li>Verifique os logs do Authelia para erros de autenticação ou problemas com as regras de acesso.</li>
-<li>Tente acessar o serviço com <code>?authelia_bypass=true</code> no final da URL (se você configurou uma regra de bypass para teste, o que não é recomendado para produção).</li>
+<li>Examine os <strong>logs do Authelia</strong> (<code>docker logs authelia</code>) para erros de autenticação, problemas com as regras de acesso (<code>access_control</code> no <code>configuration.yml</code>), ou falhas de conexão com o banco de dados.</li>
+<li>A configuração do middleware <code>authelia-forwardauth@docker</code> no Traefik (definida no <code>docker-compose.yml</code> do Authelia) está correta?</li>
 </ul>
 </li>
-<li><strong>Container do Serviço (<code>meuservico</code>):</strong><ul>
-<li>O container está rodando?</li>
-<li>Ele está escutando na porta interna que o Traefik espera (e.g., se Traefik aponta para a porta 8000, o container deve estar escutando na porta 8000)?</li>
-<li>Verifique os logs do container <code>meuservico</code> para erros de inicialização ou de processamento de requisições.</li>
+<li><strong>Container do Serviço de Destino (<code>meuservico</code>):</strong><ul>
+<li>O container <code>meuservico</code> está rodando na <code>core-services-vm</code> (ou <code>ai-desktop-vm</code> se aplicável)?</li>
+<li>Ele está conectado à rede Docker correta (geralmente <code>proxy</code> se exposto via Traefik)?</li>
+<li>O serviço dentro do container está realmente escutando na porta interna que o Traefik espera (e.g., se Traefik está configurado para encaminhar para a porta 8000 do container, o serviço dentro do container deve estar escutando em <code>0.0.0.0:8000</code> ou <code>:::8000</code>)?<ul>
+<li>Use <code>docker exec -it &lt;nome_do_container_meuservico&gt; ss -tulnp</code> (ou <code>netstat -tulnp</code>) dentro do container para verificar as portas em escuta.</li>
 </ul>
 </li>
-<li><strong>Firewalls:</strong><ul>
-<li>O UFW na <code>core-services-vm</code> está permitindo tráfego nas portas 80 e 443 (para Traefik)? (Já deve estar configurado pelo Ansible).</li>
-<li>O PVE Firewall no host Proxmox não deve estar bloqueando tráfego para a <code>core-services-vm</code> (geralmente não é um problema se as VMs estão na mesma bridge <code>vmbr0</code> e o firewall PVE é para tráfego externo ao host).</li>
+<li>Examine os <strong>logs do container <code>meuservico</code></strong> para quaisquer erros de inicialização, falhas ao processar requisições, ou problemas de configuração interna.</li>
+</ul>
+</li>
+<li><strong>Firewalls (Menos Provável se Outros Serviços Funcionam):</strong><ul>
+<li>O UFW na <code>core-services-vm</code> está permitindo tráfego de entrada nas portas 80 e 443 (para Traefik)? (Isso já deve ter sido configurado pelo Ansible).</li>
+<li>O PVE Firewall no host Proxmox não deve estar bloqueando tráfego entre a internet e a <code>core-services-vm</code> se o Cloudflare Tunnel estiver funcionando, pois o túnel é uma conexão de saída.</li>
 </ul>
 </li>
 </ol>
 </li>
 </ul>
-<h3 id="2-container-nao-inicia-ou-em-loop-de-crash-restarting">2. Container Não Inicia ou em Loop de Crash (Restarting)<a class="headerlink" href="#2-container-nao-inicia-ou-em-loop-de-crash-restarting" title="Permanent link">&para;</a></h3>
+<h3 id="2-container-nao-inicia-ou-fica-em-loop-de-crash-status-restarting">2. Container Não Inicia ou Fica em Loop de Crash (Status "Restarting")<a class="headerlink" href="#2-container-nao-inicia-ou-fica-em-loop-de-crash-status-restarting" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Sintomas:</strong> Container aparece como "Stopped" ou fica reiniciando no Portainer.</li>
-<li><strong>Diagnóstico:</strong><ol>
-<li><strong><code>docker logs &lt;nome_do_container&gt;</code>:</strong> Esta é a primeira e mais importante etapa. Os logs geralmente indicam o motivo da falha.</li>
-<li><strong>Problemas de Configuração:</strong><ul>
-<li>Variável de ambiente faltando ou incorreta?</li>
-<li>Arquivo de configuração essencial faltando ou malformado dentro de um volume?</li>
+<li><strong>Sintomas:</strong> O container aparece como "Stopped", "Created", ou fica alternando entre "Starting" e "Restarting" no Portainer.</li>
+<li><strong>Principal Ferramenta de Diagnóstico:</strong><ol>
+<li><strong><code>docker logs &lt;nome_do_container_ou_id&gt;</code>:</strong> Esta é a primeira e mais importante etapa. Os logs do container quase sempre indicam o motivo exato da falha ou do crash. Execute este comando na VM onde o container deveria estar rodando.</li>
+</ol>
+</li>
+<li><strong>Causas Comuns e Soluções:</strong><ul>
+<li><strong>Erro de Configuração no <code>docker-compose.yml</code> ou Variáveis de Ambiente:</strong><ul>
+<li>Uma variável de ambiente obrigatória está faltando ou tem um valor incorreto?</li>
+<li>Um caminho de volume mapeado está incorreto ou o diretório de origem não existe/não tem permissões?</li>
 </ul>
 </li>
-<li><strong>Problemas de Permissão em Volumes:</strong><ul>
-<li>O PUID/PGID configurado para o container corresponde às permissões do diretório NFS mapeado? Lembre-se que o NFS está configurado para <code>all_squash</code> para <code>{{ docker_puid }}:{{ docker_pgid }}</code>. Se o container tentar rodar como um usuário diferente internamente e precisar escrever, pode falhar.</li>
-<li>Verifique as permissões no diretório NFS na VM (<code>ls -ld /mnt/pve_data_zfs/docker-volumes/meuservico/config</code>).</li>
+<li><strong>Problemas de Permissão nos Volumes Mapeados:</strong><ul>
+<li>O usuário/UID com o qual o processo principal dentro do container roda (definido pela imagem Docker ou pelas variáveis <code>PUID</code>/<code>PGID</code> no compose) não tem permissão para ler/escrever nos diretórios NFS mapeados?</li>
+<li>Lembre-se que nossos exports NFS usam <code>all_squash</code> para <code>anonuid={{ docker_puid }}</code> e <code>anongid={{ docker_pgid }}</code>. Garanta que o <code>PUID</code>/<code>PGID</code> no seu compose corresponda a estes valores e que os diretórios no NFS tenham o <code>dockeruser:dockergroup</code> como proprietário/grupo na VM.</li>
+<li>Verifique as permissões nos diretórios NFS dentro da VM (e.g., <code>ls -ld /mnt/pve_data_zfs/docker-volumes/meuservico/config</code>).</li>
 </ul>
 </li>
-<li><strong>Porta Já em Uso:</strong><ul>
-<li>Se o container tenta mapear uma porta no host da VM (e.g., <code>-p 8080:80</code>) que já está sendo usada por outro processo ou container, ele falhará.</li>
+<li><strong>Porta Já em Uso (se o container tenta mapear uma porta diretamente no host da VM):</strong><ul>
+<li>Se o <code>docker-compose.yml</code> tem uma seção <code>ports:</code> (e.g., <code>-p 8080:80</code>) e a porta <code>8080</code> na VM já está sendo usada por outro processo ou container, o novo container falhará ao iniciar.</li>
 <li>Use <code>sudo ss -tulnp | grep &lt;numero_da_porta&gt;</code> na VM para ver qual processo está usando a porta.</li>
 </ul>
 </li>
-<li><strong>Recursos Insuficientes:</strong><ul>
-<li>A VM tem RAM ou CPU suficiente para o container iniciar? (Menos comum para falha imediata, mais para performance ruim).</li>
+<li><strong>Recursos Insuficientes na VM:</strong><ul>
+<li>A VM tem RAM ou CPU livre suficiente para o container iniciar e rodar? (Menos comum para uma falha de inicialização imediata, mas pode causar crashes se o container tentar alocar muita memória rapidamente). Verifique o uso de recursos na VM.</li>
 </ul>
 </li>
-<li><strong>Dependências Não Satisfeitas:</strong><ul>
-<li>Se o container depende de outro (e.g., uma aplicação que precisa de um banco de dados), o <code>depends_on</code> no <code>docker-compose.yml</code> com <code>condition: service_healthy</code> pode ajudar, mas o container dependente ainda pode falhar se o serviço principal não estiver acessível ou configurado corretamente.</li>
+<li><strong>Dependências Não Satisfeitas (Outros Containers):</strong><ul>
+<li>Se o container depende de outro serviço (e.g., um banco de dados) e esse serviço não está rodando ou não está acessível, o container dependente pode falhar ao iniciar.</li>
+<li>Use <code>depends_on</code> com <code>condition: service_healthy</code> no <code>docker-compose.yml</code> para ajudar com a ordem de inicialização, mas o container principal ainda precisa estar funcional.</li>
 </ul>
 </li>
-</ol>
+<li><strong>Arquivo de Configuração Interno Corrompido ou Inválido:</strong><ul>
+<li>Se o container iniciou uma vez, criou arquivos de configuração em seu volume, e depois esses arquivos foram corrompidos ou editados incorretamente, ele pode falhar ao reiniciar. Verifique os logs para mensagens sobre falha ao ler/parsear arquivos de configuração.</li>
+</ul>
+</li>
+<li><strong>Imagem Docker Incorreta ou Corrompida:</strong><ul>
+<li>Raramente, a imagem Docker baixada pode estar corrompida. Tente remover a imagem local (<code>docker rmi &lt;imagem&gt;</code>) e deixar o Docker Compose baixá-la novamente.</li>
+<li>Verifique se a tag da imagem especificada no <code>docker-compose.yml</code> realmente existe no registro.</li>
+</ul>
 </li>
 </ul>
-<h3 id="3-problemas-com-volumes-nfs">3. Problemas com Volumes NFS<a class="headerlink" href="#3-problemas-com-volumes-nfs" title="Permanent link">&para;</a></h3>
+</li>
+</ul>
+<h3 id="3-problemas-com-volumes-nfs-persistencia-de-dados">3. Problemas com Volumes NFS (Persistência de Dados)<a class="headerlink" href="#3-problemas-com-volumes-nfs-persistencia-de-dados" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Sintomas:</strong> Containers não conseguem ler/escrever em seus volumes, dados não persistem, erros de "Permission denied" nos logs do container.</li>
-<li><strong>Diagnóstico:</strong><ol>
+<li><strong>Sintomas:</strong> Containers não conseguem ler ou escrever em seus volumes persistentes, os dados não são salvos entre reinícios do container, erros de "Permission denied" ou "Read-only file system" nos logs do container relacionados a caminhos de volume.</li>
+<li><strong>Checklist de Diagnóstico:</strong><ol>
 <li><strong>Servidor NFS no Host Proxmox:</strong><ul>
-<li>O serviço está rodando? <code>systemctl status nfs-kernel-server</code> no host Proxmox.</li>
-<li>O arquivo <code>/etc/exports</code> está correto? (Verifique caminhos, IPs permitidos, opções de squash e <code>anonuid</code>/<code>anongid</code>).</li>
-<li>Execute <code>sudo exportfs -rav</code> no host Proxmox para recarregar os exports e ver se há erros.</li>
+<li>O serviço <code>nfs-kernel-server</code> está rodando no host Proxmox? Verifique com <code>sudo systemctl status nfs-kernel-server</code>.</li>
+<li>O arquivo <code>/etc/exports</code> no host Proxmox está correto?<ul>
+<li>Os caminhos dos datasets ZFS (e.g., <code>/data/docker-volumes</code>) estão corretos?</li>
+<li>O CIDR da sua rede de VMs (<code>{{ vm_nfs_allowed_clients_cidr }}</code>) está correto e permite acesso aos IPs das suas VMs?</li>
+<li>As opções de exportação (<code>rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }}</code>) estão definidas como esperado?</li>
 </ul>
 </li>
-<li><strong>Cliente NFS na VM:</strong><ul>
-<li>Os compartilhamentos NFS estão montados? <code>df -h</code> ou <code>mount | grep nfs</code> na VM.</li>
-<li>O arquivo <code>/etc/fstab</code> na VM tem as entradas corretas para montagem automática?</li>
-<li>Consegue listar o conteúdo do ponto de montagem NFS na VM? (e.g., <code>ls -l /mnt/pve_data_zfs/docker-volumes</code>).</li>
+<li>Após qualquer mudança no <code>/etc/exports</code>, você executou <code>sudo exportfs -rav</code> no host Proxmox para aplicar as mudanças?</li>
 </ul>
 </li>
-<li><strong>Permissões:</strong><ul>
-<li>No host Proxmox, quais são as permissões dos diretórios ZFS exportados (e.g., <code>/data/docker-volumes</code>)?</li>
-<li>Na VM, após a montagem, quais são as permissões e o proprietário/grupo do ponto de montagem e seus subdiretórios? Devido ao <code>all_squash</code> e <code>anonuid</code>/<code>anongid</code>, eles devem pertencer a <code>{{ docker_puid }}:{{ docker_pgid }}</code> (e.g., 1000:1000).</li>
-<li>O PUID/PGID do container corresponde a essas permissões?</li>
+<li><strong>Cliente NFS na VM (e.g., <code>core-services-vm</code>):</strong><ul>
+<li>O pacote <code>nfs-common</code> está instalado? (Deveria estar, via role <code>common</code>).</li>
+<li>Os compartilhamentos NFS do host Proxmox estão montados corretamente na VM? Verifique com:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>df<span class="w"> </span>-hT<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nfs
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mount<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nfs
+</span></code></pre></div>
+    Você deve ver seus datasets (e.g., <code>/data/docker-volumes</code>) montados em <code>/mnt/pve_data_zfs/docker-volumes</code> (ou seu <code>{{ vm_nfs_mount_base_path }}</code>).</li>
+<li>O arquivo <code>/etc/fstab</code> na VM contém as entradas corretas para montar os compartilhamentos NFS automaticamente no boot, com as opções corretas (e.g., <code>rw,sync,hard,intr,bg,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2</code>)?</li>
+<li>Você consegue listar, criar e deletar arquivos (como root ou como <code>{{ vm_ansible_user_name }}</code>) nos pontos de montagem NFS dentro da VM?
+    Exemplo: <code>ls -l /mnt/pve_data_zfs/docker-volumes/</code>
+    <code>sudo touch /mnt/pve_data_zfs/docker-volumes/testfile &amp;&amp; sudo rm /mnt/pve_data_zfs/docker-volumes/testfile</code></li>
 </ul>
 </li>
-<li><strong>Firewall:</strong> O firewall no host Proxmox (PVE Firewall) ou na VM (UFW) está bloqueando portas NFS (TCP/UDP 2049, e possivelmente portas para portmapper/rpcbind se usar NFSv3 ou inferior - NFSv4 geralmente só precisa da 2049)? (Ansible deve ter configurado isso, mas verifique).</li>
+<li><strong>Permissões de Arquivo/Diretório nos Volumes NFS (Dentro da VM):</strong><ul>
+<li>Quais são as permissões e o proprietário/grupo dos diretórios que são mapeados para os containers (e.g., <code>/mnt/pve_data_zfs/docker-volumes/nextcloud/config</code>)?
+    Use <code>ls -ld /caminho/para/diretorio_do_volume</code> na VM.</li>
+<li>Devido às opções <code>all_squash</code>, <code>anonuid={{ docker_puid }}</code>, <code>anongid={{ docker_pgid }}</code> no export NFS, os arquivos e diretórios criados pela VM no montado NFS (ou pelo host Proxmox diretamente nos datasets) devem <em>aparecer</em> na VM como pertencentes ao UID/GID especificados por <code>anonuid</code>/<code>anongid</code> (que são <code>{{ docker_puid }}</code> e <code>{{ docker_pgid }}</code>).</li>
+<li>O <code>PUID</code> e <code>PGID</code> definidos nas variáveis de ambiente do seu container Docker correspondem a esses valores?</li>
+</ul>
+</li>
+<li><strong>Firewall:</strong><ul>
+<li>O firewall no host Proxmox (PVE Firewall) está permitindo tráfego NFS (porta TCP/UDP 2049, e possivelmente portas para rpcbind/portmapper se usar NFSv3 ou inferior) vindo dos IPs das suas VMs?</li>
+<li>O firewall UFW na VM não deve bloquear o tráfego NFS de saída para o host Proxmox (a política de saída padrão é <code>allow</code>).</li>
+</ul>
+</li>
+<li><strong>Logs do Kernel/Sistema (em ambas as máquinas):</strong><ul>
+<li>Verifique <code>dmesg</code> e <code>journalctl</code> no host Proxmox e na VM por erros relacionados a NFS (e.g., "mount.nfs: access denied by server", "Stale file handle").</li>
+</ul>
+</li>
 </ol>
 </li>
 </ul>
-<h3 id="4-problemas-de-autenticacao-authelia">4. Problemas de Autenticação (Authelia)<a class="headerlink" href="#4-problemas-de-autenticacao-authelia" title="Permanent link">&para;</a></h3>
+<h3 id="4-problemas-de-autenticacao-com-authelia">4. Problemas de Autenticação com Authelia<a class="headerlink" href="#4-problemas-de-autenticacao-com-authelia" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Sintomas:</strong> Redirecionamentos inesperados, erros no portal de login do Authelia, acesso negado mesmo com credenciais corretas.</li>
-<li><strong>Diagnóstico:</strong><ol>
-<li><strong>Logs do Authelia:</strong> <code>docker logs authelia</code>. Procure por mensagens de erro detalhadas.</li>
-<li><strong>Configuração do Authelia (<code>configuration.yml</code>):</strong><ul>
-<li><code>jwt_secret</code> e <code>session.secret</code> estão definidos e são complexos?</li>
-<li><code>session.domain</code> está configurado para o domínio pai (e.g., <code>{{ base_domain }}</code>), não <code>auth.{{ base_domain }}</code>?</li>
-<li>As regras em <code>access_control</code> estão corretas? A <code>default_policy</code> e as regras específicas para domínios estão como esperado?</li>
-<li>A configuração do <code>storage</code> (PostgreSQL) está correta (host, usuário, senha, DB)?</li>
+<li><strong>Sintomas:</strong> Redirecionamentos inesperados para o portal Authelia, erros na página de login do Authelia (e.g., "Invalid credentials", "Internal Server Error"), falha no segundo fator (2FA), acesso negado a um serviço mesmo após login bem-sucedido.</li>
+<li><strong>Checklist de Diagnóstico:</strong><ol>
+<li><strong>Logs do Authelia:</strong> <code>docker logs authelia</code> na <code>core-services-vm</code>. Este é o primeiro lugar para procurar. Aumente o nível de log no <code>configuration.yml</code> do Authelia se precisar de mais detalhes.</li>
+<li><strong>Configuração do Authelia (<code>authelia/config/configuration.yml</code>):</strong><ul>
+<li><strong><code>jwt_secret</code> e <code>session.secret</code>:</strong> Estão definidos, são complexos e são os mesmos que Authelia está usando? (Se você os define via variáveis de ambiente no compose, certifique-se que estão sendo passados corretamente).</li>
+<li><strong><code>session.domain</code>:</strong> Está configurado para o seu domínio pai (e.g., <code>{{ base_domain }}</code>), e <strong>NÃO</strong> para um subdomínio como <code>auth.{{ base_domain }}</code>? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.</li>
+<li><strong><code>storage</code> (PostgreSQL):</strong> A configuração do banco de dados (host <code>authelia_db</code>, usuário, senha, nome do DB) está correta e o container <code>authelia_db</code> está rodando e saudável?</li>
+<li><strong><code>access_control.rules</code>:</strong> As regras estão definidas como você espera? A <code>default_policy</code> está correta? As regras para domínios específicos e a regra <code>bypass</code> para <code>auth.{{ base_domain }}</code> estão presentes e corretas?</li>
+<li><strong><code>notifier</code> (SMTP):</strong> Se configurado, está correto? Problemas aqui podem impedir o reset de senha.</li>
 </ul>
 </li>
-<li><strong>Conectividade com o Banco de Dados do Authelia:</strong> O container Authelia consegue alcançar o container <code>authelia_db</code>? (Eles devem estar na mesma rede <code>internal_services</code>).</li>
-<li><strong>Cookies do Navegador:</strong> Tente limpar os cookies para <code>{{ base_domain }}</code> e <code>auth.{{ base_domain }}</code> e tente novamente.</li>
-<li><strong>Relógio do Sistema:</strong> Certifique-se de que o relógio na <code>core-services-vm</code> (e consequentemente nos containers) está sincronizado corretamente (NTP). Problemas de sincronia de relógio podem afetar TOTP.</li>
-<li><strong>Configuração do Middleware no Traefik:</strong> A label <code>traefik.http.middlewares.authelia.forwardauth.address</code> no compose do Authelia aponta corretamente para <code>http://authelia:9091/api/verify...</code>?</li>
+<li><strong>Conectividade com o Banco de Dados PostgreSQL do Authelia:</strong><ul>
+<li>O container <code>authelia</code> consegue alcançar o container <code>authelia_db</code> na rede <code>internal_services</code>?</li>
+<li>Verifique os logs do <code>authelia_db</code> também.</li>
+</ul>
+</li>
+<li><strong>Cookies do Navegador:</strong><ul>
+<li>Tente limpar os cookies do seu navegador para o seu <code>{{ base_domain }}</code> e para <code>auth.{{ base_domain }}</code> e tente logar novamente.</li>
+<li>Use as Developer Tools do navegador (F12 -&gt; Aba Application/Storage -&gt; Cookies) para inspecionar o cookie de sessão do Authelia (geralmente chamado <code>homelab_authelia_session</code> ou o que você definiu em <code>session.name</code>). Ele está sendo definido para o domínio correto?</li>
+</ul>
+</li>
+<li><strong>Sincronia de Relógio:</strong><ul>
+<li>Certifique-se de que o relógio na <code>core-services-vm</code> (e, portanto, nos containers) está sincronizado corretamente com um servidor NTP. Desvios significativos de tempo podem afetar a validação de códigos TOTP para 2FA.</li>
+</ul>
+</li>
+<li><strong>Configuração do Middleware <code>authelia-forwardauth@docker</code> no Traefik:</strong><ul>
+<li>No <code>docker-compose.yml</code> da stack Authelia (Seção 5.3), a definição do middleware <code>traefik.http.middlewares.authelia-forwardauth.forwardauth.address</code> está correta, apontando para <code>http://authelia:9091/api/verify...</code>?</li>
+<li>Os serviços que você quer proteger no Traefik estão referenciando este middleware corretamente (e.g., <code>middlewares: "authelia-forwardauth@docker"</code>)?</li>
+</ul>
+</li>
 </ol>
 </li>
 </ul>
-<h3 id="5-problemas-com-certificados-ssltls-lets-encrypt-via-traefik">5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)<a class="headerlink" href="#5-problemas-com-certificados-ssltls-lets-encrypt-via-traefik" title="Permanent link">&para;</a></h3>
+<h3 id="5-problemas-com-certificados-ssltls-lets-encrypt-via-traefik">5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)<a class="headerlink" href="#5-problemas-com-certificados-ssltls-lets-encrypt-via-traefik" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>Sintomas:</strong> Aviso de certificado inválido/expirado no navegador, erros de "SSL handshake failed".</li>
-<li><strong>Diagnóstico:</strong><ol>
-<li><strong>Logs do Traefik:</strong> Procure por mensagens de erro relacionadas a "ACME", "Let's Encrypt", ou "TLS challenge".</li>
-<li><strong>Configuração do Resolvedor ACME no <code>traefik.yml</code>:</strong><ul>
-<li>O email está correto?</li>
-<li>O <code>storage</code> (caminho para <code>acme.json</code>) está correto e o container Traefik tem permissão de escrita nele? (Verifique permissões do volume NFS).</li>
-<li>Para <code>dnsChallenge</code> com Cloudflare:<ul>
-<li>A variável de ambiente <code>CF_DNS_API_TOKEN</code> está sendo passada corretamente para o container Traefik?</li>
-<li>O token API da Cloudflare é válido e tem as permissões corretas (Zone.DNS - Edit) para o seu <code>{{ base_domain }}</code>?</li>
+<li><strong>Sintomas:</strong> Avisos de certificado inválido, expirado, ou "não confiável" no navegador ao acessar seus serviços HTTPS. Erros de "SSL handshake failed".</li>
+<li><strong>Checklist de Diagnóstico:</strong><ol>
+<li><strong>Logs do Traefik:</strong> <code>docker logs traefik</code>. Procure por mensagens de erro contendo "ACME", "Let's Encrypt", "TLS certificate", ou "challenge". Aumentar o nível de log do Traefik para <code>DEBUG</code> pode fornecer informações muito detalhadas sobre o processo de obtenção de certificados.</li>
+<li><strong>Configuração do Resolvedor ACME no <code>traefik.yml</code> (Config Estática):</strong><ul>
+<li>O <code>email</code> para Let's Encrypt está correto?</li>
+<li>O <code>storage</code> para o <code>acme.json</code> (e.g., <code>/data/acme.json</code> dentro do container Traefik) está correto e o container Traefik tem permissão de <strong>escrita</strong> nesse caminho no volume NFS? (Verifique as permissões do diretório <code>traefik/data</code> no NFS).</li>
+<li>Para o <code>dnsChallenge</code> com <code>provider: "cloudflare"</code>:<ul>
+<li>A variável de ambiente <code>CF_DNS_API_TOKEN</code> está sendo passada corretamente para o container Traefik (verifique o <code>docker-compose.yml</code> da stack <code>core</code> e o <code>.env</code> carregado)?</li>
+<li>O token API da Cloudflare que você gerou é válido e tem as permissões corretas (geralmente "Zone:DNS:Edit" para o seu <code>{{ base_domain }}</code>)?</li>
 </ul>
 </li>
 </ul>
 </li>
 <li><strong>Arquivo <code>acme.json</code>:</strong><ul>
-<li>Verifique o conteúdo (com cuidado, é JSON). Ele contém os certificados? Há erros?</li>
-<li><strong>NÃO EDITE MANUALMENTE.</strong> Se estiver corrompido, pode ser necessário pará-lo, remover <code>acme.json</code>, e reiniciar Traefik para que ele tente obter novos certificados (isso pode acionar limites de taxa da Let's Encrypt se feito repetidamente).</li>
+<li>Localização: <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/data/acme.json</code> na <code>core-services-vm</code>.</li>
+<li>Verifique o conteúdo (é um arquivo JSON). Ele contém entradas para seus domínios e os certificados? Há mensagens de erro dentro dele?</li>
+<li>
+<div class="admonition danger">
+<p class="admonition-title">Não Edite <code>acme.json</code> Manualmente</p>
+A edição manual deste arquivo pode corrompê-lo. Se você suspeitar que ele está corrompido e o Traefik não consegue obter/renovar certificados:<ol>
+<li>Pare o container Traefik.</li>
+<li><strong>Faça um backup</strong> do <code>acme.json</code> atual (e.g., renomeie para <code>acme.json.bak</code>).</li>
+<li>Delete o <code>acme.json</code> original (ou deixe o diretório <code>traefik/data</code> vazio se não houver outros arquivos importantes lá).</li>
+<li>Inicie o container Traefik. Ele tentará obter novos certificados para todos os seus roteadores configurados com Let's Encrypt.</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Limites de Taxa da Let's Encrypt</p>
+Se você deletar o <code>acme.json</code> e forçar o Traefik a obter muitos certificados repetidamente em um curto período, você pode atingir os <a href="https://letsencrypt.org/docs/rate-limits/">limites de taxa da Let's Encrypt</a> (e.g., para "Certificates per Registered Domain" ou "Failed Validation limit"). Se isso acontecer, você terá que esperar (geralmente uma hora ou até uma semana para alguns limites) antes de tentar novamente.</div>
+</div>
+</li>
 </ul>
 </li>
-<li><strong>Limites de Taxa da Let's Encrypt:</strong> Se você tentou obter certificados muitas vezes sem sucesso, pode ter atingido um limite de taxa. Aguarde (geralmente uma hora ou mais) antes de tentar novamente.</li>
-<li><strong>DNS Propagation:</strong> Para o desafio DNS-01, Traefik precisa criar um registro TXT que seja publicamente resolúvel. Se sua propagação DNS for muito lenta, o desafio pode falhar.</li>
+<li><strong>Propagação de DNS:</strong> Para o desafio DNS-01, Traefik (via API da Cloudflare) precisa criar um registro TXT temporário no DNS do seu domínio. Este registro precisa ser publicamente resolúvel pelos servidores da Let's Encrypt para que o desafio seja bem-sucedido. Se sua propagação de DNS for excepcionalmente lenta (raro com Cloudflare), ou se houver problemas com a API da Cloudflare, o desafio pode falhar.</li>
+<li><strong>Roteadores Traefik:</strong> Os roteadores para seus serviços HTTPS no Traefik (definidos por labels Docker ou File Provider) estão configurados corretamente com <code>tls: true</code> (geralmente implícito com <code>entrypoints: "websecure"</code>) e <code>tls.certresolver: "letsencrypt"</code>?</li>
 </ol>
 </li>
 </ul>
-<p>Lembre-se que o troubleshooting é um processo iterativo. Comece com os logs, formule hipóteses e teste-as sistematicamente.</p>
+<p>Lembre-se que o troubleshooting é frequentemente um processo de eliminação. Comece com os logs, formule hipóteses sobre a causa raiz e teste-as sistematicamente. Anote o que você tentou e os resultados para não repetir os mesmos passos ou se perder.</p>
 
 
 
@@ -2495,9 +2424,9 @@
       
   <span class="md-source-file__fact">
     <span class="md-icon" title="Última atualização">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="3 de junho de 2025 16:06:49 -03">3 de junho de 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 01:39:15 -03">13 de outubro de 2026</span>
   </span>
 
     
@@ -2520,9 +2449,9 @@
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
-          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden="">
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
   Voltar ao topo
 </button>
         
@@ -2542,7 +2471,8 @@
   
 </div>
       
-        <div class="md-social">
+        
+<div class="md-social">
   
     
     
@@ -2552,7 +2482,7 @@
       
     
     <a href="https://github.com/lioevano" target="_blank" rel="noopener" title="github.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
     </a>
   
     
@@ -2563,7 +2493,7 @@
       
     
     <a href="https://instagram.com/lioevano" target="_blank" rel="noopener" title="instagram.com" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7m146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
     </a>
   
 </div>
@@ -2580,13 +2510,14 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": {"provider": "mike"}}</script>
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
-  <script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
-document$.subscribe(() => { lightbox.reload() });
-</script></body>
-</html>
+  
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
