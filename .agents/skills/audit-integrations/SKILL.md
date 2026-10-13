@@ -18,7 +18,7 @@ Pergunte ou deduza do pedido: **todas** as aplicações (padrão), **uma aplica�
 
 1. Leia o índice inteiro (legenda + todas as seções) e o catálogo inteiro.
 2. Para cada par aplicação × integração no escopo, decida a célula:
-   - aplicação é a **provedora** da integração → `—` (salvo se a seção disser outra coisa);
+   - aplicação é a **provedora** da integração → `—`, salvo quando uma regra da seção a avalia explicitamente pelo nome (hoje AUT-3 para `authelia` e MET-1 para `prometheus`) — então avalie normalmente;
    - "Aplica-se a" falso, ou Ajustes tem `-<id>`, ou integração `+<id>` sem `+<id>` em Ajustes → `—`;
    - depende de coluna com `?` → `?`;
    - caso contrário, avalie **cada regra não-(sobra)** buscando a *Evidência* indicada. Todas ok → `✅`; regra falhou → `❌ <REGRA>`; só falta passo manual → `✋`.

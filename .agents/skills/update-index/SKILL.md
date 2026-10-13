@@ -42,7 +42,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | Seção | Fonte | Regra |
 |---|---|---|
 | Agentes e skills | `.agents/skills/*/SKILL.md` | "Quando usar" = resumo em português da `description` |
-| Aplicações | catálogo (`02-visao-geral-arquitetura/09-catalogo-aplicacoes.md`) | Integrações ativas = ids cuja "Aplica-se a" é verdadeira para a aplicação (respeitando Ajustes; o provedor não conta como consumidor); Página = a da coluna Página |
+| Aplicações | catálogo (`02-visao-geral-arquitetura/09-catalogo-aplicacoes.md`) | Integrações ativas = ids cuja "Aplica-se a" é verdadeira para a aplicação (respeitando Ajustes; o provedor só conta quando uma regra da seção o avalia explicitamente — hoje AUT-3 para `authelia` e MET-1 para `prometheus`); Página = a da coluna Página |
 | Integrações | índice (`02-visao-geral-arquitetura/10-indice-integracoes.md`) | Seção = link `wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#<id>` |
 | Páginas da wiki | `wiki/docs/**/*.md` | Título = primeiro `# `; Descrição = `description` do front-matter |
 | Arquivos do server | `git ls-files server/` (exceto `CLAUDE.md`/`AGENTS.md`) | Tipo: `inventario`, `playbook`, `role-tasks`, `role-handlers`, `role-defaults`, `role-template`, `template`, `stack`, `env-template`, `script`, `outro`; Página = página(s) da wiki que citam o caminho ou definem seu bloco literal |

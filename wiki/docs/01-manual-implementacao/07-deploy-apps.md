@@ -39,11 +39,18 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
 
 ### Passos manuais ao mudar variáveis ou segredos
 
-1. Confira no vault real (`ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`) que as chaves da tabela acima estão preenchidas.
-2. Rode cada playbook primeiro com `--check --diff` e depois sem, e junte os arquivos num só `apps.env` para o Portainer (contém segredos: mantenha `0600`):
+1. Confira no vault real (`ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`) que as chaves da tabela acima estão preenchidas (evite `$`, `#`, aspas e espaços nos segredos: o `.env` não usa aspas).
+2. Rode cada playbook primeiro com `--check` e depois sem (não use `--diff`, que imprimiria os segredos do `.env` no terminal):
+   ```bash
+   for pb in setup-productivity-automation-volumes setup-media-stack-volumes setup-n8n-volumes setup-monitoring-stack-volumes; do
+     ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/$pb.yml --ask-vault-pass --check
+   done
+   # sem erros? repita o laço sem --check
+   ```
+   Depois junte os arquivos num só `apps.env` para o Portainer (contém segredos: `0600`):
    ```bash
    # na core-services-vm
-   sudo sh -c 'umask 077; cd /opt/portainer_stack_envs && cat productivity.env automation.env media.env n8n.env monitoring.env > apps.env'
+   sudo sh -c 'umask 077; cd /opt/portainer_stack_envs && cat productivity.env automation.env media.env n8n.env monitoring.env > apps.env && chmod 600 apps.env'
    ```
 3. No Portainer, abra a stack `apps`, recarregue `apps.env` em **Env** e clique em **Update the stack**.
 

@@ -111,13 +111,13 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | Arquivo | Tipo | Página que documenta |
 |---|---|---|
 | `ansible/ansible.cfg` | outro | `01-manual-implementacao/01-maquina-controle-ansible.md` |
-| `ansible/inventories/home/group_vars/all/main.yml` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` |
+| `ansible/inventories/home/group_vars/all/main.yml` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `ansible/inventories/home/group_vars/all/vault.yml.example` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md` |
-| `ansible/inventories/home/hosts.ini` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `05-referencia-rapida.md` |
+| `ansible/inventories/home/hosts.ini` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` |
 | `ansible/playbooks/full-deploy.yml` | playbook | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `ansible/playbooks/setup-ai-volumes.yml` | playbook | `01-manual-implementacao/08-stack-ia.md` |
 | `ansible/playbooks/setup-base-ubuntu.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` |
-| `ansible/playbooks/setup-core-networking.yml` | playbook | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` |
+| `ansible/playbooks/setup-core-networking.yml` | playbook | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` |
 | `ansible/playbooks/setup-media-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
 | `ansible/playbooks/setup-monitoring-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/playbooks/setup-n8n-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` |
@@ -149,14 +149,14 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/traefik-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
-| `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
+| `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/traefik.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/tools/ai-cli-tools/tasks/main.yml` | role-tasks | `03-guias-sustentacao/13-usando-geminicli.md` |
 | `ansible/templates/litellm_config.yaml.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md` |
-| `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
+| `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/promtail-config.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |

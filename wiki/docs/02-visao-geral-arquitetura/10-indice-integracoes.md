@@ -213,12 +213,12 @@ Não se aplica.
 
 ### Origem dos valores
 
-Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no compose, a partir de uma fonte versionada — nunca com valor fixo no playbook.
+Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no compose, a partir de uma fonte versionada — nunca com valor fixo no playbook. A tabela descreve as stacks implantadas pelo Portainer (`apps`, `ai`), que usam `stack_configs`; na stack `core` toda variável — inclusive as comuns e os segredos — é uma entrada em `environment:` do deploy em `ansible/playbooks/setup-core-networking.yml`.
 
 | Tipo | Como reconhecer | Fonte do valor | Como o playbook emite |
 |---|---|---|---|
 | Comum | `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE`, `BASE_DOMAIN_FROM_VAULT`, `VM_NFS_MOUNT_BASE_PATH`, `ZFS_*_DATASET_NAME` | vault / `group_vars/all/main.yml` | já emitidas por `ansible/templates/portainer_stack_env.j2` — nada a fazer |
-| Segredo | senha, chave, token (`*_PASSWORD*`, `*_KEY`, `*_SECRET*`, `*_TOKEN*`) | `vault.yml`, chave `snake_case` (ex.: `litellm_master_key`); placeholder obrigatório em `vault.yml.example` | entrada `{ name: 'VAR', value: "{{ chave_vault }}" }` em `stack_configs`; o playbook carrega o vault (`vars_files`) e a tarefa que grava o `.env` usa `mode: '0600'` |
+| Segredo | senha, chave, token (`*_PASSWORD*`, `*_KEY`, `*_SECRET*`, `*_TOKEN*`) | `vault.yml`, chave `snake_case` (ex.: `litellm_master_key`); placeholder obrigatório em `vault.yml.example`; valor sem `$`, `#`, aspas ou espaços (o `.env` não usa aspas) | entrada `{ name: 'VAR', value: "{{ chave_vault }}" }` em `stack_configs`; o playbook carrega o vault (`vars_files`) e a tarefa que grava o `.env` usa `mode: '0600'` |
 | IP de host/VM | `*_IP`, `*_IP_VAR` | `[all:vars]` do `hosts.ini` (`core_services_vm_ip_var`, `ai_desktop_vm_ip_var`, `proxmox_host_ip_var`) | entrada em `stack_configs` com a variável do inventário |
 | Caminho | `*_PATH` | `group_vars/all/main.yml` (`vm_nfs_mount_base_path`, `zfs_*_dataset_name`) ou caminho local declarado no playbook | entrada em `stack_configs` concatenando as variáveis |
 | Configuração | demais (subdomínios, nomes, flags) | `group_vars/all/main.yml` | entrada em `stack_configs` |

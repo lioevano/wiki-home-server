@@ -530,9 +530,7 @@ Este role prepara os arquivos de configuração do Authelia.
   ansible.builtin.file:
     path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db_pg"
     state: directory
-    owner: "{{ docker_puid }}"
-    group: "{{ docker_pgid }}"
-    mode: '0775' # mesmo padrão do db_pg do Nextcloud; o entrypoint do Postgres ajusta o dono ao iniciar
+    mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório; reexecutar o role não desfaz isso
 
 - name: "Copiar configuração principal do Authelia (configuration.yml)"
   ansible.builtin.template:

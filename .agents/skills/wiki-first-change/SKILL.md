@@ -9,7 +9,7 @@ A wiki (`wiki/docs/`) é a fonte da verdade; o `server/` só muda para refleti-l
 
 ## Sequência
 
-0. **Aplicação ou integração inteira?** Adicionar/remover aplicação → skill `add-app`/`remove-app`; integração transversal → `add-integration`/`remove-integration`. Elas usam esta skill para executar.
+0. **Aplicação ou integração inteira?** Adicionar/remover aplicação → skill `add-app`/`remove-app`; integração transversal → `add-integration`/`remove-integration`; corrigir achados da auditoria ou variáveis/segredos que faltam → `fix-integrations`. Elas usam esta skill para executar.
 1. **Localize** o assunto no `INDEX.md` (aplicações, integrações, páginas, arquivos) e, se envolver uma aplicação, a linha dela no catálogo (`wiki/docs/02-visao-geral-arquitetura/09-catalogo-aplicacoes.md`) e as integrações que se aplicam a ela (`10-indice-integracoes.md`). Só busque no disco se o índice não responder.
 2. **Registre a linha de base**: `python tools/dev.py check` e anote os erros que já existiam (não são seus).
 3. **Edite a wiki**:
@@ -27,7 +27,7 @@ A wiki (`wiki/docs/`) é a fonte da verdade; o `server/` só muda para refleti-l
 | Erro | Correção |
 |---|---|
 | Editar o server e "documentar depois" | A página vem antes; o `check` é o juiz. |
-| Rodar `index` no início | Só no fim: ele reflete o estado final. |
+| Rodar `update-index` no início | Só no fim: ele reflete o estado final. |
 | Dois blocos literais diferentes para o mesmo arquivo | Um vira `title="Trecho: ..."` (`LIT-DUP`). |
 | Corrigir erros pré-existentes no meio da tarefa | Relate-os; corrija só se o usuário pedir. |
 | Rodar `ansible-playbook`/`docker compose up`/`git push` | Peça confirmação; esta skill termina no commit local. |

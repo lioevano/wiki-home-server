@@ -55,11 +55,11 @@ O `ai.env` é gerado por `ansible/playbooks/setup-ai-volumes.yml` (via `ansible/
 
 ### Passos manuais ao mudar variáveis ou segredos
 
-1. Confira no vault real (`ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`) que `litellm_master_key`, `llm_api_keys.*` e `openwebui_secret_key` estão preenchidos; gere chaves novas com `openssl rand -hex 32`.
-2. Simule e depois aplique o playbook:
+1. Confira no vault real (`ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`) que `litellm_master_key`, `llm_api_keys.*` e `openwebui_secret_key` estão preenchidos; gere chaves novas com `openssl rand -hex 32` (evite `$`, `#`, aspas e espaços: o `.env` não usa aspas).
+2. Simule e depois aplique o playbook (sem `--diff`, que imprimiria os segredos do `.env` no terminal):
    ```bash
-   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml --check --diff
-   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml
+   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml --ask-vault-pass --check
+   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml --ask-vault-pass
    ```
 3. No Portainer, abra a stack `ai`, recarregue `/opt/portainer_stack_envs/ai.env` em **Env** e clique em **Update the stack**.
 
