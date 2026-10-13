@@ -16,7 +16,7 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
 
 - **Ollama**: Executa modelos LLM locais. Baixe modelos com `ollama pull llama3.2`, `ollama pull phi3`, etc.
 - **LiteLLM**: Proxy OpenAI-compatible. Roteia requisições entre Ollama e APIs externas com fallback automático.
-- **Open WebUI**: Interface web para chat com LLMs. Acessível em `https://openwebui.seudominio.com` (Traefik da `core-services-vm` + Authelia, router `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2`) ou na LAN em `http://ai-desktop-ip:3000`.
+- **Open WebUI**: Interface web para chat com LLMs. Usa o LiteLLM como API compatível com OpenAI (`OPENAI_API_BASE_URL=http://litellm:4000/v1`, chave `LITELLM_MASTER_KEY`) e o Ollama direto para gerenciar modelos locais. Acessível em `https://openwebui.seudominio.com` (Traefik da `core-services-vm` + Authelia, router `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2`) ou na LAN em `http://ai-desktop-ip:3000`.
 - **OpenClaw**: CLI agent para terminal. Conecta ao LiteLLM.
 - **OpenClaude**: Assistente AI com memória persistente e integração com ferramentas locais.
 - **Promtail (`promtail_ai`)**: Envia os logs dos containers e do sistema desta VM ao Loki da `core-services-vm` (`http://<core_services_vm_ip_var>:3100`). A configuração é gerada de `ansible/templates/promtail-config.yml.j2` pelo `setup-ai-volumes.yml`.
@@ -68,32 +68,34 @@ O `setup-ai-volumes.yml` também aplica o role `ansible/roles/apps/ml-tools/` na
 
 ## Configuração do LiteLLM
 
-O arquivo `config.yaml` é gerado pelo Ansible a partir de `ansible/templates/litellm_config.yaml.j2`. Modelo base:
+O arquivo `config.yaml` é gerado pelo Ansible a partir do template abaixo (segredos vêm do vault). Para trocar ou acrescentar modelos, edite este bloco e siga o fluxo wiki-first; modelos locais precisam ser baixados no Ollama (próxima seção).
 
-```yaml
+```yaml title="ansible/templates/litellm_config.yaml.j2"
+# ansible/templates/litellm_config.yaml.j2
+# Gerado pelo setup-ai-volumes.yml em <NFS>/litellm/config/config.yaml.
 general_settings:
-  master_key: "sua-chave-master"
+  master_key: "{{ litellm_master_key }}"
 
 model_list:
-  - model_name: claude-sonnet
+  - model_name: gpt-4o
     litellm_params:
-      model: claude-sonnet-4-20250514
-      api_key: "sk-ant-..."
+      model: gpt-4o
+      api_key: "{{ llm_api_keys.openai }}"
 
-  - model_name: gemini-flash
+  - model_name: claude-3-opus
     litellm_params:
-      model: gemini/gemini-2.5-flash
-      api_key: "AIza..."
+      model: claude-3-opus-20240229
+      api_key: "{{ llm_api_keys.anthropic }}"
 
-  - model_name: open-webui
+  - model_name: gemini-1.5-pro
     litellm_params:
-      model: openai/gpt-4o
-      api_key: "sk-..."
+      model: gemini/gemini-1.5-pro-latest
+      api_key: "{{ llm_api_keys.google_gemini }}"
 
-  - model_name: local
+  - model_name: ollama/llama3.2
     litellm_params:
       model: ollama/llama3.2
-      api_base: "http://ollama:11434"
+      api_base: "http://ollama:11434" # Ollama na mesma rede Docker (ai_network); ele não escuta no IP da VM
 ```
 
 ## Baixando Modelos no Ollama
@@ -110,7 +112,7 @@ docker exec -it ollama ollama list
 | Serviço | URL | Porta |
 |---|---|---|
 | Open WebUI | `https://openwebui.seudominio.com` (Authelia) ou `http://ai-desktop-ip:3000` | 3000 |
-| LiteLLM API | `http://ai-desktop-ip:4000` | 4000 |
-| Ollama API | `http://ai-desktop-ip:11434` | 11434 |
+| LiteLLM API | `http://ai-desktop-ip:4000` (chave: `LITELLM_MASTER_KEY`) | 4000 |
+| Ollama API | só dentro da VM: `http://127.0.0.1:11434` (ou `docker exec -it ollama ...`); os demais serviços usam `http://ollama:11434` | 11434 |
 | OpenClaw | Terminal (via `docker exec -it openclaw sh`) | N/A |
 | OpenClaude | Terminal (via `docker exec -it openclaude sh`) | N/A |

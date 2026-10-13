@@ -34,7 +34,7 @@ services:
     networks:
       - ai_network
     ports:
-      - "4000:4000"
+      - "${AI_DESKTOP_VM_IP}:4000:4000" # API na LAN (clientes como OpenClaw no desktop); interna = sem rota no Traefik
     volumes:
       - "${AI_STACK_LITELLM_CONFIG_PATH}/config.yaml:/app/config.yaml:ro"
     environment:
@@ -59,7 +59,8 @@ services:
       - "${AI_STACK_OPENWEBUI_DATA_PATH}:/app/backend/data"
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
-      - LITELLM_API_BASE=http://litellm:4000
+      - OPENAI_API_BASE_URL=http://litellm:4000/v1 # LiteLLM como API compatível com OpenAI
+      - OPENAI_API_KEY=${LITELLM_MASTER_KEY} # chave do proxy LiteLLM (não é chave de provedor)
       - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
       - PUID=${DOCKER_PUID}
       - PGID=${DOCKER_PGID}

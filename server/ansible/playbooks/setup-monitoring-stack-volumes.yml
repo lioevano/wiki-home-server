@@ -79,6 +79,7 @@
       ansible.builtin.copy:
         dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/datasources/prometheus.yml"
         content: |
+          apiVersion: 1
           datasources:
             - name: Prometheus
               type: prometheus
@@ -96,6 +97,7 @@
       ansible.builtin.copy:
         dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/datasources/loki.yml"
         content: |
+          apiVersion: 1
           datasources:
             - name: Loki
               type: loki

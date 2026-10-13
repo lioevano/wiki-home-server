@@ -34,7 +34,7 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
 | `productivity.env` | `setup-productivity-automation-volumes.yml` | `NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV` (vault `nextcloud_db_password`), `NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV` (vault `nextcloud_admin_initial_password`), `CORE_SERVICES_VM_IP_VAR` (`core_services_vm_ip_var` do `hosts.ini`) |
 | `automation.env` | `setup-productivity-automation-volumes.yml` | caminhos do Home Assistant |
 | `media.env` | `setup-media-stack-volumes.yml` | caminhos de mídia |
-| `n8n.env` | `setup-n8n-volumes.yml` | `N8N_ADMIN_USER_FROM_PORTAINER_ENV` (vault `n8n_admin_user`), `N8N_ADMIN_PASSWORD_FROM_PORTAINER_ENV` (vault `n8n_admin_password`) |
+| `n8n.env` | `setup-n8n-volumes.yml` | caminho de configuração e subdomínio (sem segredos: o login do n8n é a conta de dono criada no primeiro acesso, atrás do Authelia) |
 | `monitoring.env` | `setup-monitoring-stack-volumes.yml` | `GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_db_password`), `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_admin_initial_password`) |
 
 ### Passos manuais ao mudar variáveis ou segredos
@@ -85,7 +85,7 @@ Para desativar um serviço que não usa, adicione `enabled: false` nas labels do
 - **Nextcloud**: Requer Postgres e Redis. Dados em NFS. `trusted_domains` configurado automaticamente.
 - **Jellyfin**: Hardware transcoding via `/dev/dri` (iGPU). Se usar CPU, remova o device.
 - **Sonarr/Radarr**: Dependem do qBittorrent para downloads. Configure o client de torrent no Sonarr/Radarr após o deploy.
-- **Grafana**: Login inicial `admin` / senha definida no `.env`. Adicione o datasource Prometheus apontando para `http://prometheus:9090`.
+- **Grafana**: Login inicial `admin` / senha do vault (`grafana_admin_initial_password`). Os datasources Prometheus (`http://prometheus:9090`) e Loki (`http://loki:3100`) são provisionados automaticamente pelo `setup-monitoring-stack-volumes.yml` (pasta `grafana/provisioning`, montada em `/etc/grafana/provisioning`).
 - **Loki/Promtail**: Coletam logs de containers para visualizar no Grafana. O Loki publica a porta 3100 no IP da `core-services-vm` (`${CORE_SERVICES_VM_IP_VAR}:3100`) para receber os logs do `promtail_ai` da `ai-desktop-vm`; ele não tem autenticação, então a porta só deve ser alcançável pela LAN (não crie rota no Traefik nem no túnel para ela). Portas publicadas pelo Docker não passam pelo UFW da VM, então a proteção é a própria LAN.
-- **n8n**: Webhook URL configurado automaticamente para `https://n8n.seudominio.com/`.
+- **n8n**: Webhook URL configurado automaticamente para `https://n8n.seudominio.com/`. O acesso passa pelo Authelia; no primeiro acesso o n8n pede a criação da conta de dono (a autenticação básica `N8N_BASIC_AUTH_*` não existe mais no n8n 1.x).
 - **Home Assistant**: `devices` para USB (Zigbee/Zwave). Ajuste `/dev/ttyUSB0` para seu dispositivo.

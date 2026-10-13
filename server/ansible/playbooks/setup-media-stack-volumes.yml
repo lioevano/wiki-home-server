@@ -24,19 +24,10 @@
         group: "{{ docker_pgid }}"
         mode: '0775'
       loop:
-        - plex
         - jellyfin
         - sonarr
         - radarr
         - qbittorrent
-
-    - name: Create Plex transcode directory on NFS volume
-      ansible.builtin.file:
-        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/plex/transcode"
-        state: directory
-        owner: "{{ docker_puid }}"
-        group: "{{ docker_pgid }}"
-        mode: '0775'
 
     - name: Create media directories on NFS volume
       ansible.builtin.file:
@@ -68,8 +59,6 @@
       vars:
         stack_name: media
         stack_configs:
-          - { name: 'MEDIA_STACK_PLEX_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/plex/config" }
-          - { name: 'MEDIA_STACK_PLEX_TRANSCODE_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/plex/transcode" }
           - { name: 'MEDIA_STACK_JELLYFIN_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/jellyfin/config" }
           - { name: 'MEDIA_STACK_SONARR_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/sonarr/config" }
           - { name: 'MEDIA_STACK_RADARR_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/radarr/config" }

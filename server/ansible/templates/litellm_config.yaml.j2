@@ -1,3 +1,5 @@
+# ansible/templates/litellm_config.yaml.j2
+# Gerado pelo setup-ai-volumes.yml em <NFS>/litellm/config/config.yaml.
 general_settings:
   master_key: "{{ litellm_master_key }}"
 
@@ -17,7 +19,7 @@ model_list:
       model: gemini/gemini-1.5-pro-latest
       api_key: "{{ llm_api_keys.google_gemini }}"
 
-  - model_name: ollama/llama3
+  - model_name: ollama/llama3.2
     litellm_params:
-      model: ollama/llama3
-      api_base: "http://{{ ai_desktop_vm_ip_var }}:11434"
+      model: ollama/llama3.2
+      api_base: "http://ollama:11434" # Ollama na mesma rede Docker (ai_network); ele não escuta no IP da VM

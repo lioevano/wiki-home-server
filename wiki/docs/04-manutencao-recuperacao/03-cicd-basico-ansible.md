@@ -178,7 +178,9 @@ Este playbook é o ponto de entrada principal para garantir que toda a sua infra
 - import_playbook: setup-proxmox-host.yml
 - import_playbook: setup-base-ubuntu.yml
 - import_playbook: setup-core-networking.yml
+- import_playbook: setup-productivity-automation-volumes.yml
 - import_playbook: setup-media-stack-volumes.yml
+- import_playbook: setup-monitoring-stack-volumes.yml
 - import_playbook: setup-n8n-volumes.yml
 - import_playbook: setup-ai-volumes.yml
 ```

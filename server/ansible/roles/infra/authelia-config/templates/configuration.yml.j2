@@ -52,20 +52,21 @@ storage:
     #   client_key: /config/certs/db_client.key
 
 # Backend de Autenticação
-# Define como Authelia verifica as credenciais do usuário.
-# Com 'storage.postgres' configurado, Authelia usará o mesmo DB para autenticação.
-# Se você quisesse usar um arquivo YAML para usuários (users_database.yml):
-# authentication_backend:
-#   file:
-#     path: /config/users_database.yml # Caminho DENTRO do container Authelia
-#     # Configurações de hashing de senha (argon2id é o padrão e recomendado)
-#     password:
-#       algorithm: argon2id
-#       iterations: 3
-#       memory: 65536 # KiB (64MB)
-#       parallelism: 4 # Número de threads
-#       salt_length: 16
-#       key_length: 32
+# Define onde ficam os usuários e senhas. O PostgreSQL (storage) guarda sessões,
+# preferências e registros de 2FA — ele NÃO é um backend de usuários.
+# Usamos o backend 'file' com o users_database.yml gerado pelo role.
+authentication_backend:
+  file:
+    path: /config/users_database.yml # Caminho DENTRO do container Authelia
+    password:
+      algorithm: argon2
+      argon2:
+        variant: argon2id
+        iterations: 3
+        memory: 65536 # KiB (64MB)
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
 
 # Regras de Controle de Acesso
 # Define quais domínios/subdomínios são protegidos e qual política aplicar.

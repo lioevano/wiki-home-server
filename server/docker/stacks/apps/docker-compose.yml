@@ -230,6 +230,7 @@ services:
       - internal_services
     volumes:
       - "${MONITORING_GRAFANA_DATA_PATH}:/var/lib/grafana"
+      - "${MONITORING_GRAFANA_PROVISIONING_PATH}:/etc/grafana/provisioning:ro" # datasources e dashboards gerados pelo Ansible
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV}
@@ -293,9 +294,6 @@ services:
       - WEBHOOK_URL=https://${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}/
       - NODE_ENV=production
       - GENERIC_TIMEZONE=${SYSTEM_TIMEZONE}
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=${N8N_ADMIN_USER_FROM_PORTAINER_ENV}
-      - N8N_BASIC_AUTH_PASSWORD=${N8N_ADMIN_PASSWORD_FROM_PORTAINER_ENV}
     labels:
       traefik.enable: 'true'
       traefik.http.routers.n8n.rule: 'Host(`${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}`)'

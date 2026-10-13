@@ -27,4 +27,7 @@ http:
         #   X-My-Nextcloud-Header: "true" # Exemplo, não é um header real do Nextcloud
         # Ou, para redirecionamentos .well-known para CalDAV/CardDAV se não tratados de outra forma:
         # (Mas Traefik faria isso com routers, não headers)
-        pass: true # Middleware vazio por enquanto, para estrutura. Adicione headers específicos se necessário.
+        # Headers que o painel de administração do Nextcloud verifica e que não são globais:
+        customResponseHeaders:
+          X-Robots-Tag: "noindex, nofollow"
+          X-Permitted-Cross-Domain-Policies: "none"

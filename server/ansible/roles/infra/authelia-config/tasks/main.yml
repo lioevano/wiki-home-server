@@ -28,6 +28,4 @@
     owner: "{{ docker_puid }}"
     group: "{{ docker_pgid }}"
     mode: '0640'
-  # Este arquivo só é usado se o backend de autenticação do Authelia for 'file'.
-  # No nosso caso, usaremos PostgreSQL, então este arquivo serve mais como um exemplo
-  # ou um backup se mudarmos para o backend 'file'.
+  # Base de usuários do backend 'file' (authentication_backend no configuration.yml).

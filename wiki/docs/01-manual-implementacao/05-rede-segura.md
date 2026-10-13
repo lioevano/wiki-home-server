@@ -93,7 +93,7 @@ services:
     restart: unless-stopped
     networks:
       - proxy
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT} # métricas para o job cloudflared:2000 do Prometheus
     depends_on:
       traefik:
         condition: service_healthy
@@ -504,7 +504,10 @@ http:
         #   X-My-Nextcloud-Header: "true" # Exemplo, não é um header real do Nextcloud
         # Ou, para redirecionamentos .well-known para CalDAV/CardDAV se não tratados de outra forma:
         # (Mas Traefik faria isso com routers, não headers)
-        pass: true # Middleware vazio por enquanto, para estrutura. Adicione headers específicos se necessário.
+        # Headers que o painel de administração do Nextcloud verifica e que não são globais:
+        customResponseHeaders:
+          X-Robots-Tag: "noindex, nofollow"
+          X-Permitted-Cross-Domain-Policies: "none"
 ```
 
 !!! note "Nextcloud Headers"
@@ -547,9 +550,7 @@ Este role prepara os arquivos de configuração do Authelia.
     owner: "{{ docker_puid }}"
     group: "{{ docker_pgid }}"
     mode: '0640'
-  # Este arquivo só é usado se o backend de autenticação do Authelia for 'file'.
-  # No nosso caso, usaremos PostgreSQL, então este arquivo serve mais como um exemplo
-  # ou um backup se mudarmos para o backend 'file'.
+  # Base de usuários do backend 'file' (authentication_backend no configuration.yml).
 ```
 
 ##### `templates/configuration.yml.j2` (Configuração Principal Authelia)
@@ -609,20 +610,21 @@ storage:
     #   client_key: /config/certs/db_client.key
 
 # Backend de Autenticação
-# Define como Authelia verifica as credenciais do usuário.
-# Com 'storage.postgres' configurado, Authelia usará o mesmo DB para autenticação.
-# Se você quisesse usar um arquivo YAML para usuários (users_database.yml):
-# authentication_backend:
-#   file:
-#     path: /config/users_database.yml # Caminho DENTRO do container Authelia
-#     # Configurações de hashing de senha (argon2id é o padrão e recomendado)
-#     password:
-#       algorithm: argon2id
-#       iterations: 3
-#       memory: 65536 # KiB (64MB)
-#       parallelism: 4 # Número de threads
-#       salt_length: 16
-#       key_length: 32
+# Define onde ficam os usuários e senhas. O PostgreSQL (storage) guarda sessões,
+# preferências e registros de 2FA — ele NÃO é um backend de usuários.
+# Usamos o backend 'file' com o users_database.yml gerado pelo role.
+authentication_backend:
+  file:
+    path: /config/users_database.yml # Caminho DENTRO do container Authelia
+    password:
+      algorithm: argon2
+      argon2:
+        variant: argon2id
+        iterations: 3
+        memory: 65536 # KiB (64MB)
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
 
 # Regras de Controle de Acesso
 # Define quais domínios/subdomínios são protegidos e qual política aplicar.
@@ -677,7 +679,7 @@ regulation:
   ban_time: 5m    # Duração do banimento temporário.
 ```
 
-##### `templates/users_database.yml.j2` (Exemplo de Usuários - se backend `file`)
+##### `templates/users_database.yml.j2` (Usuários do backend `file`)
 
 ```yaml title="ansible/roles/infra/authelia-config/templates/users_database.yml.j2"
 # ansible/roles/infra/authelia-config/templates/users_database.yml.j2
@@ -803,27 +805,29 @@ Esta abordagem oferece a maior flexibilidade e é gerenciada centralmente no pai
     * **Subdomain:** O prefixo do seu serviço (e.g., `portainer`, `traefik`, `auth`, `nextcloud`, `hass`, `grafana`, `openwebui`, etc.).
     * **Domain:** Selecione seu domínio base (`{{ base_domain }}` e.g., `meuhomelab.com`).
     * **Path:** Deixe em branco (a menos que você queira rotear caminhos específicos para serviços diferentes, o que é mais avançado e geralmente tratado pelo Traefik).
-    * **Service Type:** `HTTP`.
-    * **Service URL:** `traefik:80`
-        * Isso instrui o Cloudflare Tunnel a encaminhar o tráfego para o serviço Docker chamado `traefik` (o container Traefik) na porta `80` (dentro da rede Docker `proxy` onde ambos, `cloudflared` e `traefik`, estão conectados).
+    * **Service Type:** `HTTPS`.
+    * **Service URL:** `traefik:443`
+        * Isso instrui o Cloudflare Tunnel a encaminhar o tráfego para o container `traefik` na porta `443` (rede Docker `proxy`, onde `cloudflared` e `traefik` estão). Não use `traefik:80`: o entrypoint `web` redireciona tudo para HTTPS e os routers só escutam em `websecure`, o que causaria redirecionamento em loop.
+    * **Additional application settings → TLS → No TLS Verify:** ativado. O `cloudflared` conecta pelo nome `traefik`, que não corresponde ao certificado Let's Encrypt do domínio; o trecho Cloudflare → túnel continua cifrado.
     * Clique em "Save hostname".
 
 **Exemplos de Public Hostnames a Adicionar Inicialmente:**
 
-* `portainer.{{ base_domain }}` -> `http://traefik:80`
-* `traefik.{{ base_domain }}` -> `http://traefik:80` (para o dashboard do Traefik)
-* `auth.{{ base_domain }}` -> `http://traefik:80` (para o portal do Authelia)
-* (Opcional, mas recomendado) **Catch-all com Wildcard:**
+* `portainer.{{ base_domain }}` -> `https://traefik:443`
+* `traefik.{{ base_domain }}` -> `https://traefik:443` (para o dashboard do Traefik)
+* `auth.{{ base_domain }}` -> `https://traefik:443` (para o portal do Authelia)
+* **Catch-all com Wildcard** (é o que o índice de integrações assume para novas aplicações):
     * Subdomain: `*`
     * Domain: `{{ base_domain }}`
-    * Service: `http://traefik:80`
+    * Service: `https://traefik:443` (com *No TLS Verify*)
+    * Confira no DNS do domínio que existe o registro `CNAME` `*` → `<TUNNEL_ID>.cfargotunnel.com`; crie-o se o painel não o criar.
     !!! tip "Vantagem do Catch-All (`*`)"
         Configurar um hostname público com o subdomínio `*` (wildcard) significa que qualquer subdomínio de `{{ base_domain }}` que não tenha uma regra de Public Hostname mais específica na Cloudflare será automaticamente encaminhado para o Traefik. O Traefik então usará suas próprias regras de roteamento (definidas por labels Docker ou File Provider) para direcionar para o container correto. Isso simplifica muito a adição de novos serviços no futuro: você só precisa configurar as labels no Traefik, e não precisará adicionar um novo Public Hostname na Cloudflare toda vez (a menos que queira configurações de túnel muito específicas por subdomínio, como políticas de acesso Cloudflare).
 
 **Opção Alternativa: Usando a flag `--hostname` no `cloudflared`**
 
 Se o seu comando `cloudflared` no `docker-compose.yml` inclui:
-`--hostname {{ base_domain }} --url http://traefik:80`
+`--hostname {{ base_domain }} --url https://traefik:443` (com `--no-tls-verify`)
 O `cloudflared` tentará criar e gerenciar automaticamente um registro CNAME para `{{ base_domain }}` e um CNAME wildcard `*.{{ base_domain }}` apontando para o seu túnel.
 
 * **Ação:** Verifique no painel DNS da Cloudflare (não no Zero Trust, mas na seção DNS do seu domínio) se esses CNAMEs foram criados (e.g., `seudominio.com CNAME <TUNNEL_ID>.cfargotunnel.com` e `* CNAME <TUNNEL_ID>.cfargotunnel.com`). O `<TUNNEL_ID>` é o UUID do seu túnel.

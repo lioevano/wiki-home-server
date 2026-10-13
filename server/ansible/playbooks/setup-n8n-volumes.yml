@@ -35,5 +35,3 @@
         stack_configs:
           - { name: 'N8N_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/n8n/config" }
           - { name: 'N8N_SUBDOMAIN', value: "{{ n8n_subdomain }}" }
-          - { name: 'N8N_ADMIN_USER_FROM_PORTAINER_ENV', value: "{{ n8n_admin_user }}" }
-          - { name: 'N8N_ADMIN_PASSWORD_FROM_PORTAINER_ENV', value: "{{ n8n_admin_password }}" }

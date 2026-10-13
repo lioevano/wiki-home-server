@@ -91,7 +91,7 @@ Toda aplicação `protegida` ficaria exposta sem login: **bloquear** até que ca
 | Aplica-se a | Exposição ≠ interna |
 | Arquivos | — (configuração do túnel é remota, no painel da Cloudflare) |
 | Páginas | `01-manual-implementacao/05-rede-segura.md` (seção Public Hostnames) |
-| Manual | Public Hostname `<Subdomínio>` → `https://traefik:443` no túnel, **ou** hostname curinga `*` já configurado |
+| Manual | Public Hostname `<Subdomínio>` → `https://traefik:443` (com *No TLS Verify*) no túnel, **ou** hostname curinga `*` já configurado |
 
 ### Regras
 - **EXT-1** — a página 05 documenta o Public Hostname curinga `*` **ou** a página da aplicação registra o hostname específico a criar. Se nenhum dos dois: `✋` (passo manual pendente), não `❌`. *Evidência:* texto das páginas.
@@ -241,7 +241,7 @@ Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no 
 
 ### Regras
 - **LLM-1** — o consumidor aponta para o LiteLLM (variável com `http://litellm:4000`) e depende do serviço `litellm`. *Evidência:* `environment:` e `depends_on:`.
-- **LLM-2** — o consumidor não recebe chaves de provedores externos (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`); só o `litellm` as recebe. *Evidência:* `environment:`.
+- **LLM-2** — o consumidor não recebe chaves de provedores externos (os valores `${OPENAI_API_KEY}`, `${ANTHROPIC_API_KEY}`, `${GEMINI_API_KEY}`); só o `litellm` as recebe. Uma variável do consumidor com nome de provedor que recebe `${LITELLM_MASTER_KEY}` (ex.: `OPENAI_API_KEY=${LITELLM_MASTER_KEY}` no Open WebUI) é a chave do proxy e é válida. *Evidência:* `environment:`.
 - **LLM-3** — consumidor e `litellm` compartilham uma rede (`ai_network`). *Evidência:* `networks:`.
 
 ### Ao adicionar (por consumidor)
@@ -289,4 +289,4 @@ Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão 
 
 Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (Promtail na VM de IA, Open WebUI `protegida`, job `glances` removido).
 
-**Fora das regras** (registrados para a refatoração): LiteLLM aponta o Ollama para `ai_desktop_vm_ip_var:11434`, mas o Ollama escuta só em `127.0.0.1` (usar `http://ollama:11434`); `cloudflared` sem `--metrics` para o job `cloudflared:2000`; sobras do Plex em `setup-media-stack-volumes.yml`; `MONITORING_GRAFANA_PROVISIONING_PATH` gerada e não usada; `authentication_backend` comentado no `configuration.yml.j2`; `full-deploy.yml` não importa os playbooks de monitoramento e produtividade; a stack `apps` é um compose único, mas recebe cinco `.env` separados (hoje unidos à mão num `apps.env`, ver página 07); n8n com `N8N_BASIC_AUTH_ACTIVE=true` além do forward-auth do Authelia (login duplo); Public Hostname do túnel: o índice (acesso-externo) diz `https://traefik:443` e a página 05 manda `http://traefik:80`; a página 08 cita o Ollama em `http://ai-desktop-ip:11434`, mas ele só escuta em `127.0.0.1`, e o exemplo de `config.yaml` do LiteLLM na página difere do template; Open WebUI recebe `LITELLM_API_BASE`, que não parece ser variável reconhecida (o Open WebUI usa `OPENAI_API_BASE_URL`/`OPENAI_API_KEY`; validar); Grafana não monta a pasta de provisioning, então os datasources gerados pelo playbook não carregam; `litellm` publica `4000` em todas as interfaces sendo `interna`; portas publicadas pelo Docker (ex.: Loki 3100) contornam o UFW — a restrição real é a LAN; middleware `nextcloud-headers` em `nextcloud_middleware.yml.j2` usa a chave `pass: true`, que não parece ser opção válida de `headers` no Traefik (validar).
+**Fora das regras** (para a reestruturação): a stack `apps` é um compose único, mas recebe cinco `.env` separados (hoje unidos à mão num `apps.env`, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.

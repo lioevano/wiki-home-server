@@ -255,10 +255,6 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     grafana_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"
     grafana_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"
 
-    # --- n8n ---
-    n8n_admin_user: "admin"
-    n8n_admin_password: "SENHA_FORTE_PARA_O_ADMIN_DO_N8N"
-
     # --- APIs de LLM (LiteLLM e Gemini CLI) ---
     # Chave mestra do proxy LiteLLM (gere com: openssl rand -hex 32).
     litellm_master_key: "CHAVE_MESTRA_DO_LITELLM"
