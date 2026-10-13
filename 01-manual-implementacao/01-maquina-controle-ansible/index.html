@@ -2379,43 +2379,41 @@
 </span><span id="__span-8-42"><a id="__codelineno-8-42" name="__codelineno-8-42" href="#__codelineno-8-42"></a><span class="nt">authelia_admin_password_hash_initial</span><span class="p">:</span><span class="w"> </span><span class="s">"$argon2id$v=19$m=65536,t=3,p=4$SEU_SALT_GERADO_PELO_COMANDO$SEU_HASH_GERADO_PELO_COMANDO"</span>
 </span><span id="__span-8-43"><a id="__codelineno-8-43" name="__codelineno-8-43" href="#__codelineno-8-43"></a><span class="c1"># Senha para o usuário 'authelia' no banco de dados PostgreSQL do Authelia.</span>
 </span><span id="__span-8-44"><a id="__codelineno-8-44" name="__codelineno-8-44" href="#__codelineno-8-44"></a><span class="nt">authelia_storage_postgres_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_PARA_O_USUARIO_AUTHELIA_NO_DB_POSTGRES"</span>
-</span><span id="__span-8-45"><a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a>
-</span><span id="__span-8-46"><a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a><span class="c1"># --- Configurações Gerais ---</span>
-</span><span id="__span-8-47"><a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a><span class="c1"># Email para notificações do Let's Encrypt (renovação de certificados, problemas).</span>
-</span><span id="__span-8-48"><a id="__codelineno-8-48" name="__codelineno-8-48" href="#__codelineno-8-48"></a><span class="nt">letsencrypt_email</span><span class="p">:</span><span class="w"> </span><span class="s">"seu_email_valido_para_lets_encrypt@example.com"</span>
-</span><span id="__span-8-49"><a id="__codelineno-8-49" name="__codelineno-8-49" href="#__codelineno-8-49"></a><span class="c1"># Seu domínio base, SEM https:// ou www (e.g., meuhomelab.com).</span>
-</span><span id="__span-8-50"><a id="__codelineno-8-50" name="__codelineno-8-50" href="#__codelineno-8-50"></a><span class="nt">base_domain</span><span class="p">:</span><span class="w"> </span><span class="s">"seudominio.com"</span>
-</span><span id="__span-8-51"><a id="__codelineno-8-51" name="__codelineno-8-51" href="#__codelineno-8-51"></a><span class="c1"># Fuso horário para os sistemas. Encontre o seu com `timedatectl list-timezones` no Linux.</span>
-</span><span id="__span-8-52"><a id="__codelineno-8-52" name="__codelineno-8-52" href="#__codelineno-8-52"></a><span class="nt">system_timezone</span><span class="p">:</span><span class="w"> </span><span class="s">"America/Sao_Paulo"</span><span class="w"> </span><span class="c1"># Exemplo, ajuste para o seu.</span>
-</span><span id="__span-8-53"><a id="__codelineno-8-53" name="__codelineno-8-53" href="#__codelineno-8-53"></a>
-</span><span id="__span-8-54"><a id="__codelineno-8-54" name="__codelineno-8-54" href="#__codelineno-8-54"></a><span class="c1"># --- Docker User/Group IDs (Numéricos) ---</span>
-</span><span id="__span-8-55"><a id="__codelineno-8-55" name="__codelineno-8-55" href="#__codelineno-8-55"></a><span class="c1"># Usados para consistência de permissões nos volumes NFS e dentro dos containers.</span>
-</span><span id="__span-8-56"><a id="__codelineno-8-56" name="__codelineno-8-56" href="#__codelineno-8-56"></a><span class="c1"># Geralmente 1000 para o primeiro usuário não-root criado em um sistema Linux.</span>
-</span><span id="__span-8-57"><a id="__codelineno-8-57" name="__codelineno-8-57" href="#__codelineno-8-57"></a><span class="c1"># Verifique o UID/GID do usuário que você deseja que seja o "dono" dos arquivos Docker.</span>
-</span><span id="__span-8-58"><a id="__codelineno-8-58" name="__codelineno-8-58" href="#__codelineno-8-58"></a><span class="nt">docker_puid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
-</span><span id="__span-8-59"><a id="__codelineno-8-59" name="__codelineno-8-59" href="#__codelineno-8-59"></a><span class="nt">docker_pgid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
-</span><span id="__span-8-60"><a id="__codelineno-8-60" name="__codelineno-8-60" href="#__codelineno-8-60"></a>
-</span><span id="__span-8-61"><a id="__codelineno-8-61" name="__codelineno-8-61" href="#__codelineno-8-61"></a><span class="c1"># --- Senhas de Bancos de Dados de Aplicações (Adicione conforme necessário) ---</span>
-</span><span id="__span-8-62"><a id="__codelineno-8-62" name="__codelineno-8-62" href="#__codelineno-8-62"></a><span class="nt">nextcloud_db_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_E_UNICA_PARA_O_DB_DO_NEXTCLOUD"</span>
-</span><span id="__span-8-63"><a id="__codelineno-8-63" name="__codelineno-8-63" href="#__codelineno-8-63"></a><span class="c1"># Senha para o usuário administrador inicial do Nextcloud (criado na primeira execução).</span>
-</span><span id="__span-8-64"><a id="__codelineno-8-64" name="__codelineno-8-64" href="#__codelineno-8-64"></a><span class="nt">nextcloud_admin_initial_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_NEXTCLOUD"</span>
-</span><span id="__span-8-65"><a id="__codelineno-8-65" name="__codelineno-8-65" href="#__codelineno-8-65"></a>
-</span><span id="__span-8-66"><a id="__codelineno-8-66" name="__codelineno-8-66" href="#__codelineno-8-66"></a><span class="nt">grafana_db_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"</span>
-</span><span id="__span-8-67"><a id="__codelineno-8-67" name="__codelineno-8-67" href="#__codelineno-8-67"></a><span class="nt">grafana_admin_initial_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"</span>
-</span><span id="__span-8-68"><a id="__codelineno-8-68" name="__codelineno-8-68" href="#__codelineno-8-68"></a>
-</span><span id="__span-8-69"><a id="__codelineno-8-69" name="__codelineno-8-69" href="#__codelineno-8-69"></a><span class="c1"># --- n8n ---</span>
-</span><span id="__span-8-70"><a id="__codelineno-8-70" name="__codelineno-8-70" href="#__codelineno-8-70"></a><span class="nt">n8n_admin_user</span><span class="p">:</span><span class="w"> </span><span class="s">"admin"</span>
-</span><span id="__span-8-71"><a id="__codelineno-8-71" name="__codelineno-8-71" href="#__codelineno-8-71"></a><span class="nt">n8n_admin_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_PARA_O_ADMIN_DO_N8N"</span>
-</span><span id="__span-8-72"><a id="__codelineno-8-72" name="__codelineno-8-72" href="#__codelineno-8-72"></a>
-</span><span id="__span-8-73"><a id="__codelineno-8-73" name="__codelineno-8-73" href="#__codelineno-8-73"></a><span class="c1"># --- APIs de LLM (LiteLLM e Gemini CLI) ---</span>
-</span><span id="__span-8-74"><a id="__codelineno-8-74" name="__codelineno-8-74" href="#__codelineno-8-74"></a><span class="c1"># Chave mestra do proxy LiteLLM (gere com: openssl rand -hex 32).</span>
-</span><span id="__span-8-75"><a id="__codelineno-8-75" name="__codelineno-8-75" href="#__codelineno-8-75"></a><span class="nt">litellm_master_key</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_MESTRA_DO_LITELLM"</span>
-</span><span id="__span-8-76"><a id="__codelineno-8-76" name="__codelineno-8-76" href="#__codelineno-8-76"></a><span class="nt">llm_api_keys</span><span class="p">:</span>
-</span><span id="__span-8-77"><a id="__codelineno-8-77" name="__codelineno-8-77" href="#__codelineno-8-77"></a><span class="w">  </span><span class="nt">openai</span><span class="p">:</span><span class="w"> </span><span class="s">"SUA_CHAVE_OPENAI"</span>
-</span><span id="__span-8-78"><a id="__codelineno-8-78" name="__codelineno-8-78" href="#__codelineno-8-78"></a><span class="w">  </span><span class="nt">anthropic</span><span class="p">:</span><span class="w"> </span><span class="s">"SUA_CHAVE_ANTHROPIC"</span>
-</span><span id="__span-8-79"><a id="__codelineno-8-79" name="__codelineno-8-79" href="#__codelineno-8-79"></a><span class="w">  </span><span class="nt">google_gemini</span><span class="p">:</span><span class="w"> </span><span class="s">"SUA_CHAVE_GEMINI"</span>
-</span><span id="__span-8-80"><a id="__codelineno-8-80" name="__codelineno-8-80" href="#__codelineno-8-80"></a><span class="c1"># Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).</span>
-</span><span id="__span-8-81"><a id="__codelineno-8-81" name="__codelineno-8-81" href="#__codelineno-8-81"></a><span class="nt">openwebui_secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_SECRETA_DO_OPEN_WEBUI"</span>
+</span><span id="__span-8-45"><a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a><span class="c1"># Chave de criptografia do storage do Authelia (mín. 20 caracteres; gere com: openssl rand -hex 32).</span>
+</span><span id="__span-8-46"><a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a><span class="nt">authelia_storage_encryption_key</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_CRIPTOGRAFIA_DO_STORAGE_DO_AUTHELIA"</span>
+</span><span id="__span-8-47"><a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a>
+</span><span id="__span-8-48"><a id="__codelineno-8-48" name="__codelineno-8-48" href="#__codelineno-8-48"></a><span class="c1"># --- Configurações Gerais ---</span>
+</span><span id="__span-8-49"><a id="__codelineno-8-49" name="__codelineno-8-49" href="#__codelineno-8-49"></a><span class="c1"># Email para notificações do Let's Encrypt (renovação de certificados, problemas).</span>
+</span><span id="__span-8-50"><a id="__codelineno-8-50" name="__codelineno-8-50" href="#__codelineno-8-50"></a><span class="nt">letsencrypt_email</span><span class="p">:</span><span class="w"> </span><span class="s">"seu_email_valido_para_lets_encrypt@example.com"</span>
+</span><span id="__span-8-51"><a id="__codelineno-8-51" name="__codelineno-8-51" href="#__codelineno-8-51"></a><span class="c1"># Seu domínio base, SEM https:// ou www (e.g., meuhomelab.com).</span>
+</span><span id="__span-8-52"><a id="__codelineno-8-52" name="__codelineno-8-52" href="#__codelineno-8-52"></a><span class="nt">base_domain</span><span class="p">:</span><span class="w"> </span><span class="s">"seudominio.com"</span>
+</span><span id="__span-8-53"><a id="__codelineno-8-53" name="__codelineno-8-53" href="#__codelineno-8-53"></a><span class="c1"># Fuso horário para os sistemas. Encontre o seu com `timedatectl list-timezones` no Linux.</span>
+</span><span id="__span-8-54"><a id="__codelineno-8-54" name="__codelineno-8-54" href="#__codelineno-8-54"></a><span class="nt">system_timezone</span><span class="p">:</span><span class="w"> </span><span class="s">"America/Sao_Paulo"</span><span class="w"> </span><span class="c1"># Exemplo, ajuste para o seu.</span>
+</span><span id="__span-8-55"><a id="__codelineno-8-55" name="__codelineno-8-55" href="#__codelineno-8-55"></a>
+</span><span id="__span-8-56"><a id="__codelineno-8-56" name="__codelineno-8-56" href="#__codelineno-8-56"></a><span class="c1"># --- Docker User/Group IDs (Numéricos) ---</span>
+</span><span id="__span-8-57"><a id="__codelineno-8-57" name="__codelineno-8-57" href="#__codelineno-8-57"></a><span class="c1"># Usados para consistência de permissões nos volumes NFS e dentro dos containers.</span>
+</span><span id="__span-8-58"><a id="__codelineno-8-58" name="__codelineno-8-58" href="#__codelineno-8-58"></a><span class="c1"># Geralmente 1000 para o primeiro usuário não-root criado em um sistema Linux.</span>
+</span><span id="__span-8-59"><a id="__codelineno-8-59" name="__codelineno-8-59" href="#__codelineno-8-59"></a><span class="c1"># Verifique o UID/GID do usuário que você deseja que seja o "dono" dos arquivos Docker.</span>
+</span><span id="__span-8-60"><a id="__codelineno-8-60" name="__codelineno-8-60" href="#__codelineno-8-60"></a><span class="nt">docker_puid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+</span><span id="__span-8-61"><a id="__codelineno-8-61" name="__codelineno-8-61" href="#__codelineno-8-61"></a><span class="nt">docker_pgid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+</span><span id="__span-8-62"><a id="__codelineno-8-62" name="__codelineno-8-62" href="#__codelineno-8-62"></a>
+</span><span id="__span-8-63"><a id="__codelineno-8-63" name="__codelineno-8-63" href="#__codelineno-8-63"></a><span class="c1"># --- Senhas de Bancos de Dados de Aplicações (Adicione conforme necessário) ---</span>
+</span><span id="__span-8-64"><a id="__codelineno-8-64" name="__codelineno-8-64" href="#__codelineno-8-64"></a><span class="nt">nextcloud_db_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_E_UNICA_PARA_O_DB_DO_NEXTCLOUD"</span>
+</span><span id="__span-8-65"><a id="__codelineno-8-65" name="__codelineno-8-65" href="#__codelineno-8-65"></a><span class="c1"># Senha para o usuário administrador inicial do Nextcloud (criado na primeira execução).</span>
+</span><span id="__span-8-66"><a id="__codelineno-8-66" name="__codelineno-8-66" href="#__codelineno-8-66"></a><span class="nt">nextcloud_admin_initial_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_NEXTCLOUD"</span>
+</span><span id="__span-8-67"><a id="__codelineno-8-67" name="__codelineno-8-67" href="#__codelineno-8-67"></a>
+</span><span id="__span-8-68"><a id="__codelineno-8-68" name="__codelineno-8-68" href="#__codelineno-8-68"></a><span class="nt">grafana_db_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"</span>
+</span><span id="__span-8-69"><a id="__codelineno-8-69" name="__codelineno-8-69" href="#__codelineno-8-69"></a><span class="nt">grafana_admin_initial_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"</span>
+</span><span id="__span-8-70"><a id="__codelineno-8-70" name="__codelineno-8-70" href="#__codelineno-8-70"></a>
+</span><span id="__span-8-71"><a id="__codelineno-8-71" name="__codelineno-8-71" href="#__codelineno-8-71"></a><span class="c1"># --- APIs de LLM (LiteLLM e Gemini CLI) ---</span>
+</span><span id="__span-8-72"><a id="__codelineno-8-72" name="__codelineno-8-72" href="#__codelineno-8-72"></a><span class="c1"># Chave mestra do proxy LiteLLM (gere com: openssl rand -hex 32).</span>
+</span><span id="__span-8-73"><a id="__codelineno-8-73" name="__codelineno-8-73" href="#__codelineno-8-73"></a><span class="nt">litellm_master_key</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_MESTRA_DO_LITELLM"</span>
+</span><span id="__span-8-74"><a id="__codelineno-8-74" name="__codelineno-8-74" href="#__codelineno-8-74"></a><span class="nt">llm_api_keys</span><span class="p">:</span>
+</span><span id="__span-8-75"><a id="__codelineno-8-75" name="__codelineno-8-75" href="#__codelineno-8-75"></a><span class="w">  </span><span class="nt">openai</span><span class="p">:</span><span class="w"> </span><span class="s">"SUA_CHAVE_OPENAI"</span>
+</span><span id="__span-8-76"><a id="__codelineno-8-76" name="__codelineno-8-76" href="#__codelineno-8-76"></a><span class="w">  </span><span class="nt">anthropic</span><span class="p">:</span><span class="w"> </span><span class="s">"SUA_CHAVE_ANTHROPIC"</span>
+</span><span id="__span-8-77"><a id="__codelineno-8-77" name="__codelineno-8-77" href="#__codelineno-8-77"></a><span class="w">  </span><span class="nt">google_gemini</span><span class="p">:</span><span class="w"> </span><span class="s">"SUA_CHAVE_GEMINI"</span>
+</span><span id="__span-8-78"><a id="__codelineno-8-78" name="__codelineno-8-78" href="#__codelineno-8-78"></a><span class="c1"># Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).</span>
+</span><span id="__span-8-79"><a id="__codelineno-8-79" name="__codelineno-8-79" href="#__codelineno-8-79"></a><span class="nt">openwebui_secret_key</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_SECRETA_DO_OPEN_WEBUI"</span>
 </span></code></pre></div>
 <div class="admonition important">
 <p class="admonition-title">Como Editar o Arquivo Vault no Futuro</p>
@@ -2588,7 +2586,7 @@ Você será solicitado a fornecer a senha do Vault que você definiu. <strong>N�
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:03:30 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:41:03 -03">13 de outubro de 2026</span>
   </span>
 
     

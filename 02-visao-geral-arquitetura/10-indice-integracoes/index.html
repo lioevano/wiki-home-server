@@ -3215,7 +3215,7 @@
 </tr>
 <tr>
 <td>Manual</td>
-<td>Public Hostname <code>&lt;Subdomínio&gt;</code> → <code>https://traefik:443</code> no túnel, <strong>ou</strong> hostname curinga <code>*</code> já configurado</td>
+<td>Public Hostname <code>&lt;Subdomínio&gt;</code> → <code>https://traefik:443</code> (com <em>No TLS Verify</em>) no túnel, <strong>ou</strong> hostname curinga <code>*</code> já configurado</td>
 </tr>
 </tbody>
 </table>
@@ -3506,7 +3506,7 @@
 <h3 id="regras_7">Regras<a class="headerlink" href="#regras_7" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>LLM-1</strong> — o consumidor aponta para o LiteLLM (variável com <code>http://litellm:4000</code>) e depende do serviço <code>litellm</code>. <em>Evidência:</em> <code>environment:</code> e <code>depends_on:</code>.</li>
-<li><strong>LLM-2</strong> — o consumidor não recebe chaves de provedores externos (<code>OPENAI_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>GEMINI_API_KEY</code>); só o <code>litellm</code> as recebe. <em>Evidência:</em> <code>environment:</code>.</li>
+<li><strong>LLM-2</strong> — o consumidor não recebe chaves de provedores externos (os valores <code>${OPENAI_API_KEY}</code>, <code>${ANTHROPIC_API_KEY}</code>, <code>${GEMINI_API_KEY}</code>); só o <code>litellm</code> as recebe. Uma variável do consumidor com nome de provedor que recebe <code>${LITELLM_MASTER_KEY}</code> (ex.: <code>OPENAI_API_KEY=${LITELLM_MASTER_KEY}</code> no Open WebUI) é a chave do proxy e é válida. <em>Evidência:</em> <code>environment:</code>.</li>
 <li><strong>LLM-3</strong> — consumidor e <code>litellm</code> compartilham uma rede (<code>ai_network</code>). <em>Evidência:</em> <code>networks:</code>.</li>
 </ul>
 <h3 id="ao-adicionar-por-consumidor_7">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor_7" title="Permanent link">¶</a></h3>
@@ -3573,7 +3573,7 @@
 <h2 id="pendencias-da-auditoria-inicial">Pendências da auditoria inicial<a class="headerlink" href="#pendencias-da-auditoria-inicial" title="Permanent link">¶</a></h2>
 <p>Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) foram corrigidos pela skill <code>fix-integrations</code>.</p>
 <p>Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (Promtail na VM de IA, Open WebUI <code>protegida</code>, job <code>glances</code> removido).</p>
-<p><strong>Fora das regras</strong> (registrados para a refatoração): LiteLLM aponta o Ollama para <code>ai_desktop_vm_ip_var:11434</code>, mas o Ollama escuta só em <code>127.0.0.1</code> (usar <code>http://ollama:11434</code>); <code>cloudflared</code> sem <code>--metrics</code> para o job <code>cloudflared:2000</code>; sobras do Plex em <code>setup-media-stack-volumes.yml</code>; <code>MONITORING_GRAFANA_PROVISIONING_PATH</code> gerada e não usada; <code>authentication_backend</code> comentado no <code>configuration.yml.j2</code>; <code>full-deploy.yml</code> não importa os playbooks de monitoramento e produtividade; a stack <code>apps</code> é um compose único, mas recebe cinco <code>.env</code> separados (hoje unidos à mão num <code>apps.env</code>, ver página 07); n8n com <code>N8N_BASIC_AUTH_ACTIVE=true</code> além do forward-auth do Authelia (login duplo); Public Hostname do túnel: o índice (acesso-externo) diz <code>https://traefik:443</code> e a página 05 manda <code>http://traefik:80</code>; a página 08 cita o Ollama em <code>http://ai-desktop-ip:11434</code>, mas ele só escuta em <code>127.0.0.1</code>, e o exemplo de <code>config.yaml</code> do LiteLLM na página difere do template; Open WebUI recebe <code>LITELLM_API_BASE</code>, que não parece ser variável reconhecida (o Open WebUI usa <code>OPENAI_API_BASE_URL</code>/<code>OPENAI_API_KEY</code>; validar); Grafana não monta a pasta de provisioning, então os datasources gerados pelo playbook não carregam; <code>litellm</code> publica <code>4000</code> em todas as interfaces sendo <code>interna</code>; portas publicadas pelo Docker (ex.: Loki 3100) contornam o UFW — a restrição real é a LAN; middleware <code>nextcloud-headers</code> em <code>nextcloud_middleware.yml.j2</code> usa a chave <code>pass: true</code>, que não parece ser opção válida de <code>headers</code> no Traefik (validar).</p>
+<p><strong>Fora das regras</strong> (para a reestruturação): a stack <code>apps</code> é um compose único, mas recebe cinco <code>.env</code> separados (hoje unidos à mão num <code>apps.env</code>, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.</p>
 
 
 
@@ -3594,7 +3594,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:03:30 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:32:15 -03">13 de outubro de 2026</span>
   </span>
 
     

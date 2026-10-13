@@ -2083,7 +2083,7 @@
 <ul>
 <li><strong>Ollama</strong>: Executa modelos LLM locais. Baixe modelos com <code>ollama pull llama3.2</code>, <code>ollama pull phi3</code>, etc.</li>
 <li><strong>LiteLLM</strong>: Proxy OpenAI-compatible. Roteia requisições entre Ollama e APIs externas com fallback automático.</li>
-<li><strong>Open WebUI</strong>: Interface web para chat com LLMs. Acessível em <code>https://openwebui.seudominio.com</code> (Traefik da <code>core-services-vm</code> + Authelia, router <code>openwebui-dynamic</code> em <code>ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2</code>) ou na LAN em <code>http://ai-desktop-ip:3000</code>.</li>
+<li><strong>Open WebUI</strong>: Interface web para chat com LLMs. Usa o LiteLLM como API compatível com OpenAI (<code>OPENAI_API_BASE_URL=http://litellm:4000/v1</code>, chave <code>LITELLM_MASTER_KEY</code>) e o Ollama direto para gerenciar modelos locais. Acessível em <code>https://openwebui.seudominio.com</code> (Traefik da <code>core-services-vm</code> + Authelia, router <code>openwebui-dynamic</code> em <code>ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2</code>) ou na LAN em <code>http://ai-desktop-ip:3000</code>.</li>
 <li><strong>OpenClaw</strong>: CLI agent para terminal. Conecta ao LiteLLM.</li>
 <li><strong>OpenClaude</strong>: Assistente AI com memória persistente e integração com ferramentas locais.</li>
 <li><strong>Promtail (<code>promtail_ai</code>)</strong>: Envia os logs dos containers e do sistema desta VM ao Loki da <code>core-services-vm</code> (<code>http://&lt;core_services_vm_ip_var&gt;:3100</code>). A configuração é gerada de <code>ansible/templates/promtail-config.yml.j2</code> pelo <code>setup-ai-volumes.yml</code>.</li>
@@ -2157,32 +2157,38 @@
 </span></code></pre></div></li>
 <li>No Portainer, abra a stack <code>ai</code>, recarregue <code>/opt/portainer_stack_envs/ai.env</code> em <strong>Env</strong> e clique em <strong>Update the stack</strong>.</li>
 </ol>
-<p>O <code>setup-ai-volumes.yml</code> também aplica o role <code>ansible/roles/apps/ml-tools/</code> na <code>ai-desktop-vm</code> (ferramentas de ML e dependências da stack).</p>
+<p>O <code>setup-ai-volumes.yml</code> também aplica o role <code>ansible/roles/apps/ml-tools/</code> na <code>ai-desktop-vm</code>: ele instala o driver AMD/ROCm da GPU (RX 5600 XT) e desativa uma eventual instalação nativa antiga do Ollama. O Ollama roda <strong>só em container</strong> (<code>ollama/ollama:rocm</code>, com <code>/dev/kfd</code> e <code>/dev/dri</code>).</p>
+<div class="admonition warning">
+<p class="admonition-title">Suporte da RX 5600 XT</p>
+<p>A RX 5600 XT (RDNA1, <code>gfx1010</code>) não está na lista oficial de GPUs AMD do Ollama; se ela não for reconhecida, o Ollama roda em CPU (veja <code>docker logs ollama</code>). O resto da stack funciona igual.</p>
+</div>
 <h2 id="configuracao-do-litellm">Configuração do LiteLLM<a class="headerlink" href="#configuracao-do-litellm" title="Permanent link">¶</a></h2>
-<p>O arquivo <code>config.yaml</code> é gerado pelo Ansible a partir de <code>ansible/templates/litellm_config.yaml.j2</code>. Modelo base:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">general_settings</span><span class="p">:</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">master_key</span><span class="p">:</span><span class="w"> </span><span class="s">"sua-chave-master"</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nt">model_list</span><span class="p">:</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">claude-sonnet</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">claude-sonnet-4-20250514</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"sk-ant-..."</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gemini-flash</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gemini/gemini-2.5-flash</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"AIza..."</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">open-webui</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai/gpt-4o</span>
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"sk-..."</span>
-</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>
-</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
-</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/llama3.2</span>
-</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">      </span><span class="nt">api_base</span><span class="p">:</span><span class="w"> </span><span class="s">"http://ollama:11434"</span>
+<p>O arquivo <code>config.yaml</code> é gerado pelo Ansible a partir do template abaixo (segredos vêm do vault). Para trocar ou acrescentar modelos, edite este bloco e siga o fluxo wiki-first; modelos locais precisam ser baixados no Ollama (próxima seção).</p>
+<div class="language-yaml highlight"><span class="filename">ansible/templates/litellm_config.yaml.j2</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># ansible/templates/litellm_config.yaml.j2</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Gerado pelo setup-ai-volumes.yml em &lt;NFS&gt;/litellm/config/config.yaml.</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">general_settings</span><span class="p">:</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">master_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">litellm_master_key</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nt">model_list</span><span class="p">:</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt-4o</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt-4o</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">llm_api_keys.openai</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">claude-3-opus</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">claude-3-opus-20240229</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">llm_api_keys.anthropic</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gemini-1.5-pro</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gemini/gemini-1.5-pro-latest</span>
+</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">llm_api_keys.google_gemini</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>
+</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/llama3.2</span>
+</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
+</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/llama3.2</span>
+</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">      </span><span class="nt">api_base</span><span class="p">:</span><span class="w"> </span><span class="s">"http://ollama:11434"</span><span class="w"> </span><span class="c1"># Ollama na mesma rede Docker (ai_network); ele não escuta no IP da VM</span>
 </span></code></pre></div>
 <h2 id="baixando-modelos-no-ollama">Baixando Modelos no Ollama<a class="headerlink" href="#baixando-modelos-no-ollama" title="Permanent link">¶</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Na ai-desktop-vm, ou via docker exec</span>
@@ -2207,12 +2213,12 @@
 </tr>
 <tr>
 <td>LiteLLM API</td>
-<td><code>http://ai-desktop-ip:4000</code></td>
+<td><code>http://ai-desktop-ip:4000</code> (chave: <code>LITELLM_MASTER_KEY</code>)</td>
 <td>4000</td>
 </tr>
 <tr>
 <td>Ollama API</td>
-<td><code>http://ai-desktop-ip:11434</code></td>
+<td>só dentro da VM: <code>http://127.0.0.1:11434</code> (ou <code>docker exec -it ollama ...</code>); os demais serviços usam <code>http://ollama:11434</code></td>
 <td>11434</td>
 </tr>
 <tr>
@@ -2247,7 +2253,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:03:30 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 05:07:38 -03">13 de outubro de 2026</span>
   </span>
 
     
