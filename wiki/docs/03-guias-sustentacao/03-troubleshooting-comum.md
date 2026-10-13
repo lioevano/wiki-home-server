@@ -92,14 +92,14 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
     1.  **DNS Público (Cloudflare):**
         *   O subdomínio (`meuservico`) está configurado corretamente no seu painel DNS da Cloudflare?
         *   Se usa CNAME, ele aponta para o hostname correto do seu Cloudflare Tunnel (e.g., `UUID.cfargotunnel.com`)?
-        *   Se usa Ingress Rules/Public Hostnames no Zero Trust Dashboard, a regra para `meuservico.{{ base_domain }}` existe e aponta para o serviço `http://traefik:80`?
+        *   Se usa Ingress Rules/Public Hostnames no Zero Trust Dashboard, a regra para `meuservico.{{ base_domain }}` existe e aponta para o serviço `https://traefik:443` (com *No TLS Verify*)? `http://traefik:80` causa redirecionamento em loop.
         *   O "Proxy status" (nuvem laranja) está **habilitado** para o registro DNS?
         *   Use uma ferramenta online de DNS lookup (ou `nslookup meuservico.{{ base_domain }}` na sua máquina) para verificar se ele resolve para endereços IP da Cloudflare.
     2.  **Cloudflare Tunnel (`cloudflared` Agent):**
         *   O container `cloudflared` está rodando na `core-services-vm`? Verifique no Portainer.
         *   Examine os logs do `cloudflared`: `docker logs cloudflared`. Procure por:
             *   Erros de conexão com a Cloudflare ("Connection refused", "failed to connect to an edge").
-            *   Erros ao encaminhar para o Traefik (se estiver usando `--url http://traefik:80`, ele deve conseguir resolver `traefik`).
+            *   Erros ao encaminhar para o Traefik (se estiver usando `--url https://traefik:443`, ele deve conseguir resolver `traefik`).
         *   No dashboard Cloudflare Zero Trust (Access -> Tunnels), verifique o status do seu túnel. Deve estar "Healthy".
     3.  **Traefik (Proxy Reverso):**
         *   O container `traefik` está rodando na `core-services-vm`?

@@ -231,6 +231,8 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     authelia_admin_password_hash_initial: "$argon2id$v=19$m=65536,t=3,p=4$SEU_SALT_GERADO_PELO_COMANDO$SEU_HASH_GERADO_PELO_COMANDO"
     # Senha para o usuário 'authelia' no banco de dados PostgreSQL do Authelia.
     authelia_storage_postgres_password: "SENHA_FORTE_PARA_O_USUARIO_AUTHELIA_NO_DB_POSTGRES"
+    # Chave de criptografia do storage do Authelia (mín. 20 caracteres; gere com: openssl rand -hex 32).
+    authelia_storage_encryption_key: "CHAVE_DE_CRIPTOGRAFIA_DO_STORAGE_DO_AUTHELIA"
 
     # --- Configurações Gerais ---
     # Email para notificações do Let's Encrypt (renovação de certificados, problemas).

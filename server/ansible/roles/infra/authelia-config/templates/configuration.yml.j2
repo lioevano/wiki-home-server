@@ -37,6 +37,7 @@ session:
 # Armazenamento de Dados do Usuário (PostgreSQL)
 # Authelia usará este banco de dados para armazenar informações de usuários, dispositivos 2FA, etc.
 storage:
+  encryption_key: "{{ authelia_storage_encryption_key }}" # Obrigatório (mín. 20 caracteres); cifra dados sensíveis no banco. Não troque depois de criado o banco.
   postgres:
     address: "tcp://authelia_db:5432" # Nome do serviço Docker do banco de dados Authelia e porta
     database: authelia # Nome do banco de dados
@@ -91,6 +92,12 @@ access_control:
 
 # Notificador (para reset de senha, alertas de segurança, etc.) - ALTAMENTE RECOMENDADO
 # Configure para receber notificações por email.
+# Notificador (obrigatório): envia códigos de registro de 2FA e de redefinição de senha.
+# Padrão: arquivo dentro do volume de configuração (leia com: cat <NFS>/authelia/config/notification.txt).
+# Para e-mail, troque 'filesystem' pelo bloco 'smtp' comentado abaixo.
+notifier:
+  filesystem:
+    filename: /config/notification.txt
 # notifier:
 #   smtp:
 #     address: "smtp.seuprovedor.com:587" # Servidor SMTP e porta (587 para STARTTLS, 465 para SSL/TLS direto)

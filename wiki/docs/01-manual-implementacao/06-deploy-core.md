@@ -24,6 +24,9 @@ A stack core é a base de rede: Traefik (proxy reverso), Cloudflared (túnel) e 
 - **Authelia**: SSO com 2FA. Protege todos os serviços via middleware `authelia-forwardauth@docker`.
 - **Authelia DB**: Postgres para dados de sessão e 2FA do Authelia.
 
+!!! info "Primeiro login no Authelia"
+    Os usuários vêm do `users_database.yml` (backend `file`, gerado a partir do vault). Sem SMTP configurado, o Authelia usa o notificador `filesystem`: o link para registrar o 2FA (TOTP) aparece no arquivo `authelia/config/notification.txt` do volume NFS — leia-o na `core-services-vm` com `sudo cat <vm_nfs_mount_base_path>/<zfs_docker_volumes_dataset_name>/authelia/config/notification.txt`.
+
 ## Pré-requisitos
 
 - Playbooks Ansible executados:

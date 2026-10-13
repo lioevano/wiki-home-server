@@ -13,9 +13,6 @@ BASE_DOMAIN_FROM_VAULT={{ base_domain }}
 # --- Caminhos de Volume Base (montados via NFS do Proxmox Host) ---
 VM_NFS_MOUNT_BASE_PATH={{ vm_nfs_mount_base_path }}
 ZFS_DOCKER_VOLUMES_DATASET_NAME={{ zfs_docker_volumes_dataset_name }}
-ZFS_MEDIA_DATASET_NAME={{ zfs_media_dataset_name }}
-ZFS_DOWNLOADS_DATASET_NAME={{ zfs_downloads_dataset_name }}
-ZFS_RAG_SOURCES_DATASET_NAME={{ zfs_rag_sources_dataset_name }}
 
 # --- Caminhos Específicos para a Stack ---
 {% for config in stack_configs | default([]) %}

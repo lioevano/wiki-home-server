@@ -245,7 +245,7 @@ Este playbook Ansible orquestra a preparação dos arquivos de configuração e 
   4. **Aguarda Traefik:** Espera o healthcheck do Traefik passar antes de prosseguir.
   5. **Executa Role `infra/authelia-config`:**
       * Cria o diretório de configuração para Authelia no volume NFS.
-      * Copia o `configuration.yml` e `users_database.yml` (exemplo) templateados.
+      * Copia o `configuration.yml` e o `users_database.yml` (base de usuários do backend `file`) templateados.
   6. **Deploy da Stack `authelia`:** Usa `community.docker.docker_compose_v2` para fazer deploy da stack `authelia` (Authelia app, Authelia DB), injetando as variáveis de ambiente.
 
 ### Ações Preparatórias: Roles Ansible para Configuração
@@ -496,9 +496,7 @@ http:
         # usando um chain middleware se necessário, ou aplicado diretamente.
         # Exemplo:
         # traefik.http.routers.nextcloud.middlewares: "authelia-forwardauth@docker,nextcloud-headers@file"
-        # Se os headers globais já cobrem, este middleware pode não ser estritamente necessário,
-        # mas pode ser usado para ajustes finos específicos para Nextcloud.
-        # Por enquanto, pode ser deixado vazio ou com headers muito específicos que não são globais.
+        # Os headers globais (securityHeaders@file) cobrem o geral; aqui ficam só os específicos do Nextcloud.
         # Exemplo de header que poderia ser específico:
         # customRequestHeaders:
         #   X-My-Nextcloud-Header: "true" # Exemplo, não é um header real do Nextcloud
@@ -595,6 +593,7 @@ session:
 # Armazenamento de Dados do Usuário (PostgreSQL)
 # Authelia usará este banco de dados para armazenar informações de usuários, dispositivos 2FA, etc.
 storage:
+  encryption_key: "{{ authelia_storage_encryption_key }}" # Obrigatório (mín. 20 caracteres); cifra dados sensíveis no banco. Não troque depois de criado o banco.
   postgres:
     address: "tcp://authelia_db:5432" # Nome do serviço Docker do banco de dados Authelia e porta
     database: authelia # Nome do banco de dados
@@ -649,6 +648,12 @@ access_control:
 
 # Notificador (para reset de senha, alertas de segurança, etc.) - ALTAMENTE RECOMENDADO
 # Configure para receber notificações por email.
+# Notificador (obrigatório): envia códigos de registro de 2FA e de redefinição de senha.
+# Padrão: arquivo dentro do volume de configuração (leia com: cat <NFS>/authelia/config/notification.txt).
+# Para e-mail, troque 'filesystem' pelo bloco 'smtp' comentado abaixo.
+notifier:
+  filesystem:
+    filename: /config/notification.txt
 # notifier:
 #   smtp:
 #     address: "smtp.seuprovedor.com:587" # Servidor SMTP e porta (587 para STARTTLS, 465 para SSL/TLS direto)
@@ -685,13 +690,8 @@ regulation:
 # ansible/roles/infra/authelia-config/templates/users_database.yml.j2
 # Arquivo de Banco de Dados de Usuários Locais do Authelia (gerado por Ansible)
 # Hashes de senha DEVEM ser gerados com 'authelia crypto hash generate argon2'
-# !!! NOTA IMPORTANTE !!!
-# Este arquivo SÓ É USADO se 'authentication_backend.file' estiver configurado em configuration.yml.
-# Com a configuração atual usando PostgreSQL para 'storage', Authelia gerenciará os usuários
-# diretamente no banco de dados. O primeiro usuário (admin) será criado com base nas
-# variáveis de ambiente passadas para o container Authelia na primeira execução, ou
-# você precisará registrar o admin via UI/API do Authelia se essa funcionalidade existir.
-# Este arquivo é mantido aqui como um exemplo ou fallback.
+# Base de usuários do backend 'file' (authentication_backend em configuration.yml).
+# O PostgreSQL ('storage') guarda sessões e 2FA, não os usuários.
 
 users:
   # Usuário administrador inicial (do vault.yml)
@@ -753,7 +753,6 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
         # Traefik
         CLOUDFLARE_API_TOKEN_FROM_VAULT: "{{ cloudflare_api_token }}"
         BASE_DOMAIN_FROM_VAULT: "{{ base_domain }}"
-        LETSENCRYPT_EMAIL_FROM_VAULT: "{{ letsencrypt_email }}"
         # Cloudflared
         CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT: "{{ cloudflare_tunnel_token }}"
         # Authelia

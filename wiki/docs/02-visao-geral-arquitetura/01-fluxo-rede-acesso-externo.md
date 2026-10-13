@@ -70,7 +70,7 @@ sequenceDiagram
 *   **Ingress Rules ou `--hostname`:**
     *   Você pode definir "Public Hostnames" (Ingress Rules) no dashboard Cloudflare Zero Trust para especificar quais subdomínios são expostos através do túnel e para qual serviço interno eles devem ser encaminhados (neste caso, para o Traefik).
     *   Alternativamente, a flag `--hostname` no comando `cloudflared` pode registrar automaticamente um ou mais hostnames para o túnel.
-*   **Encaminhamento para Traefik:** O `cloudflared` é configurado para encaminhar todo o tráfego recebido do túnel para o serviço Traefik na rede Docker interna (e.g., `http://traefik:80`).
+*   **Encaminhamento para Traefik:** O `cloudflared` é configurado para encaminhar todo o tráfego recebido do túnel para o serviço Traefik na rede Docker interna (`https://traefik:443`, com *No TLS Verify*; ver a seção 5.5 da página de rede segura).
 
 ### 3. Traefik (Proxy Reverso)
 

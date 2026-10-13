@@ -33,7 +33,6 @@
         # Traefik
         CLOUDFLARE_API_TOKEN_FROM_VAULT: "{{ cloudflare_api_token }}"
         BASE_DOMAIN_FROM_VAULT: "{{ base_domain }}"
-        LETSENCRYPT_EMAIL_FROM_VAULT: "{{ letsencrypt_email }}"
         # Cloudflared
         CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT: "{{ cloudflare_tunnel_token }}"
         # Authelia

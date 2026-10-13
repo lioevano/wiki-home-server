@@ -19,9 +19,7 @@ http:
         # usando um chain middleware se necessário, ou aplicado diretamente.
         # Exemplo:
         # traefik.http.routers.nextcloud.middlewares: "authelia-forwardauth@docker,nextcloud-headers@file"
-        # Se os headers globais já cobrem, este middleware pode não ser estritamente necessário,
-        # mas pode ser usado para ajustes finos específicos para Nextcloud.
-        # Por enquanto, pode ser deixado vazio ou com headers muito específicos que não são globais.
+        # Os headers globais (securityHeaders@file) cobrem o geral; aqui ficam só os específicos do Nextcloud.
         # Exemplo de header que poderia ser específico:
         # customRequestHeaders:
         #   X-My-Nextcloud-Header: "true" # Exemplo, não é um header real do Nextcloud

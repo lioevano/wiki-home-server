@@ -1,13 +1,8 @@
 # ansible/roles/infra/authelia-config/templates/users_database.yml.j2
 # Arquivo de Banco de Dados de Usuários Locais do Authelia (gerado por Ansible)
 # Hashes de senha DEVEM ser gerados com 'authelia crypto hash generate argon2'
-# !!! NOTA IMPORTANTE !!!
-# Este arquivo SÓ É USADO se 'authentication_backend.file' estiver configurado em configuration.yml.
-# Com a configuração atual usando PostgreSQL para 'storage', Authelia gerenciará os usuários
-# diretamente no banco de dados. O primeiro usuário (admin) será criado com base nas
-# variáveis de ambiente passadas para o container Authelia na primeira execução, ou
-# você precisará registrar o admin via UI/API do Authelia se essa funcionalidade existir.
-# Este arquivo é mantido aqui como um exemplo ou fallback.
+# Base de usuários do backend 'file' (authentication_backend em configuration.yml).
+# O PostgreSQL ('storage') guarda sessões e 2FA, não os usuários.
 
 users:
   # Usuário administrador inicial (do vault.yml)
