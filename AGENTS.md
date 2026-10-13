@@ -93,3 +93,4 @@ Cada skill é um `SKILL.md` em `.agents/skills/<nome>/` (formato Agent Skills). 
 | `remove-app` | remover uma aplicação | `.agents/skills/remove-app/SKILL.md` |
 | `add-integration` | criar uma integração e ligá-la em todos os consumidores | `.agents/skills/add-integration/SKILL.md` |
 | `remove-integration` | desligar uma integração de todos e remover o provedor | `.agents/skills/remove-integration/SKILL.md` |
+| `fix-integrations` | corrigir achados da auditoria e gerar variáveis que faltam | `.agents/skills/fix-integrations/SKILL.md` |

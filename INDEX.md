@@ -11,6 +11,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `add-app` | adicionar uma aplicação | `.agents/skills/add-app/SKILL.md` |
 | `add-integration` | criar uma integração e ligá-la em todos os consumidores | `.agents/skills/add-integration/SKILL.md` |
 | `audit-integrations` | verificar integrações (catálogo × índice × arquivos) | `.agents/skills/audit-integrations/SKILL.md` |
+| `fix-integrations` | corrigir achados da auditoria e gerar variáveis que faltam | `.agents/skills/fix-integrations/SKILL.md` |
 | `remove-app` | remover uma aplicação | `.agents/skills/remove-app/SKILL.md` |
 | `remove-integration` | desligar uma integração de todos e remover o provedor | `.agents/skills/remove-integration/SKILL.md` |
 | `sync-wiki-server` | `dev.py check` com erros ou avisos | `.agents/skills/sync-wiki-server/SKILL.md` |

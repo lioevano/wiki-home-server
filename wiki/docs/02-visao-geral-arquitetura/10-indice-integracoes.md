@@ -20,6 +20,8 @@ Cada integração liga uma aplicação **provedora** (ex.: Traefik) às aplicaç
 
 **Status da auditoria:** `✅` ok · `❌ <REGRA>` falta · `⚠️ <REGRA>` sobra · `✋` passo manual pendente · `—` não se aplica · `?` depende de valor `?` no catálogo.
 
+Uma seção pode ter subseções extras **de referência** (ex.: `### Origem dos valores`) depois das cinco obrigatórias; as skills as seguem ao corrigir ou adicionar.
+
 **Serviço principal** é o primeiro da coluna Serviços. Regras de roteamento e autenticação valem para ele; aplicações `ansible:<role>` têm a evidência nas tasks/labels do role, não em compose.
 
 ---
@@ -209,6 +211,22 @@ Não se aplica (infraestrutura base).
 ### Ao remover o provedor
 Não se aplica.
 
+### Origem dos valores
+
+Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no compose, a partir de uma fonte versionada — nunca com valor fixo no playbook.
+
+| Tipo | Como reconhecer | Fonte do valor | Como o playbook emite |
+|---|---|---|---|
+| Comum | `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE`, `BASE_DOMAIN_FROM_VAULT`, `VM_NFS_MOUNT_BASE_PATH`, `ZFS_*_DATASET_NAME` | vault / `group_vars/all/main.yml` | já emitidas por `ansible/templates/portainer_stack_env.j2` — nada a fazer |
+| Segredo | senha, chave, token (`*_PASSWORD*`, `*_KEY`, `*_SECRET*`, `*_TOKEN*`) | `vault.yml`, chave `snake_case` (ex.: `litellm_master_key`); placeholder obrigatório em `vault.yml.example` | entrada `{ name: 'VAR', value: "{{ chave_vault }}" }` em `stack_configs`; o playbook carrega o vault (`vars_files`) e a tarefa que grava o `.env` usa `mode: '0600'` |
+| IP de host/VM | `*_IP`, `*_IP_VAR` | `[all:vars]` do `hosts.ini` (`core_services_vm_ip_var`, `ai_desktop_vm_ip_var`, `proxmox_host_ip_var`) | entrada em `stack_configs` com a variável do inventário |
+| Caminho | `*_PATH` | `group_vars/all/main.yml` (`vm_nfs_mount_base_path`, `zfs_*_dataset_name`) ou caminho local declarado no playbook | entrada em `stack_configs` concatenando as variáveis |
+| Configuração | demais (subdomínios, nomes, flags) | `group_vars/all/main.yml` | entrada em `stack_configs` |
+
+**Playbook de cada stack:** `core` → `environment:` do deploy em `ansible/playbooks/setup-core-networking.yml`; `apps` → `setup-productivity-automation-volumes.yml` (nextcloud, homeassistant), `setup-media-stack-volumes.yml` (mídia), `setup-monitoring-stack-volumes.yml` (monitoramento), `setup-n8n-volumes.yml` (n8n); `ai` → `setup-ai-volumes.yml`.
+
+**Segredo novo** (sem chave no vault): proponha `snake_case` derivado do nome da variável e confirme com o usuário antes de criar.
+
 ---
 
 ## llm
@@ -262,3 +280,19 @@ Consumidores ficam sem LLM: remover `+llm` de todos e decidir com o usuário se 
 
 ### Ao remover o provedor
 Não se aplica.
+
+---
+
+## Pendências da auditoria inicial
+
+Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. A skill `fix-integrations` trata os mecânicos; os demais aguardam decisão.
+
+| Regra | Aplicação | Desvio | Tipo |
+|---|---|---|---|
+| ⚠️ ROT-3 | `open-webui` | router por arquivo `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` para aplicação `interna`, apontando para a porta 8080 (o compose publica 3000) | decisão: remover o router ou tornar `protegida` |
+| ⚠️ MET-2 | (fora do catálogo) | job `glances` em `ansible/templates/prometheus.yml.j2` sem aplicação | decisão: remover o job ou catalogar o Glances |
+| ❌ LOG-2 | `ollama`, `litellm`, `open-webui`, `openclaw`, `openclaude` | sem `promtail` na `ai-desktop-vm` | decisão: Promtail na VM de IA ou `-logs` em Ajustes |
+| ❌ VAR-2 | `nextcloud`, `grafana`, `n8n`, `litellm`, `openclaw`, `openclaude`, `open-webui` | segredos `*_FROM_PORTAINER_ENV`, `LITELLM_MASTER_KEY`, `OPENWEBUI_SECRET_KEY`, `*_API_KEY` não gerados; `AI_DESKTOP_VM_IP` emitido como `AI_DESKTOP_VM_IP_VAR`; `CORE_SERVICES_VM_IP_VAR` só emitido sob condição | mecânico (`fix-integrations`) |
+| ❌ DAD-3 | `authelia` | diretório `authelia/db_pg` não é criado por playbook/role | mecânico (`fix-integrations`) |
+
+**Fora das regras** (registrados para a refatoração): LiteLLM aponta o Ollama para `ai_desktop_vm_ip_var:11434`, mas o Ollama escuta só em `127.0.0.1` (usar `http://ollama:11434`); `cloudflared` sem `--metrics` para o job `cloudflared:2000`; sobras do Plex em `setup-media-stack-volumes.yml`; `MONITORING_GRAFANA_PROVISIONING_PATH` gerada e não usada; `authentication_backend` comentado no `configuration.yml.j2`; `full-deploy.yml` não importa os playbooks de monitoramento e produtividade; `.env` com segredos gravados com `mode: '0644'`.
