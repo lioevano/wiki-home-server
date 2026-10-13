@@ -3120,8 +3120,8 @@
 </table>
 <h3 id="regras">Regras<a class="headerlink" href="#regras" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>ROT-1</strong> — o serviço principal tem <code>traefik.enable: "true"</code> e um router com regra <code>Host(`&lt;Subdomínio&gt;.${BASE_DOMAIN_FROM_VAULT}`)</code> (ou <code>Host(`&lt;Subdomínio&gt;.{{ base_domain }}`)</code> em role Ansible; <code>${N8N_SUBDOMAIN}</code> conta como o subdomínio <code>n8n</code>). <em>Evidência:</em> labels do serviço.</li>
-<li><strong>ROT-2</strong> — o serviço principal está na rede <code>proxy</code>. <em>Evidência:</em> <code>networks:</code> do serviço (para role Ansible: <code>networks</code> do task do container).</li>
+<li><strong>ROT-1</strong> — o serviço principal tem <code>traefik.enable: "true"</code> e um router com regra <code>Host(`&lt;Subdomínio&gt;.${BASE_DOMAIN_FROM_VAULT}`)</code> (ou <code>Host(`&lt;Subdomínio&gt;.{{ base_domain }}`)</code> em role Ansible; <code>${N8N_SUBDOMAIN}</code> conta como o subdomínio <code>n8n</code>). Aplicação em <strong>outra VM</strong> que não a do Traefik: em vez das labels, um router no <em>file provider</em> (<code>ansible/roles/infra/traefik-config/templates/*.yml.j2</code>) com essa regra, apontando para <code>http://&lt;ip da VM&gt;:&lt;porta publicada no compose&gt;</code>. <em>Evidência:</em> labels do serviço ou template do <em>file provider</em>.</li>
+<li><strong>ROT-2</strong> — o serviço principal está na rede <code>proxy</code>; aplicação em outra VM, roteada pelo <em>file provider</em>, publica a porta no IP da VM (<code>${&lt;VM&gt;_IP}:&lt;porta&gt;:&lt;porta do container&gt;</code>). <em>Evidência:</em> <code>networks:</code>/<code>ports:</code> do serviço (para role Ansible: <code>networks</code> do task do container).</li>
 <li><strong>ROT-3 (sobra)</strong> — nenhum router (por label <strong>ou</strong> por arquivo do <em>file provider</em>) pertence a aplicação <code>interna</code>, a serviço fora do catálogo, ou usa subdomínio diferente do catálogo. <em>Evidência:</em> labels de todos os composes e roles, e <code>ansible/roles/infra/traefik-config/templates/*.yml.j2</code>.</li>
 </ul>
 <h3 id="ao-adicionar-por-consumidor">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor" title="Permanent link">¶</a></h3>
@@ -3300,11 +3300,11 @@
 </tr>
 <tr>
 <td>Arquivos</td>
-<td>compose do consumidor; <code>ansible/templates/promtail-config.yml.j2</code></td>
+<td>compose do consumidor; <code>ansible/templates/promtail-config.yml.j2</code> (renderizado por <code>setup-monitoring-stack-volumes.yml</code> e, na VM de IA, por <code>setup-ai-volumes.yml</code>)</td>
 </tr>
 <tr>
 <td>Páginas</td>
-<td><code>01-manual-implementacao/07-deploy-apps.md</code></td>
+<td><code>01-manual-implementacao/07-deploy-apps.md</code>; <code>01-manual-implementacao/08-stack-ia.md</code> (<code>promtail_ai</code>)</td>
 </tr>
 <tr>
 <td>Manual</td>
@@ -3315,7 +3315,7 @@
 <h3 id="regras_4">Regras<a class="headerlink" href="#regras_4" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>LOG-1</strong> — nenhum serviço da aplicação sobrescreve <code>logging:</code> (o Promtail lê os logs JSON padrão do Docker em <code>/var/lib/docker/containers</code>). <em>Evidência:</em> compose do serviço.</li>
-<li><strong>LOG-2</strong> — há um <code>promtail</code> rodando na <strong>mesma VM</strong> da aplicação (hoje só na <code>core-services-vm</code>, stack <code>apps</code>). <em>Evidência:</em> catálogo (Stack/VM do <code>promtail</code>) × Stack/VM da aplicação.</li>
+<li><strong>LOG-2</strong> — há um <code>promtail</code> rodando na <strong>mesma VM</strong> da aplicação (hoje na <code>core-services-vm</code>, serviço <code>promtail</code> da stack <code>apps</code>, e na <code>ai-desktop-vm</code>, serviço <code>promtail_ai</code> da stack <code>ai</code>, que envia ao Loki pela porta 3100 publicada no IP da <code>core-services-vm</code>). <em>Evidência:</em> catálogo (Stack/VM do <code>promtail</code>) × Stack/VM da aplicação.</li>
 </ul>
 <h3 id="ao-adicionar-por-consumidor_4">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor_4" title="Permanent link">¶</a></h3>
 <ol>
@@ -3571,38 +3571,9 @@
 <p>Não se aplica.</p>
 <hr>
 <h2 id="pendencias-da-auditoria-inicial">Pendências da auditoria inicial<a class="headerlink" href="#pendencias-da-auditoria-inicial" title="Permanent link">¶</a></h2>
-<p>Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) já foram corrigidos pela skill <code>fix-integrations</code>; os demais aguardam decisão.</p>
-<table>
-<thead>
-<tr>
-<th>Regra</th>
-<th>Aplicação</th>
-<th>Desvio</th>
-<th>Tipo</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>⚠️ ROT-3</td>
-<td><code>open-webui</code></td>
-<td>router por arquivo <code>openwebui-dynamic</code> em <code>ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2</code> para aplicação <code>interna</code>, apontando para a porta 8080 (o compose publica 3000)</td>
-<td>decisão: remover o router ou tornar <code>protegida</code></td>
-</tr>
-<tr>
-<td>⚠️ MET-2</td>
-<td>(fora do catálogo)</td>
-<td>job <code>glances</code> em <code>ansible/templates/prometheus.yml.j2</code> sem aplicação</td>
-<td>decisão: remover o job ou catalogar o Glances</td>
-</tr>
-<tr>
-<td>❌ LOG-2</td>
-<td><code>ollama</code>, <code>litellm</code>, <code>open-webui</code>, <code>openclaw</code>, <code>openclaude</code></td>
-<td>sem <code>promtail</code> na <code>ai-desktop-vm</code></td>
-<td>decisão: Promtail na VM de IA ou <code>-logs</code> em Ajustes</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Fora das regras</strong> (registrados para a refatoração): LiteLLM aponta o Ollama para <code>ai_desktop_vm_ip_var:11434</code>, mas o Ollama escuta só em <code>127.0.0.1</code> (usar <code>http://ollama:11434</code>); <code>cloudflared</code> sem <code>--metrics</code> para o job <code>cloudflared:2000</code>; sobras do Plex em <code>setup-media-stack-volumes.yml</code>; <code>MONITORING_GRAFANA_PROVISIONING_PATH</code> gerada e não usada; <code>authentication_backend</code> comentado no <code>configuration.yml.j2</code>; <code>full-deploy.yml</code> não importa os playbooks de monitoramento e produtividade; a stack <code>apps</code> é um compose único, mas recebe cinco <code>.env</code> separados (hoje unidos à mão num <code>apps.env</code>, ver página 07); n8n com <code>N8N_BASIC_AUTH_ACTIVE=true</code> além do forward-auth do Authelia (login duplo); middleware <code>nextcloud-headers</code> em <code>nextcloud_middleware.yml.j2</code> usa a chave <code>pass: true</code>, que não parece ser opção válida de <code>headers</code> no Traefik (validar).</p>
+<p>Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) foram corrigidos pela skill <code>fix-integrations</code>.</p>
+<p>Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (Promtail na VM de IA, Open WebUI <code>protegida</code>, job <code>glances</code> removido).</p>
+<p><strong>Fora das regras</strong> (registrados para a refatoração): LiteLLM aponta o Ollama para <code>ai_desktop_vm_ip_var:11434</code>, mas o Ollama escuta só em <code>127.0.0.1</code> (usar <code>http://ollama:11434</code>); <code>cloudflared</code> sem <code>--metrics</code> para o job <code>cloudflared:2000</code>; sobras do Plex em <code>setup-media-stack-volumes.yml</code>; <code>MONITORING_GRAFANA_PROVISIONING_PATH</code> gerada e não usada; <code>authentication_backend</code> comentado no <code>configuration.yml.j2</code>; <code>full-deploy.yml</code> não importa os playbooks de monitoramento e produtividade; a stack <code>apps</code> é um compose único, mas recebe cinco <code>.env</code> separados (hoje unidos à mão num <code>apps.env</code>, ver página 07); n8n com <code>N8N_BASIC_AUTH_ACTIVE=true</code> além do forward-auth do Authelia (login duplo); Public Hostname do túnel: o índice (acesso-externo) diz <code>https://traefik:443</code> e a página 05 manda <code>http://traefik:80</code>; a página 08 cita o Ollama em <code>http://ai-desktop-ip:11434</code>, mas ele só escuta em <code>127.0.0.1</code>, e o exemplo de <code>config.yaml</code> do LiteLLM na página difere do template; Open WebUI recebe <code>LITELLM_API_BASE</code>, que não parece ser variável reconhecida (o Open WebUI usa <code>OPENAI_API_BASE_URL</code>/<code>OPENAI_API_KEY</code>; validar); Grafana não monta a pasta de provisioning, então os datasources gerados pelo playbook não carregam; <code>litellm</code> publica <code>4000</code> em todas as interfaces sendo <code>interna</code>; portas publicadas pelo Docker (ex.: Loki 3100) contornam o UFW — a restrição real é a LAN; middleware <code>nextcloud-headers</code> em <code>nextcloud_middleware.yml.j2</code> usa a chave <code>pass: true</code>, que não parece ser opção válida de <code>headers</code> no Traefik (validar).</p>
 
 
 
@@ -3623,7 +3594,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 02:25:45 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:03:30 -03">13 de outubro de 2026</span>
   </span>
 
     

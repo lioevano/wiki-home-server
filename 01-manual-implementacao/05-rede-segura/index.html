@@ -2539,9 +2539,9 @@
 </span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">    </span><span class="nt">openwebui-svc-dynamic</span><span class="p">:</span><span class="w"> </span><span class="c1"># Serviço Traefik para OpenWebUI</span>
 </span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">      </span><span class="nt">loadBalancer</span><span class="p">:</span>
 </span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">        </span><span class="nt">servers</span><span class="p">:</span>
-</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">          </span><span class="c1"># Aponta para o IP da ai-desktop-vm e a porta interna do container OpenWebUI.</span>
+</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">          </span><span class="c1"># Aponta para o IP da ai-desktop-vm e a porta que o compose da stack ai publica (3000 -&gt; 8080 no container).</span>
 </span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">          </span><span class="c1"># A variável ai_desktop_vm_ip_var vem do inventário Ansible (hosts.ini).</span>
-</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://{{</span><span class="nv"> </span><span class="s">ai_desktop_vm_ip_var</span><span class="nv"> </span><span class="s">}}:8080"</span><span class="w"> </span><span class="c1"># Porta que OpenWebUI expõe na ai-desktop-vm</span>
+</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">"http://{{</span><span class="nv"> </span><span class="s">ai_desktop_vm_ip_var</span><span class="nv"> </span><span class="s">}}:3000"</span>
 </span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>
 </span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">    </span><span class="c1"># opennotebooklm-svc-dynamic:</span>
 </span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a><span class="w">    </span><span class="c1">#   loadBalancer:</span>
@@ -2917,7 +2917,7 @@ O <code>cloudflared</code> tentará criar e gerenciar automaticamente um registr
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 02:25:45 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:03:30 -03">13 de outubro de 2026</span>
   </span>
 
     
