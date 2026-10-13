@@ -47,7 +47,7 @@ Pergunte ou deduza do pedido: **todas** as aplicações (padrão), **uma aplica�
 - (opcional) problemas vistos que nenhuma regra cobre — não entram na tabela
 ```
 
-- Uma coluna por integração do índice, na ordem do índice (se surgirem novas, acrescente).
+- Uma coluna por integração **que existe no índice no momento**, na ordem do índice — as colunas do exemplo são ilustrativas; integração removida sai, integração nova entra.
 - Status só destes: `✅` · `❌ <REGRA>` · `⚠️ <REGRA>` · `✋` · `—` · `?`. Várias regras na mesma célula: `❌ VAR-1, VAR-2`.
 - Todo `❌`/`⚠️` tem linha em **Achados** com caminho relativo à raiz do repositório e número de linha.
 

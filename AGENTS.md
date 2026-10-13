@@ -89,3 +89,7 @@ Cada skill é um `SKILL.md` em `.agents/skills/<nome>/` (formato Agent Skills). 
 | `validate-infra` | antes de commitar ou entregar mudanças | `.agents/skills/validate-infra/SKILL.md` |
 | `audit-integrations` | verificar integrações (catálogo × índice × arquivos) | `.agents/skills/audit-integrations/SKILL.md` |
 | `update-index` | manter o `INDEX.md` em dia (fim de toda mudança) | `.agents/skills/update-index/SKILL.md` |
+| `add-app` | adicionar uma aplicação | `.agents/skills/add-app/SKILL.md` |
+| `remove-app` | remover uma aplicação | `.agents/skills/remove-app/SKILL.md` |
+| `add-integration` | criar uma integração e ligá-la em todos os consumidores | `.agents/skills/add-integration/SKILL.md` |
+| `remove-integration` | desligar uma integração de todos e remover o provedor | `.agents/skills/remove-integration/SKILL.md` |
