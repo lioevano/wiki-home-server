@@ -30,14 +30,14 @@ Cada integração liga uma aplicação **provedora** (ex.: Traefik) às aplicaç
 |---|---|
 | Provedor | `traefik` |
 | Aplica-se a | Exposição ≠ interna |
-| Arquivos | `docker/stacks/<stack>/docker-compose.yml` (labels do serviço principal); para `ansible:<role>`, `ansible/roles/<role>/tasks/main.yml` |
+| Arquivos | `docker/stacks/<stack>/docker-compose.yml` (labels do serviço principal); para `ansible:<role>`, `ansible/roles/<role>/tasks/main.yml`; routers definidos por arquivo em `ansible/roles/infra/traefik-config/templates/*.yml.j2` |
 | Páginas | página da aplicação; `01-manual-implementacao/05-rede-segura.md` |
 | Manual | — |
 
 ### Regras
 - **ROT-1** — o serviço principal tem `traefik.enable: "true"` e um router com regra ``Host(`<Subdomínio>.${BASE_DOMAIN_FROM_VAULT}`)`` (ou ``Host(`<Subdomínio>.{{ base_domain }}`)`` em role Ansible; `${N8N_SUBDOMAIN}` conta como o subdomínio `n8n`). *Evidência:* labels do serviço.
 - **ROT-2** — o serviço principal está na rede `proxy`. *Evidência:* `networks:` do serviço (para role Ansible: `networks` do task do container).
-- **ROT-3 (sobra)** — nenhum serviço com `traefik.enable: "true"` pertence a aplicação `interna` ou está fora do catálogo; nenhum router aponta para subdomínio diferente do catálogo. *Evidência:* todos os composes e roles.
+- **ROT-3 (sobra)** — nenhum router (por label **ou** por arquivo do *file provider*) pertence a aplicação `interna`, a serviço fora do catálogo, ou usa subdomínio diferente do catálogo. *Evidência:* labels de todos os composes e roles, e `ansible/roles/infra/traefik-config/templates/*.yml.j2`.
 
 ### Ao adicionar (por consumidor)
 1. Labels no serviço principal: `traefik.enable`, router `<app>` com a regra Host, `entrypoints`/`tls` iguais aos vizinhos, `loadbalancer.server.port` com a porta interna.
@@ -63,7 +63,7 @@ Todas as aplicações com Exposição ≠ interna perdem acesso externo: remover
 | Manual | — |
 
 ### Regras
-- **AUT-1** — Exposição `protegida`: o router do serviço principal inclui o middleware `authelia-forwardauth@docker` (pode haver outros na lista). *Evidência:* label `traefik.http.routers.<r>.middlewares`.
+- **AUT-1** — Exposição `protegida`: o router do serviço principal inclui exatamente o middleware `authelia-forwardauth@docker` (pode haver outros na lista; nomes parecidos como `authelia@docker` **não** valem). *Evidência:* label `traefik.http.routers.<r>.middlewares` ou `middlewares:` do router no template do *file provider*.
 - **AUT-2** — Exposição `protegida`: o subdomínio é coberto por uma regra `two_factor` em `access_control.rules` — a regra curinga `"*.{{ base_domain }}"` → `two_factor` satisfaz. *Evidência:* `configuration.yml.j2`.
 - **AUT-3** — Exposição `publica`: existe regra `domain: "<Subdomínio>.{{ base_domain }}"` com `policy: bypass` **antes** da regra curinga, e o router **não** usa o middleware do Authelia. *Evidência:* `configuration.yml.j2` e labels. (O próprio `authelia` cumpre isso com a regra de `auth`.)
 - **AUT-4 (sobra)** — nenhuma regra `bypass`/`one_factor` específica para subdomínio que não exista no catálogo. *Evidência:* `configuration.yml.j2`.
@@ -195,8 +195,8 @@ Não se aplica (infraestrutura base).
 | Manual | — |
 
 ### Regras
-- **VAR-1** — toda `${VAR}` (inclusive `${VAR:-padrão}`) usada nos serviços da aplicação existe no `.env.template`. *Evidência:* compose × `.env.template`.
-- **VAR-2** — toda variável da aplicação no `.env.template` é produzida por um playbook (tarefa que gera o `.env` ou `environment:` do deploy). *Evidência:* `grep` da variável em `ansible/playbooks/`.
+- **VAR-1** — toda `${VAR}` (inclusive `${VAR:-padrão}`) usada em **qualquer** serviço da aplicação existe no `.env.template`. *Evidência:* compose × `.env.template`.
+- **VAR-2** — toda `${VAR}` usada em qualquer serviço da aplicação é produzida por um playbook (tarefa que gera o `.env` ou `environment:` do deploy). Variável **compartilhada** que não é produzida falha em **todas** as aplicações que a usam. "Produzida" = emitida **com o mesmo nome**; emissão condicional (`{% if X is defined %}`) só conta se algum playbook define `X`. *Evidência:* `grep` da variável em `ansible/playbooks/` e `ansible/templates/portainer_stack_env.j2`.
 - **VAR-3 (sobra)** — nenhuma variável do `.env.template` deixou de ser usada por todos os composes. *Evidência:* `grep` em `docker/stacks/*/docker-compose.yml`.
 
 ### Ao adicionar (por consumidor)
