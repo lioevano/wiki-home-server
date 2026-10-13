@@ -24,6 +24,7 @@ class Config:
     server_roots: list[str]
     ignore_paths: list[str] = field(default_factory=list)
     ignore_orphans: dict[str, str] = field(default_factory=dict)
+    pending_files: dict[str, str] = field(default_factory=dict)
     exclude_dirs: list[str] = field(default_factory=list)
 
 
@@ -52,6 +53,7 @@ def load_config(root: Path) -> Config:
         server_roots=list(data.get("server_roots") or ["ansible", "docker", "scripts"]),
         ignore_paths=list(data.get("ignore_paths") or []),
         ignore_orphans=dict(data.get("ignore_orphans") or {}),
+        pending_files=dict(data.get("pending_files") or {}),
         exclude_dirs=list(data.get("exclude_dirs") or []),
     )
 

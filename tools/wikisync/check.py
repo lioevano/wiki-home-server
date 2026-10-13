@@ -147,7 +147,10 @@ def _check_refs(cfg: Config, wiki: Wiki) -> list[Finding]:
             ok = target.is_dir() if ref.endswith("/") else target.exists()
             if not ok:
                 seen.add(ref)
-                out.append(Finding("REF-MISSING", "erro", ref, page, "caminho citado na wiki não existe no server"))
+                if ref in cfg.pending_files:
+                    out.append(Finding("REF-PENDING", "aviso", ref, page, f"ainda não criado: {cfg.pending_files[ref]}"))
+                else:
+                    out.append(Finding("REF-MISSING", "erro", ref, page, "caminho citado na wiki não existe no server"))
     return out
 
 

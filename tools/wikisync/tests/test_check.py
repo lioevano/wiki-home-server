@@ -67,6 +67,17 @@ def test_ref_missing(make_repo):
     }
 
 
+def test_pending_file_is_warning_until_created(make_repo):
+    config = (
+        "server_roots: [ansible, docker, scripts]\n"
+        "pending_files:\n  ansible/vault.yml: criado só após consolidar o template\n"
+        "exclude_dirs: [.git]\n"
+    )
+    files = base(**{"tools/wikisync/config.yml": config})
+    files["wiki/docs/index.md"] = INDEX + "\nCrie `ansible/vault.yml`.\n"
+    assert found(make_repo, files) == {("REF-PENDING", "aviso", "ansible/vault.yml")}
+
+
 def test_orphan_warning(make_repo):
     assert found(make_repo, base(**{"server/ansible/b.yml": "b: 1\n"})) == {("ORPHAN", "aviso", "ansible/b.yml")}
 

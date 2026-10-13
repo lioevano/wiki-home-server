@@ -1,6 +1,6 @@
 ---
 name: sync-wiki-server
-description: Use when `python tools/dev.py check` reports errors or warnings (LIT-DIFF, LIT-MISSING, LIT-DUP, REF-MISSING, ORPHAN, UNMARKED, DESC, LINK, NAV, VAULT, EOL) or the wiki and server/ seem out of sync.
+description: Use when `python tools/dev.py check` reports errors or warnings (LIT-DIFF, LIT-MISSING, LIT-DUP, REF-MISSING, REF-PENDING, ORPHAN, UNMARKED, DESC, LINK, NAV, VAULT, EOL) or the wiki and server/ seem out of sync.
 ---
 
 # Triagem do `wikisync check`
@@ -13,6 +13,7 @@ Rode `python tools/dev.py check --json` e trate cada achado pelo código:
 | `LIT-MISSING` | O arquivo deve existir? | Sim → `sync --path <arq> --yes`. Não → o bloco vira `title="Exemplo: ..."`. |
 | `LIT-DUP` | Qual bloco é o arquivo inteiro? | Os parciais viram `title="Trecho: <caminho> (...)"`. |
 | `REF-MISSING` | O caminho citado é real? | Criar (via wiki), corrigir o texto, ou — se for placeholder/arquivo de runtime — `ignore_paths` em `tools/wikisync/config.yml` com comentário. |
+| `REF-PENDING` (aviso) | — | Esperado: arquivo que ainda não existe de propósito (`pending_files` em `tools/wikisync/config.yml`). Não crie nem peça para criar; ao ser criado, remova a entrada. |
 | `ORPHAN` (aviso) | O arquivo ainda é usado? | Documente na página certa (caminho completo em código inline) ou remova-o junto com a explicação na wiki. Excepcional: `ignore_orphans` com motivo. |
 | `UNMARKED` (aviso) | O bloco é o arquivo inteiro? | Sim → `title="<caminho>"`. Parcial → `title="Trecho: ..."`. |
 | `DESC` (aviso) | — | `description:` no front-matter (≤160 caracteres). |

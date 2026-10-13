@@ -27,5 +27,10 @@ ignore_orphans:
   AGENTS.md: contexto para agentes de IA da pasta server/ (não é infraestrutura)
   CLAUDE.md: contexto do Claude para a pasta server/ (não é infraestrutura)
 
+# Arquivos citados na wiki que ainda não existem de propósito: caminho -> motivo.
+# Viram aviso (REF-PENDING) em vez de erro; ao criar o arquivo, remova a entrada.
+pending_files:
+  ansible/inventories/home/group_vars/all/vault.yml: criado só após consolidar wiki e server, a partir do vault.yml.example final
+
 # Pastas ignoradas nas varreduras do repositório.
 exclude_dirs: [.git, .venv, venv, wiki/venv, wiki/site, site, __pycache__, .pytest_cache, node_modules, .superpowers, .ansible, .vscode, .idea]
