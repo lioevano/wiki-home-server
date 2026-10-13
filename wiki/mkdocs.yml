@@ -98,6 +98,7 @@ nav:
     - 'Containers': '02-visao-geral-arquitetura/05-gerenciamento-containers.md'
     - 'Segurança': '02-visao-geral-arquitetura/06-principios-seguranca.md'
     - 'Estratégia LLM': '02-visao-geral-arquitetura/08-apis-llm-estrategia.md'
+    - 'Catálogo de Aplicações': '02-visao-geral-arquitetura/09-catalogo-aplicacoes.md'
   - '🛠️ Sustentação':
     - 'Visão Geral': '03-guias-sustentacao/index.md'
     - 'Novo Serviço Docker': '03-guias-sustentacao/01-adicionando-novo-servico-docker.md'
