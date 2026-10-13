@@ -9,7 +9,8 @@ A wiki (`wiki/docs/`) é a fonte da verdade; o `server/` só muda para refleti-l
 
 ## Sequência
 
-1. **Localize** o assunto no `INDEX.md` (páginas ↔ arquivos ↔ serviços). Só busque no disco se o índice não responder.
+0. **Aplicação ou integração inteira?** Adicionar/remover aplicação → skill `add-app`/`remove-app`; integração transversal → `add-integration`/`remove-integration`. Elas usam esta skill para executar.
+1. **Localize** o assunto no `INDEX.md` (aplicações, integrações, páginas, arquivos) e, se envolver uma aplicação, a linha dela no catálogo (`wiki/docs/02-visao-geral-arquitetura/09-catalogo-aplicacoes.md`) e as integrações que se aplicam a ela (`10-indice-integracoes.md`). Só busque no disco se o índice não responder.
 2. **Registre a linha de base**: `python tools/dev.py check` e anote os erros que já existiam (não são seus).
 3. **Edite a wiki**:
    - arquivo com bloco literal (`title="<caminho>"`) → altere o bloco; ele é o conteúdo exato do arquivo;

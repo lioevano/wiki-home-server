@@ -4,6 +4,9 @@ description: "Checklist e exemplo prático para adicionar um novo serviço Docke
 
 # Adicionando um Novo Serviço Docker à Infraestrutura
 
+!!! info "Fonte do checklist: catálogo + índice de integrações"
+    A lista do que uma aplicação nova precisa (roteamento, autenticação, acesso externo, métricas, logs, dados, variáveis, LLM, documentação) é definida no [Catálogo de Aplicações](../02-visao-geral-arquitetura/09-catalogo-aplicacoes.md) e no [Índice de Integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md). Agentes de IA executam esse fluxo pela skill `add-app` (veja `AGENTS.md`). Este guia mostra o passo a passo manual com um exemplo.
+
 Uma das grandes vantagens da nossa arquitetura baseada em Docker, Portainer e Traefik é a facilidade com que podemos adicionar novos serviços e aplicações ao nosso servidor doméstico. Este guia fornece um checklist detalhado e um exemplo prático para integrar uma nova aplicação containerizada de forma segura e consistente com o restante da infraestrutura.
 
 O processo geral envolve planejar o serviço, preparar os volumes e configurações (idealmente com Ansible), definir o serviço em um arquivo `docker-compose.yml`, e então implantá-lo via Portainer.

@@ -8,7 +8,11 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | Skill | Quando usar | Caminho |
 |---|---|---|
 | `add-ansible-component` | criar role, playbook, grupo ou variável Ansible | `.agents/skills/add-ansible-component/SKILL.md` |
+| `add-app` | adicionar uma aplicação | `.agents/skills/add-app/SKILL.md` |
+| `add-integration` | criar uma integração e ligá-la em todos os consumidores | `.agents/skills/add-integration/SKILL.md` |
 | `audit-integrations` | verificar integrações (catálogo × índice × arquivos) | `.agents/skills/audit-integrations/SKILL.md` |
+| `remove-app` | remover uma aplicação | `.agents/skills/remove-app/SKILL.md` |
+| `remove-integration` | desligar uma integração de todos e remover o provedor | `.agents/skills/remove-integration/SKILL.md` |
 | `sync-wiki-server` | `dev.py check` com erros ou avisos | `.agents/skills/sync-wiki-server/SKILL.md` |
 | `update-index` | manter o `INDEX.md` em dia (fim de toda mudança) | `.agents/skills/update-index/SKILL.md` |
 | `validate-infra` | antes de commitar ou entregar mudanças | `.agents/skills/validate-infra/SKILL.md` |
