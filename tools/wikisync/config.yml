@@ -31,7 +31,6 @@ ignore_orphans:
 # Viram aviso (REF-PENDING) em vez de erro; ao criar o arquivo, remova a entrada.
 pending_files:
   ansible/inventories/home/group_vars/all/vault.yml: criado só após consolidar wiki e server, a partir do vault.yml.example final
-  scripts/notify.sh: criado pelo plano 2026-10-14-painel-notificacoes (Task 7); remover esta entrada ao criar
 
 # Pastas ignoradas nas varreduras do repositório.
 exclude_dirs: [.git, .obsidian, .venv, venv, wiki/venv, wiki/site, site, __pycache__, .pytest_cache, node_modules, .superpowers, .ansible, .vscode, .idea]

@@ -288,11 +288,13 @@ Estes são os diretórios e arquivos dentro dos seus datasets ZFS (`/data/docker
 
                 if [ ${BACKUP_EXIT_CODE} -eq 0 ] && [ ${PRUNE_EXIT_CODE} -eq 0 ]; then
                   echo "Backup Borg e poda concluídos com sucesso."
+                  /opt/homeserver/scripts/notify.sh ok "Backup Borg concluído" "${ARCHIVE_NAME}" borg
                 else
                   echo "ERRO: Backup Borg ou poda falhou. Código de saída do Backup: ${BACKUP_EXIT_CODE}, Poda: ${PRUNE_EXIT_CODE}"
+                  /opt/homeserver/scripts/notify.sh critical "Backup Borg falhou" "backup=${BACKUP_EXIT_CODE} poda=${PRUNE_EXIT_CODE}" borg
                 fi
                 ```
-            4.  Torne o script executável e agende-o com `cron`.
+            4.  Torne o script executável e agende-o com `cron`. O aviso no Telegram vem do `scripts/notify.sh` (copie-o para `/opt/homeserver/scripts/` no host e configure `/etc/default/homeserver-notify`, ver [Painel e Notificações](../01-manual-implementacao/09-painel-notificacoes.md)).
     *   **Opção 2: `rsync` (Mais Simples, para Sincronização/Cópia Direta):**
         *   Bom para criar uma cópia espelhada dos seus dados em outro local (e.g., HD externo, outro servidor NAS). Não oferece deduplicação ou versionamento histórico como Borg, a menos que combinado com snapshots ou outras lógicas.
         *   **Exemplo de Script (sincronizar `/data/docker-volumes` para um HD externo):**
@@ -313,8 +315,10 @@ Estes são os diretórios e arquivos dentro dos seus datasets ZFS (`/data/docker
 
             if [ $? -eq 0 ]; then
               echo "Rsync de docker-volumes concluído com sucesso em $(date)" >> "${LOG_FILE}"
+              /opt/homeserver/scripts/notify.sh ok "Rsync de docker-volumes concluído" "Destino: ${DEST_DIR}" rsync
             else
               echo "ERRO: Rsync de docker-volumes falhou em $(date)" >> "${LOG_FILE}"
+              /opt/homeserver/scripts/notify.sh critical "Rsync de docker-volumes falhou" "Veja ${LOG_FILE}" rsync
             fi
             ```
         *   Agende com `cron`.

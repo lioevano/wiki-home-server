@@ -160,13 +160,13 @@ Remover `loki`/`promtail` e `promtail-config.yml.j2`/`loki-local-config.yaml.j2`
 
 ## dados
 
-| Campo | Valor |
-|---|---|
-| Provedor | infra (ZFS no host Proxmox, exportado por NFS) |
-| Aplica-se a | Dados ≠ nenhum |
-| Arquivos | compose do consumidor (`volumes:`); playbook `ansible/playbooks/setup-<stack>-volumes.yml` correspondente |
-| Páginas | página da aplicação; `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
-| Manual | — |
+| Campo       | Valor                                                                                                     |
+| ----------- | --------------------------------------------------------------------------------------------------------- |
+| Provedor    | infra (ZFS no host Proxmox, exportado por NFS)                                                            |
+| Aplica-se a | Dados ≠ nenhum                                                                                            |
+| Arquivos    | compose do consumidor (`volumes:`); playbook `ansible/playbooks/setup-<stack>-volumes.yml` correspondente |
+| Páginas     | página da aplicação; `04-manutencao-recuperacao/02-backup-restore-estrategia.md`                          |
+| Manual      | —                                                                                                         |
 
 ### Regras
 - **DAD-1** — Dados = `nfs`: os volumes de dados persistentes usam `${VM_NFS_MOUNT_BASE_PATH}/…` ou uma variável `*_PATH` criada pelo playbook de volumes da stack (que a aponta para o NFS). Binds de sistema (`/var/run/docker.sock`, `/etc/localtime`, logs do Docker) não contam. *Evidência:* `volumes:` + playbook.
