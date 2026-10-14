@@ -23,9 +23,9 @@ O alerta "n8n fora do ar" vai direto do Grafana ao Telegram, sem passar pelo n8n
 
 ### Disponibilidade (blackbox-exporter)
 
-O serviço `blackbox-exporter` (stack `apps`, rede `internal_services`, sem porta publicada) testa a URL de cada aplicação. A configuração vem de `ansible/templates/blackbox.yml.j2`, gerada pelo `ansible/playbooks/setup-monitoring-stack-volumes.yml` em `<NFS>/blackbox/config/blackbox.yml`. O módulo `http_2xx` aceita 200, 301, 302, 401 e 403: uma aplicação protegida responde com o redirecionamento para o Authelia, e isso conta como "no ar".
+O serviço `blackbox-exporter` (stack `apps`, redes `internal_services` e `proxy`, sem porta publicada) testa cada aplicação pela **URL interna** (ex.: `http://n8n:5678/healthz`, `http://jellyfin:8096/health`). A URL pública não serve para isso: ela passa pelo Authelia, que responde com o redirecionamento para o login mesmo com a aplicação parada. A configuração vem de `ansible/templates/blackbox.yml.j2`, gerada pelo `ansible/playbooks/setup-monitoring-stack-volumes.yml` em `<NFS>/blackbox/config/blackbox.yml`, com três módulos: `http_2xx` (padrão), `http_2xx_inseguro` (Portainer, certificado autoassinado) e `tls_traefik` (entra pela 443 do Traefik com o nome `auth.<domínio>` e mede o certificado Let's Encrypt real — o que o túnel mostra na internet é o certificado da Cloudflare).
 
-Os alvos ficam no job `blackbox_http` de `ansible/templates/prometheus.yml.j2`, um por aplicação, com `labels: {app: <id do catálogo>}` (regra NTF-1). Para conferir no Prometheus: `probe_success` (1 = no ar) e `probe_ssl_earliest_cert_expiry` (validade do certificado).
+Os alvos ficam no job `blackbox_http` de `ansible/templates/prometheus.yml.j2`, um por aplicação, com `labels: {app: <id do catálogo>}` (regra NTF-1). Para conferir no Prometheus: `probe_success` (1 = no ar) e `probe_ssl_earliest_cert_expiry{app="traefik"}` (validade do certificado). Se o próprio `blackbox-exporter` cair, a regra `host-sem-resposta` dispara (ela também observa `up{job="blackbox_http"}`).
 
 ### Alertas (Grafana Alerting)
 
@@ -121,12 +121,15 @@ fi
 
 body="{\"gravidade\":\"$(json_escape "$gravidade")\",\"titulo\":\"$(json_escape "$titulo")\",\"mensagem\":\"$(json_escape "$mensagem")\",\"app\":\"$(json_escape "$app")\"}"
 
-if ! curl -fsS --max-time 10 -X POST "$NOTIFICACOES_WEBHOOK_URL" \
+# Só 2xx conta como entregue: um 302 (ex.: regra do Authelia ausente) mandaria para a tela de login.
+code=$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' -X POST "$NOTIFICACOES_WEBHOOK_URL" \
   -H "Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}" \
   -H "Content-Type: application/json" \
-  --data-binary "$body" -o /dev/null; then
-  echo "notify.sh: falha ao enviar notificação para ${NOTIFICACOES_WEBHOOK_URL}" >&2
-fi
+  --data-binary "$body" 2>/dev/null)
+case "$code" in
+  2??) ;;
+  *) echo "notify.sh: notificação não entregue em ${NOTIFICACOES_WEBHOOK_URL} (HTTP ${code:-000})" >&2 ;;
+esac
 exit 0
 ```
 
@@ -143,7 +146,8 @@ NOTIFICACOES_WEBHOOK_TOKEN=<notificacoes_webhook_token do vault>
 
 - **Widget do Grafana** usa `admin` + `grafana_admin_initial_password`; se a senha do admin mudar na interface, atualize o vault.
 - **Widget do Portainer** chama `https://portainer:9443`, que usa certificado autoassinado; se a Homepage recusar o TLS, o widget mostra erro (atalho e status continuam).
-- **Logins falhos no Authelia** são contados no Loki pelo texto `Unsuccessful … authentication attempt` nos logs dos containers (`job="docker_logs"`), sem depender de rótulo de container.
+- **Logins falhos no Authelia** são contados no Loki pelo texto `Unsuccessful 1FA|TOTP|WebAuthn|Duo authentication attempt` nos logs dos containers (`job="docker_logs"`), ignorando as linhas de log de consulta do próprio Loki (`!= "query="`), que contêm o texto da regra.
+- **RAM do host Proxmox:** o cache ARC do ZFS é somado à memória disponível (`node_zfs_arc_size`), senão o host ficaria sempre acima do limite.
 
 ## Passos manuais
 
@@ -156,7 +160,11 @@ Radarr, Sonarr, Jellyfin e Home Assistant mandam eventos próprios ao n8n; o pas
 1. No Telegram, fale com **@BotFather** → `/newbot` → guarde o token em `telegram_bot_token` no vault.
 2. Mande qualquer mensagem ao bot e abra `https://api.telegram.org/bot<TOKEN>/getUpdates`: o `chat.id` vai em `telegram_chat_id`.
 3. Gere o token do webhook (`openssl rand -hex 32`) em `notificacoes_webhook_token`.
-4. Rode os playbooks de n8n e monitoramento e atualize a stack `apps` no Portainer (página 07).
+4. Rode os playbooks e atualize as stacks (sempre `--check` antes):
+   - `setup-core-networking.yml` — regra do Authelia que libera `/webhook/` (reinicie o Authelia: `sudo docker restart authelia`);
+   - `setup-n8n-volumes.yml` e `setup-monitoring-stack-volumes.yml` — workflow, alertas, blackbox, Diun e Homepage; depois atualize a stack `apps` no Portainer (página 07);
+   - `setup-ai-volumes.yml` — `diun_ai`; depois atualize a stack `ai`.
+   As variáveis `TELEGRAM_*` e `NOTIFICACOES_WEBHOOK_TOKEN` saem iguais no `n8n.env` e no `monitoring.env`; ao juntar no `apps.env` elas aparecem duas vezes com o mesmo valor, o que é esperado.
 5. Importe e ative o workflow (na `core-services-vm`):
    ```bash
    sudo docker exec n8n_app n8n import:workflow --input=/home/node/.n8n/workflows/notificar.json

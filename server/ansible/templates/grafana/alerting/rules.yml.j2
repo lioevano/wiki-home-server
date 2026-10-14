@@ -16,13 +16,13 @@
 {% set regras = [
   {'uid': 'servico-fora-do-ar', 'ds': 'prometheus', 'expr': '1 - probe_success{app!="n8n"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.app }} está fora do ar'},
   {'uid': 'n8n-fora-do-ar', 'ds': 'prometheus', 'expr': '1 - probe_success{app="n8n"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': 'n8n fora do ar: as notificações estão paradas'},
-  {'uid': 'certificado-vencendo', 'ds': 'prometheus', 'expr': '(probe_ssl_earliest_cert_expiry - time()) / 86400', 'op': 'lt', 'v': certificado_dias, 'for': '1h', 'sev': 'warning', 'summary': 'Certificado de {{ $$labels.app }} vence em menos de ' ~ certificado_dias ~ ' dias'},
+  {'uid': 'certificado-vencendo', 'ds': 'prometheus', 'expr': '(probe_ssl_earliest_cert_expiry{app="traefik"} - time()) / 86400', 'op': 'lt', 'v': certificado_dias, 'for': '1h', 'sev': 'warning', 'summary': 'Certificado Let’s Encrypt do Traefik vence em menos de ' ~ certificado_dias ~ ' dias'},
   {'uid': 'disco-cheio', 'ds': 'prometheus', 'expr': '100 * (1 - node_filesystem_avail_bytes{' ~ fs ~ '} / node_filesystem_size_bytes{' ~ fs ~ '})', 'op': 'gt', 'v': disco_pct, 'for': '5m', 'sev': 'warning', 'summary': 'Disco {{ $$labels.mountpoint }} em {{ $$labels.instance }} acima de ' ~ disco_pct ~ '%'},
-  {'uid': 'ram-alta', 'ds': 'prometheus', 'expr': '100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)', 'op': 'gt', 'v': ram_pct, 'for': ram_for, 'sev': 'warning', 'summary': 'RAM de {{ $$labels.instance }} acima de ' ~ ram_pct ~ '%'},
+  {'uid': 'ram-alta', 'ds': 'prometheus', 'expr': '100 * (1 - (node_memory_MemAvailable_bytes + (node_zfs_arc_size or node_memory_MemAvailable_bytes * 0)) / node_memory_MemTotal_bytes)', 'op': 'gt', 'v': ram_pct, 'for': ram_for, 'sev': 'warning', 'summary': 'RAM de {{ $$labels.instance }} acima de ' ~ ram_pct ~ '%'},
   {'uid': 'cpu-alta', 'ds': 'prometheus', 'expr': '100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100', 'op': 'gt', 'v': cpu_pct, 'for': cpu_for, 'sev': 'warning', 'summary': 'CPU de {{ $$labels.instance }} acima de ' ~ cpu_pct ~ '%'},
-  {'uid': 'host-sem-resposta', 'ds': 'prometheus', 'expr': '1 - up{job=~"node_exporter.*"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.instance }} não responde (node_exporter)'},
+  {'uid': 'host-sem-resposta', 'ds': 'prometheus', 'expr': '1 - up{job=~"node_exporter.*|blackbox_http"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.instance }} não responde ({{ $$labels.job }})'},
   {'uid': 'zfs-degradado', 'ds': 'prometheus', 'expr': 'node_zfs_zpool_state{state!="online"}', 'op': 'gt', 'v': 0, 'for': '1m', 'sev': 'critical', 'summary': 'Pool ZFS {{ $$labels.zpool }} em estado {{ $$labels.state }}'},
-  {'uid': 'authelia-logins-falhos', 'ds': 'loki', 'expr': 'sum(count_over_time({job="docker_logs"} |~ "Unsuccessful .* authentication attempt" [10m]))', 'op': 'gt', 'v': logins_falhos, 'for': '0s', 'sev': 'warning', 'summary': 'Mais de ' ~ logins_falhos ~ ' logins falhos no Authelia em 10 min'},
+  {'uid': 'authelia-logins-falhos', 'ds': 'loki', 'expr': 'sum(count_over_time({job="docker_logs"} != "query=" |~ "Unsuccessful (1FA|TOTP|WebAuthn|Duo) authentication attempt" [10m]))', 'op': 'gt', 'v': logins_falhos, 'for': '0s', 'sev': 'warning', 'summary': 'Mais de ' ~ logins_falhos ~ ' logins falhos no Authelia em 10 min'},
 ] %}
 apiVersion: 1
 groups:

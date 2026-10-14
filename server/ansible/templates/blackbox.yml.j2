@@ -1,8 +1,8 @@
 # ansible/templates/blackbox.yml.j2
 # Módulos do blackbox-exporter (gerado pelo setup-monitoring-stack-volumes.yml).
-# http_2xx aceita redirecionamentos e as respostas do Authelia (401/403) como "no ar":
-# o que importa é a aplicação responder atrás do Traefik, não o login.
+# Os alvos são URLs internas das aplicações (ver job blackbox_http no prometheus.yml.j2).
 modules:
+  # Padrão: a aplicação respondeu (inclui redirecionamento e "não autorizado" da própria app).
   http_2xx:
     prober: http
     timeout: 10s
@@ -10,3 +10,23 @@ modules:
       valid_status_codes: [200, 301, 302, 401, 403]
       follow_redirects: true
       preferred_ip_protocol: ip4
+  # Portainer: HTTPS com certificado autoassinado na rede interna.
+  http_2xx_inseguro:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200, 301, 302, 401, 403]
+      preferred_ip_protocol: ip4
+      tls_config:
+        insecure_skip_verify: true
+  # Traefik: entra pela 443 com o nome do portal do Authelia, recebendo o certificado Let's Encrypt real.
+  tls_traefik:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200, 301, 302, 401, 403]
+      preferred_ip_protocol: ip4
+      headers:
+        Host: "auth.{{ base_domain }}"
+      tls_config:
+        server_name: "auth.{{ base_domain }}"

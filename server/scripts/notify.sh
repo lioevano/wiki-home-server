@@ -34,10 +34,13 @@ fi
 
 body="{\"gravidade\":\"$(json_escape "$gravidade")\",\"titulo\":\"$(json_escape "$titulo")\",\"mensagem\":\"$(json_escape "$mensagem")\",\"app\":\"$(json_escape "$app")\"}"
 
-if ! curl -fsS --max-time 10 -X POST "$NOTIFICACOES_WEBHOOK_URL" \
+# Só 2xx conta como entregue: um 302 (ex.: regra do Authelia ausente) mandaria para a tela de login.
+code=$(curl -sS --max-time 10 -o /dev/null -w '%{http_code}' -X POST "$NOTIFICACOES_WEBHOOK_URL" \
   -H "Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}" \
   -H "Content-Type: application/json" \
-  --data-binary "$body" -o /dev/null; then
-  echo "notify.sh: falha ao enviar notificação para ${NOTIFICACOES_WEBHOOK_URL}" >&2
-fi
+  --data-binary "$body" 2>/dev/null)
+case "$code" in
+  2??) ;;
+  *) echo "notify.sh: notificação não entregue em ${NOTIFICACOES_WEBHOOK_URL} (HTTP ${code:-000})" >&2 ;;
+esac
 exit 0

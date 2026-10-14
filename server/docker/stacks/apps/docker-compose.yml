@@ -275,6 +275,7 @@ services:
     restart: unless-stopped
     networks:
       - internal_services
+      - proxy # alcança as aplicações pelas URLs internas
     volumes:
       - "${MONITORING_BLACKBOX_CONFIG_PATH}/blackbox.yml:/etc/blackbox_exporter/config.yml:ro"
 
@@ -322,7 +323,7 @@ services:
     volumes:
       - "${MONITORING_HOMEPAGE_CONFIG_PATH}:/app/config"
     environment:
-      - HOMEPAGE_ALLOWED_HOSTS=home.${BASE_DOMAIN_FROM_VAULT}
+      - HOMEPAGE_ALLOWED_HOSTS=home.${BASE_DOMAIN_FROM_VAULT},homepage:3000 # homepage:3000 = teste de disponibilidade interno
       - PUID=${DOCKER_PUID}
       - PGID=${DOCKER_PGID}
       # Credenciais dos widgets (integração painel, PNL-2); usadas como placeholders no services.yaml

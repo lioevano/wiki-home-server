@@ -37,45 +37,48 @@ scrape_configs:
           instance: 'cloudflared_tunnel_metrics'
 
   # Disponibilidade (integração notificacoes, regra NTF-1): um alvo por aplicação, com label app = id do catálogo.
+  # URLs INTERNAS (o blackbox-exporter está nas redes proxy e internal_services): a URL pública passa pelo
+  # Authelia, que responderia por qualquer aplicação. O alvo do traefik usa o módulo tls_traefik, que também
+  # mede a validade do certificado Let's Encrypt servido pelo Traefik (regra certificado-vencendo).
   - job_name: 'blackbox_http'
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
-      - targets: ['https://auth.{{ base_domain }}']
+      - targets: ['http://authelia:9091/api/health']
         labels: {app: 'authelia'}
-      - targets: ['https://grafana.{{ base_domain }}']
+      - targets: ['http://grafana:3000/api/health']
         labels: {app: 'grafana'}
-      - targets: ['https://hass.{{ base_domain }}']
+      - targets: ['http://homeassistant:8123/manifest.json']
         labels: {app: 'homeassistant'}
-      - targets: ['https://home.{{ base_domain }}']
+      - targets: ['http://homepage:3000/api/healthcheck']
         labels: {app: 'homepage'}
-      - targets: ['https://jellyfin.{{ base_domain }}']
+      - targets: ['http://jellyfin:8096/health']
         labels: {app: 'jellyfin'}
-      - targets: ['https://n8n.{{ base_domain }}']
+      - targets: ['http://n8n:5678/healthz']
         labels: {app: 'n8n'}
-      - targets: ['https://nextcloud.{{ base_domain }}']
+      - targets: ['http://nextcloud_app/status.php']
         labels: {app: 'nextcloud'}
-      - targets: ['https://openwebui.{{ base_domain }}']
-        labels: {app: 'open-webui'}
-      - targets: ['https://portainer.{{ base_domain }}']
-        labels: {app: 'portainer'}
-      - targets: ['https://prometheus.{{ base_domain }}']
+      - targets: ['https://portainer:9443/api/system/status']
+        labels: {app: 'portainer', __param_module: 'http_2xx_inseguro'}
+      - targets: ['http://prometheus:9090/-/healthy']
         labels: {app: 'prometheus'}
-      - targets: ['https://qbittorrent.{{ base_domain }}']
+      - targets: ['http://qbittorrent:8088/']
         labels: {app: 'qbittorrent'}
-      - targets: ['https://radarr.{{ base_domain }}']
+      - targets: ['http://radarr:7878/ping']
         labels: {app: 'radarr'}
-      - targets: ['https://sonarr.{{ base_domain }}']
+      - targets: ['http://sonarr:8989/ping']
         labels: {app: 'sonarr'}
-      - targets: ['https://traefik.{{ base_domain }}']
-        labels: {app: 'traefik'}
+      - targets: ['https://traefik:443']
+        labels: {app: 'traefik', __param_module: 'tls_traefik'}
+      - targets: ['http://loki:3100/ready']
+        labels: {app: 'loki'}
 {% if 'ai_desktop' in groups %}
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:3000/health']
+        labels: {app: 'open-webui'}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:4000/health/liveliness']
         labels: {app: 'litellm'}
 {% endif %}
-      - targets: ['http://loki:3100/ready']
-        labels: {app: 'loki'}
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
