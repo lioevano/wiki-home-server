@@ -22,7 +22,7 @@
   {'uid': 'cpu-alta', 'ds': 'prometheus', 'expr': '100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100', 'op': 'gt', 'v': cpu_pct, 'for': cpu_for, 'sev': 'warning', 'summary': 'CPU de {{ $$labels.instance }} acima de ' ~ cpu_pct ~ '%'},
   {'uid': 'host-sem-resposta', 'ds': 'prometheus', 'expr': '1 - up{job=~"node_exporter.*"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.instance }} não responde (node_exporter)'},
   {'uid': 'zfs-degradado', 'ds': 'prometheus', 'expr': 'node_zfs_zpool_state{state!="online"}', 'op': 'gt', 'v': 0, 'for': '1m', 'sev': 'critical', 'summary': 'Pool ZFS {{ $$labels.zpool }} em estado {{ $$labels.state }}'},
-  {'uid': 'authelia-logins-falhos', 'ds': 'loki', 'expr': 'sum(count_over_time({container_name="authelia"} |= "Unsuccessful" [10m]))', 'op': 'gt', 'v': logins_falhos, 'for': '0s', 'sev': 'warning', 'summary': 'Mais de ' ~ logins_falhos ~ ' logins falhos no Authelia em 10 min'},
+  {'uid': 'authelia-logins-falhos', 'ds': 'loki', 'expr': 'sum(count_over_time({job="docker_logs"} |~ "Unsuccessful .* authentication attempt" [10m]))', 'op': 'gt', 'v': logins_falhos, 'for': '0s', 'sev': 'warning', 'summary': 'Mais de ' ~ logins_falhos ~ ' logins falhos no Authelia em 10 min'},
 ] %}
 apiVersion: 1
 groups:

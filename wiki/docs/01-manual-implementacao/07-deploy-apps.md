@@ -12,7 +12,7 @@ Todas as aplicações são agora gerenciadas em um único compose file: `docker/
 |---|---|---|
 | Produtividade | Nextcloud (+ Postgres, Redis) | `nextcloud.seudominio.com` |
 | Mídia | Jellyfin, Sonarr, Radarr, qBittorrent | `jellyfin.`, `sonarr.`, `radarr.`, `qbittorrent.` |
-| Monitoramento | Prometheus, Grafana (+ Postgres), Loki, Promtail, blackbox-exporter, Diun | `prometheus.`, `grafana.` |
+| Monitoramento | Prometheus, Grafana (+ Postgres), Loki, Promtail, blackbox-exporter, Diun, Homepage, docker-socket-proxy | `prometheus.`, `grafana.`, `home.` |
 | Automação | n8n, Home Assistant | `n8n.`, `hass.` |
 
 ## Deploy via Portainer
@@ -68,11 +68,11 @@ ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-m
 # Volumes n8n
 ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-n8n-volumes.yml
 
-# Volumes monitoramento (gera prometheus.yml, Loki e Promtail a partir de templates)
+# Volumes monitoramento (gera prometheus.yml, Loki, Promtail, blackbox, alertas do Grafana, Diun e Homepage)
 ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-monitoring-stack-volumes.yml
 ```
 
-O playbook de monitoramento renderiza as configurações a partir de `ansible/templates/prometheus.yml.j2`, `ansible/templates/loki-local-config.yaml.j2` e `ansible/templates/promtail-config.yml.j2`, e o `.env` da stack a partir de `ansible/templates/portainer_stack_env.j2`.
+O playbook de monitoramento renderiza as configurações a partir de `ansible/templates/prometheus.yml.j2`, `ansible/templates/loki-local-config.yaml.j2`, `ansible/templates/promtail-config.yml.j2`, `ansible/templates/blackbox.yml.j2`, `ansible/templates/grafana/alerting/` e `ansible/templates/homepage/` (ver [Painel e Notificações](09-painel-notificacoes.md)), e o `.env` da stack a partir de `ansible/templates/portainer_stack_env.j2`.
 
 ## Ativando/Desativando Serviços
 
@@ -84,8 +84,11 @@ Para desativar um serviço que não usa, adicione `enabled: false` nas labels do
 
 - **Nextcloud**: Requer Postgres e Redis. Dados em NFS. `trusted_domains` configurado automaticamente.
 - **Jellyfin**: Hardware transcoding via `/dev/dri` (iGPU). Se usar CPU, remova o device.
+  - *Notificações (NTF-3):* instale o plugin **Webhook** (Painel → Plugins → Catálogo), adicione um *Generic Destination* para `http://n8n:5678/webhook/notificar` com o cabeçalho `Authorization: Bearer <notificacoes_webhook_token>` e o modelo `{"titulo": "{{NotificationType}}", "mensagem": "{{Name}}", "gravidade": "info", "app": "jellyfin"}`.
 - **Sonarr/Radarr**: Dependem do qBittorrent para downloads. Configure o client de torrent no Sonarr/Radarr após o deploy.
+  - *Notificações (NTF-3):* em **Settings → Connect → + → Webhook**: URL `http://n8n:5678/webhook/notificar`, método `POST`, cabeçalho `Authorization: Bearer <notificacoes_webhook_token>`; marque os eventos desejados (ex.: *On Import*, *On Health Issue*). O n8n reconhece o formato nativo (`eventType`).
 - **Grafana**: Login inicial `admin` / senha do vault (`grafana_admin_initial_password`). Os datasources Prometheus (`http://prometheus:9090`) e Loki (`http://loki:3100`) são provisionados automaticamente pelo `setup-monitoring-stack-volumes.yml` (pasta `grafana/provisioning`, montada em `/etc/grafana/provisioning`).
 - **Loki/Promtail**: Coletam logs de containers para visualizar no Grafana. O Loki publica a porta 3100 no IP da `core-services-vm` (`${CORE_SERVICES_VM_IP_VAR}:3100`) para receber os logs do `promtail_ai` da `ai-desktop-vm`; ele não tem autenticação, então a porta só deve ser alcançável pela LAN (não crie rota no Traefik nem no túnel para ela). Portas publicadas pelo Docker não passam pelo UFW da VM, então a proteção é a própria LAN.
 - **n8n**: Webhook URL configurado automaticamente para `https://n8n.seudominio.com/`. O acesso passa pelo Authelia; no primeiro acesso o n8n pede a criação da conta de dono (a autenticação básica `N8N_BASIC_AUTH_*` não existe mais no n8n 1.x).
 - **Home Assistant**: `devices` para USB (Zigbee/Zwave). Ajuste `/dev/ttyUSB0` para seu dispositivo.
+  - *Notificações (NTF-3):* em `configuration.yaml`, um `rest_command` que faz `POST` em `http://n8n:5678/webhook/notificar` com `headers: {Authorization: "Bearer <token>"}`, `content_type: application/json` e `payload: '{"titulo": "{{ titulo }}", "mensagem": "{{ mensagem }}", "gravidade": "{{ gravidade }}", "app": "homeassistant"}'`; chame-o nas automações. Guarde o token em `secrets.yaml` do Home Assistant.

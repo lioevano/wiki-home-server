@@ -327,7 +327,7 @@ Desativar os coletores (contato `n8n` do Grafana, webhook do Diun e do `scripts/
 Aplicação `interna` entra com `+painel` em Ajustes (atalho para a URL da LAN).
 
 ### Regras
-- **PNL-1** — a aplicação tem entrada no `services.yaml.j2`, no grupo da sua Categoria, com `href` `https://<Subdomínio>.{{ base_domain }}` (ou URL da LAN para `+painel`), `siteMonitor` e, se roda na `core-services-vm`, `server: core` e `container: <container_name>`. *Evidência:* template.
+- **PNL-1** — a aplicação tem entrada no `services.yaml.j2` (nome = id do catálogo), no grupo da sua Categoria, com `href` `https://<Subdomínio>.{{ base_domain }}` (ou URL da LAN para `+painel`) e status: na `core-services-vm`, `server: core` e `container: <container_name>` (estado do container); em outra VM, `siteMonitor` pela URL da LAN (a URL pública passa pelo Authelia). *Evidência:* template.
 - **PNL-2** — aplicação com widget oficial da Homepage (`jellyfin`, `radarr`, `sonarr`, `qbittorrent`, `nextcloud`, `homeassistant`, `grafana`, `prometheus`, `portainer`) tem `widget` na entrada; credenciais só como `{{HOMEPAGE_VAR_<APP>_...}}`, com valor vindo do vault (`homepage_widget_keys.<app>`, ou `grafana_admin_initial_password`) pelo playbook. O `traefik` fica sem widget (a API só existe atrás do Authelia). *Evidência:* template, compose da Homepage e playbook.
 - **PNL-3 (sobra)** — nenhuma entrada no `services.yaml.j2` sem aplicação correspondente no catálogo. *Evidência:* template.
 

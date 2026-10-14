@@ -74,9 +74,9 @@ A Homepage (`https://home.<domínio>`, protegida pelo Authelia) roda na stack `a
 |---|---|
 | `settings.yaml` | título, idioma e tema |
 | `docker.yaml` | `core` → `docker-socket-proxy:2375` (estado dos containers da `core-services-vm`) |
-| `services.yaml` | uma entrada por aplicação `publica`/`protegida` do catálogo (regra PNL-1), agrupada pela Categoria, com atalho, `siteMonitor` e widget quando houver (PNL-2) |
+| `services.yaml` | uma entrada por aplicação `publica`/`protegida` do catálogo (regra PNL-1), agrupada pela Categoria, com atalho, status e widget quando houver (PNL-2) |
 
-O `docker-socket-proxy` dá à Homepage acesso **só de leitura** à lista de containers (`CONTAINERS=1`, `POST=0`), sem porta publicada. As aplicações da `ai-desktop-vm` mostram só o `siteMonitor`.
+O `docker-socket-proxy` dá à Homepage acesso **só de leitura** à lista de containers (`CONTAINERS=1`, `POST=0`), sem porta publicada; o status das aplicações da `core-services-vm` é o estado do container. As da `ai-desktop-vm` usam `siteMonitor` pela URL da LAN (a URL pública passa pelo Authelia e o teste falharia).
 
 As credenciais dos widgets não ficam no `services.yaml`: lá aparecem só os placeholders `HOMEPAGE_VAR_*` (entre chaves duplas), que a Homepage substitui pelo seu ambiente (`monitoring.env`, gerado do vault). O Traefik fica sem widget: a API dele só existe atrás do Authelia.
 
@@ -139,7 +139,17 @@ NOTIFICACOES_WEBHOOK_TOKEN=<notificacoes_webhook_token do vault>
 
 **Backups do Proxmox (vzdump):** em **Datacenter → Notifications → Add → Webhook** (PVE 8.3+), aponte para a mesma URL, método `POST`, cabeçalho `Authorization: Bearer <token>` e corpo JSON `{"titulo": "{{ title }}", "mensagem": "{{ message }}", "gravidade": "{{ severity }}", "app": "proxmox"}`; associe o destino ao *matcher* dos jobs de backup. Confira na documentação do PVE da sua versão a sintaxe de escape das variáveis de template no corpo JSON.
 
+### Limitações conhecidas
+
+- **Widget do Grafana** usa `admin` + `grafana_admin_initial_password`; se a senha do admin mudar na interface, atualize o vault.
+- **Widget do Portainer** chama `https://portainer:9443`, que usa certificado autoassinado; se a Homepage recusar o TLS, o widget mostra erro (atalho e status continuam).
+- **Logins falhos no Authelia** são contados no Loki pelo texto `Unsuccessful … authentication attempt` nos logs dos containers (`job="docker_logs"`), sem depender de rótulo de container.
+
 ## Passos manuais
+
+### Webhooks nas aplicações (NTF-3)
+
+Radarr, Sonarr, Jellyfin e Home Assistant mandam eventos próprios ao n8n; o passo de cada um está nas notas por serviço da [página de apps](07-deploy-apps.md#notas-por-servico).
 
 ### Bot do Telegram e importação do workflow
 

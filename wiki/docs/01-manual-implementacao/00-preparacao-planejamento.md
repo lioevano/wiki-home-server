@@ -211,7 +211,7 @@ MEDIA_STACK_TVSHOWS_PATH=
 MEDIA_STACK_MUSIC_PATH=
 ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH=
 
-# --- Stack apps: monitoramento (Prometheus, Grafana, Loki, Promtail) ---
+# --- Stack apps: monitoramento (Prometheus, Grafana, Loki, Promtail, blackbox, Diun, Homepage) ---
 MONITORING_PROMETHEUS_CONFIG_PATH=
 MONITORING_PROMETHEUS_DATA_PATH=
 MONITORING_GRAFANA_DATA_PATH=

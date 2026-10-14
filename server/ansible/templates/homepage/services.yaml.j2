@@ -1,5 +1,8 @@
 # ansible/templates/homepage/services.yaml.j2
-# Painel (integração painel): uma entrada por aplicação do catálogo com Exposição != interna (PNL-1),
+# Painel (integração painel): uma entrada por aplicação do catálogo com Exposição != interna (PNL-1).
+# Status: na core-services-vm, o estado do container (server/container, via docker-socket-proxy);
+# em outra VM, siteMonitor pela URL da LAN (a URL pública passa pelo Authelia e falharia no teste).
+# Entradas
 # no grupo da sua Categoria; widgets (PNL-2) com credenciais SÓ como placeholders HOMEPAGE_VAR_* entre chaves duplas,
 # que a Homepage substitui a partir do próprio ambiente (monitoring.env). O bloco raw impede o Ansible de interpretá-los.
 # Gerado pelo setup-monitoring-stack-volumes.yml em <NFS>/homepage/config/services.yaml.
@@ -7,13 +10,11 @@
     - authelia:
         icon: authelia.png
         href: https://auth.{{ base_domain }}
-        siteMonitor: https://auth.{{ base_domain }}
         server: core
         container: authelia
     - portainer:
         icon: portainer.png
         href: https://portainer.{{ base_domain }}
-        siteMonitor: https://portainer.{{ base_domain }}
         server: core
         container: portainer
         widget:
@@ -24,14 +25,12 @@
     - traefik:
         icon: traefik.png
         href: https://traefik.{{ base_domain }}
-        siteMonitor: https://traefik.{{ base_domain }}
         server: core
         container: traefik
 - produtividade:
     - nextcloud:
         icon: nextcloud.png
         href: https://nextcloud.{{ base_domain }}
-        siteMonitor: https://nextcloud.{{ base_domain }}
         server: core
         container: nextcloud_app
         widget:
@@ -42,7 +41,6 @@
     - jellyfin:
         icon: jellyfin.png
         href: https://jellyfin.{{ base_domain }}
-        siteMonitor: https://jellyfin.{{ base_domain }}
         server: core
         container: jellyfin
         widget:
@@ -52,7 +50,6 @@
     - qbittorrent:
         icon: qbittorrent.png
         href: https://qbittorrent.{{ base_domain }}
-        siteMonitor: https://qbittorrent.{{ base_domain }}
         server: core
         container: qbittorrent
         widget:
@@ -63,7 +60,6 @@
     - radarr:
         icon: radarr.png
         href: https://radarr.{{ base_domain }}
-        siteMonitor: https://radarr.{{ base_domain }}
         server: core
         container: radarr
         widget:
@@ -73,7 +69,6 @@
     - sonarr:
         icon: sonarr.png
         href: https://sonarr.{{ base_domain }}
-        siteMonitor: https://sonarr.{{ base_domain }}
         server: core
         container: sonarr
         widget:
@@ -84,7 +79,6 @@
     - grafana:
         icon: grafana.png
         href: https://grafana.{{ base_domain }}
-        siteMonitor: https://grafana.{{ base_domain }}
         server: core
         container: grafana
         widget:
@@ -95,7 +89,6 @@
     - prometheus:
         icon: prometheus.png
         href: https://prometheus.{{ base_domain }}
-        siteMonitor: https://prometheus.{{ base_domain }}
         server: core
         container: prometheus
         widget:
@@ -105,7 +98,6 @@
     - homeassistant:
         icon: home-assistant.png
         href: https://hass.{{ base_domain }}
-        siteMonitor: https://hass.{{ base_domain }}
         server: core
         container: homeassistant
         widget:
@@ -115,11 +107,10 @@
     - n8n:
         icon: n8n.png
         href: https://n8n.{{ base_domain }}
-        siteMonitor: https://n8n.{{ base_domain }}
         server: core
         container: n8n_app
 - ia:
     - open-webui:
         icon: open-webui.png
         href: https://openwebui.{{ base_domain }}
-        siteMonitor: https://openwebui.{{ base_domain }}
+        siteMonitor: http://{{ ai_desktop_vm_ip_var }}:3000

@@ -70,8 +70,10 @@ scrape_configs:
         labels: {app: 'sonarr'}
       - targets: ['https://traefik.{{ base_domain }}']
         labels: {app: 'traefik'}
+{% if 'ai_desktop' in groups %}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:4000/health/liveliness']
         labels: {app: 'litellm'}
+{% endif %}
       - targets: ['http://loki:3100/ready']
         labels: {app: 'loki'}
     relabel_configs:
