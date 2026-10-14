@@ -240,6 +240,10 @@ services:
       - GF_DATABASE_USER=grafana
       - GF_DATABASE_PASSWORD=${GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV}
       - GF_DATABASE_SSL_MODE=disable
+      # Interpolados pelo provisioning de alertas (contact-points.yml)
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - NOTIFICACOES_WEBHOOK_TOKEN=${NOTIFICACOES_WEBHOOK_TOKEN}
       - TZ=${SYSTEM_TIMEZONE}
     depends_on:
       grafana_db:

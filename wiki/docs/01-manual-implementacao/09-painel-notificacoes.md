@@ -27,6 +27,23 @@ O serviço `blackbox-exporter` (stack `apps`, rede `internal_services`, sem port
 
 Os alvos ficam no job `blackbox_http` de `ansible/templates/prometheus.yml.j2`, um por aplicação, com `labels: {app: <id do catálogo>}` (regra NTF-1). Para conferir no Prometheus: `probe_success` (1 = no ar) e `probe_ssl_earliest_cert_expiry` (validade do certificado).
 
+### Alertas (Grafana Alerting)
+
+O `setup-monitoring-stack-volumes.yml` gera em `<NFS>/grafana/provisioning/alerting/` três arquivos, a partir de `ansible/templates/grafana/alerting/`:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `rules.yml` | 9 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta`, `zfs-degradado`, `authelia-logins-falhos` |
+| `contact-points.yml` | `n8n` (webhook interno com `Authorization: Bearer`) e `telegram-direto` (bot do Telegram) |
+| `policies.yml` | tudo vai para `n8n`, agrupado por `alertname` e `app`; só `n8n-fora-do-ar` vai para `telegram-direto` |
+
+**Limites** (disco 85%, RAM 90% por 10 min, CPU 90% por 15 min, fora do ar há 3 min, certificado com menos de 14 dias, mais de 5 logins falhos em 10 min) ficam no topo de `ansible/templates/grafana/alerting/rules.yml.j2`. Regras sem dados ficam em `OK` (não disparam).
+
+Os segredos não ficam nos arquivos: o Grafana recebe `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` pelo `monitoring.env` e o provisioning os interpola. Por isso as anotações usam `$$labels` (escape de `$`).
+
+!!! warning "Pool ZFS"
+    A regra `zfs-degradado` usa a métrica `node_zfs_zpool_state` do node_exporter do host. Confira se ela existe: `curl -s http://<proxmox_host_ip_var>:9100/metrics | grep node_zfs_zpool_state`. Se não existir, a regra fica sem dados (não dispara); a alternativa é publicar o estado do pool pelo *textfile collector* do node_exporter.
+
 ## Passos manuais
 
 ## Teste de ponta a ponta

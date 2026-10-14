@@ -77,3 +77,10 @@ llm_api_keys:
   google_gemini: "SUA_CHAVE_GEMINI"
 # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
 openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
+
+# --- Notificações (Telegram via n8n) ---
+# Token do bot criado no @BotFather e ID do chat que recebe as mensagens.
+telegram_bot_token: "TOKEN_DO_BOT_DO_TELEGRAM"
+telegram_chat_id: "ID_DO_CHAT_DO_TELEGRAM"
+# Token que autentica quem chama o webhook do n8n (gere com: openssl rand -hex 32).
+notificacoes_webhook_token: "TOKEN_DO_WEBHOOK_DE_NOTIFICACOES"

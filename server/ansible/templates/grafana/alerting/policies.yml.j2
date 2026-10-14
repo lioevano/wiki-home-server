@@ -1,0 +1,13 @@
+# ansible/templates/grafana/alerting/policies.yml.j2
+# Política de notificação: tudo vai para o n8n, exceto "n8n fora do ar", que vai direto ao Telegram.
+apiVersion: 1
+policies:
+  - orgId: 1
+    receiver: n8n
+    group_by: [alertname, app]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      - receiver: telegram-direto
+        object_matchers: [['alertname', '=', 'n8n-fora-do-ar']]

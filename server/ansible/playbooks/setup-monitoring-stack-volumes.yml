@@ -41,6 +41,7 @@
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/db_pg"
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/datasources"
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/dashboards"
+        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/alerting"
 
     # --- Loki directories ---
     - name: Create Loki directories on NFS volume
@@ -99,6 +100,7 @@
           apiVersion: 1
           datasources:
             - name: Prometheus
+              uid: prometheus
               type: prometheus
               access: proxy
               url: http://prometheus:9090
@@ -117,6 +119,7 @@
           apiVersion: 1
           datasources:
             - name: Loki
+              uid: loki
               type: loki
               access: proxy
               url: http://loki:3100
@@ -126,6 +129,19 @@
         owner: "{{ docker_puid }}"
         group: "{{ docker_pgid }}"
         mode: '0644'
+
+    # Fontes: ansible/templates/grafana/alerting/rules.yml.j2, grafana/alerting/contact-points.yml.j2, grafana/alerting/policies.yml.j2
+    - name: Deploy Grafana alerting provisioning (regras, contatos e política)
+      ansible.builtin.template:
+        src: "../templates/grafana/alerting/{{ item }}.yml.j2"
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/alerting/{{ item }}.yml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+      loop:
+        - rules
+        - contact-points
+        - policies
 
     - name: Deploy Grafana dashboard provisioning configuration
       ansible.builtin.copy:
@@ -180,6 +196,9 @@
           - { name: 'MONITORING_LOKI_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/config" }
           - { name: 'MONITORING_LOKI_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/data" }
           - { name: 'MONITORING_PROMTAIL_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/config" }
+          - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
+          - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
+          - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
           - { name: 'MONITORING_BLACKBOX_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/blackbox/config" }
           - { name: 'MONITORING_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/positions" }
           - { name: 'GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_db_password }}" }

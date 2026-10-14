@@ -1,0 +1,25 @@
+# ansible/templates/grafana/alerting/contact-points.yml.j2
+# Pontos de contato (integração notificacoes). Os segredos ficam no ambiente do Grafana
+# (monitoring.env) e são interpolados pelo provisioning: nada de valor real neste arquivo.
+apiVersion: 1
+contactPoints:
+  - orgId: 1
+    name: n8n
+    receivers:
+      - uid: n8n-webhook
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          url: http://n8n:5678/webhook/notificar
+          httpMethod: POST
+          authorization_scheme: Bearer
+          authorization_credentials: "${NOTIFICACOES_WEBHOOK_TOKEN}"
+  # Rota de reserva: só para o alerta "n8n fora do ar", que não pode depender do n8n.
+  - orgId: 1
+    name: telegram-direto
+    receivers:
+      - uid: telegram-direto
+        type: telegram
+        settings:
+          bottoken: "${TELEGRAM_BOT_TOKEN}"
+          chatid: "${TELEGRAM_CHAT_ID}"
