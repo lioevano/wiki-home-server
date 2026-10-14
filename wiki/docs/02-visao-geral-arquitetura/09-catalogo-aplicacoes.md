@@ -35,18 +35,22 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | Aplicação | Categoria | Stack / VM | Serviços | Exposição | Subdomínio | Dados | Métricas | Provê | Ajustes | Página |
 |---|---|---|---|---|---|---|---|---|---|---|
 | `authelia` | infra | core / core-services-vm | `authelia`, `authelia_db` | publica | `auth` | nfs | não | `autenticacao` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
+| `blackbox-exporter` | monitoramento | apps / core-services-vm | `blackbox-exporter` | interna | — | nfs | sim | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `cloudflared` | infra | core / core-services-vm | `cloudflared` | interna | — | nenhum | sim | `acesso-externo` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
+| `diun` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `diun`, `diun_ai` | interna | — | nfs | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
+| `docker-socket-proxy` | infra | apps / core-services-vm | `docker-socket-proxy` | interna | — | nenhum | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `grafana` | monitoramento | apps / core-services-vm | `grafana`, `grafana_db` | protegida | `grafana` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `homeassistant` | automação | apps / core-services-vm | `homeassistant` | protegida | `hass` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
+| `homepage` | infra | apps / core-services-vm | `homepage` | protegida | `home` | nfs | não | `painel` | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `jellyfin` | mídia | apps / core-services-vm | `jellyfin` | protegida | `jellyfin` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `litellm` | ia | ai / ai-desktop-vm | `litellm` | interna | — | nfs | não | `llm` | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `loki` | monitoramento | apps / core-services-vm | `loki` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
-| `n8n` | automação | apps / core-services-vm | `n8n` | protegida | `n8n` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
+| `n8n` | automação | apps / core-services-vm | `n8n` | protegida | `n8n` | nfs | não | `notificacoes` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `nextcloud` | produtividade | apps / core-services-vm | `nextcloud_app`, `nextcloud_db`, `nextcloud_redis` | protegida | `nextcloud` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `ollama` | ia | ai / ai-desktop-vm | `ollama` | interna | — | nfs | não | — | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
+| `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | protegida | `openwebui` | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `openclaude` | ia | ai / ai-desktop-vm | `openclaude` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `openclaw` | ia | ai / ai-desktop-vm | `openclaw` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
-| `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | protegida | `openwebui` | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | protegida | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |
 | `prometheus` | monitoramento | apps / core-services-vm | `prometheus` | protegida | `prometheus` | nfs | sim | `metricas` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `promtail` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `promtail`, `promtail_ai` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |

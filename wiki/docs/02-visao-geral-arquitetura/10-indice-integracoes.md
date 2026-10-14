@@ -283,6 +283,65 @@ Não se aplica.
 
 ---
 
+## notificacoes
+
+| Campo | Valor |
+|---|---|
+| Provedor | `n8n` (workflow `notificar`, arquivo `ansible/files/n8n/notificar.json`); coletores: Grafana Alerting (`ansible/templates/grafana/alerting/*.yml.j2`), `blackbox-exporter`, `diun` |
+| Aplica-se a | todas |
+| Arquivos | `ansible/templates/prometheus.yml.j2` (job `blackbox_http`); compose do consumidor (webhook nativo, se houver) |
+| Páginas | página da aplicação; `01-manual-implementacao/09-painel-notificacoes.md` |
+| Manual | webhook configurado na interface da aplicação (NTF-3), quando ela não aceita configuração por arquivo ou variável |
+
+Entrada única: `POST /webhook/notificar` no n8n com `Authorization: Bearer <NOTIFICACOES_WEBHOOK_TOKEN>` — interna `http://n8n:5678/webhook/notificar` (stack `apps`), externa `https://n8n.<domínio>/webhook/notificar`. A regra `bypass` do Authelia para `n8n.{{ base_domain }}` com `resources: ["^/webhook/.*$"]` é parte desta integração (não é desvio de AUT-3/AUT-4). Alertas globais (disco, RAM, CPU, ZFS, hosts, certificados, logins falhos no Authelia) ficam no provedor, em `ansible/templates/grafana/alerting/rules.yml.j2`, e não são por aplicação.
+
+### Regras
+- **NTF-1** — disponibilidade: aplicação com Exposição `publica`/`protegida` tem alvo `https://<Subdomínio>.{{ base_domain }}` com `labels: {app: <id>}` no job `blackbox_http`; das `interna`, só `litellm` (`http://<ai_desktop_vm_ip_var>:4000/health/liveliness`) e `loki` (`http://loki:3100/ready`) têm alvo — as demais `interna` → `—`. *Evidência:* `prometheus.yml.j2`.
+- **NTF-2** — atualizações: existe um serviço do `diun` na mesma VM da aplicação (Stack/VM do `diun` × da aplicação). *Evidência:* catálogo e composes.
+- **NTF-3** — eventos: aplicação com webhook nativo (`radarr`, `sonarr`, `homeassistant`, `jellyfin` via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → `✋`. Demais → `—`.
+- **NTF-4 (sobra)** — nenhum alvo do `blackbox_http` nem regra de alerta com `app` que não exista no catálogo. *Evidência:* `prometheus.yml.j2` e `rules.yml.j2`.
+
+### Ao adicionar (por consumidor)
+1. Alvo no `blackbox_http` (NTF-1), se aplicável.
+2. Se a VM ainda não tem `diun`: apontar a lacuna no plano (NTF-2) e propor ao usuário.
+3. Se a aplicação tem webhook nativo: passo manual na página dela (NTF-3).
+
+### Ao remover (por consumidor)
+1. Retirar o alvo do `blackbox_http` e o passo de webhook da página.
+
+### Ao remover o provedor
+Desativar os coletores (contato `n8n` do Grafana, webhook do Diun e do `scripts/notify.sh`), remover `ansible/files/n8n/notificar.json`, a regra `bypass` de `/webhook/` no Authelia e as variáveis `TELEGRAM_*`/`NOTIFICACOES_WEBHOOK_TOKEN`; avisar que as notificações param.
+
+---
+
+## painel
+
+| Campo | Valor |
+|---|---|
+| Provedor | `homepage` |
+| Aplica-se a | Exposição ≠ interna |
+| Arquivos | `ansible/templates/homepage/services.yaml.j2`; `.env` da Homepage (chaves `HOMEPAGE_VAR_*`) |
+| Páginas | página da aplicação; `01-manual-implementacao/09-painel-notificacoes.md` |
+| Manual | gerar a chave de API na interface da aplicação e gravá-la no vault (PNL-2) |
+
+Aplicação `interna` entra com `+painel` em Ajustes (atalho para a URL da LAN).
+
+### Regras
+- **PNL-1** — a aplicação tem entrada no `services.yaml.j2`, no grupo da sua Categoria, com `href` `https://<Subdomínio>.{{ base_domain }}` (ou URL da LAN para `+painel`), `siteMonitor` e, se roda na `core-services-vm`, `server: core` e `container: <container_name>`. *Evidência:* template.
+- **PNL-2** — aplicação com widget oficial da Homepage (`jellyfin`, `radarr`, `sonarr`, `qbittorrent`, `nextcloud`, `homeassistant`, `grafana`, `prometheus`, `portainer`) tem `widget` na entrada; credenciais só como `{{HOMEPAGE_VAR_<APP>_...}}`, com valor vindo do vault (`homepage_widget_keys.<app>`, ou `grafana_admin_initial_password`) pelo playbook. O `traefik` fica sem widget (a API só existe atrás do Authelia). *Evidência:* template, compose da Homepage e playbook.
+- **PNL-3 (sobra)** — nenhuma entrada no `services.yaml.j2` sem aplicação correspondente no catálogo. *Evidência:* template.
+
+### Ao adicionar (por consumidor)
+1. Entrada no `services.yaml.j2` (PNL-1); se houver widget: entrada, variável `HOMEPAGE_VAR_*` no compose da Homepage, `.env.template`, chave em `homepage_widget_keys` no `vault.yml.example` e emissão no playbook (PNL-2); passo manual da chave na página 09.
+
+### Ao remover (por consumidor)
+1. Retirar a entrada, a variável `HOMEPAGE_VAR_*`, a chave do vault e a emissão.
+
+### Ao remover o provedor
+Remover `homepage`, `docker-socket-proxy` (se não usado por outro), os templates `ansible/templates/homepage/` e as variáveis `HOMEPAGE_VAR_*`.
+
+---
+
 ## Pendências da auditoria inicial
 
 Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) foram corrigidos pela skill `fix-integrations`.
