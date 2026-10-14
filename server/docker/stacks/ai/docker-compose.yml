@@ -108,3 +108,24 @@ services:
       - "${AI_STACK_PROMTAIL_CONFIG_PATH}/config.yml:/etc/promtail/config.yml:ro"
       - "${AI_STACK_PROMTAIL_POSITIONS_PATH}:/tmp/positions"
     command: -config.file=/etc/promtail/config.yml
+
+  diun_ai:
+    image: crazymax/diun:latest
+    container_name: diun_ai
+    command: serve
+    restart: unless-stopped
+    networks:
+      - ai_network
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${AI_STACK_DIUN_DATA_PATH}:/data"
+    environment:
+      # Integração notificacoes (NTF-2): avisa quando sai imagem nova de qualquer container desta VM
+      - TZ=${SYSTEM_TIMEZONE}
+      - DIUN_WATCH_SCHEDULE=0 9 * * *
+      - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+      - DIUN_NOTIF_WEBHOOK_ENDPOINT=https://n8n.${BASE_DOMAIN_FROM_VAULT}/webhook/notificar
+      - DIUN_NOTIF_WEBHOOK_METHOD=POST
+      - DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION=Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}
+      - DIUN_NOTIF_WEBHOOK_HEADERS_CONTENT-TYPE=application/json

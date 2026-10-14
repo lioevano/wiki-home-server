@@ -19,6 +19,7 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
 - **Open WebUI**: Interface web para chat com LLMs. Usa o LiteLLM como API compatível com OpenAI (`OPENAI_API_BASE_URL=http://litellm:4000/v1`, chave `LITELLM_MASTER_KEY`) e o Ollama direto para gerenciar modelos locais. Acessível em `https://openwebui.seudominio.com` (Traefik da `core-services-vm` + Authelia, router `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2`) ou na LAN em `http://ai-desktop-ip:3000`.
 - **OpenClaw**: CLI agent para terminal. Conecta ao LiteLLM.
 - **OpenClaude**: Assistente AI com memória persistente e integração com ferramentas locais.
+- **Diun (`diun_ai`)**: Avisa (via n8n → Telegram) quando sai imagem nova de algum container desta VM; chama `https://n8n.<domínio>/webhook/notificar` com `NOTIFICACOES_WEBHOOK_TOKEN`. Veja [Painel e Notificações](09-painel-notificacoes.md).
 - **Promtail (`promtail_ai`)**: Envia os logs dos containers e do sistema desta VM ao Loki da `core-services-vm` (`http://<core_services_vm_ip_var>:3100`). A configuração é gerada de `ansible/templates/promtail-config.yml.j2` pelo `setup-ai-volumes.yml`.
 
 ## Deploy
@@ -53,6 +54,7 @@ O `ai.env` é gerado por `ansible/playbooks/setup-ai-volumes.yml` (via `ansible/
 | `LITELLM_MASTER_KEY` | vault `litellm_master_key` |
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | vault `llm_api_keys.openai`, `.anthropic`, `.google_gemini` |
 | `OPENWEBUI_SECRET_KEY` | vault `openwebui_secret_key` |
+| `NOTIFICACOES_WEBHOOK_TOKEN` | vault `notificacoes_webhook_token` (Diun) |
 
 ### Passos manuais ao mudar variáveis ou segredos
 

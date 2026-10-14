@@ -84,6 +84,15 @@
         group: "{{ docker_pgid }}"
         mode: '0644'
 
+    # --- Diun (atualizações de imagens, integração notificacoes) ---
+    - name: Create Diun data directory on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun/data"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
     # --- Gerar arquivos de configuração via templates ---
     - name: Deploy Prometheus configuration
       ansible.builtin.template:
@@ -199,6 +208,7 @@
           - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
+          - { name: 'MONITORING_DIUN_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun/data" }
           - { name: 'MONITORING_BLACKBOX_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/blackbox/config" }
           - { name: 'MONITORING_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/positions" }
           - { name: 'GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_db_password }}" }

@@ -55,6 +55,17 @@ O workflow fica no repositório como arquivo estático, `ansible/files/n8n/notif
 
 O Authelia libera só `n8n.<domínio>/webhook/…` (regra `bypass` com `resources`, em `ansible/roles/infra/authelia-config/templates/configuration.yml.j2`); a interface do n8n continua protegida.
 
+### Atualizações (Diun)
+
+Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true`), uma vez por dia às 9h:
+
+| Serviço | Stack / VM | Webhook |
+|---|---|---|
+| `diun` | `apps` / `core-services-vm` | `http://n8n:5678/webhook/notificar` (rede `proxy`) |
+| `diun_ai` | `ai` / `ai-desktop-vm` | `https://n8n.<domínio>/webhook/notificar` |
+
+Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`).
+
 ## Passos manuais
 
 ### Bot do Telegram e importação do workflow

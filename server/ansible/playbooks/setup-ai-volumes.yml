@@ -90,6 +90,15 @@
       vars:
         promtail_loki_push_url: "http://{{ core_services_vm_ip_var }}:3100/loki/api/v1/push"
 
+    # --- Diun da VM de IA (atualizações de imagens, integração notificacoes) ---
+    - name: Criar diretório de dados do Diun da VM de IA no NFS
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun-ai/data"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
     # --- .env para Portainer ---
     - name: Garantir diretório de envs do Portainer
       ansible.builtin.file:
@@ -117,6 +126,8 @@
           - { name: 'AI_STACK_OPENCLAUDE_MEMORY_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory" }
           - { name: 'AI_STACK_PROMTAIL_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail-ai/config" }
           - { name: 'AI_STACK_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail-ai/positions" }
+          - { name: 'AI_STACK_DIUN_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun-ai/data" }
+          - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
           - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
           - { name: 'LITELLM_MASTER_KEY', value: "{{ litellm_master_key }}" }
           - { name: 'OPENAI_API_KEY', value: "{{ llm_api_keys.openai }}" }
