@@ -44,6 +44,43 @@ Os segredos não ficam nos arquivos: o Grafana recebe `TELEGRAM_BOT_TOKEN`, `TEL
 !!! warning "Pool ZFS"
     A regra `zfs-degradado` usa a métrica `node_zfs_zpool_state` do node_exporter do host. Confira se ela existe: `curl -s http://<proxmox_host_ip_var>:9100/metrics | grep node_zfs_zpool_state`. Se não existir, a regra fica sem dados (não dispara); a alternativa é publicar o estado do pool pelo *textfile collector* do node_exporter.
 
+### Workflow `notificar` (n8n)
+
+O workflow fica no repositório como arquivo estático, `ansible/files/n8n/notificar.json` (id `HsNotificar00001`), e o `ansible/playbooks/setup-n8n-volumes.yml` o copia para `<NFS>/n8n/config/workflows/notificar.json` (dentro do container: `/home/node/.n8n/workflows/notificar.json`). Nós:
+
+1. **Webhook** — `POST /webhook/notificar`.
+2. **Autorizado?** — confere `Authorization: Bearer <NOTIFICACOES_WEBHOOK_TOKEN>`; sem o token certo responde **401** e não envia nada.
+3. **Formatar** — reconhece Grafana (lista `alerts`), Diun (`diun_version`), Radarr/Sonarr (`eventType`) ou genérico (`titulo`, `mensagem`, `gravidade`, `app`) e monta a mensagem: 🔴 crítico, 🟠 aviso, 🟢 resolvido/ok, ℹ️ informação. Payload desconhecido vira notificação genérica.
+4. **Telegram** — `sendMessage` com `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`, lidos do ambiente do n8n (`N8N_BLOCK_ENV_ACCESS_IN_NODE=false`).
+
+O Authelia libera só `n8n.<domínio>/webhook/…` (regra `bypass` com `resources`, em `ansible/roles/infra/authelia-config/templates/configuration.yml.j2`); a interface do n8n continua protegida.
+
 ## Passos manuais
 
+### Bot do Telegram e importação do workflow
+
+1. No Telegram, fale com **@BotFather** → `/newbot` → guarde o token em `telegram_bot_token` no vault.
+2. Mande qualquer mensagem ao bot e abra `https://api.telegram.org/bot<TOKEN>/getUpdates`: o `chat.id` vai em `telegram_chat_id`.
+3. Gere o token do webhook (`openssl rand -hex 32`) em `notificacoes_webhook_token`.
+4. Rode os playbooks de n8n e monitoramento e atualize a stack `apps` no Portainer (página 07).
+5. Importe e ative o workflow (na `core-services-vm`):
+   ```bash
+   sudo docker exec n8n_app n8n import:workflow --input=/home/node/.n8n/workflows/notificar.json
+   sudo docker exec n8n_app n8n update:workflow --id=HsNotificar00001 --active=true
+   sudo docker restart n8n_app
+   ```
+   Ao mudar o arquivo no repositório, repita os três comandos.
+
 ## Teste de ponta a ponta
+
+```bash
+# deve chegar uma mensagem no Telegram (resposta 200)
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "https://n8n.<domínio>/webhook/notificar" \
+  -H "Authorization: Bearer <notificacoes_webhook_token>" -H "Content-Type: application/json" \
+  -d '{"titulo":"Teste","mensagem":"Webhook funcionando","gravidade":"ok"}'
+
+# sem o token: 401 e nenhuma mensagem
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "https://n8n.<domínio>/webhook/notificar" -d '{}'
+```
+
+No Grafana: **Alerting → Contact points → n8n → Test** (e o mesmo em `telegram-direto`).

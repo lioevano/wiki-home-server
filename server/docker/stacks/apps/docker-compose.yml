@@ -307,6 +307,11 @@ services:
       - WEBHOOK_URL=https://${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}/
       - NODE_ENV=production
       - GENERIC_TIMEZONE=${SYSTEM_TIMEZONE}
+      # Workflow "notificar": lê o bot do Telegram e o token do webhook do ambiente ($env)
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - NOTIFICACOES_WEBHOOK_TOKEN=${NOTIFICACOES_WEBHOOK_TOKEN}
     labels:
       traefik.enable: 'true'
       traefik.http.routers.n8n.rule: 'Host(`${N8N_SUBDOMAIN}.${BASE_DOMAIN_FROM_VAULT}`)'

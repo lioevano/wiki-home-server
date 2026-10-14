@@ -79,6 +79,13 @@ access_control:
     - domain: "auth.{{ base_domain }}"
       policy: bypass # Não requer autenticação para acessar o portal de login
 
+    # Webhooks do n8n (integração notificacoes): quem chama não faz login; a proteção é o token
+    # no cabeçalho Authorization, conferido pelo próprio workflow. Só o caminho /webhook/ é liberado.
+    - domain: "n8n.{{ base_domain }}"
+      resources:
+        - "^/webhook/.*$"
+      policy: bypass
+
     # Regra geral para todos os outros subdomínios do seu domínio base: requer dois fatores.
     - domain: "*.{{ base_domain }}"
       policy: two_factor # Requer login bem-sucedido com primeiro e segundo fator

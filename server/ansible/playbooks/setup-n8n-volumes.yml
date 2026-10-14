@@ -23,6 +23,24 @@
         group: "{{ docker_pgid }}"
         mode: '0775'
 
+    # Workflow "notificar" (integração notificacoes): arquivo estático, importado à mão após o deploy
+    # (ver wiki 01-manual-implementacao/09-painel-notificacoes.md).
+    - name: Create n8n workflows directory on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/n8n/config/workflows"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    - name: Copy n8n workflow notificar (ansible/files/n8n/notificar.json)
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/n8n/notificar.json"
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/n8n/config/workflows/notificar.json"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
     - name: Generate .env file for n8n stack
       ansible.builtin.template:
         src: ../templates/portainer_stack_env.j2
@@ -35,3 +53,6 @@
         stack_configs:
           - { name: 'N8N_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/n8n/config" }
           - { name: 'N8N_SUBDOMAIN', value: "{{ n8n_subdomain }}" }
+          - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
+          - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
+          - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
