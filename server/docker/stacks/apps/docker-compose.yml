@@ -299,6 +299,52 @@ services:
       - DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION=Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}
       - DIUN_NOTIF_WEBHOOK_HEADERS_CONTENT-TYPE=application/json
 
+  docker-socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker-socket-proxy
+    restart: unless-stopped
+    networks:
+      - internal_services
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    environment:
+      # Só leitura: a Homepage lista containers; nada de POST, exec, imagens ou volumes
+      - CONTAINERS=1
+      - POST=0
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MONITORING_HOMEPAGE_CONFIG_PATH}:/app/config"
+    environment:
+      - HOMEPAGE_ALLOWED_HOSTS=home.${BASE_DOMAIN_FROM_VAULT}
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      # Credenciais dos widgets (integração painel, PNL-2); usadas como placeholders no services.yaml
+      - HOMEPAGE_VAR_JELLYFIN_KEY=${HOMEPAGE_VAR_JELLYFIN_KEY}
+      - HOMEPAGE_VAR_RADARR_KEY=${HOMEPAGE_VAR_RADARR_KEY}
+      - HOMEPAGE_VAR_SONARR_KEY=${HOMEPAGE_VAR_SONARR_KEY}
+      - HOMEPAGE_VAR_NEXTCLOUD_KEY=${HOMEPAGE_VAR_NEXTCLOUD_KEY}
+      - HOMEPAGE_VAR_HOMEASSISTANT_KEY=${HOMEPAGE_VAR_HOMEASSISTANT_KEY}
+      - HOMEPAGE_VAR_PORTAINER_KEY=${HOMEPAGE_VAR_PORTAINER_KEY}
+      - HOMEPAGE_VAR_QBITTORRENT_USER=${HOMEPAGE_VAR_QBITTORRENT_USER}
+      - HOMEPAGE_VAR_QBITTORRENT_PASSWORD=${HOMEPAGE_VAR_QBITTORRENT_PASSWORD}
+      - HOMEPAGE_VAR_GRAFANA_PASSWORD=${HOMEPAGE_VAR_GRAFANA_PASSWORD}
+    depends_on:
+      - docker-socket-proxy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.homepage.rule: "Host(`home.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.homepage.entrypoints: "websecure"
+      traefik.http.routers.homepage.tls.certresolver: "letsencrypt"
+      traefik.http.routers.homepage.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.homepage-svc.loadbalancer.server.port: "3000"
+
   promtail:
     image: grafana/promtail:latest
     container_name: promtail

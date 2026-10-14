@@ -66,6 +66,20 @@ Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCH
 
 Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`).
 
+### Painel (Homepage)
+
+A Homepage (`https://home.<domínio>`, protegida pelo Authelia) roda na stack `apps` e lê três arquivos gerados pelo `setup-monitoring-stack-volumes.yml` em `<NFS>/homepage/config/`, a partir de `ansible/templates/homepage/`:
+
+| Arquivo | Conteúdo |
+|---|---|
+| `settings.yaml` | título, idioma e tema |
+| `docker.yaml` | `core` → `docker-socket-proxy:2375` (estado dos containers da `core-services-vm`) |
+| `services.yaml` | uma entrada por aplicação `publica`/`protegida` do catálogo (regra PNL-1), agrupada pela Categoria, com atalho, `siteMonitor` e widget quando houver (PNL-2) |
+
+O `docker-socket-proxy` dá à Homepage acesso **só de leitura** à lista de containers (`CONTAINERS=1`, `POST=0`), sem porta publicada. As aplicações da `ai-desktop-vm` mostram só o `siteMonitor`.
+
+As credenciais dos widgets não ficam no `services.yaml`: lá aparecem só os placeholders `HOMEPAGE_VAR_*` (entre chaves duplas), que a Homepage substitui pelo seu ambiente (`monitoring.env`, gerado do vault). O Traefik fica sem widget: a API dele só existe atrás do Authelia.
+
 ## Passos manuais
 
 ### Bot do Telegram e importação do workflow
@@ -81,6 +95,22 @@ Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do D
    sudo docker restart n8n_app
    ```
    Ao mudar o arquivo no repositório, repita os três comandos.
+
+### Chaves de API dos widgets
+
+Depois do primeiro acesso a cada aplicação, gere a credencial e grave-a no vault (`ansible-vault edit …/vault.yml`, chave `homepage_widget_keys`); depois rode o `setup-monitoring-stack-volumes.yml` e atualize a stack `apps`:
+
+| Aplicação | Onde gerar | Chave no vault |
+|---|---|---|
+| Jellyfin | Painel → Chaves de API | `homepage_widget_keys.jellyfin` |
+| Radarr / Sonarr | Settings → General → API Key | `homepage_widget_keys.radarr` / `.sonarr` |
+| Nextcloud | app *serverinfo*: `occ config:app:set serverinfo token --value <token>` | `homepage_widget_keys.nextcloud` |
+| Home Assistant | Perfil → Tokens de acesso de longa duração | `homepage_widget_keys.homeassistant` |
+| Portainer | Conta → Access tokens | `homepage_widget_keys.portainer` |
+| qBittorrent | usuário e senha da Web UI | `homepage_widget_keys.qbittorrent_user` / `_password` |
+| Grafana | usa `admin` + `grafana_admin_initial_password` | — |
+
+Sem a chave, o widget mostra erro; atalho e status continuam funcionando.
 
 ## Teste de ponta a ponta
 

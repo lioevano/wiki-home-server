@@ -93,6 +93,28 @@
         group: "{{ docker_pgid }}"
         mode: '0775'
 
+    # --- Homepage (integração painel) ---
+    - name: Create Homepage config directory on NFS volume
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/homepage/config"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+
+    # Fontes: ansible/templates/homepage/settings.yaml.j2, homepage/docker.yaml.j2, homepage/services.yaml.j2
+    - name: Deploy Homepage configuration (settings, docker, services)
+      ansible.builtin.template:
+        src: "../templates/homepage/{{ item }}.yaml.j2"
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/homepage/config/{{ item }}.yaml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+      loop:
+        - settings
+        - docker
+        - services
+
     # --- Gerar arquivos de configuração via templates ---
     - name: Deploy Prometheus configuration
       ansible.builtin.template:
@@ -208,6 +230,16 @@
           - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
+          - { name: 'MONITORING_HOMEPAGE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/homepage/config" }
+          - { name: 'HOMEPAGE_VAR_JELLYFIN_KEY', value: "{{ homepage_widget_keys.jellyfin }}" }
+          - { name: 'HOMEPAGE_VAR_RADARR_KEY', value: "{{ homepage_widget_keys.radarr }}" }
+          - { name: 'HOMEPAGE_VAR_SONARR_KEY', value: "{{ homepage_widget_keys.sonarr }}" }
+          - { name: 'HOMEPAGE_VAR_NEXTCLOUD_KEY', value: "{{ homepage_widget_keys.nextcloud }}" }
+          - { name: 'HOMEPAGE_VAR_HOMEASSISTANT_KEY', value: "{{ homepage_widget_keys.homeassistant }}" }
+          - { name: 'HOMEPAGE_VAR_PORTAINER_KEY', value: "{{ homepage_widget_keys.portainer }}" }
+          - { name: 'HOMEPAGE_VAR_QBITTORRENT_USER', value: "{{ homepage_widget_keys.qbittorrent_user }}" }
+          - { name: 'HOMEPAGE_VAR_QBITTORRENT_PASSWORD', value: "{{ homepage_widget_keys.qbittorrent_password }}" }
+          - { name: 'HOMEPAGE_VAR_GRAFANA_PASSWORD', value: "{{ grafana_admin_initial_password }}" }
           - { name: 'MONITORING_DIUN_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun/data" }
           - { name: 'MONITORING_BLACKBOX_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/blackbox/config" }
           - { name: 'MONITORING_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/positions" }

@@ -1,0 +1,125 @@
+# ansible/templates/homepage/services.yaml.j2
+# Painel (integração painel): uma entrada por aplicação do catálogo com Exposição != interna (PNL-1),
+# no grupo da sua Categoria; widgets (PNL-2) com credenciais SÓ como placeholders HOMEPAGE_VAR_* entre chaves duplas,
+# que a Homepage substitui a partir do próprio ambiente (monitoring.env). O bloco raw impede o Ansible de interpretá-los.
+# Gerado pelo setup-monitoring-stack-volumes.yml em <NFS>/homepage/config/services.yaml.
+- infra:
+    - authelia:
+        icon: authelia.png
+        href: https://auth.{{ base_domain }}
+        siteMonitor: https://auth.{{ base_domain }}
+        server: core
+        container: authelia
+    - portainer:
+        icon: portainer.png
+        href: https://portainer.{{ base_domain }}
+        siteMonitor: https://portainer.{{ base_domain }}
+        server: core
+        container: portainer
+        widget:
+          type: portainer
+          url: https://portainer:9443
+          env: 1
+          key: "{% raw %}{{HOMEPAGE_VAR_PORTAINER_KEY}}{% endraw %}"
+    - traefik:
+        icon: traefik.png
+        href: https://traefik.{{ base_domain }}
+        siteMonitor: https://traefik.{{ base_domain }}
+        server: core
+        container: traefik
+- produtividade:
+    - nextcloud:
+        icon: nextcloud.png
+        href: https://nextcloud.{{ base_domain }}
+        siteMonitor: https://nextcloud.{{ base_domain }}
+        server: core
+        container: nextcloud_app
+        widget:
+          type: nextcloud
+          url: http://nextcloud_app
+          key: "{% raw %}{{HOMEPAGE_VAR_NEXTCLOUD_KEY}}{% endraw %}"
+- mídia:
+    - jellyfin:
+        icon: jellyfin.png
+        href: https://jellyfin.{{ base_domain }}
+        siteMonitor: https://jellyfin.{{ base_domain }}
+        server: core
+        container: jellyfin
+        widget:
+          type: jellyfin
+          url: http://jellyfin:8096
+          key: "{% raw %}{{HOMEPAGE_VAR_JELLYFIN_KEY}}{% endraw %}"
+    - qbittorrent:
+        icon: qbittorrent.png
+        href: https://qbittorrent.{{ base_domain }}
+        siteMonitor: https://qbittorrent.{{ base_domain }}
+        server: core
+        container: qbittorrent
+        widget:
+          type: qbittorrent
+          url: http://qbittorrent:8088
+          username: "{% raw %}{{HOMEPAGE_VAR_QBITTORRENT_USER}}{% endraw %}"
+          password: "{% raw %}{{HOMEPAGE_VAR_QBITTORRENT_PASSWORD}}{% endraw %}"
+    - radarr:
+        icon: radarr.png
+        href: https://radarr.{{ base_domain }}
+        siteMonitor: https://radarr.{{ base_domain }}
+        server: core
+        container: radarr
+        widget:
+          type: radarr
+          url: http://radarr:7878
+          key: "{% raw %}{{HOMEPAGE_VAR_RADARR_KEY}}{% endraw %}"
+    - sonarr:
+        icon: sonarr.png
+        href: https://sonarr.{{ base_domain }}
+        siteMonitor: https://sonarr.{{ base_domain }}
+        server: core
+        container: sonarr
+        widget:
+          type: sonarr
+          url: http://sonarr:8989
+          key: "{% raw %}{{HOMEPAGE_VAR_SONARR_KEY}}{% endraw %}"
+- monitoramento:
+    - grafana:
+        icon: grafana.png
+        href: https://grafana.{{ base_domain }}
+        siteMonitor: https://grafana.{{ base_domain }}
+        server: core
+        container: grafana
+        widget:
+          type: grafana
+          url: http://grafana:3000
+          username: admin
+          password: "{% raw %}{{HOMEPAGE_VAR_GRAFANA_PASSWORD}}{% endraw %}"
+    - prometheus:
+        icon: prometheus.png
+        href: https://prometheus.{{ base_domain }}
+        siteMonitor: https://prometheus.{{ base_domain }}
+        server: core
+        container: prometheus
+        widget:
+          type: prometheus
+          url: http://prometheus:9090
+- automação:
+    - homeassistant:
+        icon: home-assistant.png
+        href: https://hass.{{ base_domain }}
+        siteMonitor: https://hass.{{ base_domain }}
+        server: core
+        container: homeassistant
+        widget:
+          type: homeassistant
+          url: http://homeassistant:8123
+          key: "{% raw %}{{HOMEPAGE_VAR_HOMEASSISTANT_KEY}}{% endraw %}"
+    - n8n:
+        icon: n8n.png
+        href: https://n8n.{{ base_domain }}
+        siteMonitor: https://n8n.{{ base_domain }}
+        server: core
+        container: n8n_app
+- ia:
+    - open-webui:
+        icon: open-webui.png
+        href: https://openwebui.{{ base_domain }}
+        siteMonitor: https://openwebui.{{ base_domain }}

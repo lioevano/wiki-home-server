@@ -273,6 +273,19 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     telegram_chat_id: "ID_DO_CHAT_DO_TELEGRAM"
     # Token que autentica quem chama o webhook do n8n (gere com: openssl rand -hex 32).
     notificacoes_webhook_token: "TOKEN_DO_WEBHOOK_DE_NOTIFICACOES"
+
+    # --- Painel (Homepage): credenciais dos widgets ---
+    # Geradas na interface de cada aplicação depois do primeiro acesso (página 09).
+    # O widget do Grafana usa o admin e grafana_admin_initial_password.
+    homepage_widget_keys:
+      jellyfin: "CHAVE_DE_API_DO_JELLYFIN"
+      radarr: "CHAVE_DE_API_DO_RADARR"
+      sonarr: "CHAVE_DE_API_DO_SONARR"
+      nextcloud: "NC_TOKEN_DO_NEXTCLOUD"
+      homeassistant: "TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT"
+      portainer: "CHAVE_DE_API_DO_PORTAINER"
+      qbittorrent_user: "admin"
+      qbittorrent_password: "SENHA_DO_QBITTORRENT"
     ```
     !!! important "Como Editar o Arquivo Vault no Futuro"
         Para editar o arquivo `vault.yml` após sua criação, SEMPRE use o comando:

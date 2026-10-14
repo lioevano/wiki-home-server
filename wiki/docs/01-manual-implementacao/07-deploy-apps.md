@@ -12,7 +12,7 @@ Todas as aplicações são agora gerenciadas em um único compose file: `docker/
 |---|---|---|
 | Produtividade | Nextcloud (+ Postgres, Redis) | `nextcloud.seudominio.com` |
 | Mídia | Jellyfin, Sonarr, Radarr, qBittorrent | `jellyfin.`, `sonarr.`, `radarr.`, `qbittorrent.` |
-| Monitoramento | Prometheus, Grafana (+ Postgres), Loki, Promtail, blackbox-exporter | `prometheus.`, `grafana.` |
+| Monitoramento | Prometheus, Grafana (+ Postgres), Loki, Promtail, blackbox-exporter, Diun | `prometheus.`, `grafana.` |
 | Automação | n8n, Home Assistant | `n8n.`, `hass.` |
 
 ## Deploy via Portainer
@@ -35,7 +35,7 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
 | `automation.env` | `setup-productivity-automation-volumes.yml` | caminhos do Home Assistant |
 | `media.env` | `setup-media-stack-volumes.yml` | caminhos de mídia |
 | `n8n.env` | `setup-n8n-volumes.yml` | caminho de configuração e subdomínio; `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` (vault `telegram_bot_token`, `telegram_chat_id`, `notificacoes_webhook_token`) para o workflow de notificações. O login do n8n é a conta de dono criada no primeiro acesso, atrás do Authelia |
-| `monitoring.env` | `setup-monitoring-stack-volumes.yml` | `GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_db_password`), `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_admin_initial_password`); `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` para os alertas do Grafana |
+| `monitoring.env` | `setup-monitoring-stack-volumes.yml` | `GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_db_password`), `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_admin_initial_password`); `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` para os alertas do Grafana; credenciais dos widgets da Homepage (`HOMEPAGE_VAR_*`, vault `homepage_widget_keys`) |
 
 ### Passos manuais ao mudar variáveis ou segredos
 
