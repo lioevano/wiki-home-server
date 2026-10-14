@@ -12,7 +12,7 @@ Todas as aplicações são agora gerenciadas em um único compose file: `docker/
 |---|---|---|
 | Produtividade | Nextcloud (+ Postgres, Redis) | `nextcloud.seudominio.com` |
 | Mídia | Jellyfin, Sonarr, Radarr, qBittorrent | `jellyfin.`, `sonarr.`, `radarr.`, `qbittorrent.` |
-| Monitoramento | Prometheus, Grafana (+ Postgres), Loki, Promtail | `prometheus.`, `grafana.` |
+| Monitoramento | Prometheus, Grafana (+ Postgres), Loki, Promtail, blackbox-exporter | `prometheus.`, `grafana.` |
 | Automação | n8n, Home Assistant | `n8n.`, `hass.` |
 
 ## Deploy via Portainer

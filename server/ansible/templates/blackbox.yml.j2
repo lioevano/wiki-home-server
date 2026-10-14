@@ -1,0 +1,12 @@
+# ansible/templates/blackbox.yml.j2
+# Módulos do blackbox-exporter (gerado pelo setup-monitoring-stack-volumes.yml).
+# http_2xx aceita redirecionamentos e as respostas do Authelia (401/403) como "no ar":
+# o que importa é a aplicação responder atrás do Traefik, não o login.
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: [200, 301, 302, 401, 403]
+      follow_redirects: true
+      preferred_ip_protocol: ip4

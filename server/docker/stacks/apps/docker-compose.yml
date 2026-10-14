@@ -265,6 +265,15 @@ services:
       - "${MONITORING_LOKI_DATA_PATH}:/loki"
     command: -config.file=/etc/loki/config.yaml
 
+  blackbox-exporter:
+    image: prom/blackbox-exporter:latest
+    container_name: blackbox-exporter
+    restart: unless-stopped
+    networks:
+      - internal_services
+    volumes:
+      - "${MONITORING_BLACKBOX_CONFIG_PATH}/blackbox.yml:/etc/blackbox_exporter/config.yml:ro"
+
   promtail:
     image: grafana/promtail:latest
     container_name: promtail

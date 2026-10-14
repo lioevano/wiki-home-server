@@ -36,3 +36,48 @@ scrape_configs:
         labels:
           instance: 'cloudflared_tunnel_metrics'
 
+  # Disponibilidade (integração notificacoes, regra NTF-1): um alvo por aplicação, com label app = id do catálogo.
+  - job_name: 'blackbox_http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ['https://auth.{{ base_domain }}']
+        labels: {app: 'authelia'}
+      - targets: ['https://grafana.{{ base_domain }}']
+        labels: {app: 'grafana'}
+      - targets: ['https://hass.{{ base_domain }}']
+        labels: {app: 'homeassistant'}
+      - targets: ['https://home.{{ base_domain }}']
+        labels: {app: 'homepage'}
+      - targets: ['https://jellyfin.{{ base_domain }}']
+        labels: {app: 'jellyfin'}
+      - targets: ['https://n8n.{{ base_domain }}']
+        labels: {app: 'n8n'}
+      - targets: ['https://nextcloud.{{ base_domain }}']
+        labels: {app: 'nextcloud'}
+      - targets: ['https://openwebui.{{ base_domain }}']
+        labels: {app: 'open-webui'}
+      - targets: ['https://portainer.{{ base_domain }}']
+        labels: {app: 'portainer'}
+      - targets: ['https://prometheus.{{ base_domain }}']
+        labels: {app: 'prometheus'}
+      - targets: ['https://qbittorrent.{{ base_domain }}']
+        labels: {app: 'qbittorrent'}
+      - targets: ['https://radarr.{{ base_domain }}']
+        labels: {app: 'radarr'}
+      - targets: ['https://sonarr.{{ base_domain }}']
+        labels: {app: 'sonarr'}
+      - targets: ['https://traefik.{{ base_domain }}']
+        labels: {app: 'traefik'}
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:4000/health/liveliness']
+        labels: {app: 'litellm'}
+      - targets: ['http://loki:3100/ready']
+        labels: {app: 'loki'}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
