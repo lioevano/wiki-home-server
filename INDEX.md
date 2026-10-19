@@ -29,6 +29,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `bazarr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `blackbox-exporter` | apps / core-services-vm | metricas, logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `cloudflared` | core / core-services-vm | metricas, logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/05-rede-segura.md` |
+| `collabora` | cloud / core-services-vm | roteamento, autenticacao, acesso-externo, logs, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `diun` | apps / core-services-vm; ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `docker-socket-proxy` | apps / core-services-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `flaresolverr` | media / core-services-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/10-midia.md` |
@@ -36,12 +37,13 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `grafana` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
 | `homeassistant` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
 | `homepage` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
+| `immich` | photos / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `jellyfin` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `lidarr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `litellm` | ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/08-stack-ia.md` |
 | `loki` | apps / core-services-vm | dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/07-deploy-apps.md` |
 | `n8n` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, painel | `01-manual-implementacao/07-deploy-apps.md` |
-| `nextcloud` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
+| `nextcloud` | cloud / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ollama` | ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/08-stack-ia.md` |
 | `open-webui` | ai / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, llm, documentacao, notificacoes, painel | `01-manual-implementacao/08-stack-ia.md` |
 | `openclaude` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao, notificacoes | `01-manual-implementacao/08-stack-ia.md` |
@@ -83,10 +85,11 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS) | Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e o coletor Grafana Alloy. |
 | `01-manual-implementacao/05-rede-segura.md` | Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia) | Rede segura na core-services-vm: Traefik como proxy reverso, Cloudflare Tunnel para acesso externo e Authelia para 2FA. |
 | `01-manual-implementacao/06-deploy-core.md` | Seção 6: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia) | Deploy da stack core (Traefik, Cloudflared e Authelia) pelo Ansible, com o playbook setup-core-networking.yml. |
-| `01-manual-implementacao/07-deploy-apps.md` | Seção 7: Deploy de Aplicações (Nextcloud, Monitoramento, n8n, Home Assistant) | Deploy das aplicações na stack apps: Nextcloud, monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible. |
+| `01-manual-implementacao/07-deploy-apps.md` | Seção 7: Deploy de Aplicações (Monitoramento, n8n, Home Assistant) | Deploy das aplicações na stack apps: monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible. |
 | `01-manual-implementacao/08-stack-ia.md` | Seção 8: Stack de IA (Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude) | Stack de IA na ai-desktop-vm: Ollama, LiteLLM, Open WebUI, OpenClaw e OpenClaude, com volumes e configuração do LiteLLM. |
 | `01-manual-implementacao/09-painel-notificacoes.md` | Seção 9: Painel e Notificações | Painel Homepage e notificações no Telegram via n8n: Grafana Alerting, blackbox-exporter, Diun, workflow notificar, passos manuais e teste de ponta a ponta. |
 | `01-manual-implementacao/10-midia.md` | Seção 10: Mídia (Jellyfin, *arr, Seerr e VPN) | Stack media: Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Recyclarr e qBittorrent atrás da ProtonVPN (gluetun), com /data único e importação por hardlink. |
+| `01-manual-implementacao/11-fotos-arquivos.md` | Seção 11: Fotos e Arquivos (Immich, Nextcloud e Collabora) | Stacks photos (Immich) e cloud (Nextcloud, cron e Collabora), públicas pelo túnel com login OIDC do Authelia, datasets com cota e bancos no disco local. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -133,10 +136,12 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/playbooks/full-deploy.yml` | playbook | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `ansible/playbooks/setup-ai-volumes.yml` | playbook | `01-manual-implementacao/08-stack-ia.md` |
 | `ansible/playbooks/setup-base-ubuntu.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` |
+| `ansible/playbooks/setup-cloud-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/playbooks/setup-core-networking.yml` | playbook | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` |
 | `ansible/playbooks/setup-media-stack-volumes.yml` | playbook | `01-manual-implementacao/10-midia.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
 | `ansible/playbooks/setup-monitoring-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/playbooks/setup-n8n-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
+| `ansible/playbooks/setup-photos-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/playbooks/setup-productivity-automation-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/setup-proxmox-host.yml` | playbook | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `ansible/playbooks/vm-deploy.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `03-guias-sustentacao/06-gerenciando-recursos-vms.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
@@ -179,16 +184,21 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/homepage/docker.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/homepage/services.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/homepage/settings.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/immich/immich.json.j2` | template | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/templates/litellm_config.yaml.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/nextcloud/10-homeserver.sh.j2` | template | `01-manual-implementacao/11-fotos-arquivos.md` |
+| `ansible/templates/nextcloud/backup-nextcloud-db.sh.j2` | template | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/recyclarr.yml.j2` | template | `01-manual-implementacao/10-midia.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` |
 | `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
+| `docker/stacks/cloud/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `docker/stacks/core/docker-compose.yml` | stack | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md` |
 | `docker/stacks/media/docker-compose.yml` | stack | `01-manual-implementacao/10-midia.md` |
+| `docker/stacks/photos/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `scripts/bootstrap.sh` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` |
 | `scripts/notify.sh` | script | `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `scripts/restore.sh` | script | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |

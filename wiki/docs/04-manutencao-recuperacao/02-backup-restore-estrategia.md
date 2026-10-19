@@ -170,9 +170,17 @@ Proxmox VE tem um sistema de backup integrado robusto para VMs.
 
 ### 3. Dados Persistentes dos Containers Docker (Volumes NFS)
 
-Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/docker-volumes`, `/data/media`, `/data/rag_sources`) e são montados nas VMs via NFS para os containers Docker.
+Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/docker-volumes`, `/data/media`, `/data/photos`, `/data/files`, `/data/rag_sources`) e são montados nas VMs via NFS para os containers Docker.
 
 #### A. Bancos de Dados das Aplicações (PostgreSQL para Authelia, Nextcloud, Grafana)
+
+!!! warning "Immich e Nextcloud: bancos no disco local da VM"
+    Os bancos do Immich (`immich_db`) e do Nextcloud (`nextcloud_db`) ficam em `/opt/local-data` na `core-services-vm`, **fora dos snapshots ZFS**. O backup deles são os dumps diários, já automatizados ([Fotos e Arquivos](../01-manual-implementacao/11-fotos-arquivos.md)):
+
+    * **Immich:** o próprio Immich grava um dump por dia em `/data/photos/backups/` (14 últimos);
+    * **Nextcloud:** o timer `backup-nextcloud-db.timer` grava `nextcloud-<data>.dump` em `/data/docker-volumes/nextcloud/db-dumps/` (duas semanas).
+
+    Os dois ficam em datasets ZFS (snapshots, Borg e cópia off-site). A restauração de cada um está na página 11. O script de exemplo abaixo vale para os bancos que ainda não têm dump automático (Authelia e Grafana).
 
 É **altamente recomendado** fazer dumps lógicos dos seus bancos de dados, além do backup do volume ZFS onde os arquivos do banco de dados residem. Dumps lógicos são mais portáteis e podem ser mais fáceis de restaurar para diferentes versões do PostgreSQL.
 
@@ -261,6 +269,8 @@ Estes são os diretórios e arquivos dentro dos seus datasets ZFS (`/data/docker
                     ::"${ARCHIVE_NAME}" \
                     {{ zfs_base_pool_path }}/docker-volumes \
                     {{ zfs_base_pool_path }}/media \
+                    {{ zfs_base_pool_path }}/photos \
+                    {{ zfs_base_pool_path }}/files \
                     {{ zfs_base_pool_path }}/rag_sources \
                     --exclude '{{ zfs_base_pool_path }}/backups' # NÃO FAÇA BACKUP DO DIRETÓRIO DE BACKUPS EM SI!
                     # Adicione outros --exclude para caches, arquivos temporários grandes, etc.

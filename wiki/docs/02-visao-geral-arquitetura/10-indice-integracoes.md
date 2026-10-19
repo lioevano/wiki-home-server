@@ -171,10 +171,11 @@ Remover `loki` e `loki-local-config.yaml.j2` e os blocos `loki.*` do `config.all
 | Manual      | —                                                                                                         |
 
 ### Regras
-- **DAD-1** — Dados = `nfs`: os volumes de dados persistentes usam `${VM_NFS_MOUNT_BASE_PATH}/…` ou uma variável `*_PATH` criada pelo playbook de volumes da stack (que a aponta para o NFS). Binds de sistema (`/var/run/docker.sock`, `/etc/localtime`, logs do Docker) não contam. *Evidência:* `volumes:` + playbook.
+- **DAD-1** — Dados = `nfs`: os volumes de dados persistentes usam `${VM_NFS_MOUNT_BASE_PATH}/…` ou uma variável `*_PATH` criada pelo playbook de volumes da stack (que a aponta para o NFS). Binds de sistema (`/var/run/docker.sock`, `/etc/localtime`, logs do Docker) não contam. *Evidência:* `volumes:` + playbook. O banco de dados em disco local da DAD-5 é a exceção.
 - **DAD-2** — Dados = `local`: a página da aplicação tem aviso de que os dados ficam fora dos snapshots ZFS **e** a página de backup lista a aplicação. *Evidência:* as duas páginas.
 - **DAD-3** — o playbook `setup-<stack>-volumes.yml` cria os diretórios usados pela aplicação. *Evidência:* tasks `ansible.builtin.file` do playbook.
 - **DAD-4** — aplicação de Categoria `mídia` que acessa arquivos de mídia monta `/data` (ou uma subpasta) sempre a partir de `${MEDIA_STACK_DATA_PATH}`, nunca de duas variáveis diferentes: o hardlink da importação exige o mesmo sistema de arquivos. *Evidência:* `volumes:` do compose da stack `media`.
+- **DAD-5** — Dados = `nfs` com banco de dados no disco local (hoje `immich` e `nextcloud`): o volume do banco vem de uma variável `*_DB_PATH` que o playbook da stack aponta para `{{ vm_local_data_path }}`, a página da aplicação avisa que o banco fica fora dos snapshots ZFS e documenta o dump diário para o NFS, e a página de backup lista esse dump. *Evidência:* `volumes:` do compose, playbook, página da aplicação e página de backup.
 
 ### Ao adicionar (por consumidor)
 1. `nfs`: diretórios no playbook de volumes e variável `*_PATH` (ver `variaveis`).
@@ -331,7 +332,7 @@ Aplicação `interna` entra com `+painel` em Ajustes (atalho para a URL da LAN).
 
 ### Regras
 - **PNL-1** — a aplicação tem entrada no `services.yaml.j2` (nome = id do catálogo), no grupo da sua Categoria, com `href` `https://<Subdomínio>.{{ base_domain }}` (ou URL da LAN para `+painel`) e status: na `core-services-vm`, `server: core` e `container: <container_name>` (estado do container); em outra VM, `siteMonitor` pela URL da LAN (a URL pública passa pelo Authelia). *Evidência:* template.
-- **PNL-2** — aplicação com widget oficial da Homepage (`jellyfin`, `radarr`, `sonarr`, `lidarr`, `prowlarr`, `bazarr`, `seerr`, `qbittorrent`, `nextcloud`, `homeassistant`, `grafana`, `prometheus`, `portainer`) tem `widget` na entrada; credenciais só como `{{HOMEPAGE_VAR_<APP>_...}}`, com valor vindo do vault (`homepage_widget_keys.<app>`, `arr_api_keys.<app>` para sonarr, radarr, lidarr e prowlarr, ou `grafana_admin_initial_password`) pelo playbook. O `traefik` fica sem widget (a API só existe atrás do Authelia). *Evidência:* template, compose da Homepage e playbook.
+- **PNL-2** — aplicação com widget oficial da Homepage (`jellyfin`, `radarr`, `sonarr`, `lidarr`, `prowlarr`, `bazarr`, `seerr`, `qbittorrent`, `nextcloud`, `immich`, `homeassistant`, `grafana`, `prometheus`, `portainer`) tem `widget` na entrada; credenciais só como `{{HOMEPAGE_VAR_<APP>_...}}`, com valor vindo do vault (`homepage_widget_keys.<app>`, `arr_api_keys.<app>` para sonarr, radarr, lidarr e prowlarr, ou `grafana_admin_initial_password`) pelo playbook. O `traefik` fica sem widget (a API só existe atrás do Authelia). *Evidência:* template, compose da Homepage e playbook.
 - **PNL-3 (sobra)** — nenhuma entrada no `services.yaml.j2` sem aplicação correspondente no catálogo. *Evidência:* template.
 
 ### Ao adicionar (por consumidor)

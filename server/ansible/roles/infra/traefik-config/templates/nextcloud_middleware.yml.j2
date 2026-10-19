@@ -15,10 +15,8 @@ http:
         # X-Robots-Tag: none
         # X-XSS-Protection: 1; mode=block (já tratado globalmente)
         # Adicione outros específicos se Nextcloud evoluir suas recomendações.
-        # Este middleware pode ser combinado com 'authelia-forwardauth@docker' e 'securityHeaders@file'
-        # usando um chain middleware se necessário, ou aplicado diretamente.
-        # Exemplo:
-        # traefik.http.routers.nextcloud.middlewares: "authelia-forwardauth@docker,nextcloud-headers@file"
+        # Uso no router do Nextcloud (stack cloud, página 11; sem Authelia, o login é o OIDC):
+        # traefik.http.routers.nextcloud.middlewares: "nextcloud-dav@file,nextcloud-headers@file"
         # Os headers globais (securityHeaders@file) cobrem o geral; aqui ficam só os específicos do Nextcloud.
         # Exemplo de header que poderia ser específico:
         # customRequestHeaders:

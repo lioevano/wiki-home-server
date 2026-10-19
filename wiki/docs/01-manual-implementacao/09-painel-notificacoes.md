@@ -184,6 +184,7 @@ Depois do primeiro acesso a cada aplicação, gere a credencial e grave-a no vau
 | Bazarr | Settings → General → API Key | `homepage_widget_keys.bazarr` |
 | Seerr | Settings → General → API Key | `homepage_widget_keys.seerr` |
 | Nextcloud | app *serverinfo*: `occ config:app:set serverinfo token --value <token>` | `homepage_widget_keys.nextcloud` |
+| Immich | Conta → Configurações da conta → Chaves de API (permissão `server.statistics`) | `homepage_widget_keys.immich` |
 | Home Assistant | Perfil → Tokens de acesso de longa duração | `homepage_widget_keys.homeassistant` |
 | Portainer | Conta → Access tokens | `homepage_widget_keys.portainer` |
 | qBittorrent | usuário e senha da Web UI | `homepage_widget_keys.qbittorrent_user` / `_password` |

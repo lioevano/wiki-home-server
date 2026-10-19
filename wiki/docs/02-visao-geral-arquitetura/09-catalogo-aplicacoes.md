@@ -39,6 +39,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `bazarr` | mídia | media / core-services-vm | `bazarr` | protegida | `bazarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `blackbox-exporter` | monitoramento | apps / core-services-vm | `blackbox-exporter` | interna | — | nfs | sim | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `cloudflared` | infra | core / core-services-vm | `cloudflared` | interna | — | nenhum | sim | `acesso-externo` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
+| `collabora` | produtividade | cloud / core-services-vm | `collabora` | publica | `office` | nenhum | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `diun` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `diun`, `diun_ai` | interna | — | nfs | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `docker-socket-proxy` | infra | apps / core-services-vm | `docker-socket-proxy` | interna | — | nenhum | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `flaresolverr` | mídia | media / core-services-vm | `flaresolverr` | interna | — | nenhum | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
@@ -46,12 +47,13 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `grafana` | monitoramento | apps / core-services-vm | `grafana`, `grafana_db` | protegida | `grafana` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `homeassistant` | automação | apps / core-services-vm | `homeassistant` | protegida | `hass` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `homepage` | infra | apps / core-services-vm | `homepage` | protegida | `home` | nfs | não | `painel` | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
+| `immich` | produtividade | photos / core-services-vm | `immich_server`, `immich_ml`, `immich_redis`, `immich_db` | publica | `fotos` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `jellyfin` | mídia | media / core-services-vm | `jellyfin` | publica | `jellyfin` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `lidarr` | mídia | media / core-services-vm | `lidarr` | protegida | `lidarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `litellm` | ia | ai / ai-desktop-vm | `litellm` | interna | — | nfs | não | `llm` | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `loki` | monitoramento | apps / core-services-vm | `loki` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `n8n` | automação | apps / core-services-vm | `n8n` | protegida | `n8n` | nfs | não | `notificacoes` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
-| `nextcloud` | produtividade | apps / core-services-vm | `nextcloud_app`, `nextcloud_db`, `nextcloud_redis` | protegida | `nextcloud` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
+| `nextcloud` | produtividade | cloud / core-services-vm | `nextcloud_app`, `nextcloud_cron`, `nextcloud_db`, `nextcloud_redis` | publica | `nextcloud` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `ollama` | ia | ai / ai-desktop-vm | `ollama` | interna | — | nfs | não | — | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | protegida | `openwebui` | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `openclaude` | ia | ai / ai-desktop-vm | `openclaude` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |

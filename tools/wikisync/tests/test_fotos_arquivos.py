@@ -353,3 +353,28 @@ def test_homepage_immich():
     pb = (ROOT / "server/ansible/playbooks/setup-monitoring-stack-volumes.yml").read_text(encoding="utf-8")
     assert "{ name: 'HOMEPAGE_VAR_IMMICH_KEY', value: \"{{ homepage_widget_keys.immich }}\" }" in pb
     assert "HOMEPAGE_VAR_IMMICH_KEY" in _env(_svc(APPS)["homepage"])
+
+
+# --- Documentação e catálogo ---
+
+def _catalogo() -> dict:
+    src = (ROOT / "wiki/docs/02-visao-geral-arquitetura/09-catalogo-aplicacoes.md").read_text(encoding="utf-8")
+    linhas = {}
+    for l in src.splitlines():
+        cel = [c.strip() for c in l.strip().strip("|").split("|")]
+        if len(cel) == 11 and cel[0].startswith("`"):
+            linhas[cel[0].strip("`")] = cel
+    return linhas
+
+
+def test_catalogo_fotos_arquivos():
+    cat = _catalogo()
+    for app, stack, sub in (("immich", "photos", "fotos"), ("nextcloud", "cloud", "nextcloud"),
+                            ("collabora", "cloud", "office")):
+        c = cat[app]
+        assert c[2] == f"{stack} / core-services-vm", app
+        assert c[4] == "publica" and c[5] == f"`{sub}`", app
+        assert "11-fotos-arquivos.md" in c[10], app
+    assert "`nextcloud_cron`" in cat["nextcloud"][3]
+    assert (ROOT / "wiki/docs/01-manual-implementacao/11-fotos-arquivos.md").exists()
+    assert "11-fotos-arquivos.md" in (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
