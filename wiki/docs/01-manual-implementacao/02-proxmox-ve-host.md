@@ -1,5 +1,5 @@
 ---
-description: "Instala e configura o host Proxmox VE: repositórios, pool ZFS, servidor NFS, firewall e Node Exporter via role proxmox-host-config."
+description: "Instala e configura o host Proxmox VE: repositórios, pool ZFS, servidor NFS, firewall e o coletor Grafana Alloy."
 ---
 
 # Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS)
@@ -200,10 +200,21 @@ Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os ar
 Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 !!! info "Firewall do Proxmox"
-    As regras de entrada (SSH e Web UI) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é `proxmox_node_name` (`group_vars/all/main.yml`), não o nome lógico `proxmox_main_host`.
+    As regras de entrada (SSH e Web UI da LAN, NFS v4 na porta 2049 das VMs, Alloy na porta 12345 da `core-services-vm`) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é `proxmox_node_name` (`group_vars/all/main.yml`), não o nome lógico `proxmox_main_host`. As tarefas específicas do Proxmox (repositórios e firewall) só rodam quando existe `/usr/bin/pveversion`: no Proxmox VE o fato `ansible_distribution` vale `Debian`, então ele não serve para reconhecer o host.
 
 ```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
+# No Proxmox VE o fato ansible_distribution é 'Debian'; o host é reconhecido pelo pveversion.
+- name: "Detectar se o host é um Proxmox VE"
+  ansible.builtin.stat:
+    path: /usr/bin/pveversion
+  register: pve_binary
+
+- name: "Verificar se existe o repositório enterprise no formato .list"
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list.d/pve-enterprise.list
+  register: pve_enterprise_list
+
 - name: "Atualizar repositórios Proxmox (remover enterprise, adicionar no-subscription)"
   block:
     - name: "Comentar repositório enterprise"
@@ -211,13 +222,13 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
         path: /etc/apt/sources.list.d/pve-enterprise.list
         regexp: '^deb'
         replace: '#deb'
-      when: ansible_distribution == 'Proxmox VE' # Garante que só roda em PVE
+      when: pve_binary.stat.exists and pve_enterprise_list.stat.exists
     - name: "Adicionar repositório no-subscription"
       ansible.builtin.apt_repository:
         repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
         state: present
         filename: pve-no-subscription
-      when: ansible_distribution == 'Proxmox VE'
+      when: pve_binary.stat.exists
   notify: Update apt cache
 
 - name: "Atualizar todos os pacotes do sistema"
@@ -258,7 +269,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     enabled: yes
 
 # Regras primeiro: ligar o firewall com DROP antes delas cortaria o acesso ao host.
-- name: "Permitir SSH e Web UI no Firewall do Host Proxmox"
+- name: "Permitir SSH, Web UI, NFS e Alloy no Firewall do Host Proxmox"
   community.proxmox.proxmox_firewall:
     level: node
     node: "{{ proxmox_node_name }}" # Nome do nó no Proxmox (group_vars), não o nome lógico do inventário
@@ -267,11 +278,13 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     rules:
       - { pos: 0, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ proxmox_ssh_allowed_cidrs }}", dport: "22", proto: tcp, comment: "Allow SSH from Local LAN" }
       - { pos: 1, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ proxmox_web_ui_allowed_cidrs }}", dport: "8006", proto: tcp, comment: "Allow Proxmox WebUI from Local LAN" }
+      - { pos: 2, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ vm_nfs_allowed_clients_cidr }}", dport: "2049", proto: tcp, comment: "NFS v4 das VMs" }
+      - { pos: 3, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ core_services_vm_ip_var }}", dport: "12345", proto: tcp, comment: "Alloy: Prometheus da core-services-vm" }
     api_user: "{{ proxmox_api_user }}" # Do vault.yml
     api_password: "{{ proxmox_api_password }}" # Do vault.yml
     api_host: "{{ ansible_host }}" # IP do host Proxmox no inventário
   notify: Reload PVE Firewall
-  when: ansible_distribution == 'Proxmox VE'
+  when: pve_binary.stat.exists
 
 - name: "Configurar Firewall Proxmox (PVE Firewall) - Políticas Globais"
   community.proxmox.proxmox_cluster_firewall_options:
@@ -282,7 +295,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     api_password: "{{ proxmox_api_password }}"
     api_host: "{{ ansible_host }}"
   notify: Reload PVE Firewall
-  when: ansible_distribution == 'Proxmox VE'
+  when: pve_binary.stat.exists
 
 - name: "Hardening Configuração SSHD"
   ansible.builtin.lineinfile:
@@ -297,75 +310,6 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
     - { regexp: '^#?UsePAM', line: 'UsePAM yes' } # Manter PAM para `su` e outras funcionalidades
   notify: Restart sshd
-
-# --- Instalação do Node Exporter (Host Proxmox) para Prometheus ---
-- name: "Verificar se Node Exporter já está instalado (binário)"
-  ansible.builtin.stat:
-    path: /usr/local/bin/node_exporter
-  register: node_exporter_host_binary
-
-- name: Instalar Node Exporter (se não existir)
-  when: not node_exporter_host_binary.stat.exists
-  block:
-    - name: Checar última release do Node Exporter no GitHub
-      ansible.builtin.uri:
-        url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"
-        return_content: yes
-      register: node_exporter_latest_release
-      run_once: true # Para evitar múltiplas chamadas à API se rodar em vários hosts
-
-    - name: Definir URL de download do Node Exporter
-      ansible.builtin.set_fact:
-        node_exporter_version: "{{ node_exporter_latest_release.json.tag_name | regex_replace('^v(.*)$', '\\1') }}"
-        node_exporter_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
-
-    - name: Baixar Node Exporter
-      ansible.builtin.get_url:
-        url: "{{ node_exporter_download_url }}"
-        dest: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
-        mode: '0644'
-
-    - name: Descompactar Node Exporter
-      ansible.builtin.unarchive:
-        src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
-        dest: "/tmp/"
-        remote_src: yes # O arquivo .tar.gz está no host remoto (Proxmox)
-
-    - name: Mover binário Node Exporter para /usr/local/bin
-      ansible.builtin.copy:
-        src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
-        dest: "/usr/local/bin/node_exporter"
-        mode: '0755'
-        remote_src: yes # O binário extraído está no host remoto
-
-    - name: Criar usuário de sistema 'node_exporter'
-      ansible.builtin.user:
-        name: node_exporter
-        shell: /bin/false
-        system: yes
-        create_home: no
-
-    - name: Criar arquivo de serviço systemd para Node Exporter (Host)
-      ansible.builtin.template:
-        src: node_exporter_host.service.j2 # Template específico para o host
-        dest: /etc/systemd/system/node_exporter.service
-        mode: '0644'
-      notify: Reload systemd and restart node_exporter_host
-
-    - name: Limpar arquivos temporários de instalação do Node Exporter
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
-        - "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64"
-
-- name: Garantir que Node Exporter (Host) está habilitado e rodando
-  ansible.builtin.systemd_service:
-    name: node_exporter
-    state: started
-    enabled: yes
-  # Esta task roda mesmo se o Node Exporter já existia, garantindo que o serviço está OK.
 
 # --- Configuração do Servidor NFS ---
 - name: "Garantir que nfs-kernel-server está instalado"
@@ -389,51 +333,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     enabled: yes
 ```
 
-* `templates/`: Contém arquivos de template Jinja2 (e.g., `node_exporter_host.service.j2`, `etc_exports.j2`).
-
-#### Template `templates/node_exporter_host.service.j2`
-
-```systemd title="ansible/roles/infra/proxmox-host-config/templates/node_exporter_host.service.j2"
-# ansible/roles/infra/proxmox-host-config/templates/node_exporter_host.service.j2
-[Unit]
-Description=Node Exporter for Prometheus (Proxmox Host)
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-User=node_exporter
-Group=node_exporter
-Type=simple
-ExecStart=/usr/local/bin/node_exporter \
-    --collector.zfs \
-    --collector.ksm \
-    --collector.systemd \
-    --collector.thermal_zone \
-    --collector.power_supply \
-    --collector.mdadm \
-    --collector.meminfo_numa \
-    --collector.interrupts \
-    --collector.entropy \
-    --collector.bonding \
-    --collector.buddyinfo \
-    --collector.conntrack \
-    --collector.cpu \
-    --collector.diskstats \
-    --collector.filesystem \
-    --collector.loadavg \
-    --collector.meminfo \
-    --collector.netdev \
-    --collector.netstat \
-    --collector.stat \
-    --collector.time \
-    --collector.vmstat \
-    --collector.pressure
-    # Adicione ou remova coletores conforme necessário.
-    # Para Proxmox, --collector.zfs é particularmente útil.
-
-[Install]
-WantedBy=multi-user.target
-```
+* `templates/`: Contém arquivos de template Jinja2 (e.g., `etc_exports.j2`).
 
 #### Template `templates/etc_exports.j2`
 
@@ -495,7 +395,7 @@ Handlers são tarefas que são executadas apenas se notificadas por uma mudança
 
 - name: Reload PVE Firewall
   ansible.builtin.command: pve-firewall restart
-  when: ansible_distribution == 'Proxmox VE'
+  when: pve_binary.stat.exists
   # Usar 'command' pois pode não haver um módulo Ansible específico para 'pve-firewall restart'
   # que seja idempotente da maneira que queremos (apenas recarregar).
 
@@ -503,17 +403,6 @@ Handlers são tarefas que são executadas apenas se notificadas por uma mudança
   ansible.builtin.systemd_service:
     name: sshd # Ou ssh.service, dependendo da distro
     state: restarted
-
-- name: Reload systemd and restart node_exporter_host
-  ansible.builtin.systemd: # Módulo systemd para daemon_reload
-    daemon_reload: yes
-  notify: Restart node_exporter_host_service # Encadeia para o próximo handler
-
-- name: Restart node_exporter_host_service
-  ansible.builtin.systemd_service:
-    name: node_exporter
-    state: restarted
-    enabled: yes # Garante que está habilitado também
 
 - name: Export filesystems
   ansible.builtin.command: exportfs -ra
@@ -540,11 +429,12 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
 
   roles:
     - role: infra/proxmox-host-config # Aplica o role que configura o host
+    - role: infra/alloy # Coletor de logs e métricas (seção 4.4 do manual); sem Docker no host
 ```
 
 ### Executando o Playbook `setup-proxmox-host.yml`
 
-1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/node_exporter_host.service.j2`, `templates/etc_exports.j2`, e `handlers/main.yml` com o conteúdo apropriado.
+1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/etc_exports.j2` e `handlers/main.yml`, e que o role `ansible/roles/infra/alloy/` existe ([seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)) com o conteúdo apropriado.
 2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 
@@ -560,9 +450,9 @@ Após a execução bem-sucedida deste playbook, seu host Proxmox VE estará com 
 * Sistema atualizado.
 * Pacotes essenciais instalados.
 * Fuso horário e NTP configurados.
-* Firewall PVE básico configurado e habilitado.
+* Firewall PVE configurado e habilitado: entrada só para SSH e Web UI (LAN), NFS v4 (VMs) e Alloy (`core-services-vm`).
 * Configuração SSHd fortalecida.
-* Node Exporter instalado e rodando para monitoramento com Prometheus.
+* Grafana Alloy instalado e enviando métricas (inclusive ZFS) e o journal do host para o Prometheus e o Loki.
 * Servidor NFS configurado e exportando os datasets ZFS.
 
 Com o host Proxmox pronto, o próximo passo é o [Provisionamento das Máquinas Virtuais (VMs) com Ansible](03-provisionamento-vms.md).

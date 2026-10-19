@@ -7,3 +7,4 @@
 
   roles:
     - role: infra/proxmox-host-config # Aplica o role que configura o host
+    - role: infra/alloy # Coletor de logs e métricas (seção 4.4 do manual); sem Docker no host

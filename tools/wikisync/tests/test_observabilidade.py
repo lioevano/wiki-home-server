@@ -107,3 +107,34 @@ def test_vms_recebem_alloy_depois_do_docker():
     assert plays[i_alloy]["hosts"].split()[0] == "ubuntu_vms"
     assert "node_exporter" not in (ROOT / "server/ansible/roles/common/tasks/main.yml").read_text(encoding="utf-8").lower()
     assert not (ROOT / "server/ansible/roles/common/templates/node_exporter_vm.service.j2").exists()
+
+
+# --- Host Proxmox: Alloy, condição pveversion e firewall ---
+
+PVE_TASKS = ROOT / "server/ansible/roles/infra/proxmox-host-config/tasks/main.yml"
+
+
+def test_sem_condicao_proxmox_ve():
+    # No Proxmox o fato ansible_distribution é 'Debian': a condição antiga pulava as tarefas sem avisar.
+    for f in (ROOT / "server/ansible").rglob("*.yml"):
+        assert "ansible_distribution == 'Proxmox VE'" not in f.read_text(encoding="utf-8"), f
+
+
+def test_firewall_host_libera_nfs_e_alloy_antes_do_drop():
+    tasks = yaml.safe_load(PVE_TASKS.read_text(encoding="utf-8"))
+    nomes = [t.get("name", "") for t in tasks]
+    i_regras = next(i for i, t in enumerate(tasks) if "community.proxmox.proxmox_firewall" in t)
+    i_drop = next(i for i, t in enumerate(tasks) if "community.proxmox.proxmox_cluster_firewall_options" in t)
+    assert i_regras < i_drop
+    regras = {r["pos"]: r for r in tasks[i_regras]["community.proxmox.proxmox_firewall"]["rules"]}
+    assert regras[2]["dport"] == "2049" and "vm_nfs_allowed_clients_cidr" in regras[2]["source"]
+    assert regras[3]["dport"] == "12345" and "core_services_vm_ip_var" in regras[3]["source"]
+    assert not any("node exporter" in n.lower() for n in nomes)
+    play = yaml.safe_load((ROOT / "server/ansible/playbooks/setup-proxmox-host.yml").read_text(encoding="utf-8"))[0]
+    assert _roles(play) == ["infra/proxmox-host-config", "infra/alloy"]
+
+
+def test_condicao_pve_usa_pveversion():
+    tasks = yaml.safe_load(PVE_TASKS.read_text(encoding="utf-8"))
+    assert tasks[0].get("ansible.builtin.stat", {}).get("path") == "/usr/bin/pveversion"
+    assert tasks[0].get("register") == "pve_binary"
