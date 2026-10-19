@@ -95,7 +95,7 @@ Utilize ativamente a Stack de Monitoramento (Prometheus, Grafana, Loki) — veja
     *   Uso de CPU, RAM, Espaço em Disco, Swap (para o Host Proxmox e cada VM).
     *   Tráfego de Rede (por interface, por VM).
     *   Status e Performance do Pool ZFS (saúde, capacidade, IOPS, latência, ARC stats).
-    *   Métricas do Node Exporter de cada sistema.
+    *   Métricas do Alloy de cada sistema (`node_*`) e dos containers (`container_*`).
     *   Status dos containers no painel Homepage e sondas do blackbox-exporter (ver [Painel e Notificações](../01-manual-implementacao/09-painel-notificacoes.md)).
     *   Métricas do Cloudflare Tunnel.
 *   **Alertas (Grafana Alerting → n8n → Telegram):**

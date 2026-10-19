@@ -24,6 +24,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 
 | Aplicação | Stack / VM | Integrações ativas | Página |
 |---|---|---|---|
+| `alloy` | ansible:infra/alloy / proxmox_main_host; ansible:infra/alloy / core-services-vm; ansible:infra/alloy / ai-desktop-vm | metricas, logs, documentacao, notificacoes | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `authelia` | core / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/05-rede-segura.md` |
 | `blackbox-exporter` | apps / core-services-vm | metricas, logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `cloudflared` | core / core-services-vm | metricas, logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/05-rede-segura.md` |
@@ -43,7 +44,6 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `openclaw` | ai / ai-desktop-vm | logs, dados, variaveis, llm, documentacao, notificacoes | `01-manual-implementacao/08-stack-ia.md` |
 | `portainer` | ansible:infra/docker / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, documentacao, notificacoes, painel | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `prometheus` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, metricas, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
-| `promtail` | apps / core-services-vm; ai / ai-desktop-vm | dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/07-deploy-apps.md` |
 | `qbittorrent` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
 | `radarr` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
 | `sonarr` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
@@ -58,7 +58,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `dados` | infra (ZFS no host Proxmox, exportado por NFS) | Dados ≠ nenhum | [dados](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#dados) |
 | `documentacao` | wiki | todas | [documentacao](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#documentacao) |
 | `llm` | `litellm` | `+llm` | [llm](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#llm) |
-| `logs` | `loki` (coleta pelo `promtail`) | todas | [logs](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#logs) |
+| `logs` | `loki` (coleta pelo `alloy`) | todas | [logs](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#logs) |
 | `metricas` | `prometheus` | Métricas = sim | [metricas](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#metricas) |
 | `notificacoes` | `n8n` (coletores: Grafana Alerting, `blackbox-exporter`, `diun`) | todas | [notificacoes](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#notificacoes) |
 | `painel` | `homepage` | Exposição ≠ interna | [painel](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#painel) |
@@ -71,9 +71,9 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 |---|---|---|
 | `01-manual-implementacao/00-preparacao-planejamento.md` | Seção 0: Preparação e Planejamento | Pré-requisitos, estrutura do repositório (server/, wiki/, tools/), .gitignore e modelo de variáveis das stacks antes de começar. |
 | `01-manual-implementacao/01-maquina-controle-ansible.md` | Seção 1: Configuração da Máquina de Controle Ansible | Prepara a máquina de controle: Ansible, chaves SSH, Ansible Vault, inventário hosts.ini e variáveis globais em group_vars. |
-| `01-manual-implementacao/02-proxmox-ve-host.md` | Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS) | Instala e configura o host Proxmox VE: repositórios, pool ZFS, servidor NFS, firewall e Node Exporter via role proxmox-host-config. |
+| `01-manual-implementacao/02-proxmox-ve-host.md` | Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS) | Instala e configura o host Proxmox VE: repositórios, pool ZFS, servidor NFS, firewall e o coletor Grafana Alloy. |
 | `01-manual-implementacao/03-provisionamento-vms.md` | Seção 3: Provisionamento das Máquinas Virtuais (VMs) com Ansible | Cria as VMs core-services-vm e ai-desktop-vm a partir de template Cloud-Init com o role proxmox-vm, incluindo passthrough de GPU. |
-| `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS) | Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e Node Exporter. |
+| `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` | Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS) | Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e o coletor Grafana Alloy. |
 | `01-manual-implementacao/05-rede-segura.md` | Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia) | Rede segura na core-services-vm: Traefik como proxy reverso, Cloudflare Tunnel para acesso externo e Authelia para 2FA. |
 | `01-manual-implementacao/06-deploy-core.md` | Seção 6: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia) | Deploy da stack core (Traefik, Cloudflared e Authelia) pelo Ansible, com o playbook setup-core-networking.yml. |
 | `01-manual-implementacao/07-deploy-apps.md` | Seção 7: Deploy de Aplicações (Nextcloud, Mídia, Monitoramento, n8n, Home Assistant) | Deploy das aplicações na stack apps: Nextcloud, mídia, monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible. |
@@ -138,7 +138,10 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/apps/ml-tools/tasks/main.yml` | role-tasks | `01-manual-implementacao/08-stack-ia.md` |
 | `ansible/roles/common/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `ansible/roles/common/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
-| `ansible/roles/common/templates/node_exporter_vm.service.j2` | role-template | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/alloy/defaults/main.yml` | role-defaults | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/alloy/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/alloy/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/alloy/templates/config.alloy.j2` | role-template | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/roles/infra/authelia-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
@@ -150,7 +153,6 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/proxmox-host-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/02-proxmox-ve-host.md` |
 | `ansible/roles/infra/proxmox-host-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md` |
 | `ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md` |
-| `ansible/roles/infra/proxmox-host-config/templates/node_exporter_host.service.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md` |
 | `ansible/roles/infra/proxmox-vm/defaults/main.yml` | role-defaults | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/infra/proxmox-vm/handlers/main.yml` | role-handlers | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/infra/proxmox-vm/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
@@ -170,10 +172,9 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/homepage/services.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/homepage/settings.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/litellm_config.yaml.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
-| `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md` |
+| `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
-| `ansible/templates/promtail-config.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` |
 | `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |

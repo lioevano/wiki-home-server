@@ -202,7 +202,7 @@ Se você precisar de um espaço de armazenamento separado dentro de uma VM (e n�
     *   A aba "**Summary**" de cada VM mostra o uso atual de CPU, RAM, disco e tráfego de rede.
     *   A aba "**Monitor**" oferece gráficos históricos mais detalhados para esses mesmos recursos.
 *   **Stack de Monitoramento (Prometheus e Grafana):**
-    *   O **Node Exporter** (instalado em cada VM e no host Proxmox) coleta métricas detalhadas do sistema.
+    *   O **Grafana Alloy** (instalado em cada VM e no host Proxmox) coleta métricas detalhadas do sistema e, nas VMs, de cada container.
     *   **Grafana Dashboards:** Você pode (e deve) importar ou criar dashboards no Grafana para visualizar essas métricas por VM. Dashboards populares como "Node Exporter Full" (ID 1860 no grafana.com/dashboards) ou "Proxmox VE Host and VM stats" (ID 10347) são excelentes pontos de partida.
 *   **Dentro da VM (Linha de Comando):**
     *   `htop` ou `top`: Uso de CPU e RAM por processo.
@@ -247,6 +247,6 @@ A decisão de escalar verticalmente (adicionar mais recursos a uma VM existente)
     *   Se adicionar um novo serviço (ou aumentar a carga de um existente) em uma VM já existente está começando a degradar significativamente a performance dos outros serviços naquela VM (mesmo após tentar adicionar mais CPU/RAM a ela), pode ser hora de mover esse serviço para uma **nova VM** (assumindo que os recursos do host Proxmox o permitam).
 *   **Limites de Recursos Totais do Host Proxmox:**
     *   Lembre-se sempre da capacidade total do seu host Proxmox (CPU, RAM, I/O de disco). Não adianta criar muitas VMs se o host físico não consegue suportar a carga combinada de todas elas de forma estável.
-    *   Monitore o uso de recursos do **host Proxmox** (via UI Proxmox ou Node Exporter no Grafana) além do uso das VMs individuais.
+    *   Monitore o uso de recursos do **host Proxmox** (via UI Proxmox ou pelas métricas do Alloy no Grafana) além do uso das VMs individuais.
 
 Gerenciar recursos de VM é um ato de equilíbrio contínuo. Monitore regularmente o uso, entenda os requisitos das suas aplicações, e não hesite em ajustar as alocações (ou criar novas VMs) conforme suas necessidades evoluem, sempre mantendo sua configuração Ansible como a fonte da verdade para a Infraestrutura como Código.

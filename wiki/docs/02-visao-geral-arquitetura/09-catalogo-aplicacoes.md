@@ -34,6 +34,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 
 | Aplicação | Categoria | Stack / VM | Serviços | Exposição | Subdomínio | Dados | Métricas | Provê | Ajustes | Página |
 |---|---|---|---|---|---|---|---|---|---|---|
+| `alloy` | monitoramento | ansible:infra/alloy / proxmox_main_host; ansible:infra/alloy / core-services-vm; ansible:infra/alloy / ai-desktop-vm | `alloy` | interna | — | nenhum | sim | `logs`, `metricas` | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy) |
 | `authelia` | infra | core / core-services-vm | `authelia`, `authelia_db` | publica | `auth` | nfs | não | `autenticacao` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
 | `blackbox-exporter` | monitoramento | apps / core-services-vm | `blackbox-exporter` | interna | — | nfs | sim | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `cloudflared` | infra | core / core-services-vm | `cloudflared` | interna | — | nenhum | sim | `acesso-externo` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
@@ -53,7 +54,6 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `openclaw` | ia | ai / ai-desktop-vm | `openclaw` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | protegida | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |
 | `prometheus` | monitoramento | apps / core-services-vm | `prometheus` | protegida | `prometheus` | nfs | sim | `metricas` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
-| `promtail` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `promtail`, `promtail_ai` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `qbittorrent` | mídia | apps / core-services-vm | `qbittorrent` | protegida | `qbittorrent` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `radarr` | mídia | apps / core-services-vm | `radarr` | protegida | `radarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `sonarr` | mídia | apps / core-services-vm | `sonarr` | protegida | `sonarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |

@@ -48,13 +48,13 @@ A organização dos arquivos Ansible no nosso projeto é crucial para a manuteni
 
 *   **`setup-proxmox-host.yml`:**
     *   **Alvo:** `proxmox_main_host`.
-    *   **Função:** Configurações iniciais do Proxmox VE (repositórios, pacotes, firewall, SSH hardening, Node Exporter, servidor NFS).
+    *   **Função:** Configurações iniciais do Proxmox VE (repositórios, pacotes, firewall, SSH hardening, servidor NFS) e o coletor Grafana Alloy.
 *   **`vm-deploy.yml`:**
     *   **Alvo:** `proxmox_main_host` (para interagir com a API Proxmox).
     *   **Função:** Provisiona as VMs (`core-services-vm`, `ai-desktop-vm`) a partir do template Cloud-Init, configurando recursos e Cloud-Init.
 *   **`setup-base-ubuntu.yml`:**
     *   **Alvo:** `ubuntu_vms` (grupo contendo todas as VMs Ubuntu).
-    *   **Função:** Aplica configurações base (pacotes, fuso horário, cliente NFS, UFW, Node Exporter VM). Instala Docker Engine e Portainer na `core-services-vm`. Instala GUI opcional.
+    *   **Função:** Aplica configurações base (pacotes, fuso horário, cliente NFS, UFW). Instala Docker Engine e Portainer na `core-services-vm`, o Grafana Alloy em todas as VMs e a GUI opcional.
 *   **`setup-core-networking.yml`:**
     *   **Alvo:** `core-services-vm`.
     *   **Função:** Prepara arquivos de configuração para Traefik e Authelia, e faz o deploy da stack Docker `core` (Traefik, Cloudflared e Authelia).

@@ -167,7 +167,7 @@ Embora este guia foque primariamente em Linux para os serviços do servidor, voc
 *   **Documente Suas VMs:** Mesmo que uma VM não seja totalmente gerenciada pelo Ansible, adicione uma entrada para ela no seu inventário Ansible (`hosts.ini`) com seu IP e um breve comentário sobre seu propósito. Isso ajuda a manter um registro centralizado da sua infraestrutura.
 *   **Nomeação Consistente:** Use um esquema de nomeação claro e consistente para suas VMs e seus hostnames.
 *   **Recursos com Moderação:** Comece com uma alocação de recursos modesta (CPU, RAM) e aumente apenas se o monitoramento indicar necessidade.
-*   **Monitoramento:** Assim que a VM estiver operacional, instale o Node Exporter nela (se for Linux e você quiser métricas detalhadas) e adicione-a como um alvo no seu Prometheus para monitorar seu uso de recursos.
+*   **Monitoramento:** Assim que a VM estiver operacional, inclua-a no grupo `ubuntu_vms` do inventário (ou aplique o role `infra/alloy` a ela) e adicione o alvo `<ip>:12345` ao job `alloy` do `prometheus.yml.j2`, para monitorar seu uso de recursos e coletar seus logs.
 *   **Backups:** Não se esqueça de configurar backups para suas novas VMs no sistema de backup do Proxmox VE.
 *   **Segurança:** Aplique princípios de segurança básicos (firewall, atualizações, senhas fortes) a todas as VMs, mesmo as de teste.
 

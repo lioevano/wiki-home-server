@@ -93,7 +93,9 @@ graph TD
     *   **Atualizações Regulares do Host:** Manter o Proxmox VE e o Debian subjacente atualizados.
 
 4.  **Camada de Segurança das Máquinas Virtuais (VMs):**
-    *   **UFW (Uncomplicated Firewall):** Habilitado nas VMs (`core-services-vm` e `ai-desktop-vm` se tiver GUI) para controlar o tráfego de entrada para as próprias VMs, permitindo apenas as portas necessárias (e.g., 80/443 para Traefik, 22 para SSH, 9100 para Node Exporter).
+    *   **UFW (Uncomplicated Firewall):** Habilitado nas VMs (`core-services-vm` e `ai-desktop-vm` se tiver GUI) para controlar o tráfego de entrada para as próprias VMs, permitindo apenas as portas necessárias (e.g., 80/443 para Traefik, 22 para SSH, 12345 para o Alloy, só a partir da `core-services-vm`).
+    *   **Portas na LAN sem autenticação:** Prometheus (9090, *remote write*), Loki (3100) e Alloy (12345, interface e `/metrics`) não têm login; ficam só na LAN, sem rota no Traefik nem no túnel. Portas publicadas pelo Docker não passam pelo UFW, então a proteção do 9090 e do 3100 é a própria LAN; o 12345 é limitado pelo UFW e pelo PVE Firewall à `core-services-vm`.
+    *   **Usuário `alloy` no grupo `docker`:** necessário para ler logs e métricas dos containers; equivale a root na VM.
     *   **Atualizações Automáticas (`unattended-upgrades`):** Configuradas nas VMs Ubuntu para aplicar patches de segurança automaticamente.
     *   **Isolamento:** As VMs são naturalmente isoladas umas das outras e do host pelo hypervisor.
 

@@ -31,7 +31,7 @@ O Proxmox VE gerencia os recursos de hardware do servidor físico e os distribui
 *   **RAM (48GB DDR4):**
     *   O Proxmox host em si consome uma pequena quantidade de RAM (geralmente 1-2GB), mais o ARC do ZFS, que usa a memória livre como cache e a devolve sob pressão.
     *   O restante é dividido entre as VMs: 16GB para a `core-services-vm` e 16GB para a `ai-desktop-vm`, o que deixa margem para o ARC e para aumentar a VM de IA se modelos maiores pedirem.
-    *   O KSM (Kernel Samepage Merging) pode ser habilitado no Proxmox para deduplicar páginas de memória idênticas entre VMs, economizando RAM, mas com um pequeno custo de CPU. (O Node Exporter no host está configurado para coletar métricas KSM).
+    *   O KSM (Kernel Samepage Merging) pode ser habilitado no Proxmox para deduplicar páginas de memória idênticas entre VMs, economizando RAM, mas com um pequeno custo de CPU. (O Alloy do host coleta as métricas de memória; o coletor `ksmd` do `prometheus.exporter.unix` vem desligado e pode ser ligado no `config.alloy.j2`.)
 *   **Armazenamento:**
     *   **SSD NVMe 1TB:** Usado para o sistema operacional Proxmox VE e para os discos virtuais das VMs (`local-lvm`). Isso garante boot rápido do host e boa performance de I/O para as VMs.
     *   **HDDs 2x 500GB (ZFS Pool `/data`):** Usados para armazenamento de dados persistentes das aplicações, backups de VMs, etc., como detalhado na [Estratégia de Armazenamento](03-armazenamento-zfs-nfs.md).

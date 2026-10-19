@@ -102,8 +102,8 @@ Siga estes passos metodicamente:
         # cd server/ansible && ansible-playbook -i inventories/home/hosts.ini playbooks/full-deploy.yml --ask-vault-pass
         ```
         O playbook `full-deploy.yml` não executa o `vm-deploy.yml`: as VMs vêm da restauração (se precisar recriá-las, rode-o antes). Ele irá:
-        *   Executar `setup-proxmox-host.yml`: Reconfigurar o host Proxmox (NFS server, firewall, pacotes, Node Exporter, etc.) para o estado definido.
-        *   Executar `setup-base-ubuntu.yml`: Reconfigurar a base das VMs (NFS client, UFW, Node Exporter VM, Docker, Portainer na `core-services-vm`).
+        *   Executar `setup-proxmox-host.yml`: Reconfigurar o host Proxmox (NFS server, firewall, pacotes, Alloy, etc.) para o estado definido.
+        *   Executar `setup-base-ubuntu.yml`: Reconfigurar a base das VMs (NFS client, UFW, Alloy, Docker, Portainer na `core-services-vm`).
         *   Executar `setup-core-networking.yml`: Re-deployar as configurações e containers para Traefik, Cloudflared e Authelia.
         *   Executar os playbooks `setup-<stack>-volumes.yml` (produtividade/automação, mídia, monitoramento, n8n e IA): Garantir que os diretórios NFS para as stacks Docker estejam com as permissões corretas e que os arquivos `.env` sejam recriados nas VMs.
 

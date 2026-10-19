@@ -75,4 +75,5 @@ qm status 100  # proxmox CLI para core-services-vm
 | Authelia pedindo login em loop | Cookie/SSL mismatch | Verificar que `traefik.http.routers.*.tls` está ativo |
 | NFS mount falhando na VM | Serviço NFS parou no host | `systemctl status nfs-kernel-server` no Proxmox |
 | Ollama não detecta GPU | Passthrough da GPU AMD ou `/dev/kfd`/`/dev/dri` ausentes | `docker logs ollama` e `ls /dev/kfd /dev/dri` na `ai-desktop-vm` (imagem `ollama/ollama:rocm`) |
+| Sem logs ou métricas de um host (alerta `host-sem-resposta`) | Alloy parado, configuração inválida ou firewall | `systemctl status alloy` e `journalctl -u alloy` no host; componentes em `http://<host>:12345` |
 | LiteLLM retornando erro 429 | Rate limit da API externa | Verificar config `config.yaml` do LiteLLM |

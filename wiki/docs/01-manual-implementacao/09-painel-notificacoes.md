@@ -10,7 +10,7 @@ Duas integrações transversais do [Índice de Integrações](../02-visao-geral-
 
 ```
 Prometheus ── blackbox (no ar? certificado?) ─┐
-Prometheus ── node_exporter (disco/RAM/CPU/ZFS)┼─► Grafana Alerting ─┐
+Prometheus ── Alloy (disco/RAM/CPU/ZFS/reinícios)┼─► Grafana Alerting ─┐
 Loki ── logs (login falho no Authelia) ───────┘                     │
 Diun (core e IA) ── imagem nova ────────────────────────────────────┤
 scripts/notify.sh (backups) e Proxmox ──────────────────────────────┼─► n8n /webhook/notificar ─► Telegram

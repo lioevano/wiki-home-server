@@ -113,13 +113,15 @@ Nenhuma aplicação fica acessível pela internet; tratar como remoção de `ace
 |---|---|
 | Provedor | `prometheus` |
 | Aplica-se a | Métricas = sim |
-| Arquivos | `ansible/templates/prometheus.yml.j2`; playbook `ansible/playbooks/setup-monitoring-stack-volumes.yml` (renderiza o template) |
+| Arquivos | `ansible/templates/prometheus.yml.j2`; playbook `ansible/playbooks/setup-monitoring-stack-volumes.yml` (renderiza o template); `ansible/roles/infra/alloy/templates/config.alloy.j2` (métricas de host e containers por `remote_write`) |
 | Páginas | página da aplicação; `01-manual-implementacao/07-deploy-apps.md` |
 | Manual | — |
 
 ### Regras
 - **MET-1** — existe um `job_name` em `prometheus.yml.j2` cujo target aponta para um serviço da aplicação (`<serviço>:<porta>`). O próprio `prometheus` cumpre com o job `prometheus` (`localhost:9090`). *Evidência:* `scrape_configs`.
-- **MET-2 (sobra)** — todo job aponta para um serviço do catálogo com Métricas = sim, **exceto** jobs `node_exporter_*`, que monitoram hosts/VMs (não aplicações). *Evidência:* `scrape_configs`.
+- **MET-2 (sobra)** — todo job aponta para um serviço do catálogo com Métricas = sim (o job `alloy` aponta para o `alloy` de cada host). *Evidência:* `scrape_configs`.
+
+Métricas de host e por container não dependem desta integração: o Alloy de cada host as envia por `remote_write` (`node_*` e, nas VMs, `container_*` do cAdvisor), para qualquer aplicação, sem regra por consumidor. MET-1 vale para as aplicações com `/metrics` próprio.
 
 ### Ao adicionar (por consumidor)
 1. Confirmar na documentação oficial a porta/caminho de métricas; adicionar o job em `prometheus.yml.j2` (template estrutural) e citar na página da aplicação.
@@ -297,7 +299,7 @@ Entrada única: `POST /webhook/notificar` no n8n com `Authorization: Bearer <NOT
 
 ### Regras
 - **NTF-1** — disponibilidade: aplicação com Exposição `publica`/`protegida` tem alvo pela **URL interna** do serviço principal (ex.: `http://n8n:5678/healthz`; a URL pública passa pelo Authelia e não mede a aplicação) com `labels: {app: <id>}` no job `blackbox_http`; o alvo do `traefik` usa o módulo `tls_traefik` (mede também o certificado). Das `interna`, só `litellm` (`http://<ai_desktop_vm_ip_var>:4000/health/liveliness`) e `loki` (`http://loki:3100/ready`) têm alvo — as demais `interna` → `—`. *Evidência:* `prometheus.yml.j2`.
-- **NTF-2** — atualizações: existe um serviço do `diun` na mesma VM da aplicação (Stack/VM do `diun` × da aplicação). *Evidência:* catálogo e composes.
+- **NTF-2** — atualizações: existe um serviço do `diun` na mesma VM da aplicação (Stack/VM do `diun` × da aplicação). Aplicações sem container, instaladas como pacote do sistema (hoje o `alloy`), ficam fora: o Diun só observa imagens, e a versão do pacote é fixada no `group_vars` (`alloy_version`). *Evidência:* catálogo e composes.
 - **NTF-3** — eventos: aplicação com webhook nativo (`radarr`, `sonarr`, `homeassistant`, `jellyfin` via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → `✋`. Demais → `—`.
 - **NTF-4 (sobra)** — nenhum alvo do `blackbox_http` nem regra de alerta com `app` que não exista no catálogo. *Evidência:* `prometheus.yml.j2` e `rules.yml.j2`.
 
@@ -346,6 +348,6 @@ Remover `homepage`, `docker-socket-proxy` (se não usado por outro), os template
 
 Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) foram corrigidos pela skill `fix-integrations`.
 
-Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (Promtail na VM de IA, Open WebUI `protegida`, job `glances` removido).
+Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (coleta de logs na VM de IA — hoje pelo Alloy, que substituiu o Promtail em 2026-10-19 —, Open WebUI `protegida`, job `glances` removido).
 
 **Fora das regras** (para a reestruturação): a stack `apps` é um compose único, mas recebe cinco `.env` separados (hoje unidos à mão num `apps.env`, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.

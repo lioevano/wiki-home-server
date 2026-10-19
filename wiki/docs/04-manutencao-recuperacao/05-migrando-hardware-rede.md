@@ -108,7 +108,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         # cd server/ansible && ansible-playbook -i inventories/home/hosts.ini playbooks/full-deploy.yml --ask-vault-pass
         ```
         Isto irá:
-        *   Configurar o novo host Proxmox (NFS, firewall, pacotes, Node Exporter, etc.).
+        *   Configurar o novo host Proxmox (NFS, firewall, pacotes, Alloy, etc.).
         *   Aplicar/verificar as configurações das VMs restauradas (incluindo as novas configurações de passthrough de PCI).
         *   Configurar a base das VMs Ubuntu (cliente NFS, Docker, Portainer, etc.).
         *   Configurar a stack de rede core (Traefik, Cloudflared, Authelia).

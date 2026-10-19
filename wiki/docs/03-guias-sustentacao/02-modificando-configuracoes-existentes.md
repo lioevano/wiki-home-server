@@ -39,7 +39,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   `/etc/default/grub` e `/etc/kernel/cmdline`: Opções de boot do kernel (para IOMMU, etc.).
         *   `/etc/modules`, `/etc/modprobe.d/`: Módulos do kernel e blacklisting.
         *   `/etc/exports`: Configuração do servidor NFS (gerada pelo Ansible).
-        *   `/etc/systemd/system/` (e `override.conf` em subdiretórios): Arquivos de unidade Systemd para serviços como o Node Exporter (gerenciados por Ansible). O Ollama roda em container na stack `ai`, não como serviço systemd.
+        *   `/etc/systemd/system/` (e `override.conf` em subdiretórios): Arquivos de unidade Systemd para serviços gerenciados por Ansible. O Alloy é um pacote apt: a configuração fica em `/etc/alloy/config.alloy` e `/etc/default/alloy`, gerados pelo role `infra/alloy`. O Ollama roda em container na stack `ai`, não como serviço systemd.
 
 3.  **Máquinas Virtuais (VMs - `core-services-vm`, `ai-desktop-vm`):**
     As configurações base são gerenciadas pelo Ansible.
@@ -47,7 +47,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   `/etc/fstab`: Para montagens NFS automáticas.
         *   `/etc/ufw/`: Regras do firewall UFW.
         *   `/etc/apt/sources.list.d/`: Repositórios de pacotes APT (e.g., para Docker).
-        *   Configurações de serviços systemd (e.g., `/etc/systemd/system/node_exporter.service`).
+        *   Configuração do Alloy (`/etc/alloy/config.alloy`, `/etc/default/alloy`), gerada pelo role `infra/alloy`: para mudá-la, edite o `config.alloy.j2` pela wiki e rode o `setup-base-ubuntu.yml`.
     *   **Arquivos `.env` para Stacks Portainer:**
         *   Localizados em `{{ portainer_env_files_dest_path_on_vm }}` (e.g., `/opt/portainer_stack_envs/`) nas VMs.
         *   Gerados pelo Ansible (e.g., por `setup-media-stack-volumes.yml`). Contêm PUID/PGID, TZ, caminhos de volume, etc., para as stacks Docker.

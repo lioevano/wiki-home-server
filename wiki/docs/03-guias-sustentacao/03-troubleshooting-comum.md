@@ -51,7 +51,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
         ```bash
         journalctl -xe # Mostra os últimos logs com explicações de erros
         journalctl -f # Segue os logs do sistema em tempo real
-        journalctl -u nome_do_servico.service # Logs de um serviço systemd específico (e.g., sshd, nfs-kernel-server, node_exporter)
+        journalctl -u nome_do_servico.service # Logs de um serviço systemd específico (e.g., sshd, nfs-kernel-server, alloy)
         journalctl -p err # Mostra apenas logs com prioridade de erro ou superior
         ```
     *   **`dmesg`:** Mostra mensagens do buffer do kernel. Útil para problemas de hardware, drivers, ou erros de baixo nível.
