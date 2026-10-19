@@ -782,6 +782,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/10-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mídia
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2111,6 +2139,19 @@
 <td><a href="../../01-manual-implementacao/05-rede-segura/">Rede segura</a></td>
 </tr>
 <tr>
+<td><code>bazarr</code></td>
+<td>mídia</td>
+<td>media / core-services-vm</td>
+<td><code>bazarr</code></td>
+<td>protegida</td>
+<td><code>bazarr</code></td>
+<td>nfs</td>
+<td>não</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
+</tr>
+<tr>
 <td><code>blackbox-exporter</code></td>
 <td>monitoramento</td>
 <td>apps / core-services-vm</td>
@@ -2163,6 +2204,32 @@
 <td><a href="../../01-manual-implementacao/09-painel-notificacoes/">Painel e notificações</a></td>
 </tr>
 <tr>
+<td><code>flaresolverr</code></td>
+<td>mídia</td>
+<td>media / core-services-vm</td>
+<td><code>flaresolverr</code></td>
+<td>interna</td>
+<td>—</td>
+<td>nenhum</td>
+<td>não</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
+</tr>
+<tr>
+<td><code>gluetun</code></td>
+<td>mídia</td>
+<td>media / core-services-vm</td>
+<td><code>gluetun</code></td>
+<td>interna</td>
+<td>—</td>
+<td>nfs</td>
+<td>não</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
+</tr>
+<tr>
 <td><code>grafana</code></td>
 <td>monitoramento</td>
 <td>apps / core-services-vm</td>
@@ -2204,15 +2271,28 @@
 <tr>
 <td><code>jellyfin</code></td>
 <td>mídia</td>
-<td>apps / core-services-vm</td>
+<td>media / core-services-vm</td>
 <td><code>jellyfin</code></td>
-<td>protegida</td>
+<td>publica</td>
 <td><code>jellyfin</code></td>
 <td>nfs</td>
 <td>não</td>
 <td>—</td>
 <td>—</td>
-<td><a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de apps</a></td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
+</tr>
+<tr>
+<td><code>lidarr</code></td>
+<td>mídia</td>
+<td>media / core-services-vm</td>
+<td><code>lidarr</code></td>
+<td>protegida</td>
+<td><code>lidarr</code></td>
+<td>nfs</td>
+<td>não</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
 </tr>
 <tr>
 <td><code>litellm</code></td>
@@ -2345,9 +2425,22 @@
 <td><a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de apps</a></td>
 </tr>
 <tr>
+<td><code>prowlarr</code></td>
+<td>mídia</td>
+<td>media / core-services-vm</td>
+<td><code>prowlarr</code></td>
+<td>protegida</td>
+<td><code>prowlarr</code></td>
+<td>nfs</td>
+<td>não</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
+</tr>
+<tr>
 <td><code>qbittorrent</code></td>
 <td>mídia</td>
-<td>apps / core-services-vm</td>
+<td>media / core-services-vm</td>
 <td><code>qbittorrent</code></td>
 <td>protegida</td>
 <td><code>qbittorrent</code></td>
@@ -2355,12 +2448,12 @@
 <td>não</td>
 <td>—</td>
 <td>—</td>
-<td><a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de apps</a></td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
 </tr>
 <tr>
 <td><code>radarr</code></td>
 <td>mídia</td>
-<td>apps / core-services-vm</td>
+<td>media / core-services-vm</td>
 <td><code>radarr</code></td>
 <td>protegida</td>
 <td><code>radarr</code></td>
@@ -2368,12 +2461,38 @@
 <td>não</td>
 <td>—</td>
 <td>—</td>
-<td><a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de apps</a></td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
+</tr>
+<tr>
+<td><code>recyclarr</code></td>
+<td>mídia</td>
+<td>media / core-services-vm</td>
+<td><code>recyclarr</code></td>
+<td>interna</td>
+<td>—</td>
+<td>nfs</td>
+<td>não</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
+</tr>
+<tr>
+<td><code>seerr</code></td>
+<td>mídia</td>
+<td>media / core-services-vm</td>
+<td><code>seerr</code></td>
+<td>publica</td>
+<td><code>pedidos</code></td>
+<td>nfs</td>
+<td>não</td>
+<td>—</td>
+<td>—</td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
 </tr>
 <tr>
 <td><code>sonarr</code></td>
 <td>mídia</td>
-<td>apps / core-services-vm</td>
+<td>media / core-services-vm</td>
 <td><code>sonarr</code></td>
 <td>protegida</td>
 <td><code>sonarr</code></td>
@@ -2381,7 +2500,7 @@
 <td>não</td>
 <td>—</td>
 <td>—</td>
-<td><a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de apps</a></td>
+<td><a href="../../01-manual-implementacao/10-midia/">Mídia</a></td>
 </tr>
 <tr>
 <td><code>traefik</code></td>
@@ -2418,7 +2537,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 01:06:15 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 04:04:56 -03">19 de outubro de 2026</span>
   </span>
 
     

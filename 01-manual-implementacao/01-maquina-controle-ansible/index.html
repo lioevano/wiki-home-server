@@ -954,6 +954,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mídia
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2450,18 +2478,29 @@
 </span><span id="__span-8-85"><a id="__codelineno-8-85" name="__codelineno-8-85" href="#__codelineno-8-85"></a><span class="c1"># Token que autentica quem chama o webhook do n8n (gere com: openssl rand -hex 32).</span>
 </span><span id="__span-8-86"><a id="__codelineno-8-86" name="__codelineno-8-86" href="#__codelineno-8-86"></a><span class="nt">notificacoes_webhook_token</span><span class="p">:</span><span class="w"> </span><span class="s">"TOKEN_DO_WEBHOOK_DE_NOTIFICACOES"</span>
 </span><span id="__span-8-87"><a id="__codelineno-8-87" name="__codelineno-8-87" href="#__codelineno-8-87"></a>
-</span><span id="__span-8-88"><a id="__codelineno-8-88" name="__codelineno-8-88" href="#__codelineno-8-88"></a><span class="c1"># --- Painel (Homepage): credenciais dos widgets ---</span>
-</span><span id="__span-8-89"><a id="__codelineno-8-89" name="__codelineno-8-89" href="#__codelineno-8-89"></a><span class="c1"># Geradas na interface de cada aplicação depois do primeiro acesso (página 09).</span>
-</span><span id="__span-8-90"><a id="__codelineno-8-90" name="__codelineno-8-90" href="#__codelineno-8-90"></a><span class="c1"># O widget do Grafana usa o admin e grafana_admin_initial_password.</span>
-</span><span id="__span-8-91"><a id="__codelineno-8-91" name="__codelineno-8-91" href="#__codelineno-8-91"></a><span class="nt">homepage_widget_keys</span><span class="p">:</span>
-</span><span id="__span-8-92"><a id="__codelineno-8-92" name="__codelineno-8-92" href="#__codelineno-8-92"></a><span class="w">  </span><span class="nt">jellyfin</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_JELLYFIN"</span>
-</span><span id="__span-8-93"><a id="__codelineno-8-93" name="__codelineno-8-93" href="#__codelineno-8-93"></a><span class="w">  </span><span class="nt">radarr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_RADARR"</span>
-</span><span id="__span-8-94"><a id="__codelineno-8-94" name="__codelineno-8-94" href="#__codelineno-8-94"></a><span class="w">  </span><span class="nt">sonarr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_SONARR"</span>
-</span><span id="__span-8-95"><a id="__codelineno-8-95" name="__codelineno-8-95" href="#__codelineno-8-95"></a><span class="w">  </span><span class="nt">nextcloud</span><span class="p">:</span><span class="w"> </span><span class="s">"NC_TOKEN_DO_NEXTCLOUD"</span>
-</span><span id="__span-8-96"><a id="__codelineno-8-96" name="__codelineno-8-96" href="#__codelineno-8-96"></a><span class="w">  </span><span class="nt">homeassistant</span><span class="p">:</span><span class="w"> </span><span class="s">"TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT"</span>
-</span><span id="__span-8-97"><a id="__codelineno-8-97" name="__codelineno-8-97" href="#__codelineno-8-97"></a><span class="w">  </span><span class="nt">portainer</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_PORTAINER"</span>
-</span><span id="__span-8-98"><a id="__codelineno-8-98" name="__codelineno-8-98" href="#__codelineno-8-98"></a><span class="w">  </span><span class="nt">qbittorrent_user</span><span class="p">:</span><span class="w"> </span><span class="s">"admin"</span>
-</span><span id="__span-8-99"><a id="__codelineno-8-99" name="__codelineno-8-99" href="#__codelineno-8-99"></a><span class="w">  </span><span class="nt">qbittorrent_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_DO_QBITTORRENT"</span>
+</span><span id="__span-8-88"><a id="__codelineno-8-88" name="__codelineno-8-88" href="#__codelineno-8-88"></a><span class="c1"># --- Mídia (stack media, página 10) ---</span>
+</span><span id="__span-8-89"><a id="__codelineno-8-89" name="__codelineno-8-89" href="#__codelineno-8-89"></a><span class="c1"># Chaves de API das *arr, fixadas por variável de ambiente (gere cada uma com: openssl rand -hex 16).</span>
+</span><span id="__span-8-90"><a id="__codelineno-8-90" name="__codelineno-8-90" href="#__codelineno-8-90"></a><span class="nt">arr_api_keys</span><span class="p">:</span>
+</span><span id="__span-8-91"><a id="__codelineno-8-91" name="__codelineno-8-91" href="#__codelineno-8-91"></a><span class="w">  </span><span class="nt">sonarr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_SONARR_32_HEX"</span>
+</span><span id="__span-8-92"><a id="__codelineno-8-92" name="__codelineno-8-92" href="#__codelineno-8-92"></a><span class="w">  </span><span class="nt">radarr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_RADARR_32_HEX"</span>
+</span><span id="__span-8-93"><a id="__codelineno-8-93" name="__codelineno-8-93" href="#__codelineno-8-93"></a><span class="w">  </span><span class="nt">lidarr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_LIDARR_32_HEX"</span>
+</span><span id="__span-8-94"><a id="__codelineno-8-94" name="__codelineno-8-94" href="#__codelineno-8-94"></a><span class="w">  </span><span class="nt">prowlarr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_PROWLARR_32_HEX"</span>
+</span><span id="__span-8-95"><a id="__codelineno-8-95" name="__codelineno-8-95" href="#__codelineno-8-95"></a><span class="c1"># PrivateKey da configuração WireGuard da ProtonVPN gerada com NAT-PMP (Port Forwarding) ligado.</span>
+</span><span id="__span-8-96"><a id="__codelineno-8-96" name="__codelineno-8-96" href="#__codelineno-8-96"></a><span class="nt">protonvpn_wireguard_private_key</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_PRIVADA_WIREGUARD_DA_PROTONVPN"</span>
+</span><span id="__span-8-97"><a id="__codelineno-8-97" name="__codelineno-8-97" href="#__codelineno-8-97"></a>
+</span><span id="__span-8-98"><a id="__codelineno-8-98" name="__codelineno-8-98" href="#__codelineno-8-98"></a><span class="c1"># --- Painel (Homepage): credenciais dos widgets ---</span>
+</span><span id="__span-8-99"><a id="__codelineno-8-99" name="__codelineno-8-99" href="#__codelineno-8-99"></a><span class="c1"># Geradas na interface de cada aplicação depois do primeiro acesso (página 09).</span>
+</span><span id="__span-8-100"><a id="__codelineno-8-100" name="__codelineno-8-100" href="#__codelineno-8-100"></a><span class="c1"># O widget do Grafana usa o admin e grafana_admin_initial_password.</span>
+</span><span id="__span-8-101"><a id="__codelineno-8-101" name="__codelineno-8-101" href="#__codelineno-8-101"></a><span class="nt">homepage_widget_keys</span><span class="p">:</span>
+</span><span id="__span-8-102"><a id="__codelineno-8-102" name="__codelineno-8-102" href="#__codelineno-8-102"></a><span class="w">  </span><span class="c1"># Sonarr, Radarr, Lidarr e Prowlarr usam arr_api_keys (acima).</span>
+</span><span id="__span-8-103"><a id="__codelineno-8-103" name="__codelineno-8-103" href="#__codelineno-8-103"></a><span class="w">  </span><span class="nt">jellyfin</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_JELLYFIN"</span>
+</span><span id="__span-8-104"><a id="__codelineno-8-104" name="__codelineno-8-104" href="#__codelineno-8-104"></a><span class="w">  </span><span class="nt">bazarr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_BAZARR"</span>
+</span><span id="__span-8-105"><a id="__codelineno-8-105" name="__codelineno-8-105" href="#__codelineno-8-105"></a><span class="w">  </span><span class="nt">seerr</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_SEERR"</span>
+</span><span id="__span-8-106"><a id="__codelineno-8-106" name="__codelineno-8-106" href="#__codelineno-8-106"></a><span class="w">  </span><span class="nt">nextcloud</span><span class="p">:</span><span class="w"> </span><span class="s">"NC_TOKEN_DO_NEXTCLOUD"</span>
+</span><span id="__span-8-107"><a id="__codelineno-8-107" name="__codelineno-8-107" href="#__codelineno-8-107"></a><span class="w">  </span><span class="nt">homeassistant</span><span class="p">:</span><span class="w"> </span><span class="s">"TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT"</span>
+</span><span id="__span-8-108"><a id="__codelineno-8-108" name="__codelineno-8-108" href="#__codelineno-8-108"></a><span class="w">  </span><span class="nt">portainer</span><span class="p">:</span><span class="w"> </span><span class="s">"CHAVE_DE_API_DO_PORTAINER"</span>
+</span><span id="__span-8-109"><a id="__codelineno-8-109" name="__codelineno-8-109" href="#__codelineno-8-109"></a><span class="w">  </span><span class="nt">qbittorrent_user</span><span class="p">:</span><span class="w"> </span><span class="s">"admin"</span>
+</span><span id="__span-8-110"><a id="__codelineno-8-110" name="__codelineno-8-110" href="#__codelineno-8-110"></a><span class="w">  </span><span class="nt">qbittorrent_password</span><span class="p">:</span><span class="w"> </span><span class="s">"SENHA_DO_QBITTORRENT"</span>
 </span></code></pre></div>
 <div class="admonition important">
 <p class="admonition-title">Como Editar o Arquivo Vault no Futuro</p>
@@ -2587,35 +2626,34 @@ Você será solicitado a fornecer a senha do Vault que você definiu. <strong>N�
 </span><span id="__span-11-44"><a id="__codelineno-11-44" name="__codelineno-11-44" href="#__codelineno-11-44"></a><span class="c1"># Nomes dos datasets ZFS a serem criados sob o pool 'data'.</span>
 </span><span id="__span-11-45"><a id="__codelineno-11-45" name="__codelineno-11-45" href="#__codelineno-11-45"></a><span class="c1"># Estes serão montados em, por exemplo, /data/docker-volumes, /data/media, etc.</span>
 </span><span id="__span-11-46"><a id="__codelineno-11-46" name="__codelineno-11-46" href="#__codelineno-11-46"></a><span class="nt">zfs_docker_volumes_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"docker-volumes"</span>
-</span><span id="__span-11-47"><a id="__codelineno-11-47" name="__codelineno-11-47" href="#__codelineno-11-47"></a><span class="nt">zfs_media_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"media"</span>
-</span><span id="__span-11-48"><a id="__codelineno-11-48" name="__codelineno-11-48" href="#__codelineno-11-48"></a><span class="nt">zfs_downloads_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"downloads"</span>
-</span><span id="__span-11-49"><a id="__codelineno-11-49" name="__codelineno-11-49" href="#__codelineno-11-49"></a><span class="nt">zfs_rag_sources_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"rag_sources"</span><span class="w">       </span><span class="c1"># Para a VM de IA, se usada.</span>
-</span><span id="__span-11-50"><a id="__codelineno-11-50" name="__codelineno-11-50" href="#__codelineno-11-50"></a><span class="nt">zfs_backups_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"backups"</span>
-</span><span id="__span-11-51"><a id="__codelineno-11-51" name="__codelineno-11-51" href="#__codelineno-11-51"></a>
-</span><span id="__span-11-52"><a id="__codelineno-11-52" name="__codelineno-11-52" href="#__codelineno-11-52"></a><span class="c1"># --- Caminhos de Montagem NFS DENTRO das VMs ---</span>
-</span><span id="__span-11-53"><a id="__codelineno-11-53" name="__codelineno-11-53" href="#__codelineno-11-53"></a><span class="c1"># Ponto de montagem base DENTRO das VMs para os datasets ZFS compartilhados do Host Proxmox.</span>
-</span><span id="__span-11-54"><a id="__codelineno-11-54" name="__codelineno-11-54" href="#__codelineno-11-54"></a><span class="nt">vm_nfs_mount_base_path</span><span class="p">:</span><span class="w"> </span><span class="s">"/mnt/pve_data_zfs"</span>
-</span><span id="__span-11-55"><a id="__codelineno-11-55" name="__codelineno-11-55" href="#__codelineno-11-55"></a>
-</span><span id="__span-11-56"><a id="__codelineno-11-56" name="__codelineno-11-56" href="#__codelineno-11-56"></a><span class="c1"># --- Configuração do Servidor NFS (no Host Proxmox) ---</span>
-</span><span id="__span-11-57"><a id="__codelineno-11-57" name="__codelineno-11-57" href="#__codelineno-11-57"></a><span class="c1"># IPs ou CIDRs das VMs que terão permissão para montar os compartilhamentos NFS.</span>
-</span><span id="__span-11-58"><a id="__codelineno-11-58" name="__codelineno-11-58" href="#__codelineno-11-58"></a><span class="c1"># Deve cobrir os IPs de todas as suas VMs que precisarão de acesso NFS.</span>
-</span><span id="__span-11-59"><a id="__codelineno-11-59" name="__codelineno-11-59" href="#__codelineno-11-59"></a><span class="c1"># AJUSTE ESTE VALOR PARA A SUB-REDE DAS SUAS VMs!</span>
-</span><span id="__span-11-60"><a id="__codelineno-11-60" name="__codelineno-11-60" href="#__codelineno-11-60"></a><span class="nt">vm_nfs_allowed_clients_cidr</span><span class="p">:</span><span class="w"> </span><span class="s">"192.168.15.0/24"</span>
-</span><span id="__span-11-61"><a id="__codelineno-11-61" name="__codelineno-11-61" href="#__codelineno-11-61"></a>
-</span><span id="__span-11-62"><a id="__codelineno-11-62" name="__codelineno-11-62" href="#__codelineno-11-62"></a><span class="c1"># --- Caminhos para Templates `.env` para Stacks Portainer ---</span>
-</span><span id="__span-11-63"><a id="__codelineno-11-63" name="__codelineno-11-63" href="#__codelineno-11-63"></a><span class="c1"># Usado por playbooks Ansible para preparar arquivos .env para as stacks Docker.</span>
-</span><span id="__span-11-64"><a id="__codelineno-11-64" name="__codelineno-11-64" href="#__codelineno-11-64"></a><span class="c1"># portainer_env_template_src: "templates/portainer_stack_env.j2" # Caminho relativo ao diretório de roles/playbooks</span>
-</span><span id="__span-11-65"><a id="__codelineno-11-65" name="__codelineno-11-65" href="#__codelineno-11-65"></a><span class="c1"># Onde os arquivos .env resolvidos (preenchidos pelo Ansible) serão colocados na VM</span>
-</span><span id="__span-11-66"><a id="__codelineno-11-66" name="__codelineno-11-66" href="#__codelineno-11-66"></a><span class="c1"># para o Portainer usar ao criar/atualizar stacks.</span>
-</span><span id="__span-11-67"><a id="__codelineno-11-67" name="__codelineno-11-67" href="#__codelineno-11-67"></a><span class="nt">portainer_env_files_dest_path_on_vm</span><span class="p">:</span><span class="w"> </span><span class="s">"/opt/portainer_stack_envs"</span>
-</span><span id="__span-11-68"><a id="__codelineno-11-68" name="__codelineno-11-68" href="#__codelineno-11-68"></a>
-</span><span id="__span-11-69"><a id="__codelineno-11-69" name="__codelineno-11-69" href="#__codelineno-11-69"></a><span class="c1"># --- Subdomínios de serviços ---</span>
-</span><span id="__span-11-70"><a id="__codelineno-11-70" name="__codelineno-11-70" href="#__codelineno-11-70"></a><span class="c1"># Subdomínio do n8n (resulta em n8n.&lt;base_domain&gt;).</span>
-</span><span id="__span-11-71"><a id="__codelineno-11-71" name="__codelineno-11-71" href="#__codelineno-11-71"></a><span class="nt">n8n_subdomain</span><span class="p">:</span><span class="w"> </span><span class="s">"n8n"</span>
-</span><span id="__span-11-72"><a id="__codelineno-11-72" name="__codelineno-11-72" href="#__codelineno-11-72"></a>
-</span><span id="__span-11-73"><a id="__codelineno-11-73" name="__codelineno-11-73" href="#__codelineno-11-73"></a><span class="c1"># --- Grafana Alloy (coletor de logs e métricas; role infra/alloy) ---</span>
-</span><span id="__span-11-74"><a id="__codelineno-11-74" name="__codelineno-11-74" href="#__codelineno-11-74"></a><span class="c1"># Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.</span>
-</span><span id="__span-11-75"><a id="__codelineno-11-75" name="__codelineno-11-75" href="#__codelineno-11-75"></a><span class="nt">alloy_version</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.*"</span>
+</span><span id="__span-11-47"><a id="__codelineno-11-47" name="__codelineno-11-47" href="#__codelineno-11-47"></a><span class="nt">zfs_media_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"media"</span><span class="w">             </span><span class="c1"># Mídia e torrents no mesmo dataset (/data na stack media; hardlinks).</span>
+</span><span id="__span-11-48"><a id="__codelineno-11-48" name="__codelineno-11-48" href="#__codelineno-11-48"></a><span class="nt">zfs_rag_sources_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"rag_sources"</span><span class="w">       </span><span class="c1"># Para a VM de IA, se usada.</span>
+</span><span id="__span-11-49"><a id="__codelineno-11-49" name="__codelineno-11-49" href="#__codelineno-11-49"></a><span class="nt">zfs_backups_dataset_name</span><span class="p">:</span><span class="w"> </span><span class="s">"backups"</span>
+</span><span id="__span-11-50"><a id="__codelineno-11-50" name="__codelineno-11-50" href="#__codelineno-11-50"></a>
+</span><span id="__span-11-51"><a id="__codelineno-11-51" name="__codelineno-11-51" href="#__codelineno-11-51"></a><span class="c1"># --- Caminhos de Montagem NFS DENTRO das VMs ---</span>
+</span><span id="__span-11-52"><a id="__codelineno-11-52" name="__codelineno-11-52" href="#__codelineno-11-52"></a><span class="c1"># Ponto de montagem base DENTRO das VMs para os datasets ZFS compartilhados do Host Proxmox.</span>
+</span><span id="__span-11-53"><a id="__codelineno-11-53" name="__codelineno-11-53" href="#__codelineno-11-53"></a><span class="nt">vm_nfs_mount_base_path</span><span class="p">:</span><span class="w"> </span><span class="s">"/mnt/pve_data_zfs"</span>
+</span><span id="__span-11-54"><a id="__codelineno-11-54" name="__codelineno-11-54" href="#__codelineno-11-54"></a>
+</span><span id="__span-11-55"><a id="__codelineno-11-55" name="__codelineno-11-55" href="#__codelineno-11-55"></a><span class="c1"># --- Configuração do Servidor NFS (no Host Proxmox) ---</span>
+</span><span id="__span-11-56"><a id="__codelineno-11-56" name="__codelineno-11-56" href="#__codelineno-11-56"></a><span class="c1"># IPs ou CIDRs das VMs que terão permissão para montar os compartilhamentos NFS.</span>
+</span><span id="__span-11-57"><a id="__codelineno-11-57" name="__codelineno-11-57" href="#__codelineno-11-57"></a><span class="c1"># Deve cobrir os IPs de todas as suas VMs que precisarão de acesso NFS.</span>
+</span><span id="__span-11-58"><a id="__codelineno-11-58" name="__codelineno-11-58" href="#__codelineno-11-58"></a><span class="c1"># AJUSTE ESTE VALOR PARA A SUB-REDE DAS SUAS VMs!</span>
+</span><span id="__span-11-59"><a id="__codelineno-11-59" name="__codelineno-11-59" href="#__codelineno-11-59"></a><span class="nt">vm_nfs_allowed_clients_cidr</span><span class="p">:</span><span class="w"> </span><span class="s">"192.168.15.0/24"</span>
+</span><span id="__span-11-60"><a id="__codelineno-11-60" name="__codelineno-11-60" href="#__codelineno-11-60"></a>
+</span><span id="__span-11-61"><a id="__codelineno-11-61" name="__codelineno-11-61" href="#__codelineno-11-61"></a><span class="c1"># --- Caminhos para Templates `.env` para Stacks Portainer ---</span>
+</span><span id="__span-11-62"><a id="__codelineno-11-62" name="__codelineno-11-62" href="#__codelineno-11-62"></a><span class="c1"># Usado por playbooks Ansible para preparar arquivos .env para as stacks Docker.</span>
+</span><span id="__span-11-63"><a id="__codelineno-11-63" name="__codelineno-11-63" href="#__codelineno-11-63"></a><span class="c1"># portainer_env_template_src: "templates/portainer_stack_env.j2" # Caminho relativo ao diretório de roles/playbooks</span>
+</span><span id="__span-11-64"><a id="__codelineno-11-64" name="__codelineno-11-64" href="#__codelineno-11-64"></a><span class="c1"># Onde os arquivos .env resolvidos (preenchidos pelo Ansible) serão colocados na VM</span>
+</span><span id="__span-11-65"><a id="__codelineno-11-65" name="__codelineno-11-65" href="#__codelineno-11-65"></a><span class="c1"># para o Portainer usar ao criar/atualizar stacks.</span>
+</span><span id="__span-11-66"><a id="__codelineno-11-66" name="__codelineno-11-66" href="#__codelineno-11-66"></a><span class="nt">portainer_env_files_dest_path_on_vm</span><span class="p">:</span><span class="w"> </span><span class="s">"/opt/portainer_stack_envs"</span>
+</span><span id="__span-11-67"><a id="__codelineno-11-67" name="__codelineno-11-67" href="#__codelineno-11-67"></a>
+</span><span id="__span-11-68"><a id="__codelineno-11-68" name="__codelineno-11-68" href="#__codelineno-11-68"></a><span class="c1"># --- Subdomínios de serviços ---</span>
+</span><span id="__span-11-69"><a id="__codelineno-11-69" name="__codelineno-11-69" href="#__codelineno-11-69"></a><span class="c1"># Subdomínio do n8n (resulta em n8n.&lt;base_domain&gt;).</span>
+</span><span id="__span-11-70"><a id="__codelineno-11-70" name="__codelineno-11-70" href="#__codelineno-11-70"></a><span class="nt">n8n_subdomain</span><span class="p">:</span><span class="w"> </span><span class="s">"n8n"</span>
+</span><span id="__span-11-71"><a id="__codelineno-11-71" name="__codelineno-11-71" href="#__codelineno-11-71"></a>
+</span><span id="__span-11-72"><a id="__codelineno-11-72" name="__codelineno-11-72" href="#__codelineno-11-72"></a><span class="c1"># --- Grafana Alloy (coletor de logs e métricas; role infra/alloy) ---</span>
+</span><span id="__span-11-73"><a id="__codelineno-11-73" name="__codelineno-11-73" href="#__codelineno-11-73"></a><span class="c1"># Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.</span>
+</span><span id="__span-11-74"><a id="__codelineno-11-74" name="__codelineno-11-74" href="#__codelineno-11-74"></a><span class="nt">alloy_version</span><span class="p">:</span><span class="w"> </span><span class="s">"1.20.*"</span>
 </span></code></pre></div>
 <p>Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: <a href="../02-proxmox-ve-host/">Instalação e Configuração Base do Proxmox VE</a>.</p>
 
@@ -2638,7 +2676,7 @@ Você será solicitado a fornecer a senha do Vault que você definiu. <strong>N�
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 00:42:35 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 03:54:54 -03">19 de outubro de 2026</span>
   </span>
 
     

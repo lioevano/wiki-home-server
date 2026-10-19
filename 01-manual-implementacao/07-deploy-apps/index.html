@@ -3,7 +3,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Deploy das aplicações na stack apps: Nextcloud, mídia, monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible.">
+        <meta name="description" content="Deploy das aplicações na stack apps: Nextcloud, monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible.">
       
       
         <meta name="author" content="Léo Ivan">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#seção-7-deploy-de-aplicações-nextcloud-mídia-monitoramento-n8n-home-assistant" class="md-skip">
+        <a href="#seção-7-deploy-de-aplicações-nextcloud-monitoramento-n8n-home-assistant" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -902,6 +902,34 @@
     
   
     Painel e Notificações
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mídia
   
 
     
@@ -2101,8 +2129,8 @@
   
 
 
-<h1 id="seção-7-deploy-de-aplicações-nextcloud-mídia-monitoramento-n8n-home-assistant">Seção 7: Deploy de Aplicações (Nextcloud, Mídia, Monitoramento, n8n, Home Assistant)<a class="headerlink" href="#seção-7-deploy-de-aplicações-nextcloud-mídia-monitoramento-n8n-home-assistant" title="Permanent link">¶</a></h1>
-<p>Todas as aplicações são agora gerenciadas em um único compose file: <code>docker/stacks/apps/docker-compose.yml</code>.</p>
+<h1 id="seção-7-deploy-de-aplicações-nextcloud-monitoramento-n8n-home-assistant">Seção 7: Deploy de Aplicações (Nextcloud, Monitoramento, n8n, Home Assistant)<a class="headerlink" href="#seção-7-deploy-de-aplicações-nextcloud-monitoramento-n8n-home-assistant" title="Permanent link">¶</a></h1>
+<p>As aplicações ficam em um único compose: <code>docker/stacks/apps/docker-compose.yml</code>. A mídia tem stack própria (<code>media</code>), descrita na <a href="../10-midia/">Seção 10</a>.</p>
 <h2 id="visão-geral-dos-serviços">Visão Geral dos Serviços<a class="headerlink" href="#visão-geral-dos-serviços" title="Permanent link">¶</a></h2>
 <table>
 <thead>
@@ -2117,11 +2145,6 @@
 <td>Produtividade</td>
 <td>Nextcloud (+ Postgres, Redis)</td>
 <td><code>nextcloud.seudominio.com</code></td>
-</tr>
-<tr>
-<td>Mídia</td>
-<td>Jellyfin, Sonarr, Radarr, qBittorrent</td>
-<td><code>jellyfin.</code>, <code>sonarr.</code>, <code>radarr.</code>, <code>qbittorrent.</code></td>
 </tr>
 <tr>
 <td>Monitoramento</td>
@@ -2167,11 +2190,6 @@
 <td>caminhos do Home Assistant</td>
 </tr>
 <tr>
-<td><code>media.env</code></td>
-<td><code>setup-media-stack-volumes.yml</code></td>
-<td>caminhos de mídia</td>
-</tr>
-<tr>
 <td><code>n8n.env</code></td>
 <td><code>setup-n8n-volumes.yml</code></td>
 <td>caminho de configuração e subdomínio; <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code> e <code>NOTIFICACOES_WEBHOOK_TOKEN</code> (vault <code>telegram_bot_token</code>, <code>telegram_chat_id</code>, <code>notificacoes_webhook_token</code>) para o workflow de notificações. O login do n8n é a conta de dono criada no primeiro acesso, atrás do Authelia</td>
@@ -2179,7 +2197,7 @@
 <tr>
 <td><code>monitoring.env</code></td>
 <td><code>setup-monitoring-stack-volumes.yml</code></td>
-<td><code>GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV</code> (vault <code>grafana_db_password</code>), <code>GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV</code> (vault <code>grafana_admin_initial_password</code>); <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code> e <code>NOTIFICACOES_WEBHOOK_TOKEN</code> para os alertas do Grafana; credenciais dos widgets da Homepage (<code>HOMEPAGE_VAR_*</code>, vault <code>homepage_widget_keys</code>)</td>
+<td><code>GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV</code> (vault <code>grafana_db_password</code>), <code>GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV</code> (vault <code>grafana_admin_initial_password</code>); <code>TELEGRAM_BOT_TOKEN</code>, <code>TELEGRAM_CHAT_ID</code> e <code>NOTIFICACOES_WEBHOOK_TOKEN</code> para os alertas do Grafana; credenciais dos widgets da Homepage (<code>HOMEPAGE_VAR_*</code>, vault <code>homepage_widget_keys</code> e <code>arr_api_keys</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -2187,42 +2205,34 @@
 <ol>
 <li>Confira no vault real (<code>ansible-vault edit inventories/home/group_vars/all/vault.yml</code>) que as chaves da tabela acima estão preenchidas (evite <code>$</code>, <code>#</code>, aspas e espaços nos segredos: o <code>.env</code> não usa aspas).</li>
 <li>Rode cada playbook primeiro com <code>--check</code> e depois sem (não use <code>--diff</code>, que imprimiria os segredos do <code>.env</code> no terminal):
-   <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">for</span><span class="w"> </span>pb<span class="w"> </span><span class="k">in</span><span class="w"> </span>setup-productivity-automation-volumes<span class="w"> </span>setup-media-stack-volumes<span class="w"> </span>setup-n8n-volumes<span class="w"> </span>setup-monitoring-stack-volumes<span class="p">;</span><span class="w"> </span><span class="k">do</span>
+   <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">for</span><span class="w"> </span>pb<span class="w"> </span><span class="k">in</span><span class="w"> </span>setup-productivity-automation-volumes<span class="w"> </span>setup-n8n-volumes<span class="w"> </span>setup-monitoring-stack-volumes<span class="p">;</span><span class="w"> </span><span class="k">do</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/<span class="nv">$pb</span>.yml<span class="w"> </span>--ask-vault-pass<span class="w"> </span>--check
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">done</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># sem erros? repita o laço sem --check</span>
 </span></code></pre></div>
    Depois junte os arquivos num só <code>apps.env</code> para o Portainer (contém segredos: <code>0600</code>):
    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># na core-services-vm</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'umask 077; cd /opt/portainer_stack_envs &amp;&amp; cat productivity.env automation.env media.env n8n.env monitoring.env &gt; apps.env &amp;&amp; chmod 600 apps.env'</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'umask 077; cd /opt/portainer_stack_envs &amp;&amp; cat productivity.env automation.env n8n.env monitoring.env &gt; apps.env &amp;&amp; chmod 600 apps.env'</span>
 </span></code></pre></div></li>
 <li>No Portainer, abra a stack <code>apps</code>, recarregue <code>apps.env</code> em <strong>Env</strong> e clique em <strong>Update the stack</strong>.</li>
 </ol>
 <h2 id="preparação-dos-volumes">Preparação dos Volumes<a class="headerlink" href="#preparação-dos-volumes" title="Permanent link">¶</a></h2>
-<p>Os volumes são criados pelos playbooks Ansible <code>ansible/playbooks/setup-productivity-automation-volumes.yml</code>, <code>ansible/playbooks/setup-media-stack-volumes.yml</code>, <code>ansible/playbooks/setup-n8n-volumes.yml</code> e <code>ansible/playbooks/setup-monitoring-stack-volumes.yml</code>. A partir de <code>server/ansible</code>:</p>
+<p>Os volumes são criados pelos playbooks Ansible <code>ansible/playbooks/setup-productivity-automation-volumes.yml</code>, <code>ansible/playbooks/setup-n8n-volumes.yml</code> e <code>ansible/playbooks/setup-monitoring-stack-volumes.yml</code>. A partir de <code>server/ansible</code>:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Volumes Nextcloud + automação</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-productivity-automation-volumes.yml
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Volumes mídia</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-media-stack-volumes.yml
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Volumes n8n</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-n8n-volumes.yml
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Volumes n8n</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-n8n-volumes.yml
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Volumes monitoramento (gera prometheus.yml, Loki, blackbox, alertas do Grafana, Diun e Homepage)</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-monitoring-stack-volumes.yml
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Volumes monitoramento (gera prometheus.yml, Loki, blackbox, alertas do Grafana, Diun e Homepage)</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-monitoring-stack-volumes.yml
 </span></code></pre></div>
 <p>O playbook de monitoramento renderiza as configurações a partir de <code>ansible/templates/prometheus.yml.j2</code>, <code>ansible/templates/loki-local-config.yaml.j2</code>, <code>ansible/templates/blackbox.yml.j2</code>, <code>ansible/templates/grafana/alerting/</code> e <code>ansible/templates/homepage/</code> (ver <a href="../09-painel-notificacoes/">Painel e Notificações</a>), e o <code>.env</code> da stack a partir de <code>ansible/templates/portainer_stack_env.j2</code>.</p>
 <h2 id="ativandodesativando-serviços">Ativando/Desativando Serviços<a class="headerlink" href="#ativandodesativando-serviços" title="Permanent link">¶</a></h2>
 <p>Para desativar um serviço que não usa, adicione <code>enabled: false</code> nas labels do Traefik do serviço no compose, ou comente o bloco inteiro do serviço.</p>
-<p><strong>Plex em vez de Jellyfin</strong> — o compose consolidado inclui apenas o Jellyfin. Para trocar, use as skills <code>remove-app</code> (jellyfin) e <code>add-app</code> (plex), que ajustam compose, playbook de volumes, variáveis, catálogo e integrações juntos.</p>
 <h2 id="notas-por-serviço">Notas por Serviço<a class="headerlink" href="#notas-por-serviço" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Nextcloud</strong>: Requer Postgres e Redis. Dados em NFS. <code>trusted_domains</code> configurado automaticamente.</li>
-<li><strong>Jellyfin</strong>: Hardware transcoding via <code>/dev/dri</code> (iGPU). Se usar CPU, remova o device.</li>
-<li><em>Notificações (NTF-3):</em> instale o plugin <strong>Webhook</strong> (Painel → Plugins → Catálogo), adicione um <em>Generic Destination</em> para <code>http://n8n:5678/webhook/notificar</code> com o cabeçalho <code>Authorization: Bearer &lt;notificacoes_webhook_token&gt;</code> e o modelo <code>{"titulo": "{{NotificationType}}", "mensagem": "{{Name}}", "gravidade": "info", "app": "jellyfin"}</code>.</li>
-<li><strong>Sonarr/Radarr</strong>: Dependem do qBittorrent para downloads. Configure o client de torrent no Sonarr/Radarr após o deploy.</li>
-<li><em>Notificações (NTF-3):</em> em <strong>Settings → Connect → + → Webhook</strong>: URL <code>http://n8n:5678/webhook/notificar</code>, método <code>POST</code>, cabeçalho <code>Authorization: Bearer &lt;notificacoes_webhook_token&gt;</code>; marque os eventos desejados (ex.: <em>On Import</em>, <em>On Health Issue</em>). O n8n reconhece o formato nativo (<code>eventType</code>).</li>
 <li><strong>Prometheus</strong>: Recebe as métricas dos Alloys por <em>remote write</em> (<code>--web.enable-remote-write-receiver</code>) e publica a porta 9090 no IP da <code>core-services-vm</code> (<code>${CORE_SERVICES_VM_IP_VAR}:9090</code>), só para a LAN, como o Loki; a interface continua em <code>prometheus.seudominio.com</code>, atrás do Authelia. O job <code>alloy</code> de <code>ansible/templates/prometheus.yml.j2</code> raspa o <code>/metrics</code> do Alloy de cada host (porta 12345) para saber se ele está vivo (<a href="../04-configuracao-base-vms-ubuntu/#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy">seção 4.4</a>).</li>
 <li><strong>Grafana</strong>: Login inicial <code>admin</code> / senha do vault (<code>grafana_admin_initial_password</code>). Os datasources Prometheus (<code>http://prometheus:9090</code>) e Loki (<code>http://loki:3100</code>) são provisionados automaticamente pelo <code>setup-monitoring-stack-volumes.yml</code> (pasta <code>grafana/provisioning</code>, montada em <code>/etc/grafana/provisioning</code>).</li>
 <li><strong>Loki</strong>: Guarda os logs que o Grafana Alloy coleta em cada host (containers, journal e <code>/var/log</code>; <a href="../04-configuracao-base-vms-ubuntu/#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy">seção 4.4</a>), que substituiu o Promtail. O Loki usa schema v13 com índice TSDB (<code>ansible/templates/loki-local-config.yaml.j2</code>), o formato exigido pelo Loki 3. O Loki publica a porta 3100 no IP da <code>core-services-vm</code> (<code>${CORE_SERVICES_VM_IP_VAR}:3100</code>) para receber os logs dos Alloys de todos os hosts; ele não tem autenticação, então a porta só deve ser alcançável pela LAN (não crie rota no Traefik nem no túnel para ela). Portas publicadas pelo Docker não passam pelo UFW da VM, então a proteção é a própria LAN.</li>
@@ -2250,7 +2260,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 00:57:27 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 04:04:56 -03">19 de outubro de 2026</span>
   </span>
 
     

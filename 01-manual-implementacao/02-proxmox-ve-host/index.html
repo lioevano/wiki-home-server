@@ -915,6 +915,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../10-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mídia
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2251,15 +2279,13 @@ Este é um passo <strong>absolutamente essencial</strong> para que a virtualiza�
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Assumindo os valores padrão de zfs_*_dataset_name do main.yml:</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># zfs_docker_volumes_dataset_name: "docker-volumes"</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># zfs_media_dataset_name: "media"</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># zfs_downloads_dataset_name: "downloads"</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># zfs_rag_sources_dataset_name: "rag_sources"</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># zfs_backups_dataset_name: "backups"</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/docker-volumes
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/media
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/downloads
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/rag_sources
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/backups
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># zfs_rag_sources_dataset_name: "rag_sources"</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># zfs_backups_dataset_name: "backups"</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/docker-volumes
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/media
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/rag_sources
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/backups
 </span></code></pre></div>
 <p>Por padrão, esses datasets serão automaticamente montados pelo ZFS em <code>/data/docker-volumes</code>, <code>/data/media</code>, etc., no host Proxmox.</p>
 <div class="admonition tip">
@@ -2474,20 +2500,17 @@ Este é um passo <strong>absolutamente essencial</strong> para que a virtualiza�
 </span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="x"># Compartilhamento para volumes Docker gerais</span>
 </span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_docker_volumes_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(rw,sync,no_subtree_check,all_squash,anonuid=</span><span class="cp">{{</span> <span class="nv">docker_puid</span> <span class="cp">}}</span><span class="x">,anongid=</span><span class="cp">{{</span> <span class="nv">docker_pgid</span> <span class="cp">}}</span><span class="x">)</span>
 </span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
-</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="x"># Compartilhamento para dados de mídia</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="x"># Compartilhamento para mídia e torrents (mesmo dataset: a importação das *arr é por hardlink)</span>
 </span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_media_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(rw,sync,no_subtree_check,all_squash,anonuid=</span><span class="cp">{{</span> <span class="nv">docker_puid</span> <span class="cp">}}</span><span class="x">,anongid=</span><span class="cp">{{</span> <span class="nv">docker_pgid</span> <span class="cp">}}</span><span class="x">)</span>
 </span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>
-</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="x"># Compartilhamento para downloads</span>
-</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_downloads_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(rw,sync,no_subtree_check,all_squash,anonuid=</span><span class="cp">{{</span> <span class="nv">docker_puid</span> <span class="cp">}}</span><span class="x">,anongid=</span><span class="cp">{{</span> <span class="nv">docker_pgid</span> <span class="cp">}}</span><span class="x">)</span>
-</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>
-</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="x"># Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)</span>
-</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a><span class="cp">{%</span> <span class="k">if</span> <span class="nv">zfs_rag_sources_dataset_name</span> <span class="k">is</span> <span class="nf">defined</span> <span class="k">and</span> <span class="s1">'ai-desktop-vm'</span> <span class="k">in</span> <span class="nv">groups</span><span class="o">[</span><span class="s1">'virtual_machines'</span><span class="o">]</span> <span class="cp">%}</span>
-</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_rag_sources_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(rw,sync,no_subtree_check,all_squash,anonuid=</span><span class="cp">{{</span> <span class="nv">docker_puid</span> <span class="cp">}}</span><span class="x">,anongid=</span><span class="cp">{{</span> <span class="nv">docker_pgid</span> <span class="cp">}}</span><span class="x">)</span>
-</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
-</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>
-</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="x"># Compartilhamento para backups (geralmente não precisa ser montado por VMs,</span>
-</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="x"># a menos que uma VM específica precise ler backups. Pode ser 'ro' para VMs).</span>
-</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="x"># </span><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_backups_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(ro,sync,no_subtree_check)</span>
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="x"># Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)</span>
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="cp">{%</span> <span class="k">if</span> <span class="nv">zfs_rag_sources_dataset_name</span> <span class="k">is</span> <span class="nf">defined</span> <span class="k">and</span> <span class="s1">'ai-desktop-vm'</span> <span class="k">in</span> <span class="nv">groups</span><span class="o">[</span><span class="s1">'virtual_machines'</span><span class="o">]</span> <span class="cp">%}</span>
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_rag_sources_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(rw,sync,no_subtree_check,all_squash,anonuid=</span><span class="cp">{{</span> <span class="nv">docker_puid</span> <span class="cp">}}</span><span class="x">,anongid=</span><span class="cp">{{</span> <span class="nv">docker_pgid</span> <span class="cp">}}</span><span class="x">)</span>
+</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
+</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="x"># Compartilhamento para backups (geralmente não precisa ser montado por VMs,</span>
+</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="x"># a menos que uma VM específica precise ler backups. Pode ser 'ro' para VMs).</span>
+</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="x"># </span><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_backups_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(ro,sync,no_subtree_check)</span>
 </span></code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Opções de Exportação NFS Explicadas</p>
@@ -2593,7 +2616,7 @@ Esta combinação garante que os arquivos criados pelas VMs nos montados NFS ten
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 00:49:16 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 03:52:11 -03">19 de outubro de 2026</span>
   </span>
 
     

@@ -782,6 +782,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/10-midia/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mídia
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3357,7 +3385,7 @@
 <p><strong>Regras</strong> têm id <code>&lt;PREFIXO&gt;-&lt;n&gt;</code>. Regras marcadas <strong>(sobra)</strong> verificam o inverso: algo que ficou para trás e não deveria existir.</p>
 <p><strong>Status da auditoria:</strong> <code>✅</code> ok · <code>❌ &lt;REGRA&gt;</code> falta · <code>⚠️ &lt;REGRA&gt;</code> sobra · <code>✋</code> passo manual pendente · <code>—</code> não se aplica · <code>?</code> depende de valor <code>?</code> no catálogo.</p>
 <p>Uma seção pode ter subseções extras <strong>de referência</strong> (ex.: <code>### Origem dos valores</code>) depois das cinco obrigatórias; as skills as seguem ao corrigir ou adicionar.</p>
-<p><strong>Serviço principal</strong> é o primeiro da coluna Serviços. Regras de roteamento e autenticação valem para ele; aplicações <code>ansible:&lt;role&gt;</code> têm a evidência nas tasks/labels do role, não em compose.</p>
+<p><strong>Serviço principal</strong> é o primeiro da coluna Serviços. Regras de roteamento e autenticação valem para ele; aplicações <code>ansible:&lt;role&gt;</code> têm a evidência nas tasks/labels do role, não em compose. Serviço com <code>network_mode: service:&lt;outro&gt;</code> (hoje o <code>qbittorrent</code>, na rede do <code>gluetun</code>) tem o router, as redes e o middleware no serviço <code>&lt;outro&gt;</code>, que vale como evidência das regras de roteamento e autenticação.</p>
 <hr>
 <h2 id="roteamento">roteamento<a class="headerlink" href="#roteamento" title="Permanent link">¶</a></h2>
 <table>
@@ -3636,6 +3664,7 @@
 <li><strong>DAD-1</strong> — Dados = <code>nfs</code>: os volumes de dados persistentes usam <code>${VM_NFS_MOUNT_BASE_PATH}/…</code> ou uma variável <code>*_PATH</code> criada pelo playbook de volumes da stack (que a aponta para o NFS). Binds de sistema (<code>/var/run/docker.sock</code>, <code>/etc/localtime</code>, logs do Docker) não contam. <em>Evidência:</em> <code>volumes:</code> + playbook.</li>
 <li><strong>DAD-2</strong> — Dados = <code>local</code>: a página da aplicação tem aviso de que os dados ficam fora dos snapshots ZFS <strong>e</strong> a página de backup lista a aplicação. <em>Evidência:</em> as duas páginas.</li>
 <li><strong>DAD-3</strong> — o playbook <code>setup-&lt;stack&gt;-volumes.yml</code> cria os diretórios usados pela aplicação. <em>Evidência:</em> tasks <code>ansible.builtin.file</code> do playbook.</li>
+<li><strong>DAD-4</strong> — aplicação de Categoria <code>mídia</code> que acessa arquivos de mídia monta <code>/data</code> (ou uma subpasta) sempre a partir de <code>${MEDIA_STACK_DATA_PATH}</code>, nunca de duas variáveis diferentes: o hardlink da importação exige o mesmo sistema de arquivos. <em>Evidência:</em> <code>volumes:</code> do compose da stack <code>media</code>.</li>
 </ul>
 <h3 id="ao-adicionar-por-consumidor_5">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor_5" title="Permanent link">¶</a></h3>
 <ol>
@@ -3879,7 +3908,7 @@
 <ul>
 <li><strong>NTF-1</strong> — disponibilidade: aplicação com Exposição <code>publica</code>/<code>protegida</code> tem alvo pela <strong>URL interna</strong> do serviço principal (ex.: <code>http://n8n:5678/healthz</code>; a URL pública passa pelo Authelia e não mede a aplicação) com <code>labels: {app: &lt;id&gt;}</code> no job <code>blackbox_http</code>; o alvo do <code>traefik</code> usa o módulo <code>tls_traefik</code> (mede também o certificado). Das <code>interna</code>, só <code>litellm</code> (<code>http://&lt;ai_desktop_vm_ip_var&gt;:4000/health/liveliness</code>) e <code>loki</code> (<code>http://loki:3100/ready</code>) têm alvo — as demais <code>interna</code> → <code>—</code>. <em>Evidência:</em> <code>prometheus.yml.j2</code>.</li>
 <li><strong>NTF-2</strong> — atualizações: existe um serviço do <code>diun</code> na mesma VM da aplicação (Stack/VM do <code>diun</code> × da aplicação). Aplicações sem container, instaladas como pacote do sistema (hoje o <code>alloy</code>), ficam fora: o Diun só observa imagens, e a versão do pacote é fixada no <code>group_vars</code> (<code>alloy_version</code>). <em>Evidência:</em> catálogo e composes.</li>
-<li><strong>NTF-3</strong> — eventos: aplicação com webhook nativo (<code>radarr</code>, <code>sonarr</code>, <code>homeassistant</code>, <code>jellyfin</code> via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → <code>✋</code>. Demais → <code>—</code>.</li>
+<li><strong>NTF-3</strong> — eventos: aplicação com webhook nativo (<code>radarr</code>, <code>sonarr</code>, <code>lidarr</code>, <code>prowlarr</code>, <code>seerr</code>, <code>homeassistant</code>, <code>jellyfin</code> via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → <code>✋</code>. Demais → <code>—</code>.</li>
 <li><strong>NTF-4 (sobra)</strong> — nenhum alvo do <code>blackbox_http</code> nem regra de alerta com <code>app</code> que não exista no catálogo. <em>Evidência:</em> <code>prometheus.yml.j2</code> e <code>rules.yml.j2</code>.</li>
 </ul>
 <h3 id="ao-adicionar-por-consumidor_9">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor_9" title="Permanent link">¶</a></h3>
@@ -3930,7 +3959,7 @@
 <h3 id="regras_10">Regras<a class="headerlink" href="#regras_10" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>PNL-1</strong> — a aplicação tem entrada no <code>services.yaml.j2</code> (nome = id do catálogo), no grupo da sua Categoria, com <code>href</code> <code>https://&lt;Subdomínio&gt;.{{ base_domain }}</code> (ou URL da LAN para <code>+painel</code>) e status: na <code>core-services-vm</code>, <code>server: core</code> e <code>container: &lt;container_name&gt;</code> (estado do container); em outra VM, <code>siteMonitor</code> pela URL da LAN (a URL pública passa pelo Authelia). <em>Evidência:</em> template.</li>
-<li><strong>PNL-2</strong> — aplicação com widget oficial da Homepage (<code>jellyfin</code>, <code>radarr</code>, <code>sonarr</code>, <code>qbittorrent</code>, <code>nextcloud</code>, <code>homeassistant</code>, <code>grafana</code>, <code>prometheus</code>, <code>portainer</code>) tem <code>widget</code> na entrada; credenciais só como <code>{{HOMEPAGE_VAR_&lt;APP&gt;_...}}</code>, com valor vindo do vault (<code>homepage_widget_keys.&lt;app&gt;</code>, ou <code>grafana_admin_initial_password</code>) pelo playbook. O <code>traefik</code> fica sem widget (a API só existe atrás do Authelia). <em>Evidência:</em> template, compose da Homepage e playbook.</li>
+<li><strong>PNL-2</strong> — aplicação com widget oficial da Homepage (<code>jellyfin</code>, <code>radarr</code>, <code>sonarr</code>, <code>lidarr</code>, <code>prowlarr</code>, <code>bazarr</code>, <code>seerr</code>, <code>qbittorrent</code>, <code>nextcloud</code>, <code>homeassistant</code>, <code>grafana</code>, <code>prometheus</code>, <code>portainer</code>) tem <code>widget</code> na entrada; credenciais só como <code>{{HOMEPAGE_VAR_&lt;APP&gt;_...}}</code>, com valor vindo do vault (<code>homepage_widget_keys.&lt;app&gt;</code>, <code>arr_api_keys.&lt;app&gt;</code> para sonarr, radarr, lidarr e prowlarr, ou <code>grafana_admin_initial_password</code>) pelo playbook. O <code>traefik</code> fica sem widget (a API só existe atrás do Authelia). <em>Evidência:</em> template, compose da Homepage e playbook.</li>
 <li><strong>PNL-3 (sobra)</strong> — nenhuma entrada no <code>services.yaml.j2</code> sem aplicação correspondente no catálogo. <em>Evidência:</em> template.</li>
 </ul>
 <h3 id="ao-adicionar-por-consumidor_10">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor_10" title="Permanent link">¶</a></h3>
@@ -3968,7 +3997,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 01:06:15 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 04:04:56 -03">19 de outubro de 2026</span>
   </span>
 
     
