@@ -5,25 +5,62 @@
     path: /usr/bin/pveversion
   register: pve_binary
 
-- name: "Verificar se existe o repositório enterprise no formato .list"
+# Repositórios enterprise (exigem assinatura): o PVE 8 usa arquivos .list; o PVE 9 (Debian trixie), o formato
+# deb822 (.sources). As tarefas tratam os dois, cada uma só quando o arquivo existe.
+- name: "Verificar repositórios enterprise no formato .list (PVE 8)"
   ansible.builtin.stat:
-    path: /etc/apt/sources.list.d/pve-enterprise.list
-  register: pve_enterprise_list
+    path: "/etc/apt/sources.list.d/{{ item }}"
+  loop:
+    - pve-enterprise.list
+    - ceph.list
+  register: pve_enterprise_lists
+
+- name: "Verificar repositórios enterprise no formato .sources (PVE 9)"
+  ansible.builtin.stat:
+    path: "/etc/apt/sources.list.d/{{ item }}"
+  loop:
+    - pve-enterprise.sources
+    - ceph.sources
+  register: pve_enterprise_sources
 
 - name: "Atualizar repositórios Proxmox (remover enterprise, adicionar no-subscription)"
   block:
-    - name: "Comentar repositório enterprise"
+    - name: "Comentar repositórios enterprise no formato .list"
       ansible.builtin.replace:
-        path: /etc/apt/sources.list.d/pve-enterprise.list
+        path: "{{ item.stat.path }}"
         regexp: '^deb'
         replace: '#deb'
-      when: pve_binary.stat.exists and pve_enterprise_list.stat.exists
-    - name: "Adicionar repositório no-subscription"
+      loop: "{{ pve_enterprise_lists.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: item.stat.exists
+    # O ceph.sources do PVE 9 aponta para o enterprise por padrão; sem Ceph, desativá-lo não tem efeito colateral.
+    - name: "Desativar repositórios enterprise no formato .sources"
+      ansible.builtin.lineinfile:
+        path: "{{ item.stat.path }}"
+        regexp: '^Enabled:'
+        line: "Enabled: no"
+      loop: "{{ pve_enterprise_sources.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: item.stat.exists
+    - name: "Adicionar repositório no-subscription (PVE 9, formato deb822)"
+      ansible.builtin.deb822_repository:
+        name: pve-no-subscription
+        types: deb
+        uris: http://download.proxmox.com/debian/pve
+        suites: "{{ ansible_distribution_release }}"
+        components: pve-no-subscription
+        signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
+        state: present
+      when: pve_enterprise_sources.results[0].stat.exists
+    - name: "Adicionar repositório no-subscription (PVE 8, formato .list)"
       ansible.builtin.apt_repository:
         repo: "deb http://download.proxmox.com/debian/pve {{ ansible_distribution_release }} pve-no-subscription"
         state: present
         filename: pve-no-subscription
-      when: pve_binary.stat.exists
+      when: not pve_enterprise_sources.results[0].stat.exists
+  when: pve_binary.stat.exists
   notify: Update apt cache
 
 - name: "Atualizar todos os pacotes do sistema"

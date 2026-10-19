@@ -194,13 +194,14 @@ Handlers para o role `common`.
 
 ## 4.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)
 
-Este role é específico para a `core-services-vm` (ou qualquer outra VM que você designar para rodar a maioria dos seus containers Docker e o Portainer). Suas principais responsabilidades são:
+Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portainer_mode` (em `ansible/roles/infra/docker/defaults/main.yml`) decide o que cada uma recebe além do Docker: `server` na `core-services-vm` (o Portainer completo, a rede `proxy` e o diretório no NFS) e `agent` nas demais (o **Portainer Agent** na porta 9001, publicada só no IP da LAN, pelo qual o Portainer central gerencia as stacks daquela VM). As portas publicadas pelo Docker não passam pelo UFW; quem protege o agente é o segredo `portainer_agent_secret` do vault (`AGENT_SECRET`), que o Portainer central também recebe. Suas principais responsabilidades são:
 
 * Instalar o Docker Engine e o plugin Docker Compose.
 * Adicionar os usuários relevantes (`{{ vm_ansible_user_name }}`, `{{ docker_user_name_on_vm }}`) ao grupo `docker` do sistema para permitir a execução de comandos Docker sem `sudo`.
-* Criar o diretório NFS para os dados persistentes do Portainer.
-* Criar a rede Docker `proxy` (que será usada pelo Traefik e outros serviços expostos).
-* Fazer o deploy do container Portainer CE, configurando-o com:
+* Na `core-services-vm`: criar o diretório NFS para os dados persistentes do Portainer.
+* Na `core-services-vm`: criar a rede Docker `proxy` (que será usada pelo Traefik e outros serviços expostos).
+* Nas demais VMs: fazer o deploy do Portainer Agent (`portainer_agent_image`), com o socket do Docker e o `AGENT_SECRET`.
+* Na `core-services-vm`: fazer o deploy do container Portainer CE, configurando-o com:
   * Mapeamento do socket Docker.
   * Volume persistente para seus dados (no diretório NFS preparado).
   * Conexão à rede `proxy`.
@@ -210,7 +211,7 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
 
 ```yaml title="ansible/roles/infra/docker/tasks/main.yml"
 # ansible/roles/infra/docker/tasks/main.yml
-# Instala Docker Engine e Portainer CE na VM designada (core-services-vm).
+# Instala Docker Engine em todas as VMs Ubuntu; Portainer CE na core-services-vm e Portainer Agent nas demais.
 
 - name: "Adicionar chave GPG oficial do Docker"
   ansible.builtin.get_url:
@@ -286,12 +287,14 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
   # A criação do diretório base no dataset ZFS do Proxmox host (e.g., /data/docker-volumes/portainer/data)
   # pode ser feita aqui também ou assumir que o dataset pai já existe.
   # Para simplicidade, esta task garante o subdiretório no montado NFS.
+  when: docker_portainer_mode == 'server'
 
 - name: "Criar rede Docker 'proxy' se não existir (para Traefik e serviços expostos)"
   community.docker.docker_network:
     name: proxy
     state: present
     # Outras opções como 'driver: bridge' são padrão.
+  when: docker_portainer_mode == 'server' # O Traefik só roda na core-services-vm
 
 - name: "Deploy Portainer CE container"
   community.docker.docker_container:
@@ -305,6 +308,9 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9443:9443" # HTTPS principal do Portainer
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9000:9000" # HTTP (redireciona para 9443, pode ser omitido se só usar Traefik)
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:8000:8000" # Porta para o Edge Agent do Portainer (opcional)
+    env:
+      # Segredo compartilhado com o Portainer Agent das outras VMs: o agente só atende quem o conhece.
+      AGENT_SECRET: "{{ portainer_agent_secret }}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock" # Permite Portainer gerenciar o Docker local
       # Caminho no host (VM core-services-vm) onde o volume NFS do Portainer está montado
@@ -324,6 +330,25 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
       # Middleware de Autenticação Authelia
       # Refere-se ao middleware Authelia que será definido no docker-compose do Authelia (Seção 5).
       traefik.http.routers.portainer.middlewares: "authelia-forwardauth@docker"
+  when: docker_portainer_mode == 'server'
+
+# Nas demais VMs (ai-desktop-vm), o Portainer Agent: o Portainer central gerencia as stacks dela por aqui.
+# Porta só no IP da LAN. Portas publicadas pelo Docker não passam pelo UFW, então a proteção é o
+# AGENT_SECRET (o mesmo do Portainer server): sem ele, o agente recusa a conexão.
+- name: "Deploy Portainer Agent container"
+  community.docker.docker_container:
+    name: portainer_agent
+    image: "{{ portainer_agent_image }}"
+    restart_policy: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9001:9001"
+    env:
+      AGENT_SECRET: "{{ portainer_agent_secret }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/lib/docker/volumes:/var/lib/docker/volumes"
+  when: docker_portainer_mode == 'agent'
 ```
 
 ### `handlers/main.yml`
@@ -364,12 +389,14 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
   roles:
     - role: common # Aplica configurações base, cliente NFS e UFW a todas as VMs Ubuntu
 
-- hosts: core-services-vm # Alvo específico para instalar Docker e o container Portainer
+# Docker em todas as VMs Ubuntu. O Portainer completo fica na core-services-vm; nas demais (ai-desktop-vm)
+# roda o Portainer Agent, que o Portainer central usa para gerenciar as stacks dela (docker_portainer_mode).
+- hosts: ubuntu_vms
   become: yes
   vars_files:
-    - ../inventories/home/group_vars/all/vault.yml # Necessário para base_domain nas labels do Portainer
+    - ../inventories/home/group_vars/all/vault.yml # base_domain nas labels do Portainer e portainer_agent_secret
   roles:
-    - role: infra/docker # Instala Docker Engine e o container Portainer
+    - role: infra/docker # Instala Docker Engine e o Portainer (server) ou o Portainer Agent (agent)
 
 # Coletor de logs e métricas (seção 4.4). Depois do Docker, cujos containers ele lê.
 - hosts: ubuntu_vms

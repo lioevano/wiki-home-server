@@ -10,12 +10,14 @@
   roles:
     - role: common # Aplica configurações base, cliente NFS e UFW a todas as VMs Ubuntu
 
-- hosts: core-services-vm # Alvo específico para instalar Docker e o container Portainer
+# Docker em todas as VMs Ubuntu. O Portainer completo fica na core-services-vm; nas demais (ai-desktop-vm)
+# roda o Portainer Agent, que o Portainer central usa para gerenciar as stacks dela (docker_portainer_mode).
+- hosts: ubuntu_vms
   become: yes
   vars_files:
-    - ../inventories/home/group_vars/all/vault.yml # Necessário para base_domain nas labels do Portainer
+    - ../inventories/home/group_vars/all/vault.yml # base_domain nas labels do Portainer e portainer_agent_secret
   roles:
-    - role: infra/docker # Instala Docker Engine e o container Portainer
+    - role: infra/docker # Instala Docker Engine e o Portainer (server) ou o Portainer Agent (agent)
 
 # Coletor de logs e métricas (seção 4.4). Depois do Docker, cujos containers ele lê.
 - hosts: ubuntu_vms

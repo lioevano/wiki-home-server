@@ -30,7 +30,7 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
    ```
 
 2. **Se Portainer está gerenciando a ai-desktop-vm:**
-   - Adicione o endpoint da ai-desktop-vm no Portainer (via Portainer Agent ou TCP)
+   - Adicione o ambiente da ai-desktop-vm no Portainer: **Environments → Add environment → Docker Standalone → Agent**, endereço `<ai_desktop_vm_ip_var>:9001`. O Portainer Agent já foi instalado pelo `setup-base-ubuntu.yml` ([seção 4.2](04-configuracao-base-vms-ubuntu.md#42-role-ansible-docker-ansiblerolesinfradocker)), e o `AGENT_SECRET` dos dois lados vem de `portainer_agent_secret`
    - **Stacks** > **Add Stack** > Nome: `ai`
    - Cole o conteúdo de `docker/stacks/ai/docker-compose.yml`
    - Carregue `/opt/portainer_stack_envs/ai.env` (já traz todos os segredos; nada a adicionar à mão)

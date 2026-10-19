@@ -1,5 +1,5 @@
 # ansible/roles/infra/docker/tasks/main.yml
-# Instala Docker Engine e Portainer CE na VM designada (core-services-vm).
+# Instala Docker Engine em todas as VMs Ubuntu; Portainer CE na core-services-vm e Portainer Agent nas demais.
 
 - name: "Adicionar chave GPG oficial do Docker"
   ansible.builtin.get_url:
@@ -75,12 +75,14 @@
   # A criação do diretório base no dataset ZFS do Proxmox host (e.g., /data/docker-volumes/portainer/data)
   # pode ser feita aqui também ou assumir que o dataset pai já existe.
   # Para simplicidade, esta task garante o subdiretório no montado NFS.
+  when: docker_portainer_mode == 'server'
 
 - name: "Criar rede Docker 'proxy' se não existir (para Traefik e serviços expostos)"
   community.docker.docker_network:
     name: proxy
     state: present
     # Outras opções como 'driver: bridge' são padrão.
+  when: docker_portainer_mode == 'server' # O Traefik só roda na core-services-vm
 
 - name: "Deploy Portainer CE container"
   community.docker.docker_container:
@@ -94,6 +96,9 @@
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9443:9443" # HTTPS principal do Portainer
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9000:9000" # HTTP (redireciona para 9443, pode ser omitido se só usar Traefik)
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:8000:8000" # Porta para o Edge Agent do Portainer (opcional)
+    env:
+      # Segredo compartilhado com o Portainer Agent das outras VMs: o agente só atende quem o conhece.
+      AGENT_SECRET: "{{ portainer_agent_secret }}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock" # Permite Portainer gerenciar o Docker local
       # Caminho no host (VM core-services-vm) onde o volume NFS do Portainer está montado
@@ -113,3 +118,22 @@
       # Middleware de Autenticação Authelia
       # Refere-se ao middleware Authelia que será definido no docker-compose do Authelia (Seção 5).
       traefik.http.routers.portainer.middlewares: "authelia-forwardauth@docker"
+  when: docker_portainer_mode == 'server'
+
+# Nas demais VMs (ai-desktop-vm), o Portainer Agent: o Portainer central gerencia as stacks dela por aqui.
+# Porta só no IP da LAN. Portas publicadas pelo Docker não passam pelo UFW, então a proteção é o
+# AGENT_SECRET (o mesmo do Portainer server): sem ele, o agente recusa a conexão.
+- name: "Deploy Portainer Agent container"
+  community.docker.docker_container:
+    name: portainer_agent
+    image: "{{ portainer_agent_image }}"
+    restart_policy: unless-stopped
+    security_opt: ["no-new-privileges:true"]
+    ports:
+      - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9001:9001"
+    env:
+      AGENT_SECRET: "{{ portainer_agent_secret }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/lib/docker/volumes:/var/lib/docker/volumes"
+  when: docker_portainer_mode == 'agent'
