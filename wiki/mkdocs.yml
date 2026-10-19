@@ -102,7 +102,7 @@ nav:
     - 'Automação': '02-visao-geral-arquitetura/04-automacao-ansible.md'
     - 'Containers': '02-visao-geral-arquitetura/05-gerenciamento-containers.md'
     - 'Segurança': '02-visao-geral-arquitetura/06-principios-seguranca.md'
-    - 'Estratégia LLM': '02-visao-geral-arquitetura/08-apis-llm-estrategia.md'
+    - 'Estratégia LLM': '02-visao-geral-arquitetura/07-apis-llm-estrategia.md'
     - 'Catálogo de Aplicações': '02-visao-geral-arquitetura/09-catalogo-aplicacoes.md'
     - 'Índice de Integrações': '02-visao-geral-arquitetura/10-indice-integracoes.md'
   - '🛠️ Sustentação':

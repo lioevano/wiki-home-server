@@ -17,7 +17,7 @@ Manter todo o software atualizado é uma das tarefas de manutenção mais críti
 *   **Frequência Recomendada:** **Mensalmente**, ou imediatamente se houver alertas de segurança críticos para o Debian ou componentes Proxmox.
 *   **Procedimento (no shell do host Proxmox, como `root` ou com `sudo`):**
     1.  **Leia as Notas de Release (Importante para atualizações maiores):** Antes de grandes atualizações de versão do Proxmox VE (e.g., de 7.x para 8.x), é crucial verificar o [fórum do Proxmox](https://forum.proxmox.com/) e as [notas de release oficiais](https://pve.proxmox.com/wiki/Roadmap) para quaisquer problemas conhecidos, breaking changes, ou procedimentos de upgrade específicos.
-    2.  **Faça Backup das VMs:** Certifique-se de que seus backups de VMs ([conforme Seção 2.3](#2-verificação-de-backups) e [Estratégia de Backup](02-backup-restore-estrategia.md)) estão atualizados e funcionais antes de uma atualização do host.
+    2.  **Faça Backup das VMs:** Certifique-se de que seus backups de VMs ([verificação de backups](#6-verificação-e-teste-de-backups) e [Estratégia de Backup](02-backup-restore-estrategia.md)) estão atualizados e funcionais antes de uma atualização do host.
     3.  **Execute a Atualização:**
         ```bash
         # Sincroniza a lista de pacotes com os repositórios

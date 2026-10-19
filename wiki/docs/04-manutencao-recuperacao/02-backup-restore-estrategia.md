@@ -350,7 +350,7 @@ Como detalhado no [Guia Prático de Snapshots ZFS](../03-guias-sustentacao/12-gu
         Exemplo: Para restaurar `/data/docker-volumes/meuapp/config.txt` do snapshot `@snap1`:
         `sudo cp /data/docker-volumes/.zfs/snapshot/snap1/meuapp/config.txt /data/docker-volumes/meuapp/config.txt`
 
-### 5. Repositório Ansible Git (`home-server/`)
+### 5. Repositório Git do Projeto (`wiki-home-server`)
 
 Sua configuração de Infraestrutura como Código é um ativo crítico.
 
@@ -409,18 +409,3 @@ Repetindo pela última vez (mas não menos importante): **TESTE, TESTE, TESTE!**
 *   **Documente Seus Procedimentos de Restauração:** Enquanto você testa, anote os passos exatos. Em uma emergência real, você estará sob pressão e ter um guia passo a passo documentado por você mesmo será inestimável.
 
 Uma estratégia de backup bem implementada e regularmente testada é o que lhe dará a verdadeira tranquilidade e a capacidade de se recuperar de quase qualquer eventualidade com seu servidor doméstico.
-
-### 5. Backup Off-site para a Nuvem (Google Cloud Storage)
-
-Esta é a etapa que completa nossa regra 3-2-1, garantindo que tenhamos uma cópia dos nossos dados mais críticos em um local geograficamente separado.
-
-*   **O Que Fazer Backup:**
-    *   Os backups da **configuração do host Proxmox** gerados pelo script local.
-    *   Os backups das **VMs** gerados pelo Proxmox.
-    *   Os **snapshots ZFS** dos seus datasets de dados.
-
-*   **Como Fazer Backup:**
-    *   Use `rclone` para sincronizar os backups para outro disco ou servidor remoto.
-
-*   **Como Restaurar:**
-    *   Reconstrua o host Proxmox do zero, importe os backups de VM e restaure os snapshots ZFS conforme descrito em [Reconstruindo a Infraestrutura](04-reconstruindo-infraestrutura.md).

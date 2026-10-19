@@ -236,7 +236,7 @@ Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no 
 | Provedor | `litellm` |
 | Aplica-se a | `+llm` |
 | Arquivos | compose do consumidor (`environment:`); `ansible/templates/litellm_config.yaml.j2` |
-| Páginas | `01-manual-implementacao/08-stack-ia.md`; `02-visao-geral-arquitetura/08-apis-llm-estrategia.md` |
+| Páginas | `01-manual-implementacao/08-stack-ia.md`; `02-visao-geral-arquitetura/07-apis-llm-estrategia.md` |
 | Manual | — |
 
 ### Regras

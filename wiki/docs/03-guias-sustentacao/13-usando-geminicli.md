@@ -2,9 +2,7 @@
 description: "Instala o Gemini CLI nas VMs via Ansible e mostra como usá-lo no terminal para manutenção e troubleshooting."
 ---
 
----
-
-## 13. Usando o GeminiCLI para Interação Inteligente com o Servidor
+# Usando o Gemini CLI para Interação Inteligente com o Servidor
 
 Nossa arquitetura de home server é poderosa, mas a interação com ela, especialmente para tarefas de manutenção, análise de logs e troubleshooting, geralmente acontece através da linha de comando (CLI). Para turbinar essa interação, integramos o **Gemini CLI** (`@google/gemini-cli`), a ferramenta de código aberto do Google que leva o poder dos modelos de linguagem da Google (Gemini) diretamente para o seu terminal.
 
@@ -13,7 +11,7 @@ O GeminiCLI permite que você faça perguntas em linguagem natural sobre o seu s
 !!! warning "Ferramenta Não-Oficial e Segurança"
     O Gemini CLI é instalado via `npm` (pacote `@google/gemini-cli`), por isso o role instala `nodejs` e `npm` antes. Embora seja extremamente útil, sempre exerça cautela. **Nunca execute comandos gerados por uma IA em um ambiente de produção sem antes revisá-los cuidadosamente.** Trate as sugestões da IA como as de um assistente júnior: úteis, mas que exigem supervisão sênior (a sua!).
 
-### Instalação e Configuração via Ansible
+## Instalação e Configuração via Ansible
 
 A instalação do GeminiCLI e a configuração da chave de API serão gerenciadas pelo Ansible para garantir consistência em todas as VMs relevantes (como a `core-services-vm` e a `ai-desktop-vm`).
 
@@ -63,11 +61,11 @@ A instalação do GeminiCLI e a configuração da chave de API serão gerenciada
 3.  **Adicione o Role aos Playbooks:**
     Inclua este novo role nos playbooks que configuram suas VMs principais, como `setup-core-services-vm.yml`.
 
-### Casos de Uso Práticos no Home Server
+## Casos de Uso Práticos no Home Server
 
 Após a execução do Ansible, você pode acessar a VM via SSH e começar a usar o `gemini` ou `g` na linha de comando. O grande diferencial do GeminiCLI é sua capacidade de interagir com arquivos e com a saída de outros comandos (stdin).
 
-#### 1. Análise de Logs do Sistema
+### 1. Análise de Logs do Sistema
 
 Imagine que um container está se comportando de forma estranha. Em vez de ler centenas de linhas de log, você pode pedir ao Gemini para fazer isso por você.
 
@@ -80,7 +78,7 @@ docker logs --tail 100 nextcloud_app | gemini "Resuma estes logs. Há algum erro
 # Há também um erro de conexão com o banco de dados que ocorreu uma vez, mas não se repetiu.
 ```
 
-#### 2. Geração de Comandos e Scripts
+### 2. Geração de Comandos e Scripts
 
 Precisa de um comando `find` ou `awk` complexo que você nunca lembra de cabeça? Peça ao Gemini.
 
@@ -94,7 +92,7 @@ gemini "Gere um comando para encontrar todos os arquivos .log no diretório /var
 # Você pode então copiar, revisar e executar o comando.
 ```
 
-#### 3. Troubleshooting Assistido por IA
+### 3. Troubleshooting Assistido por IA
 
 Seu serviço Traefik não está funcionando. Você pode passar o arquivo de configuração para o Gemini e pedir uma análise.
 
@@ -106,7 +104,7 @@ gemini -f /etc/traefik/traefik.yml "Analise este arquivo de configuração do Tr
 # Na seção 'entrypoints', o endereço 'websecure' está definido como ':443', mas não há uma configuração TLS associada a ele. Você precisa adicionar a seção 'tls:' com um 'certresolver'.
 ```
 
-#### 4. Documentação e Explicação de Comandos
+### 4. Documentação e Explicação de Comandos
 
 Encontrou um script complexo na internet? Peça ao Gemini para explicá-lo.
 
@@ -122,7 +120,7 @@ gemini "Explique o que este comando faz, passo a passo: tar -czf - /home/ubuntu/
 # 4. `'cat > /backup/data.tar.gz'`: Executa o comando `cat` no servidor remoto, que lê da sua entrada padrão (que está recebendo os dados do backup) e escreve os dados no arquivo `/backup/data.tar.gz`.
 ```
 
-### Automações e Integrações
+## Automações e Integrações
 
 O poder do GeminiCLI é ampliado quando combinado com outras ferramentas e scripts.
 

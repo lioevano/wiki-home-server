@@ -2,9 +2,9 @@
 description: "Estratégia de IA híbrida com LiteLLM: quando usar modelos locais no Ollama ou APIs externas, com foco em custo."
 ---
 
-# Seção 8: Estratégia de APIs de LLM e Arquitetura Híbrida de IA
+# Estratégia de APIs de LLM e Arquitetura Híbrida de IA
 
-Com a introdução do LiteLLM em nossa stack, a capacidade de processamento de linguagem do nosso home server evolui de um sistema puramente local para uma **arquitetura de IA híbrida, elástica e consciente dos custos**. Esta seção aprofunda a visão estratégica por trás dessa abordagem, detalhando como, quando e por que utilizar modelos de linguagem locais (via Ollama) versus modelos de ponta na nuvem (via APIs externas).
+Com a introdução do LiteLLM em nossa stack, a capacidade de processamento de linguagem do nosso home server evolui de um sistema puramente local para uma **arquitetura de IA híbrida, elástica e consciente dos custos**. Esta página aprofunda a visão estratégica por trás dessa abordagem, detalhando como, quando e por que utilizar modelos de linguagem locais (via Ollama) versus modelos de ponta na nuvem (via APIs externas).
 
 O objetivo não é substituir o Ollama, mas sim aumentá-lo, criando um sistema inteligente que utiliza o recurso certo para a tarefa certa, otimizando a relação entre performance, custo e privacidade.
 
