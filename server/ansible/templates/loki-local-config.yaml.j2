@@ -17,15 +17,19 @@ common:
     kvstore:
       store: inmemory
 
+# Loki 3: schema v13 com índice TSDB (exigido para structured metadata; v11/boltdb-shipper não inicia).
+# Instalação nova, sem dados a migrar: um único período a partir de 2026-10-01.
 schema_config:
   configs:
-    - from: 2020-10-24
-      store: boltdb-shipper
+    - from: 2026-10-01
+      store: tsdb
       object_store: filesystem
-      schema: v11
+      schema: v13
       index:
         prefix: index_
         period: 24h
 
-ruler:
-  alertmanager_url: http://localhost:9093
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-index
+    cache_location: /loki/tsdb-cache
