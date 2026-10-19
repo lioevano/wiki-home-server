@@ -315,6 +315,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       bazarr: "CHAVE_DE_API_DO_BAZARR"
       seerr: "CHAVE_DE_API_DO_SEERR"
       nextcloud: "NC_TOKEN_DO_NEXTCLOUD"
+      immich: "CHAVE_DE_API_DO_IMMICH" # Conta › Configurações da conta › Chaves de API (página 11)
       homeassistant: "TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT"
       portainer: "CHAVE_DE_API_DO_PORTAINER"
       qbittorrent_user: "admin"

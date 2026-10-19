@@ -218,6 +218,7 @@
           - { name: 'HOMEPAGE_VAR_BAZARR_KEY', value: "{{ homepage_widget_keys.bazarr }}" }
           - { name: 'HOMEPAGE_VAR_SEERR_KEY', value: "{{ homepage_widget_keys.seerr }}" }
           - { name: 'HOMEPAGE_VAR_NEXTCLOUD_KEY', value: "{{ homepage_widget_keys.nextcloud }}" }
+          - { name: 'HOMEPAGE_VAR_IMMICH_KEY', value: "{{ homepage_widget_keys.immich }}" }
           - { name: 'HOMEPAGE_VAR_HOMEASSISTANT_KEY', value: "{{ homepage_widget_keys.homeassistant }}" }
           - { name: 'HOMEPAGE_VAR_PORTAINER_KEY', value: "{{ homepage_widget_keys.portainer }}" }
           - { name: 'HOMEPAGE_VAR_QBITTORRENT_USER', value: "{{ homepage_widget_keys.qbittorrent_user }}" }

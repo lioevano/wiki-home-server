@@ -63,6 +63,10 @@ scrape_configs:
         labels: {app: 'n8n'}
       - targets: ['http://nextcloud_app/status.php']
         labels: {app: 'nextcloud'}
+      - targets: ['http://collabora:9980/hosting/discovery']
+        labels: {app: 'collabora'}
+      - targets: ['http://immich_server:2283/api/server/ping']
+        labels: {app: 'immich'}
       - targets: ['https://portainer:9443/api/system/status']
         labels: {app: 'portainer', __param_module: 'http_2xx_inseguro'}
       - targets: ['http://prometheus:9090/-/healthy']

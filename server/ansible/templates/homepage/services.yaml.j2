@@ -37,6 +37,21 @@
           type: nextcloud
           url: http://nextcloud_app
           key: "{% raw %}{{HOMEPAGE_VAR_NEXTCLOUD_KEY}}{% endraw %}"
+    - immich:
+        icon: immich.png
+        href: https://fotos.{{ base_domain }}
+        server: core
+        container: immich_server
+        widget:
+          type: immich
+          url: http://immich_server:2283
+          key: "{% raw %}{{HOMEPAGE_VAR_IMMICH_KEY}}{% endraw %}"
+          version: 2
+    - collabora:
+        icon: collabora-online.png
+        href: https://office.{{ base_domain }}
+        server: core
+        container: collabora
 - mídia:
     - bazarr:
         icon: bazarr.png

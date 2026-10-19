@@ -322,3 +322,34 @@ def test_dump_diario_do_nextcloud():
     out = render(DUMP_TPL, vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes")
     assert "pg_dump" in out and "/mnt/pve_data_zfs/docker-volumes/nextcloud/db-dumps" in out
     assert "-mtime +14" in out and "-delete" in out
+
+
+# --- Painel e disponibilidade ---
+
+def test_sondas_fotos_arquivos():
+    from test_midia import PROM_VARS
+    cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups={}, **PROM_VARS))
+    alvos = {c["labels"]["app"]: c["targets"][0] for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
+             for c in j["static_configs"]}
+    assert alvos["immich"] == "http://immich_server:2283/api/server/ping"
+    assert alvos["nextcloud"] == "http://nextcloud_app/status.php"
+    assert alvos["collabora"] == "http://collabora:9980/hosting/discovery"
+
+
+def test_homepage_immich():
+    from test_midia import PROM_VARS
+    src = (ROOT / "server/ansible/templates/homepage/services.yaml.j2").read_text(encoding="utf-8")
+    ctx = {"base_domain": DOM, "groups": {"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS}
+    ctx.update({v: "x" for v in set(re.findall(r"\{\{\s*([a-z_]+)", src)) - {"item"} if v not in ctx})
+    grupo = next(g for g in yaml.safe_load(render("templates/homepage/services.yaml.j2", **ctx))
+                 if "produtividade" in g)["produtividade"]
+    entradas = {list(e)[0]: list(e.values())[0] for e in grupo}
+    im = entradas["immich"]
+    assert im["href"] == f"https://fotos.{DOM}" and im["container"] == "immich_server" and im["server"] == "core"
+    assert im["widget"]["type"] == "immich" and im["widget"]["url"] == "http://immich_server:2283"
+    assert im["widget"]["key"] == "{{HOMEPAGE_VAR_IMMICH_KEY}}" and im["widget"]["version"] == 2
+    co = entradas["collabora"]
+    assert co["href"] == f"https://office.{DOM}" and co["container"] == "collabora" and "widget" not in co
+    pb = (ROOT / "server/ansible/playbooks/setup-monitoring-stack-volumes.yml").read_text(encoding="utf-8")
+    assert "{ name: 'HOMEPAGE_VAR_IMMICH_KEY', value: \"{{ homepage_widget_keys.immich }}\" }" in pb
+    assert "HOMEPAGE_VAR_IMMICH_KEY" in _env(_svc(APPS)["homepage"])
