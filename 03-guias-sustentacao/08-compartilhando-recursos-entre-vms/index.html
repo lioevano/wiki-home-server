@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/08-compartilhando-recursos-entre-vms/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/08-compartilhando-recursos-entre-vms/">
       
       
         <link rel="prev" href="../07-cenarios-especificos-criacao-vms/">
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1478,7 +1478,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#1-nfs-network-file-system-ja-em-uso-na-arquitetura" class="md-nav__link">
+  <a href="#1-nfs-network-file-system---já-em-uso-na-arquitetura" class="md-nav__link">
     <span class="md-ellipsis">
       
         1. NFS (Network File System) - Já em Uso na Arquitetura
@@ -1500,7 +1500,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-pastas-compartilhadas-virtio-fs-9p-host-proxmox-para-vm-kvm-especifica" class="md-nav__link">
+  <a href="#3-pastas-compartilhadas-virtio-fs-9p---host-proxmox-para-vm-kvm-específica" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. Pastas Compartilhadas VirtIO-FS (9P) - Host Proxmox para VM KVM Específica
@@ -1511,7 +1511,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-bancos-de-dados-compartilhados-entre-aplicacoesvms" class="md-nav__link">
+  <a href="#4-bancos-de-dados-compartilhados-entre-aplicaçõesvms" class="md-nav__link">
     <span class="md-ellipsis">
       
         4. Bancos de Dados Compartilhados entre Aplicações/VMs
@@ -1522,7 +1522,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-sincronizacao-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud" class="md-nav__link">
+  <a href="#5-sincronização-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud" class="md-nav__link">
     <span class="md-ellipsis">
       
         5. Sincronização de Arquivos entre Dispositivos/VMs (e.g., Syncthing, Nextcloud)
@@ -1971,7 +1971,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#1-nfs-network-file-system-ja-em-uso-na-arquitetura" class="md-nav__link">
+  <a href="#1-nfs-network-file-system---já-em-uso-na-arquitetura" class="md-nav__link">
     <span class="md-ellipsis">
       
         1. NFS (Network File System) - Já em Uso na Arquitetura
@@ -1993,7 +1993,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-pastas-compartilhadas-virtio-fs-9p-host-proxmox-para-vm-kvm-especifica" class="md-nav__link">
+  <a href="#3-pastas-compartilhadas-virtio-fs-9p---host-proxmox-para-vm-kvm-específica" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. Pastas Compartilhadas VirtIO-FS (9P) - Host Proxmox para VM KVM Específica
@@ -2004,7 +2004,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-bancos-de-dados-compartilhados-entre-aplicacoesvms" class="md-nav__link">
+  <a href="#4-bancos-de-dados-compartilhados-entre-aplicaçõesvms" class="md-nav__link">
     <span class="md-ellipsis">
       
         4. Bancos de Dados Compartilhados entre Aplicações/VMs
@@ -2015,7 +2015,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-sincronizacao-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud" class="md-nav__link">
+  <a href="#5-sincronização-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud" class="md-nav__link">
     <span class="md-ellipsis">
       
         5. Sincronização de Arquivos entre Dispositivos/VMs (e.g., Syncthing, Nextcloud)
@@ -2048,7 +2048,7 @@
 <h1 id="compartilhando-recursos-entre-vms-ou-com-a-rede-local">Compartilhando Recursos Entre VMs ou com a Rede Local<a class="headerlink" href="#compartilhando-recursos-entre-vms-ou-com-a-rede-local" title="Permanent link">¶</a></h1>
 <p>Em um ambiente de servidor doméstico, frequentemente surge a necessidade de compartilhar arquivos, bancos de dados ou outros recursos não apenas entre containers Docker dentro de uma mesma VM, mas também entre diferentes máquinas virtuais (VMs) ou entre suas VMs e outros dispositivos na sua rede local (como seu desktop, laptop ou media players).</p>
 <p>Esta página explora algumas das abordagens mais comuns para realizar esse compartilhamento de recursos.</p>
-<h2 id="1-nfs-network-file-system-ja-em-uso-na-arquitetura">1. NFS (Network File System) - Já em Uso na Arquitetura<a class="headerlink" href="#1-nfs-network-file-system-ja-em-uso-na-arquitetura" title="Permanent link">¶</a></h2>
+<h2 id="1-nfs-network-file-system---já-em-uso-na-arquitetura">1. NFS (Network File System) - Já em Uso na Arquitetura<a class="headerlink" href="#1-nfs-network-file-system---já-em-uso-na-arquitetura" title="Permanent link">¶</a></h2>
 <p>Nossa arquitetura já utiliza extensivamente o NFS. O host Proxmox VE atua como um servidor NFS, exportando os datasets ZFS (como <code>data/docker-volumes</code>, <code>data/media</code>, <code>data/downloads</code>) para a <code>core-services-vm</code> e a <code>ai-desktop-vm</code>. Essas VMs, por sua vez, atuam como clientes NFS, montando esses compartilhamentos para que os containers Docker possam usar os dados persistentes.</p>
 <ul>
 <li><strong>Caso de Uso Principal na Arquitetura Atual:</strong> Compartilhar grandes volumes de dados (configurações Docker, bibliotecas de mídia, downloads, modelos de IA) do host Proxmox para as VMs Linux que rodam os containers.</li>
@@ -2245,7 +2245,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="3-pastas-compartilhadas-virtio-fs-9p-host-proxmox-para-vm-kvm-especifica">3. Pastas Compartilhadas VirtIO-FS (9P) - Host Proxmox para VM KVM Específica<a class="headerlink" href="#3-pastas-compartilhadas-virtio-fs-9p-host-proxmox-para-vm-kvm-especifica" title="Permanent link">¶</a></h2>
+<h2 id="3-pastas-compartilhadas-virtio-fs-9p---host-proxmox-para-vm-kvm-específica">3. Pastas Compartilhadas VirtIO-FS (9P) - Host Proxmox para VM KVM Específica<a class="headerlink" href="#3-pastas-compartilhadas-virtio-fs-9p---host-proxmox-para-vm-kvm-específica" title="Permanent link">¶</a></h2>
 <p>VirtIO-FS é um sistema de arquivos compartilhado projetado especificamente para VMs KVM, permitindo compartilhar um diretório do host Proxmox diretamente com uma VM de forma mais eficiente e integrada do que NFS para este caso de uso host-para-VM_única.</p>
 <ul>
 <li><strong>Caso de Uso:</strong> Compartilhamento de alta performance e baixa latência de um diretório específico do host Proxmox para uma <strong>única</strong> VM KVM. Bom para arquivos de configuração, scripts, ou dados que precisam ser acessados rapidamente pela VM a partir do host.</li>
@@ -2297,7 +2297,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="4-bancos-de-dados-compartilhados-entre-aplicacoesvms">4. Bancos de Dados Compartilhados entre Aplicações/VMs<a class="headerlink" href="#4-bancos-de-dados-compartilhados-entre-aplicacoesvms" title="Permanent link">¶</a></h2>
+<h2 id="4-bancos-de-dados-compartilhados-entre-aplicaçõesvms">4. Bancos de Dados Compartilhados entre Aplicações/VMs<a class="headerlink" href="#4-bancos-de-dados-compartilhados-entre-aplicaçõesvms" title="Permanent link">¶</a></h2>
 <p>Se múltiplas aplicações (rodando em diferentes VMs ou até mesmo em diferentes containers dentro da mesma VM, mas em stacks Docker separadas) precisam acessar o <strong>mesmo</strong> banco de dados.</p>
 <ul>
 <li><strong>Estratégia Geral: Centralizar o Banco de Dados.</strong><ol>
@@ -2352,7 +2352,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="5-sincronizacao-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud">5. Sincronização de Arquivos entre Dispositivos/VMs (e.g., Syncthing, Nextcloud)<a class="headerlink" href="#5-sincronizacao-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud" title="Permanent link">¶</a></h2>
+<h2 id="5-sincronização-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud">5. Sincronização de Arquivos entre Dispositivos/VMs (e.g., Syncthing, Nextcloud)<a class="headerlink" href="#5-sincronização-de-arquivos-entre-dispositivosvms-eg-syncthing-nextcloud" title="Permanent link">¶</a></h2>
 <p>Em vez de montagens de rede diretas para todos os casos, você pode usar ferramentas de sincronização de arquivos para manter diretórios consistentes entre múltiplas VMs, seu desktop, laptop, etc.</p>
 <ul>
 <li><strong>Syncthing:</strong><ul>

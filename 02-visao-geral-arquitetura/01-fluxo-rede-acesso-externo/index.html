@@ -4,7 +4,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <meta content="Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo." name="description"/>
 <meta content="Léo Ivan" name="author"/>
-<link href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/" rel="canonical"/>
+<link href="https://wiki.lioevano.com/02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/" rel="canonical"/>
 <link href="../" rel="prev"/>
 <link href="../02-virtualizacao-proxmox/" rel="next"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
@@ -448,7 +448,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#componentes-chave-e-suas-funcoes">
+<a class="md-nav__link" href="#componentes-chave-e-suas-funções">
 <span class="md-ellipsis">
       
         Componentes Chave e Suas Funções
@@ -485,7 +485,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#4-authelia-servidor-de-autenticacao-e-autorizacao">
+<a class="md-nav__link" href="#4-authelia-servidor-de-autenticação-e-autorização">
 <span class="md-ellipsis">
       
         4. Authelia (Servidor de Autenticação e Autorização)
@@ -569,7 +569,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../08-apis-llm-estrategia/">
+<a class="md-nav__link" href="../07-apis-llm-estrategia/">
 <span class="md-ellipsis">
     
   
@@ -935,7 +935,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#componentes-chave-e-suas-funcoes">
+<a class="md-nav__link" href="#componentes-chave-e-suas-funções">
 <span class="md-ellipsis">
       
         Componentes Chave e Suas Funções
@@ -972,7 +972,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#4-authelia-servidor-de-autenticacao-e-autorizacao">
+<a class="md-nav__link" href="#4-authelia-servidor-de-autenticação-e-autorização">
 <span class="md-ellipsis">
       
         4. Authelia (Servidor de Autenticação e Autorização)
@@ -1019,8 +1019,8 @@
     CF_Edge-&gt;&gt;CFT_Agent: 4. Tráfego encaminhado via Túnel Seguro (conexão de saída)
     Note over CF_Edge, CFT_Agent: Seu IP doméstico NUNCA é exposto!
 
-    CFT_Agent-&gt;&gt;Traefik_Proxy: 5. Encaminha requisição HTTP para Traefik (porta 80 interna)
-    Note over CFT_Agent, Traefik_Proxy: Traefik escuta em 80/443 na VM, CFT direciona para ele.
+    CFT_Agent-&gt;&gt;Traefik_Proxy: 5. Encaminha a requisição para https://traefik:443 (rede Docker proxy)
+    Note over CFT_Agent, Traefik_Proxy: No TLS Verify: o nome interno traefik não bate com o certificado do domínio.
 
     Traefik_Proxy-&gt;&gt;Traefik_Proxy: 6. Roteamento baseado em Host (app.seudominio.com)
     Traefik_Proxy-&gt;&gt;Authelia_Auth: 7. Verifica Autenticação (Middleware Authelia)
@@ -1044,7 +1044,7 @@
     Traefik_Proxy--&gt;&gt;CFT_Agent: 14. Resposta via Traefik
     CFT_Agent--&gt;&gt;CF_Edge: 15. Resposta via Túnel Seguro
     CF_Edge--&gt;&gt;U: 16. Resposta final para o Usuário (HTTPS)</code></pre>
-<h2 id="componentes-chave-e-suas-funcoes">Componentes Chave e Suas Funções<a class="headerlink" href="#componentes-chave-e-suas-funcoes" title="Permanent link">¶</a></h2>
+<h2 id="componentes-chave-e-suas-funções">Componentes Chave e Suas Funções<a class="headerlink" href="#componentes-chave-e-suas-funções" title="Permanent link">¶</a></h2>
 <h3 id="1-cloudflare-dns-e-edge-network">1. Cloudflare DNS e Edge Network<a class="headerlink" href="#1-cloudflare-dns-e-edge-network" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>Gerenciamento DNS:</strong> Seu domínio (<code>{{ base_domain }}</code>) utiliza os nameservers da Cloudflare.</li>
@@ -1084,7 +1084,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="4-authelia-servidor-de-autenticacao-e-autorizacao">4. Authelia (Servidor de Autenticação e Autorização)<a class="headerlink" href="#4-authelia-servidor-de-autenticacao-e-autorizacao" title="Permanent link">¶</a></h3>
+<h3 id="4-authelia-servidor-de-autenticação-e-autorização">4. Authelia (Servidor de Autenticação e Autorização)<a class="headerlink" href="#4-authelia-servidor-de-autenticação-e-autorização" title="Permanent link">¶</a></h3>
 <p>Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e opcionalmente 2FA) antes que os usuários possam acessar os serviços protegidos.</p>
 <ul>
 <li><strong>Integração com Traefik:</strong> Traefik é configurado para usar Authelia como um <a href="https://doc.traefik.io/traefik/middlewares/http/forwardauth/">middleware de forward authentication</a>.<ul>
@@ -1123,7 +1123,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:41:03 -03">13 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:40:13 -03">18 de outubro de 2026</span>
 </span>
 </aside>
 </article>

@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/06-gerenciando-recursos-vms/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/06-gerenciando-recursos-vms/">
       
       
         <link rel="prev" href="../05-passthrough-hardware-adicional/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gerenciando-recursos-de-maquinas-virtuais-vms" class="md-skip">
+        <a href="#gerenciando-recursos-de-máquinas-virtuais-vms" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1434,7 +1434,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#procedimento-recomendado-interface-web-proxmox-sincronizacao-com-ansible" class="md-nav__link">
+  <a href="#procedimento-recomendado-interface-web-proxmox--sincronização-com-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
         Procedimento Recomendado (Interface Web Proxmox + Sincronização com Ansible)
@@ -1500,7 +1500,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-consideracoes-sobre-overcommitment-de-cpu-e-ram" class="md-nav__link">
+  <a href="#4-considerações-sobre-overcommitment-de-cpu-e-ram" class="md-nav__link">
     <span class="md-ellipsis">
       
         4. Considerações Sobre Overcommitment de CPU e RAM
@@ -2028,7 +2028,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#procedimento-recomendado-interface-web-proxmox-sincronizacao-com-ansible" class="md-nav__link">
+  <a href="#procedimento-recomendado-interface-web-proxmox--sincronização-com-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
         Procedimento Recomendado (Interface Web Proxmox + Sincronização com Ansible)
@@ -2094,7 +2094,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-consideracoes-sobre-overcommitment-de-cpu-e-ram" class="md-nav__link">
+  <a href="#4-considerações-sobre-overcommitment-de-cpu-e-ram" class="md-nav__link">
     <span class="md-ellipsis">
       
         4. Considerações Sobre Overcommitment de CPU e RAM
@@ -2135,12 +2135,12 @@
   
 
 
-<h1 id="gerenciando-recursos-de-maquinas-virtuais-vms">Gerenciando Recursos de Máquinas Virtuais (VMs)<a class="headerlink" href="#gerenciando-recursos-de-maquinas-virtuais-vms" title="Permanent link">¶</a></h1>
+<h1 id="gerenciando-recursos-de-máquinas-virtuais-vms">Gerenciando Recursos de Máquinas Virtuais (VMs)<a class="headerlink" href="#gerenciando-recursos-de-máquinas-virtuais-vms" title="Permanent link">¶</a></h1>
 <p>À medida que seu servidor doméstico evolui, seus serviços crescem, ou suas necessidades mudam, você provavelmente precisará ajustar os recursos alocados para suas máquinas virtuais (VMs). Esta página aborda como gerenciar CPU, RAM e discos de VMs existentes no Proxmox VE, com a importante consideração de manter a consistência com sua configuração Ansible (Infraestrutura como Código - IaC).</p>
 <p>As modificações de recursos são geralmente realizadas através da <strong>Interface Web do Proxmox VE</strong>. No entanto, para que essas mudanças sejam persistentes e refletidas na sua IaC, elas também devem ser atualizadas nos seus arquivos Ansible, principalmente no playbook <code>vm-deploy.yml</code>.</p>
 <h2 id="1-redimensionando-vcpus-e-ram-de-uma-vm-existente">1. Redimensionando vCPUs e RAM de uma VM Existente<a class="headerlink" href="#1-redimensionando-vcpus-e-ram-de-uma-vm-existente" title="Permanent link">¶</a></h2>
 <p>Aumentar ou diminuir o número de processadores virtuais (vCPUs) ou a quantidade de memória RAM alocada para uma VM são tarefas comuns para otimizar a performance ou liberar recursos no host.</p>
-<h3 id="procedimento-recomendado-interface-web-proxmox-sincronizacao-com-ansible">Procedimento Recomendado (Interface Web Proxmox + Sincronização com Ansible)<a class="headerlink" href="#procedimento-recomendado-interface-web-proxmox-sincronizacao-com-ansible" title="Permanent link">¶</a></h3>
+<h3 id="procedimento-recomendado-interface-web-proxmox--sincronização-com-ansible">Procedimento Recomendado (Interface Web Proxmox + Sincronização com Ansible)<a class="headerlink" href="#procedimento-recomendado-interface-web-proxmox--sincronização-com-ansible" title="Permanent link">¶</a></h3>
 <ol>
 <li>
 <p><strong>Desligue a VM (Recomendado para a Maioria das Mudanças de CPU/RAM):</strong></p>
@@ -2185,7 +2185,7 @@ Proxmox VE, em conjunto com o QEMU Guest Agent (que deve estar instalado e rodan
 <p><strong>Atualize a Configuração Ansible (Passo Crucial para Manter a IaC):</strong>
     Esta é uma etapa <strong>fundamental</strong> para garantir que sua Infraestrutura como Código (Ansible) reflita o estado real da sua infraestrutura.</p>
 <ul>
-<li>Na sua máquina de controle Ansible, abra o arquivo <code>home-server/ansible/playbooks/vm-deploy.yml</code>.</li>
+<li>Na sua máquina de controle Ansible, abra o arquivo <code>server/ansible/playbooks/vm-deploy.yml</code>.</li>
 <li>Localize a seção de deploy da VM que você acabou de modificar na UI do Proxmox (e.g., a task para <code>core-services-vm</code> ou <code>ai-desktop-vm</code>).</li>
 <li>Atualize as variáveis <code>vm_cores</code> e <code>vm_memory</code> (em MiB) para corresponder exatamente aos novos valores que você configurou na UI do Proxmox.
     <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Exemplo de trecho no vm-deploy.yml para core-services-vm</span>
@@ -2207,7 +2207,7 @@ Proxmox VE, em conjunto com o QEMU Guest Agent (que deve estar instalado e rodan
 <li>
 <p><strong>Execute o Playbook Ansible para Registrar o Novo Estado Desejado:</strong>
     Rode o playbook <code>vm-deploy.yml</code> a partir da sua máquina de controle Ansible. Como a VM já existe, o Ansible (através do módulo <code>community.proxmox.proxmox_kvm</code> com <code>update: true</code> e <code>state: present</code>) deve apenas verificar se os recursos da VM no Proxmox correspondem ao definido no playbook. Se você acabou de fazer a mudança na UI, ele deve reportar "ok" para as tasks de configuração de recursos. Se houvesse uma divergência (e.g., você mudou na UI mas esqueceu de mudar no Ansible e rodou o playbook), o Ansible tentaria aplicar os valores do playbook.
-    </p><div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
+    </p><div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div>
     !!! warning "Idempotência e Sincronização de Estado"
         Se você não atualizar os arquivos Ansible após uma mudança manual na UI do Proxmox, na próxima vez que o playbook <code>vm-deploy.yml</code> for executado, ele poderá tentar <strong>reverter os recursos da VM para os valores antigos</strong> que estavam definidos no playbook. Manter a UI do Proxmox e seus arquivos Ansible sincronizados é a chave para uma IaC eficaz. <strong>A configuração Ansible deve ser a fonte da verdade.</strong><p></p>
@@ -2256,7 +2256,7 @@ Proxmox VE, em conjunto com o QEMU Guest Agent (que deve estar instalado e rodan
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># ...</span>
 </span></code></pre></div></li>
 <li>Execute o playbook Ansible para registrar a mudança:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div></li>
 </ul>
 </li>
@@ -2326,7 +2326,7 @@ Proxmox VE, em conjunto com o QEMU Guest Agent (que deve estar instalado e rodan
 </span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="s">"qcow2"</span><span class="w"> </span><span class="c1"># O formato que você escolheu</span>
 </span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># ...</span>
 </span></code></pre></div></li>
-<li>Execute <code>ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass</code>. O Ansible deve reconhecer o disco existente.</li>
+<li>Execute <code>ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass</code>. O Ansible deve reconhecer o disco existente.</li>
 </ul>
 </li>
 <li>
@@ -2387,7 +2387,7 @@ Proxmox VE, em conjunto com o QEMU Guest Agent (que deve estar instalado e rodan
 </ul>
 </li>
 </ul>
-<h2 id="4-consideracoes-sobre-overcommitment-de-cpu-e-ram">4. Considerações Sobre Overcommitment de CPU e RAM<a class="headerlink" href="#4-consideracoes-sobre-overcommitment-de-cpu-e-ram" title="Permanent link">¶</a></h2>
+<h2 id="4-considerações-sobre-overcommitment-de-cpu-e-ram">4. Considerações Sobre Overcommitment de CPU e RAM<a class="headerlink" href="#4-considerações-sobre-overcommitment-de-cpu-e-ram" title="Permanent link">¶</a></h2>
 <p>"Overcommitment" (ou sobrealocação) ocorre quando a soma dos recursos alocados para todas as VMs excede os recursos físicos disponíveis no host.</p>
 <ul>
 <li><strong>CPU Overcommitment:</strong><ul>
@@ -2464,7 +2464,7 @@ Proxmox VE, em conjunto com o QEMU Guest Agent (que deve estar instalado e rodan
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:03:30 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

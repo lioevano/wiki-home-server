@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/01-manual-implementacao/03-provisionamento-vms/">
+        <link rel="canonical" href="https://wiki.lioevano.com/01-manual-implementacao/03-provisionamento-vms/">
       
       
         <link rel="prev" href="../02-proxmox-ve-host/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secao-3-provisionamento-das-maquinas-virtuais-vms-com-ansible" class="md-skip">
+        <a href="#seção-3-provisionamento-das-máquinas-virtuais-vms-com-ansible" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -656,7 +656,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#31-criacao-de-template-de-vm-base-ubuntu-server-cloud-init" class="md-nav__link">
+  <a href="#31-criação-de-template-de-vm-base-ubuntu-server-cloud-init" class="md-nav__link">
     <span class="md-ellipsis">
       
         3.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)
@@ -745,10 +745,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#34-configuracao-de-gpu-passthrough-host-proxmox-revisao" class="md-nav__link">
+  <a href="#34-configuração-de-gpu-passthrough-host-proxmox" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.4. Configuração de GPU Passthrough (Host Proxmox) - Revisão
+        3.4. Configuração de GPU Passthrough (Host Proxmox)
       
     </span>
   </a>
@@ -756,7 +756,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#35-configuracao-de-ambiente-desktop-gui-em-vms-linux-opcional" class="md-nav__link">
+  <a href="#35-configuração-de-ambiente-desktop-gui-em-vms-linux-opcional" class="md-nav__link">
     <span class="md-ellipsis">
       
         3.5. Configuração de Ambiente Desktop (GUI) em VMs Linux (Opcional)
@@ -1224,7 +1224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -2044,7 +2044,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#31-criacao-de-template-de-vm-base-ubuntu-server-cloud-init" class="md-nav__link">
+  <a href="#31-criação-de-template-de-vm-base-ubuntu-server-cloud-init" class="md-nav__link">
     <span class="md-ellipsis">
       
         3.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)
@@ -2133,10 +2133,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#34-configuracao-de-gpu-passthrough-host-proxmox-revisao" class="md-nav__link">
+  <a href="#34-configuração-de-gpu-passthrough-host-proxmox" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3.4. Configuração de GPU Passthrough (Host Proxmox) - Revisão
+        3.4. Configuração de GPU Passthrough (Host Proxmox)
       
     </span>
   </a>
@@ -2144,7 +2144,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#35-configuracao-de-ambiente-desktop-gui-em-vms-linux-opcional" class="md-nav__link">
+  <a href="#35-configuração-de-ambiente-desktop-gui-em-vms-linux-opcional" class="md-nav__link">
     <span class="md-ellipsis">
       
         3.5. Configuração de Ambiente Desktop (GUI) em VMs Linux (Opcional)
@@ -2191,14 +2191,14 @@
   
 
 
-<h1 id="secao-3-provisionamento-das-maquinas-virtuais-vms-com-ansible">Seção 3: Provisionamento das Máquinas Virtuais (VMs) com Ansible<a class="headerlink" href="#secao-3-provisionamento-das-maquinas-virtuais-vms-com-ansible" title="Permanent link">¶</a></h1>
+<h1 id="seção-3-provisionamento-das-máquinas-virtuais-vms-com-ansible">Seção 3: Provisionamento das Máquinas Virtuais (VMs) com Ansible<a class="headerlink" href="#seção-3-provisionamento-das-máquinas-virtuais-vms-com-ansible" title="Permanent link">¶</a></h1>
 <p>Com o host Proxmox VE devidamente configurado (<a href="../02-proxmox-ve-host/">Seção 2</a>), o próximo passo é provisionar as máquinas virtuais (VMs) que hospedarão seus serviços containerizados. Utilizaremos o Ansible para automatizar a criação e configuração inicial dessas VMs a partir de um template Ubuntu Server Cloud-Init, garantindo consistência e repetibilidade.</p>
 <p>Nesta arquitetura, com 48GB de RAM disponíveis no host, temos flexibilidade para alocar recursos de forma mais confortável para nossas VMs principais:</p>
 <ul>
 <li><strong><code>core-services-vm</code>:</strong> Esta VM será o cavalo de batalha, hospedando a maioria dos seus serviços Docker, incluindo Traefik, Portainer, Authelia, Nextcloud, a stack de mídia, a stack de monitoramento, e outros serviços essenciais.</li>
 <li><strong><code>ai-desktop-vm</code>:</strong> Esta VM é opcional, mas planejada para tarefas de Inteligência Artificial (LLMs com Ollama, aplicações RAG) que podem se beneficiar de um ambiente isolado e, crucialmente, do passthrough da GPU AMD RX 5600XT para aceleração de hardware.</li>
 </ul>
-<h2 id="31-criacao-de-template-de-vm-base-ubuntu-server-cloud-init">3.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)<a class="headerlink" href="#31-criacao-de-template-de-vm-base-ubuntu-server-cloud-init" title="Permanent link">¶</a></h2>
+<h2 id="31-criação-de-template-de-vm-base-ubuntu-server-cloud-init">3.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)<a class="headerlink" href="#31-criação-de-template-de-vm-base-ubuntu-server-cloud-init" title="Permanent link">¶</a></h2>
 <p>Um template de VM no Proxmox permite que você clone rapidamente novas VMs já com uma configuração base (como o sistema operacional e alguns pacotes essenciais). Usaremos uma imagem Cloud-Init do Ubuntu Server, que é projetada para ser configurada dinamicamente no primeiro boot.</p>
 <p>Siga estes passos na <strong>interface web do Proxmox VE</strong> ou, para os comandos de download e importação, no <strong>shell do host Proxmox VE</strong> (como <code>root</code>):</p>
 <ol>
@@ -2233,7 +2233,7 @@
 <li><strong>Aba General:</strong><ul>
 <li><strong>Node:</strong> Selecione seu nó Proxmox (e.g., <code>pve</code>).</li>
 <li><strong>VM ID:</strong> Escolha um ID numérico único que esteja fora da sua faixa usual de VMs de produção. IDs altos como <code>9000</code>, <code>9001</code>, etc., são comumente usados para templates. Exemplo: <code>9000</code>.</li>
-<li><strong>Name:</strong> Dê um nome descritivo, e.g., <code>ubuntu-2204-cloudinit-base</code>.</li>
+<li><strong>Name:</strong> Dê um nome descritivo, e.g., <code>ubuntu-2404-cloudinit-template-v1</code> (o mesmo valor de <code>proxmox_ubuntu_template_name</code>).</li>
 </ul>
 </li>
 <li><strong>Aba OS:</strong><ul>
@@ -2643,15 +2643,15 @@ O template agora aparecerá na sua lista de VMs com um ícone diferente. O <stro
 </div>
 <h3 id="executando-o-playbook-de-deploy-das-vms">Executando o Playbook de Deploy das VMs<a class="headerlink" href="#executando-o-playbook-de-deploy-das-vms" title="Permanent link">¶</a></h3>
 <ol>
-<li>Na sua máquina de controle Ansible, navegue até a raiz do projeto <code>home-server/</code>.</li>
+<li>Na sua máquina de controle Ansible, entre na pasta <code>server/ansible</code> do repositório.</li>
 <li>
 <p>Execute o playbook:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div>
 </li>
 </ol>
 <p>Após a execução, suas VMs (<code>core-services-vm</code> e <code>ai-desktop-vm</code>, se habilitada) devem estar criadas no Proxmox, configuradas com os parâmetros básicos de Cloud-Init e, se tudo correu bem com o <code>wait_for</code>, prontas para as próximas etapas de configuração.</p>
-<h2 id="34-configuracao-de-gpu-passthrough-host-proxmox-revisao">3.4. Configuração de GPU Passthrough (Host Proxmox) - Revisão<a class="headerlink" href="#34-configuracao-de-gpu-passthrough-host-proxmox-revisao" title="Permanent link">¶</a></h2>
+<h2 id="34-configuração-de-gpu-passthrough-host-proxmox">3.4. Configuração de GPU Passthrough (Host Proxmox)<a class="headerlink" href="#34-configuração-de-gpu-passthrough-host-proxmox" title="Permanent link">¶</a></h2>
 <p>Se você planeja usar a <code>ai-desktop-vm</code> com a RX 5600XT para aceleração de IA ou outras tarefas gráficas, a configuração de GPU passthrough no <strong>host Proxmox</strong> é um pré-requisito. Este é um processo avançado e os detalhes podem variar ligeiramente dependendo do seu hardware específico e versão do Proxmox.</p>
 <p><strong>Resumo das Etapas Essenciais no Host Proxmox (Como Checklist de Verificação):</strong></p>
 <ol>
@@ -2730,7 +2730,7 @@ O template agora aparecerá na sua lista de VMs com um ícone diferente. O <stro
 </li>
 </ol>
 <p>A configuração de GPU passthrough é uma das partes mais complexas e propensas a variações dependendo do hardware. Consulte guias detalhados online específicos para "Proxmox AMD GPU passthrough" se encontrar dificuldades.</p>
-<h2 id="35-configuracao-de-ambiente-desktop-gui-em-vms-linux-opcional">3.5. Configuração de Ambiente Desktop (GUI) em VMs Linux (Opcional)<a class="headerlink" href="#35-configuracao-de-ambiente-desktop-gui-em-vms-linux-opcional" title="Permanent link">¶</a></h2>
+<h2 id="35-configuração-de-ambiente-desktop-gui-em-vms-linux-opcional">3.5. Configuração de Ambiente Desktop (GUI) em VMs Linux (Opcional)<a class="headerlink" href="#35-configuração-de-ambiente-desktop-gui-em-vms-linux-opcional" title="Permanent link">¶</a></h2>
 <p>Para a <code>ai-desktop-vm</code>, se você deseja uma interface gráfica para interagir com ela (especialmente se estiver usando GPU passthrough e conectar um monitor diretamente à RX 5600XT), você pode instalar um ambiente desktop. Se o acesso for apenas via SSH e para rodar serviços como Ollama, uma GUI não é estritamente necessária.</p>
 <h3 id="role-ansiblerolesappsdesktop-environment">Role: <code>ansible/roles/apps/desktop-environment/</code><a class="headerlink" href="#role-ansiblerolesappsdesktop-environment" title="Permanent link">¶</a></h3>
 <p>Este role Ansible instala XFCE (um ambiente desktop leve) e TightVNCServer (para acesso remoto à GUI se não usar GPU passthrough direto com um monitor conectado à VM).</p>
@@ -2792,7 +2792,7 @@ O template agora aparecerá na sua lista de VMs com um ícone diferente. O <stro
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:03:30 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

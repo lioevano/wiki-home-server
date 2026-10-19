@@ -4,7 +4,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <meta content="Estratégia de armazenamento: pool ZFS no host Proxmox, datasets e compartilhamento com as VMs via NFS." name="description"/>
 <meta content="Léo Ivan" name="author"/>
-<link href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/03-armazenamento-zfs-nfs/" rel="canonical"/>
+<link href="https://wiki.lioevano.com/02-visao-geral-arquitetura/03-armazenamento-zfs-nfs/" rel="canonical"/>
 <link href="../02-virtualizacao-proxmox/" rel="prev"/>
 <link href="../04-automacao-ansible/" rel="next"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
@@ -32,7 +32,7 @@
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
 <div data-md-component="skip">
-<a class="md-skip" href="#estrategia-de-armazenamento-com-zfs-e-nfs">
+<a class="md-skip" href="#estratégia-de-armazenamento-com-zfs-e-nfs">
           Ir para o conteúdo
         </a>
 </div>
@@ -507,7 +507,7 @@
 </nav>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#consideracoes-de-performance-e-alternativas">
+<a class="md-nav__link" href="#considerações-de-performance-e-alternativas">
 <span class="md-ellipsis">
       
         Considerações de Performance e Alternativas
@@ -555,7 +555,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../08-apis-llm-estrategia/">
+<a class="md-nav__link" href="../07-apis-llm-estrategia/">
 <span class="md-ellipsis">
     
   
@@ -956,7 +956,7 @@
 </nav>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#consideracoes-de-performance-e-alternativas">
+<a class="md-nav__link" href="#considerações-de-performance-e-alternativas">
 <span class="md-ellipsis">
       
         Considerações de Performance e Alternativas
@@ -971,7 +971,7 @@
 </div>
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
-<h1 id="estrategia-de-armazenamento-com-zfs-e-nfs">Estratégia de Armazenamento com ZFS e NFS<a class="headerlink" href="#estrategia-de-armazenamento-com-zfs-e-nfs" title="Permanent link">¶</a></h1>
+<h1 id="estratégia-de-armazenamento-com-zfs-e-nfs">Estratégia de Armazenamento com ZFS e NFS<a class="headerlink" href="#estratégia-de-armazenamento-com-zfs-e-nfs" title="Permanent link">¶</a></h1>
 <p>Uma estratégia de armazenamento robusta e resiliente é vital para a segurança e disponibilidade dos dados do seu servidor doméstico. Nesta arquitetura, utilizamos o ZFS no host Proxmox para gerenciamento avançado de discos e o NFS para compartilhar esse armazenamento com as máquinas virtuais.</p>
 <h2 id="zfs-zettabyte-file-system-no-host-proxmox">ZFS (Zettabyte File System) no Host Proxmox<a class="headerlink" href="#zfs-zettabyte-file-system-no-host-proxmox" title="Permanent link">¶</a></h2>
 <p>ZFS é mais do que apenas um sistema de arquivos; é também um gerenciador de volumes lógicos. Ele oferece inúmeras vantagens para um ambiente de servidor:</p>
@@ -1007,9 +1007,9 @@
 <li>O pacote <code>nfs-kernel-server</code> é instalado no host Proxmox.</li>
 <li>O arquivo <code>/etc/exports</code> no host Proxmox define quais datasets ZFS são compartilhados, para quais clientes (as VMs) e com quais permissões.</li>
 <li><strong>Exemplo de entrada em <code>/etc/exports</code> (gerado por Ansible):</strong>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>/data/docker-volumes 192.168.1.0/24(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a>/data/docker-volumes 192.168.15.0/24(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)
 </span></code></pre></div>
-    Isto compartilha o dataset <code>/data/docker-volumes</code> com qualquer cliente na sub-rede <code>192.168.1.0/24</code> com permissões de leitura/escrita (<code>rw</code>), modo síncrono (<code>sync</code>), e mapeia todos os acessos para o UID 1000 e GID 1000 no servidor (correspondendo ao <code>dockeruser:dockergroup</code> nas VMs).</li>
+    Isto compartilha o dataset <code>/data/docker-volumes</code> com qualquer cliente na sub-rede <code>192.168.15.0/24</code> com permissões de leitura/escrita (<code>rw</code>), modo síncrono (<code>sync</code>), e mapeia todos os acessos para o UID 1000 e GID 1000 no servidor (correspondendo ao <code>dockeruser:dockergroup</code> nas VMs).</li>
 </ul>
 </li>
 <li><strong>Cliente NFS nas VMs (<code>core-services-vm</code>, <code>ai-desktop-vm</code>):</strong><ul>
@@ -1048,7 +1048,7 @@
 <li>Este caminho na VM é um ponto de montagem NFS que aponta para o dataset ZFS <code>/data/docker-volumes/nextcloud/config</code> (ou um subdiretório dele) no host Proxmox.</li>
 <li>Quando o container Nextcloud escreve em <code>/config</code>, os dados são enviados via NFS para o host Proxmox e escritos no pool ZFS.</li>
 </ol>
-<h2 id="consideracoes-de-performance-e-alternativas">Considerações de Performance e Alternativas<a class="headerlink" href="#consideracoes-de-performance-e-alternativas" title="Permanent link">¶</a></h2>
+<h2 id="considerações-de-performance-e-alternativas">Considerações de Performance e Alternativas<a class="headerlink" href="#considerações-de-performance-e-alternativas" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Performance do NFS:</strong> NFS sobre uma rede Gigabit local geralmente oferece performance suficiente para a maioria das aplicações de homelab. Para cargas de trabalho muito intensivas em I/O (como bancos de dados muito ativos ou transcodificação de vídeo frequente), o NFS pode se tornar um gargalo.<ul>
 <li><strong>Otimizações:</strong> Usar <code>vers=4.2</code> (ou a versão mais alta suportada), ajustar <code>rsize</code> e <code>wsize</code> nas opções de montagem, e garantir uma rede estável pode ajudar.</li>
@@ -1072,7 +1072,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:42:52 -03">13 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
 </span>
 </aside>
 </article>

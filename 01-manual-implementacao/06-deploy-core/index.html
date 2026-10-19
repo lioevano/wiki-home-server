@@ -3,13 +3,13 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Deploy da stack core (Traefik, Cloudflared e Authelia) no Portainer a partir de docker/stacks/core/docker-compose.yml.">
+        <meta name="description" content="Deploy da stack core (Traefik, Cloudflared e Authelia) pelo Ansible, com o playbook setup-core-networking.yml.">
       
       
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/01-manual-implementacao/06-deploy-core/">
+        <link rel="canonical" href="https://wiki.lioevano.com/01-manual-implementacao/06-deploy-core/">
       
       
         <link rel="prev" href="../05-rede-segura/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secao-6-deploy-da-infraestrutura-core-traefik-cloudflared-authelia" class="md-skip">
+        <a href="#seção-6-deploy-da-infraestrutura-core-traefik--cloudflared--authelia" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -740,32 +740,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#deploy-no-portainer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deploy no Portainer
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#o-que-cada-servico-faz" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        O que cada serviço faz
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pre-requisitos" class="md-nav__link">
+  <a href="#pré-requisitos" class="md-nav__link">
     <span class="md-ellipsis">
       
         Pré-requisitos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#depois-do-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Depois do deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-que-cada-serviço-faz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que cada serviço faz
       
     </span>
   </a>
@@ -1129,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1949,32 +1960,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#deploy-no-portainer" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deploy no Portainer
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#o-que-cada-servico-faz" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        O que cada serviço faz
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pre-requisitos" class="md-nav__link">
+  <a href="#pré-requisitos" class="md-nav__link">
     <span class="md-ellipsis">
       
         Pré-requisitos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#depois-do-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Depois do deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#o-que-cada-serviço-faz" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O que cada serviço faz
       
     </span>
   </a>
@@ -2001,20 +2023,39 @@
   
 
 
-<h1 id="secao-6-deploy-da-infraestrutura-core-traefik-cloudflared-authelia">Seção 6: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia)<a class="headerlink" href="#secao-6-deploy-da-infraestrutura-core-traefik-cloudflared-authelia" title="Permanent link">¶</a></h1>
+<h1 id="seção-6-deploy-da-infraestrutura-core-traefik--cloudflared--authelia">Seção 6: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia)<a class="headerlink" href="#seção-6-deploy-da-infraestrutura-core-traefik--cloudflared--authelia" title="Permanent link">¶</a></h1>
 <p>A stack core é a base de rede: Traefik (proxy reverso), Cloudflared (túnel) e Authelia (autenticação 2FA). Tudo consolidado em <code>docker/stacks/core/docker-compose.yml</code>.</p>
-<h2 id="deploy-no-portainer">Deploy no Portainer<a class="headerlink" href="#deploy-no-portainer" title="Permanent link">¶</a></h2>
+<p>Diferente das stacks <code>apps</code> e <code>ai</code>, a <code>core</code> <strong>não é criada no Portainer</strong>: o próprio Ansible a implanta com <code>community.docker.docker_compose_v2</code>, porque o Portainer é acessado por <code>portainer.seudominio.com</code>, que depende do Traefik, do túnel e do Authelia já estarem de pé.</p>
+<h2 id="pré-requisitos">Pré-requisitos<a class="headerlink" href="#pré-requisitos" title="Permanent link">¶</a></h2>
+<ul>
+<li>Seções 1 a 5 concluídas: VMs provisionadas e configuradas (<code>setup-base-ubuntu.yml</code>), roles e templates da <a href="../05-rede-segura/">Rede Segura</a> no repositório.</li>
+<li>No vault (<code>ansible/inventories/home/group_vars/all/vault.yml</code>):<ul>
+<li><code>cloudflare_tunnel_token</code>: token do túnel gerado no Cloudflare Zero Trust.</li>
+<li><code>cloudflare_api_token</code>: API Token com permissão de DNS na zona (desafio DNS-01 do Let's Encrypt).</li>
+<li><code>authelia_storage_postgres_password</code> e os demais segredos do Authelia.</li>
+</ul>
+</li>
+</ul>
+<h2 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">¶</a></h2>
+<p>Na máquina de controle, a partir da pasta <code>server/ansible</code> do repositório:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-core-networking.yml<span class="w"> </span>--ask-vault-pass<span class="w"> </span>--check
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-core-networking.yml<span class="w"> </span>--ask-vault-pass
+</span></code></pre></div>
+<p>O playbook:</p>
 <ol>
-<li>Acesse o Portainer em <code>https://portainer.seudominio.com</code></li>
-<li><strong>Stacks</strong> &gt; <strong>Add Stack</strong> &gt; Nome: <code>core</code></li>
-<li>Selecione <strong>Web editor</strong></li>
-<li>Cole o conteúdo de <code>docker/stacks/core/docker-compose.yml</code></li>
-<li>Em <strong>Environment variables</strong>, clique em Advanced mode &gt; <strong>Load variables from .env file</strong></li>
-<li>Caminho na VM: <code>/opt/portainer_stack_envs/core.env</code></li>
-<li>Adicione manualmente os segredos: <code>CLOUDFLARE_API_TOKEN_FROM_VAULT</code>, <code>CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT</code>, <code>AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT</code></li>
-<li><strong>Deploy the stack</strong></li>
+<li>Cria as redes Docker <code>proxy</code> e <code>internal_services</code> na <code>core-services-vm</code>.</li>
+<li>Gera as configurações do Traefik e do Authelia no volume NFS (roles <code>infra/traefik-config</code> e <code>infra/authelia-config</code>).</li>
+<li>Copia o compose para <code>/opt/stacks/core/</code> na VM e sobe a stack, passando as variáveis no bloco <code>environment:</code> da tarefa (sem <code>.env</code> em disco).</li>
+<li>Espera o healthcheck do Traefik.</li>
 </ol>
-<h2 id="o-que-cada-servico-faz">O que cada serviço faz<a class="headerlink" href="#o-que-cada-servico-faz" title="Permanent link">¶</a></h2>
+<p>Detalhes de cada passo estão na <a href="../05-rede-segura/#54-playbook-ansibleplaybookssetup-core-networkingyml">seção 5.4</a>. Para mudar uma variável ou um segredo da stack, altere o vault ou <code>group_vars</code> e rode o playbook de novo.</p>
+<h2 id="depois-do-deploy">Depois do deploy<a class="headerlink" href="#depois-do-deploy" title="Permanent link">¶</a></h2>
+<ol>
+<li>Configure os Public Hostnames do túnel (<code>https://traefik:443</code>, com <em>No TLS Verify</em>), conforme a <a href="../05-rede-segura/#55-configuração-de-dns-na-cloudflare">seção 5.5</a>.</li>
+<li>Acesse <code>https://auth.seudominio.com</code> e registre o 2FA.</li>
+<li>Acesse <code>https://portainer.seudominio.com</code> para seguir com as stacks <code>apps</code> e <code>ai</code> nas próximas seções.</li>
+</ol>
+<h2 id="o-que-cada-serviço-faz">O que cada serviço faz<a class="headerlink" href="#o-que-cada-serviço-faz" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Traefik</strong>: Proxy reverso HTTPS. Detecta containers via labels. Redireciona HTTP→HTTPS automaticamente.</li>
 <li><strong>Cloudflared</strong>: Túnel para Cloudflare. Não precisa abrir portas no roteador.</li>
@@ -2025,16 +2066,6 @@
 <p class="admonition-title">Primeiro login no Authelia</p>
 <p>Os usuários vêm do <code>users_database.yml</code> (backend <code>file</code>, gerado a partir do vault). Sem SMTP configurado, o Authelia usa o notificador <code>filesystem</code>: o link para registrar o 2FA (TOTP) aparece no arquivo <code>authelia/config/notification.txt</code> do volume NFS — leia-o na <code>core-services-vm</code> com <code>sudo cat &lt;vm_nfs_mount_base_path&gt;/&lt;zfs_docker_volumes_dataset_name&gt;/authelia/config/notification.txt</code>.</p>
 </div>
-<h2 id="pre-requisitos">Pré-requisitos<a class="headerlink" href="#pre-requisitos" title="Permanent link">¶</a></h2>
-<ul>
-<li>Playbooks Ansible executados:
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>ansible/inventories/home/hosts.ini<span class="w"> </span>ansible/playbooks/setup-base-ubuntu.yml
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>ansible/inventories/home/hosts.ini<span class="w"> </span>ansible/playbooks/setup-core-networking.yml
-</span></code></pre></div></li>
-<li>Rede Docker <code>proxy</code> e <code>internal_services</code> criadas pelo playbook de rede.</li>
-<li>Token do túnel Cloudflare gerado no dashboard Cloudflare Zero Trust.</li>
-<li>API Token DNS Cloudflare (para desafio Let's Encrypt DNS-01).</li>
-</ul>
 
 
 
@@ -2055,7 +2086,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:41:03 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:40:13 -03">18 de outubro de 2026</span>
   </span>
 
     

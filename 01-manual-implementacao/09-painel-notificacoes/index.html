@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/01-manual-implementacao/09-painel-notificacoes/">
+        <link rel="canonical" href="https://wiki.lioevano.com/01-manual-implementacao/09-painel-notificacoes/">
       
       
         <link rel="prev" href="../08-stack-ia/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secao-9-painel-e-notificacoes" class="md-skip">
+        <a href="#seção-9-painel-e-notificações" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -824,7 +824,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#visao-geral" class="md-nav__link">
+  <a href="#visão-geral" class="md-nav__link">
     <span class="md-ellipsis">
       
         Visão geral
@@ -880,7 +880,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#atualizacoes-diun" class="md-nav__link">
+  <a href="#atualizações-diun" class="md-nav__link">
     <span class="md-ellipsis">
       
         Atualizações (Diun)
@@ -913,7 +913,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#limitacoes-conhecidas" class="md-nav__link">
+  <a href="#limitações-conhecidas" class="md-nav__link">
     <span class="md-ellipsis">
       
         Limitações conhecidas
@@ -941,7 +941,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#webhooks-nas-aplicacoes-ntf-3" class="md-nav__link">
+  <a href="#webhooks-nas-aplicações-ntf-3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Webhooks nas aplicações (NTF-3)
@@ -952,7 +952,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bot-do-telegram-e-importacao-do-workflow" class="md-nav__link">
+  <a href="#bot-do-telegram-e-importação-do-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bot do Telegram e importação do workflow
@@ -1262,7 +1262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -2082,7 +2082,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#visao-geral" class="md-nav__link">
+  <a href="#visão-geral" class="md-nav__link">
     <span class="md-ellipsis">
       
         Visão geral
@@ -2138,7 +2138,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#atualizacoes-diun" class="md-nav__link">
+  <a href="#atualizações-diun" class="md-nav__link">
     <span class="md-ellipsis">
       
         Atualizações (Diun)
@@ -2171,7 +2171,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#limitacoes-conhecidas" class="md-nav__link">
+  <a href="#limitações-conhecidas" class="md-nav__link">
     <span class="md-ellipsis">
       
         Limitações conhecidas
@@ -2199,7 +2199,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#webhooks-nas-aplicacoes-ntf-3" class="md-nav__link">
+  <a href="#webhooks-nas-aplicações-ntf-3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Webhooks nas aplicações (NTF-3)
@@ -2210,7 +2210,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bot-do-telegram-e-importacao-do-workflow" class="md-nav__link">
+  <a href="#bot-do-telegram-e-importação-do-workflow" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bot do Telegram e importação do workflow
@@ -2267,9 +2267,9 @@
   
 
 
-<h1 id="secao-9-painel-e-notificacoes">Seção 9: Painel e Notificações<a class="headerlink" href="#secao-9-painel-e-notificacoes" title="Permanent link">¶</a></h1>
+<h1 id="seção-9-painel-e-notificações">Seção 9: Painel e Notificações<a class="headerlink" href="#seção-9-painel-e-notificações" title="Permanent link">¶</a></h1>
 <p>Duas integrações transversais do <a href="../../02-visao-geral-arquitetura/10-indice-integracoes/">Índice de Integrações</a>: <code>notificacoes</code> (n8n → Telegram) e <code>painel</code> (Homepage). As aplicações envolvidas estão no <a href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/">Catálogo</a>: <code>homepage</code>, <code>docker-socket-proxy</code>, <code>blackbox-exporter</code>, <code>diun</code> e o <code>n8n</code> como provedor das notificações.</p>
-<h2 id="visao-geral">Visão geral<a class="headerlink" href="#visao-geral" title="Permanent link">¶</a></h2>
+<h2 id="visão-geral">Visão geral<a class="headerlink" href="#visão-geral" title="Permanent link">¶</a></h2>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Prometheus ── blackbox (no ar? certificado?) ─┐
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Prometheus ── node_exporter (disco/RAM/CPU/ZFS)┼─► Grafana Alerting ─┐
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Loki ── logs (login falho no Authelia) ───────┘                     │
@@ -2280,7 +2280,7 @@
 <p>O alerta "n8n fora do ar" vai direto do Grafana ao Telegram, sem passar pelo n8n.</p>
 <h2 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">¶</a></h2>
 <h3 id="disponibilidade-blackbox-exporter">Disponibilidade (blackbox-exporter)<a class="headerlink" href="#disponibilidade-blackbox-exporter" title="Permanent link">¶</a></h3>
-<p>O serviço <code>blackbox-exporter</code> (stack <code>apps</code>, redes <code>internal_services</code> e <code>proxy</code>, sem porta publicada) testa cada aplicação pela <strong>URL interna</strong> (ex.: <code>http://n8n:5678/healthz</code>, <code>http://jellyfin:8096/health</code>). A URL pública não serve para isso: ela passa pelo Authelia, que responde com o redirecionamento para o login mesmo com a aplicação parada. A configuração vem de <code>ansible/templates/blackbox.yml.j2</code>, gerada pelo <code>ansible/playbooks/setup-monitoring-stack-volumes.yml</code> em <code>&lt;NFS&gt;/blackbox/config/blackbox.yml</code>, com três módulos: <code>http_2xx</code> (padrão), <code>http_2xx_inseguro</code> (Portainer, certificado autoassinado) e <code>tls_traefik</code> (entra pela 443 do Traefik com o nome <code>auth.&lt;domínio&gt;</code> e mede o certificado Let's Encrypt real — o que o túnel mostra na internet é o certificado da Cloudflare).</p>
+<p>O serviço <code>blackbox-exporter</code> (stack <code>apps</code>, redes <code>internal_services</code> e <code>proxy</code>, sem porta publicada) testa cada aplicação pela <strong>URL interna</strong> (ex.: <code>http://n8n:5678/healthz</code>, <code>http://jellyfin:8096/health</code>). A URL pública não serve para isso: ela passa pelo Authelia, que responde com o redirecionamento para o login mesmo com a aplicação parada. A configuração vem de <code>ansible/templates/blackbox.yml.j2</code>, gerada pelo <code>ansible/playbooks/setup-monitoring-stack-volumes.yml</code> em <code>&lt;NFS&gt;/blackbox/config/blackbox.yml</code>, com três módulos: <code>http_2xx</code> (padrão), <code>http_2xx_inseguro</code> (Portainer, certificado autoassinado) e <code>tls_traefik</code> (entra pela 443 do Traefik com o nome <code>auth.seudominio.com</code> e mede o certificado Let's Encrypt real — o que o túnel mostra na internet é o certificado da Cloudflare).</p>
 <p>Os alvos ficam no job <code>blackbox_http</code> de <code>ansible/templates/prometheus.yml.j2</code>, um por aplicação, com <code>labels: {app: &lt;id do catálogo&gt;}</code> (regra NTF-1). Para conferir no Prometheus: <code>probe_success</code> (1 = no ar) e <code>probe_ssl_earliest_cert_expiry{app="traefik"}</code> (validade do certificado). Se o próprio <code>blackbox-exporter</code> cair, a regra <code>host-sem-resposta</code> dispara (ela também observa <code>up{job="blackbox_http"}</code>).</p>
 <h3 id="alertas-grafana-alerting">Alertas (Grafana Alerting)<a class="headerlink" href="#alertas-grafana-alerting" title="Permanent link">¶</a></h3>
 <p>O <code>setup-monitoring-stack-volumes.yml</code> gera em <code>&lt;NFS&gt;/grafana/provisioning/alerting/</code> três arquivos, a partir de <code>ansible/templates/grafana/alerting/</code>:</p>
@@ -2320,8 +2320,8 @@
 <li><strong>Formatar</strong> — reconhece Grafana (lista <code>alerts</code>), Diun (<code>diun_version</code>), Radarr/Sonarr (<code>eventType</code>) ou genérico (<code>titulo</code>, <code>mensagem</code>, <code>gravidade</code>, <code>app</code>) e monta a mensagem: 🔴 crítico, 🟠 aviso, 🟢 resolvido/ok, ℹ️ informação. Payload desconhecido vira notificação genérica.</li>
 <li><strong>Telegram</strong> — <code>sendMessage</code> com <code>TELEGRAM_BOT_TOKEN</code> e <code>TELEGRAM_CHAT_ID</code>, lidos do ambiente do n8n (<code>N8N_BLOCK_ENV_ACCESS_IN_NODE=false</code>).</li>
 </ol>
-<p>O Authelia libera só <code>n8n.&lt;domínio&gt;/webhook/…</code> (regra <code>bypass</code> com <code>resources</code>, em <code>ansible/roles/infra/authelia-config/templates/configuration.yml.j2</code>); a interface do n8n continua protegida.</p>
-<h3 id="atualizacoes-diun">Atualizações (Diun)<a class="headerlink" href="#atualizacoes-diun" title="Permanent link">¶</a></h3>
+<p>O Authelia libera só <code>n8n.seudominio.com/webhook/…</code> (regra <code>bypass</code> com <code>resources</code>, em <code>ansible/roles/infra/authelia-config/templates/configuration.yml.j2</code>); a interface do n8n continua protegida.</p>
+<h3 id="atualizações-diun">Atualizações (Diun)<a class="headerlink" href="#atualizações-diun" title="Permanent link">¶</a></h3>
 <p>Um Diun por VM, observando <strong>todos</strong> os containers (<code>DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true</code>), uma vez por dia às 9h:</p>
 <table>
 <thead>
@@ -2340,13 +2340,13 @@
 <tr>
 <td><code>diun_ai</code></td>
 <td><code>ai</code> / <code>ai-desktop-vm</code></td>
-<td><code>https://n8n.&lt;domínio&gt;/webhook/notificar</code></td>
+<td><code>https://n8n.seudominio.com/webhook/notificar</code></td>
 </tr>
 </tbody>
 </table>
 <p>Ambos enviam <code>Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}</code>; o banco do Diun fica em <code>&lt;NFS&gt;/diun/data</code> e <code>&lt;NFS&gt;/diun-ai/data</code> (variáveis <code>MONITORING_DIUN_DATA_PATH</code> e <code>AI_STACK_DIUN_DATA_PATH</code>).</p>
 <h3 id="painel-homepage">Painel (Homepage)<a class="headerlink" href="#painel-homepage" title="Permanent link">¶</a></h3>
-<p>A Homepage (<code>https://home.&lt;domínio&gt;</code>, protegida pelo Authelia) roda na stack <code>apps</code> e lê três arquivos gerados pelo <code>setup-monitoring-stack-volumes.yml</code> em <code>&lt;NFS&gt;/homepage/config/</code>, a partir de <code>ansible/templates/homepage/</code>:</p>
+<p>A Homepage (<code>https://home.seudominio.com</code>, protegida pelo Authelia) roda na stack <code>apps</code> e lê três arquivos gerados pelo <code>setup-monitoring-stack-volumes.yml</code> em <code>&lt;NFS&gt;/homepage/config/</code>, a partir de <code>ansible/templates/homepage/</code>:</p>
 <table>
 <thead>
 <tr>
@@ -2425,7 +2425,7 @@
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">NOTIFICACOES_WEBHOOK_TOKEN</span><span class="o">=</span>&lt;notificacoes_webhook_token<span class="w"> </span><span class="k">do</span><span class="w"> </span>vault&gt;
 </span></code></pre></div>
 <p><strong>Backups do Proxmox (vzdump):</strong> em <strong>Datacenter → Notifications → Add → Webhook</strong> (PVE 8.3+), aponte para a mesma URL, método <code>POST</code>, cabeçalho <code>Authorization: Bearer &lt;token&gt;</code> e corpo JSON <code>{"titulo": "{{ title }}", "mensagem": "{{ message }}", "gravidade": "{{ severity }}", "app": "proxmox"}</code>; associe o destino ao <em>matcher</em> dos jobs de backup. Confira na documentação do PVE da sua versão a sintaxe de escape das variáveis de template no corpo JSON.</p>
-<h3 id="limitacoes-conhecidas">Limitações conhecidas<a class="headerlink" href="#limitacoes-conhecidas" title="Permanent link">¶</a></h3>
+<h3 id="limitações-conhecidas">Limitações conhecidas<a class="headerlink" href="#limitações-conhecidas" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>Widget do Grafana</strong> usa <code>admin</code> + <code>grafana_admin_initial_password</code>; se a senha do admin mudar na interface, atualize o vault.</li>
 <li><strong>Widget do Portainer</strong> chama <code>https://portainer:9443</code>, que usa certificado autoassinado; se a Homepage recusar o TLS, o widget mostra erro (atalho e status continuam).</li>
@@ -2433,9 +2433,9 @@
 <li><strong>RAM do host Proxmox:</strong> o cache ARC do ZFS é somado à memória disponível (<code>node_zfs_arc_size</code>), senão o host ficaria sempre acima do limite.</li>
 </ul>
 <h2 id="passos-manuais">Passos manuais<a class="headerlink" href="#passos-manuais" title="Permanent link">¶</a></h2>
-<h3 id="webhooks-nas-aplicacoes-ntf-3">Webhooks nas aplicações (NTF-3)<a class="headerlink" href="#webhooks-nas-aplicacoes-ntf-3" title="Permanent link">¶</a></h3>
-<p>Radarr, Sonarr, Jellyfin e Home Assistant mandam eventos próprios ao n8n; o passo de cada um está nas notas por serviço da <a href="../07-deploy-apps/#notas-por-servico">página de apps</a>.</p>
-<h3 id="bot-do-telegram-e-importacao-do-workflow">Bot do Telegram e importação do workflow<a class="headerlink" href="#bot-do-telegram-e-importacao-do-workflow" title="Permanent link">¶</a></h3>
+<h3 id="webhooks-nas-aplicações-ntf-3">Webhooks nas aplicações (NTF-3)<a class="headerlink" href="#webhooks-nas-aplicações-ntf-3" title="Permanent link">¶</a></h3>
+<p>Radarr, Sonarr, Jellyfin e Home Assistant mandam eventos próprios ao n8n; o passo de cada um está nas notas por serviço da <a href="../07-deploy-apps/#notas-por-serviço">página de apps</a>.</p>
+<h3 id="bot-do-telegram-e-importação-do-workflow">Bot do Telegram e importação do workflow<a class="headerlink" href="#bot-do-telegram-e-importação-do-workflow" title="Permanent link">¶</a></h3>
 <ol>
 <li>No Telegram, fale com <strong>@BotFather</strong> → <code>/newbot</code> → guarde o token em <code>telegram_bot_token</code> no vault.</li>
 <li>Mande qualquer mensagem ao bot e abra <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code>: o <code>chat.id</code> vai em <code>telegram_chat_id</code>.</li>
@@ -2503,12 +2503,12 @@
 <p>Sem a chave, o widget mostra erro; atalho e status continuam funcionando.</p>
 <h2 id="teste-de-ponta-a-ponta">Teste de ponta a ponta<a class="headerlink" href="#teste-de-ponta-a-ponta" title="Permanent link">¶</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># deve chegar uma mensagem no Telegram (resposta 200)</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"https://n8n.&lt;domínio&gt;/webhook/notificar"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"https://n8n.seudominio.com/webhook/notificar"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;notificacoes_webhook_token&gt;"</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">"Content-Type: application/json"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"titulo":"Teste","mensagem":"Webhook funcionando","gravidade":"ok"}'</span>
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># sem o token: 401 e nenhuma mensagem</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"https://n8n.&lt;domínio&gt;/webhook/notificar"</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{}'</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>curl<span class="w"> </span>-s<span class="w"> </span>-o<span class="w"> </span>/dev/null<span class="w"> </span>-w<span class="w"> </span><span class="s1">'%{http_code}\n'</span><span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"https://n8n.seudominio.com/webhook/notificar"</span><span class="w"> </span>-d<span class="w"> </span><span class="s1">'{}'</span>
 </span></code></pre></div>
 <p>No Grafana: <strong>Alerting → Contact points → n8n → Test</strong> (e o mesmo em <code>telegram-direto</code>).</p>
 
@@ -2531,7 +2531,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="14 de outubro de 2026 15:21:00 -03">14 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

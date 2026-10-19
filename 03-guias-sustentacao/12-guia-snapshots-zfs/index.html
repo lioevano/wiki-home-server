@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/12-guia-snapshots-zfs/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/12-guia-snapshots-zfs/">
       
       
         <link rel="prev" href="../11-hospedando-aplicacao-publica-dominio-raiz/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#guia-pratico-de-snapshots-zfs" class="md-skip">
+        <a href="#guia-prático-de-snapshots-zfs" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1590,7 +1590,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#1-o-que-e-e-o-que-nao-e-um-snapshot-zfs" class="md-nav__link">
+  <a href="#1-o-que-é-e-o-que-não-é-um-snapshot-zfs" class="md-nav__link">
     <span class="md-ellipsis">
       
         1. O Que é (e o que NÃO é) um Snapshot ZFS?
@@ -1662,7 +1662,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-utilizando-snapshots-para-recuperacao-de-dados" class="md-nav__link">
+  <a href="#3-utilizando-snapshots-para-recuperação-de-dados" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. Utilizando Snapshots para Recuperação de Dados
@@ -1685,7 +1685,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro" class="md-nav__link">
+  <a href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-método-seguro" class="md-nav__link">
     <span class="md-ellipsis">
       
         Acessando e Recuperando Arquivos Individuais de um Snapshot (Método Seguro)
@@ -1712,7 +1712,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot" class="md-nav__link">
+  <a href="#4-automação-de-snapshots-zfs-com-zfs-auto-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
         4. Automação de Snapshots ZFS com zfs-auto-snapshot
@@ -1723,7 +1723,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-consideracoes-importantes-ao-trabalhar-com-snapshots" class="md-nav__link">
+  <a href="#5-considerações-importantes-ao-trabalhar-com-snapshots" class="md-nav__link">
     <span class="md-ellipsis">
       
         5. Considerações Importantes ao Trabalhar com Snapshots
@@ -2060,7 +2060,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#1-o-que-e-e-o-que-nao-e-um-snapshot-zfs" class="md-nav__link">
+  <a href="#1-o-que-é-e-o-que-não-é-um-snapshot-zfs" class="md-nav__link">
     <span class="md-ellipsis">
       
         1. O Que é (e o que NÃO é) um Snapshot ZFS?
@@ -2132,7 +2132,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-utilizando-snapshots-para-recuperacao-de-dados" class="md-nav__link">
+  <a href="#3-utilizando-snapshots-para-recuperação-de-dados" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. Utilizando Snapshots para Recuperação de Dados
@@ -2155,7 +2155,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro" class="md-nav__link">
+  <a href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-método-seguro" class="md-nav__link">
     <span class="md-ellipsis">
       
         Acessando e Recuperando Arquivos Individuais de um Snapshot (Método Seguro)
@@ -2182,7 +2182,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot" class="md-nav__link">
+  <a href="#4-automação-de-snapshots-zfs-com-zfs-auto-snapshot" class="md-nav__link">
     <span class="md-ellipsis">
       
         4. Automação de Snapshots ZFS com zfs-auto-snapshot
@@ -2193,7 +2193,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-consideracoes-importantes-ao-trabalhar-com-snapshots" class="md-nav__link">
+  <a href="#5-considerações-importantes-ao-trabalhar-com-snapshots" class="md-nav__link">
     <span class="md-ellipsis">
       
         5. Considerações Importantes ao Trabalhar com Snapshots
@@ -2223,7 +2223,7 @@
   
 
 
-<h1 id="guia-pratico-de-snapshots-zfs">Guia Prático de Snapshots ZFS<a class="headerlink" href="#guia-pratico-de-snapshots-zfs" title="Permanent link">¶</a></h1>
+<h1 id="guia-prático-de-snapshots-zfs">Guia Prático de Snapshots ZFS<a class="headerlink" href="#guia-prático-de-snapshots-zfs" title="Permanent link">¶</a></h1>
 <p>Os snapshots ZFS são uma das funcionalidades mais poderosas e distintivas do ZFS, oferecendo uma maneira incrivelmente eficiente e rápida de capturar o estado de um dataset (seja um sistema de arquivos ZFS ou um ZVOL - ZFS Volume) em um ponto específico no tempo. Eles são uma ferramenta crucial para:</p>
 <ul>
 <li><strong>Proteção contra Erros Humanos:</strong> Deleção acidental de arquivos, modificações incorretas.</li>
@@ -2232,7 +2232,7 @@
 <li><strong>Testes e Rollbacks:</strong> Permitem testar mudanças e reverter facilmente se algo der errado.</li>
 </ul>
 <p>Este guia prático foca em como criar, listar, gerenciar e utilizar snapshots ZFS no seu <strong>host Proxmox VE</strong>, onde reside nosso pool ZFS principal <code>/data</code> e seus datasets (como <code>data/docker-volumes</code>, <code>data/media</code>, etc.).</p>
-<h2 id="1-o-que-e-e-o-que-nao-e-um-snapshot-zfs">1. O Que é (e o que NÃO é) um Snapshot ZFS?<a class="headerlink" href="#1-o-que-e-e-o-que-nao-e-um-snapshot-zfs" title="Permanent link">¶</a></h2>
+<h2 id="1-o-que-é-e-o-que-não-é-um-snapshot-zfs">1. O Que é (e o que NÃO é) um Snapshot ZFS?<a class="headerlink" href="#1-o-que-é-e-o-que-não-é-um-snapshot-zfs" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Cópia Point-in-Time Read-Only:</strong> Um snapshot ZFS é uma imagem <strong>somente leitura</strong> do estado exato de um dataset no exato momento em que o snapshot é criado. Você não pode modificar diretamente o conteúdo de um snapshot existente.</li>
 <li><strong>Extremamente Eficiente em Espaço (Inicialmente):</strong><ul>
@@ -2361,7 +2361,7 @@
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>rename<span class="w"> </span>data/docker-volumes@temp_snap_123<span class="w"> </span>data/docker-volumes@backup_importante_20230815
 </span></code></pre></div></li>
 </ul>
-<h2 id="3-utilizando-snapshots-para-recuperacao-de-dados">3. Utilizando Snapshots para Recuperação de Dados<a class="headerlink" href="#3-utilizando-snapshots-para-recuperacao-de-dados" title="Permanent link">¶</a></h2>
+<h2 id="3-utilizando-snapshots-para-recuperação-de-dados">3. Utilizando Snapshots para Recuperação de Dados<a class="headerlink" href="#3-utilizando-snapshots-para-recuperação-de-dados" title="Permanent link">¶</a></h2>
 <p>A principal utilidade dos snapshots é a capacidade de recuperar dados ou reverter o estado de um sistema.</p>
 <h3 id="rollback-de-um-dataset-inteiro-para-um-snapshot">Rollback de um Dataset Inteiro para um Snapshot<a class="headerlink" href="#rollback-de-um-dataset-inteiro-para-um-snapshot" title="Permanent link">¶</a></h3>
 <p>O comando <code>zfs rollback</code> reverte um dataset (sistema de arquivos) inteiro para o estado exato de um snapshot específico.</p>
@@ -2391,7 +2391,7 @@
     !!! danger "Rollback é uma Operação Destrutiva para Mudanças Posteriores!"
         O <code>zfs rollback</code> é poderoso, mas <strong>apaga irreversivelmente todas as alterações e snapshots feitos <em>após</em> o snapshot para o qual você está revertendo</strong> (se a opção <code>-r</code> for usada, o que geralmente é necessário se existem snapshots posteriores). Use com extrema cautela e apenas se tiver certeza absoluta de que quer perder essas mudanças posteriores. Ter um snapshot do estado <em>imediatamente antes</em> do rollback (como no passo 1 do exemplo) é uma boa rede de segurança.</li>
 </ul>
-<h3 id="acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro">Acessando e Recuperando Arquivos Individuais de um Snapshot (Método Seguro)<a class="headerlink" href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-metodo-seguro" title="Permanent link">¶</a></h3>
+<h3 id="acessando-e-recuperando-arquivos-individuais-de-um-snapshot-método-seguro">Acessando e Recuperando Arquivos Individuais de um Snapshot (Método Seguro)<a class="headerlink" href="#acessando-e-recuperando-arquivos-individuais-de-um-snapshot-método-seguro" title="Permanent link">¶</a></h3>
 <p>Esta é a maneira <strong>mais segura e comum</strong> de recuperar arquivos ou diretórios específicos de um snapshot, sem reverter o dataset inteiro.</p>
 <ul>
 <li><strong>Como Funciona:</strong> Para cada dataset ZFS que tem snapshots, o ZFS automaticamente torna os snapshots acessíveis através de um diretório oculto especial chamado <code>.zfs/snapshot/</code> localizado no ponto de montagem do dataset. Dentro deste diretório <code>.zfs/snapshot/</code>, cada snapshot aparece como um subdiretório somente leitura, contendo os arquivos como eles estavam no momento da criação daquele snapshot.</li>
@@ -2438,7 +2438,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot">4. Automação de Snapshots ZFS com <code>zfs-auto-snapshot</code><a class="headerlink" href="#4-automacao-de-snapshots-zfs-com-zfs-auto-snapshot" title="Permanent link">¶</a></h2>
+<h2 id="4-automação-de-snapshots-zfs-com-zfs-auto-snapshot">4. Automação de Snapshots ZFS com <code>zfs-auto-snapshot</code><a class="headerlink" href="#4-automação-de-snapshots-zfs-com-zfs-auto-snapshot" title="Permanent link">¶</a></h2>
 <p>Manter snapshots manualmente é funcional para ações pontuais, mas para uma proteção contínua, a automação é essencial. O pacote <code>zfs-auto-snapshot</code> (geralmente incluído com <code>zfsutils-linux</code> no Debian/Ubuntu, ou disponível como um pacote separado) é uma forma simples de automatizar a criação e a poda (deleção) de snapshots.</p>
 <ul>
 <li><strong>Como Funciona:</strong><ul>
@@ -2483,7 +2483,7 @@
 <p class="admonition-title">Considerando <code>sanoid</code> para Gerenciamento Avançado de Snapshots e Replicação</p>
 <p>Para políticas de snapshot e retenção ainda mais granulares, considere a combinação <a href="https://github.com/jimsalterjrs/sanoid"><strong>Sanoid e Syncoid</strong></a>.</p>
 </div>
-<h2 id="5-consideracoes-importantes-ao-trabalhar-com-snapshots">5. Considerações Importantes ao Trabalhar com Snapshots<a class="headerlink" href="#5-consideracoes-importantes-ao-trabalhar-com-snapshots" title="Permanent link">¶</a></h2>
+<h2 id="5-considerações-importantes-ao-trabalhar-com-snapshots">5. Considerações Importantes ao Trabalhar com Snapshots<a class="headerlink" href="#5-considerações-importantes-ao-trabalhar-com-snapshots" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Consumo de Espaço em Disco:</strong><ul>
 <li>Snapshots consomem espaço em disco à medida que os dados no dataset ativo divergem do estado capturado pelo snapshot. Se você fizer muitas alterações ou deletar muitos dados, os snapshots mais antigos podem "segurar" uma quantidade significativa de espaço.</li>

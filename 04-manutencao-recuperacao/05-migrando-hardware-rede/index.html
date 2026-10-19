@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/04-manutencao-recuperacao/05-migrando-hardware-rede/">
+        <link rel="canonical" href="https://wiki.lioevano.com/04-manutencao-recuperacao/05-migrando-hardware-rede/">
       
       
         <link rel="prev" href="../04-reconstruindo-infraestrutura/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adaptando-a-infraestrutura-para-novo-hardware-ou-mudancas-de-rede" class="md-skip">
+        <a href="#adaptando-a-infraestrutura-para-novo-hardware-ou-mudanças-de-rede" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1847,7 +1847,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#a-migracao-para-novo-servidor-fisico-novo-host-proxmox" class="md-nav__link">
+  <a href="#a-migração-para-novo-servidor-físico-novo-host-proxmox" class="md-nav__link">
     <span class="md-ellipsis">
       
         A. Migração para Novo Servidor Físico (Novo Host Proxmox)
@@ -1858,7 +1858,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#b-mudanca-de-esquema-de-enderecamento-ip-da-rede-local" class="md-nav__link">
+  <a href="#b-mudança-de-esquema-de-endereçamento-ip-da-rede-local" class="md-nav__link">
     <span class="md-ellipsis">
       
         B. Mudança de Esquema de Endereçamento IP da Rede Local
@@ -1938,7 +1938,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#a-migracao-para-novo-servidor-fisico-novo-host-proxmox" class="md-nav__link">
+  <a href="#a-migração-para-novo-servidor-físico-novo-host-proxmox" class="md-nav__link">
     <span class="md-ellipsis">
       
         A. Migração para Novo Servidor Físico (Novo Host Proxmox)
@@ -1949,7 +1949,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#b-mudanca-de-esquema-de-enderecamento-ip-da-rede-local" class="md-nav__link">
+  <a href="#b-mudança-de-esquema-de-endereçamento-ip-da-rede-local" class="md-nav__link">
     <span class="md-ellipsis">
       
         B. Mudança de Esquema de Endereçamento IP da Rede Local
@@ -1979,10 +1979,10 @@
   
 
 
-<h1 id="adaptando-a-infraestrutura-para-novo-hardware-ou-mudancas-de-rede">Adaptando a Infraestrutura para Novo Hardware ou Mudanças de Rede<a class="headerlink" href="#adaptando-a-infraestrutura-para-novo-hardware-ou-mudancas-de-rede" title="Permanent link">¶</a></h1>
+<h1 id="adaptando-a-infraestrutura-para-novo-hardware-ou-mudanças-de-rede">Adaptando a Infraestrutura para Novo Hardware ou Mudanças de Rede<a class="headerlink" href="#adaptando-a-infraestrutura-para-novo-hardware-ou-mudanças-de-rede" title="Permanent link">¶</a></h1>
 <p>Com o tempo, você pode se deparar com a necessidade de migrar seu servidor doméstico para um <strong>novo hardware físico</strong> ou de adaptar sua configuração existente a <strong>mudanças significativas na sua rede local</strong>, como um novo roteador que impõe um esquema de endereçamento IP diferente.</p>
 <p>Este guia aborda as principais considerações e os passos envolvidos nesses dois cenários, sempre com o objetivo de minimizar o downtime e manter a consistência da sua Infraestrutura como Código (IaC) gerenciada pelo Ansible.</p>
-<h2 id="a-migracao-para-novo-servidor-fisico-novo-host-proxmox">A. Migração para Novo Servidor Físico (Novo Host Proxmox)<a class="headerlink" href="#a-migracao-para-novo-servidor-fisico-novo-host-proxmox" title="Permanent link">¶</a></h2>
+<h2 id="a-migração-para-novo-servidor-físico-novo-host-proxmox">A. Migração para Novo Servidor Físico (Novo Host Proxmox)<a class="headerlink" href="#a-migração-para-novo-servidor-físico-novo-host-proxmox" title="Permanent link">¶</a></h2>
 <p>Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtuais (VMs) e dados, para uma nova máquina física é uma tarefa complexa, mas totalmente viável com planejamento cuidadoso e o poder da sua configuração Ansible.</p>
 <p><strong>Considerações Prévias Essenciais Antes da Migração:</strong></p>
 <ol>
@@ -2016,9 +2016,9 @@
 <p class="admonition-title">Este é o Passo Mais Importante e Não Pode Ser Ignorado!</p>
 Antes de iniciar qualquer migração:<ul>
 <li>Garanta que você tem <strong>backups completos e recentes de todas as suas VMs Proxmox</strong>, salvos em um local acessível (idealmente no seu pool <code>/data/backups/vms</code> e também uma cópia off-site). Verifique se os backups foram concluídos com sucesso.</li>
-<li>Faça um <strong>backup completo dos seus dados do pool ZFS <code>/data</code></strong> (que contém <code>docker-volumes</code>, <code>media</code>, <code>downloads</code>, etc.). A melhor forma é usar <a href="../02-backup-restore-estrategia/#b-volumes-de-arquivos-configs-docker-mídia-etc">BorgBackup</a> para um destino externo. Se não usa Borg, pelo menos <code>rsync</code> para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.</li>
+<li>Faça um <strong>backup completo dos seus dados do pool ZFS <code>/data</code></strong> (que contém <code>docker-volumes</code>, <code>media</code>, <code>downloads</code>, etc.). A melhor forma é usar <a href="../02-backup-restore-estrategia/#b-volumes-de-arquivos-configs-docker-mídia-downloads-modelos-rag">BorgBackup</a> para um destino externo. Se não usa Borg, pelo menos <code>rsync</code> para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.</li>
 <li>Faça um backup da <a href="../02-backup-restore-estrategia/#1-configuração-do-host-proxmox-ve">configuração do seu host Proxmox antigo</a> (arquivos de <code>/etc/</code>).</li>
-<li>Certifique-se de que seu <strong>repositório Ansible <code>home-server/</code> está totalmente atualizado e enviado (<code>pushed</code>) para seu Git remote</strong> (GitHub, GitLab, etc.).</li>
+<li>Certifique-se de que seu <strong>repositório <code>homeserver</code> está totalmente atualizado e enviado (<code>pushed</code>) para seu Git remote</strong> (GitHub, GitLab, etc.).</li>
 <li>Tenha sua <strong>senha do Ansible Vault</strong> em local seguro.</li>
 <li><strong>Teste a restauração de uma VM e de alguns dados importantes de seus backups em um ambiente de teste, se possível, ANTES da migração.</strong></li>
 </ul>
@@ -2094,17 +2094,17 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
 <li>
 <p><strong>Atualizar Configurações Ansible (na sua Máquina de Controle Ansible):</strong></p>
 <ul>
-<li><strong>Inventário (<code>home-server/ansible/inventories/home/hosts.ini</code>):</strong><ul>
+<li><strong>Inventário (<code>server/ansible/inventories/home/hosts.ini</code>):</strong><ul>
 <li>Se o endereço IP do seu novo host Proxmox mudou, atualize o valor de <code>ansible_host</code> para <code>proxmox_main_host</code>.</li>
 <li>Confirme se os endereços IP das VMs (definidos em <code>ansible_host</code> para <code>core-services-vm</code> e <code>ai-desktop-vm</code>) ainda são os que você planeja que elas usem (e que seu roteador/DHCP está configurado para atribuí-los ou que a config Cloud-Init os definirá).</li>
 </ul>
 </li>
 <li><strong>Passthrough de PCI (Playbook <code>vm-deploy.yml</code>):</strong><ol>
 <li>No novo host Proxmox, use o comando <code>lspci -nn</code> no shell para encontrar os <strong>novos IDs PCI</strong> da sua GPU AMD RX 5600XT (e quaisquer outros dispositivos de passthrough, como placas de rede). Lembre-se de pegar tanto o ID do dispositivo de vídeo quanto o do dispositivo de áudio da GPU.</li>
-<li>Edite o arquivo <code>home-server/ansible/playbooks/vm-deploy.yml</code>. Na seção de deploy da <code>ai-desktop-vm</code> (ou qualquer outra VM que use passthrough), atualize a lista <code>vm_host_pci_devices</code> com os <strong>novos IDs PCI corretos</strong> do novo hardware.</li>
+<li>Edite o arquivo <code>server/ansible/playbooks/vm-deploy.yml</code>. Na seção de deploy da <code>ai-desktop-vm</code> (ou qualquer outra VM que use passthrough), atualize a lista <code>vm_host_pci_devices</code> com os <strong>novos IDs PCI corretos</strong> do novo hardware.</li>
 </ol>
 </li>
-<li><strong>Outras Variáveis Específicas do Host:</strong> Revise <code>home-server/ansible/inventories/home/group_vars/all/main.yml</code> para quaisquer outras variáveis que possam ser dependentes do hardware específico do host (e.g., nomes de interface de rede se você os referenciou em algum lugar, embora o uso de <code>vmbr0</code> como padrão deva minimizar isso).</li>
+<li><strong>Outras Variáveis Específicas do Host:</strong> Revise <code>server/ansible/inventories/home/group_vars/all/main.yml</code> para quaisquer outras variáveis que possam ser dependentes do hardware específico do host (e.g., nomes de interface de rede se você os referenciou em algum lugar, embora o uso de <code>vmbr0</code> como padrão deva minimizar isso).</li>
 </ul>
 </li>
 <li>
@@ -2115,14 +2115,14 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
 <li>Adicione-o ao grupo <code>sudo</code> e configure <code>NOPASSWD</code> para <code>sudo</code>.</li>
 <li>Na sua máquina de controle Ansible, copie sua chave SSH pública (<code>~/.ssh/id_ed25519_homelab.pub</code>) para este novo usuário no host Proxmox usando <code>ssh-copy-id</code>.</li>
 <li>Teste a conexão SSH e a capacidade de <code>sudo</code> sem senha.
-(Estes são os mesmos passos da <a href="../../01-manual-implementacao/02-proxmox-ve-host/#ações-manuais-prévias-no-host-proxmox-importante">Seção 2.3: Ações Manuais Prévias</a>).</li>
+(Estes são os mesmos passos da <a href="../../01-manual-implementacao/02-proxmox-ve-host/#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible">Seção 2.3: Ações Manuais Prévias</a>).</li>
 </ul>
 </li>
 <li><strong>Execute o Playbook Mestre <code>full-deploy.yml</code> (ou o script <code>restore.sh</code>):</strong>
-    Na raiz do seu projeto <code>home-server/</code> na máquina de controle Ansible:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bash<span class="w"> </span>scripts/restore.sh<span class="w"> </span><span class="c1"># Este script executa o full-deploy.yml e lida com a senha do vault</span>
+    Na raiz do repositório, na máquina de controle Ansible (o <code>restore.sh</code> entra sozinho em <code>server/ansible</code>):
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bash<span class="w"> </span>server/scripts/restore.sh<span class="w"> </span><span class="c1"># Este script executa o full-deploy.yml e lida com a senha do vault</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># OU, se preferir executar diretamente:</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># ansible-playbook ansible/playbooks/full-deploy.yml --ask-vault-pass</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># cd server/ansible &amp;&amp; ansible-playbook -i inventories/home/hosts.ini playbooks/full-deploy.yml --ask-vault-pass</span>
 </span></code></pre></div>
     Isto irá:<ul>
 <li>Configurar o novo host Proxmox (NFS, firewall, pacotes, Node Exporter, etc.).</li>
@@ -2148,7 +2148,7 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
 </ol>
 </li>
 <li><strong>Dados das Aplicações:</strong> Como o conteúdo dos seus datasets ZFS (e.g., <code>/data/docker-volumes/nextcloud</code>, <code>/data/media</code>) foi migrado, suas aplicações Docker, ao serem reiniciadas com seus volumes corretamente mapeados, devem encontrar seus dados e configurações anteriores.</li>
-<li><strong>Restauração de Dumps de DB:</strong> Se você optou por restaurar os dados do pool ZFS de um backup que não era o mais recente, e você tem dumps de banco de dados mais recentes, restaure esses dumps manualmente agora (conforme descrito na <a href="../02-backup-restore-estrategia/#como-restaurar-um-banco-de-dados-postgresql-de-um-dump">Estratégia de Backup</a>).</li>
+<li><strong>Restauração de Dumps de DB:</strong> Se você optou por restaurar os dados do pool ZFS de um backup que não era o mais recente, e você tem dumps de banco de dados mais recentes, restaure esses dumps manualmente agora (conforme descrito na <a href="../02-backup-restore-estrategia/#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana">Estratégia de Backup</a>).</li>
 </ul>
 </li>
 <li>
@@ -2163,7 +2163,7 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
 </ul>
 </li>
 </ol>
-<h2 id="b-mudanca-de-esquema-de-enderecamento-ip-da-rede-local">B. Mudança de Esquema de Endereçamento IP da Rede Local<a class="headerlink" href="#b-mudanca-de-esquema-de-enderecamento-ip-da-rede-local" title="Permanent link">¶</a></h2>
+<h2 id="b-mudança-de-esquema-de-endereçamento-ip-da-rede-local">B. Mudança de Esquema de Endereçamento IP da Rede Local<a class="headerlink" href="#b-mudança-de-esquema-de-endereçamento-ip-da-rede-local" title="Permanent link">¶</a></h2>
 <p>Se você precisar alterar o esquema de IP da sua rede doméstica (e.g., seu roteador mudou e agora usa uma sub-rede diferente, como <code>10.0.10.0/24</code> em vez de <code>192.168.15.0/24</code>).</p>
 <p><strong>Locais Chave Onde os Endereços IP Precisam ser Atualizados:</strong></p>
 <ol>
@@ -2181,13 +2181,13 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
         Após mudar o IP do host Proxmox, você precisará usar o novo IP para acessá-lo via SSH ou interface web.</li>
 </ul>
 </li>
-<li><strong>Inventário Ansible (<code>home-server/ansible/inventories/home/hosts.ini</code>):</strong><ul>
+<li><strong>Inventário Ansible (<code>server/ansible/inventories/home/hosts.ini</code>):</strong><ul>
 <li>Atualize o valor de <code>ansible_host</code> para <code>proxmox_main_host</code> com o novo IP do Proxmox.</li>
 <li>Atualize os valores de <code>ansible_host</code> para <code>core-services-vm</code> e <code>ai-desktop-vm</code> com os novos IPs estáticos que você planeja para elas na nova sub-rede.</li>
 <li>Atualize as variáveis de referência de IP no final do arquivo (e.g., <code>proxmox_host_ip_var</code>, <code>core_services_vm_ip_var</code>, <code>ai_desktop_vm_ip_var</code>).</li>
 </ul>
 </li>
-<li><strong>Variáveis Globais Ansible (<code>home-server/ansible/inventories/home/group_vars/all/main.yml</code>):</strong><ul>
+<li><strong>Variáveis Globais Ansible (<code>server/ansible/inventories/home/group_vars/all/main.yml</code>):</strong><ul>
 <li><code>vm_cloud_init_gateway</code>: Atualize para o novo endereço IP do seu roteador/gateway.</li>
 <li><code>proxmox_ssh_allowed_cidrs</code> e <code>proxmox_web_ui_allowed_cidrs</code>: Atualize para o novo CIDR da sua LAN (e.g., <code>10.0.10.0/24</code>).</li>
 <li><code>vm_nfs_allowed_clients_cidr</code>: Atualize para o novo CIDR da sua sub-rede de VMs (geralmente o mesmo da LAN, e.g., <code>10.0.10.0/24</code>).</li>
@@ -2197,7 +2197,7 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
     As suas VMs (<code>core-services-vm</code>, <code>ai-desktop-vm</code>) foram configuradas com IPs estáticos através do Cloud-Init, usando a variável <code>vm_ipconfig</code> no playbook <code>vm-deploy.yml</code>. Esta variável, por sua vez, usa <code>hostvars[NOME_DA_VM]['ansible_host']</code> do inventário para definir o IP da VM.<ul>
 <li><strong>Após atualizar os IPs no inventário Ansible (<code>hosts.ini</code>) e o <code>vm_cloud_init_gateway</code> em <code>main.yml</code>:</strong><ol>
 <li><strong>Execute o playbook <code>vm-deploy.yml</code>:</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/vm-deploy.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div>
     O módulo <code>community.proxmox.proxmox_kvm</code> tentará atualizar a configuração de Cloud-Init da VM. Para que a nova configuração de rede tenha efeito, a VM <strong>precisará ser reiniciada</strong>. O Ansible pode não forçar o reboot aqui, então você pode precisar fazer isso manualmente via UI do Proxmox ou <code>sudo reboot</code> dentro da VM.</li>
 <li><strong>Verificação:</strong> Após o reboot da VM, verifique se ela obteve o novo IP estático, gateway e DNS.</li>
@@ -2215,8 +2215,8 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
 <li><strong>Configurações de Firewall (PVE Firewall no Host e UFW nas VMs):</strong><ul>
 <li>Os playbooks Ansible (<code>setup-proxmox-host.yml</code> para PVE Firewall e <code>setup-base-ubuntu.yml</code> para UFW nas VMs) usam as variáveis <code>proxmox_*_allowed_cidrs</code> e <code>vm_nfs_allowed_clients_cidr</code>.</li>
 <li>Após você ter atualizado essas variáveis no seu <code>group_vars/all/main.yml</code>, <strong>re-execute esses playbooks</strong> para que o Ansible atualize as regras de firewall para permitir os novos CIDRs da sua rede.
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/setup-proxmox-host.yml<span class="w"> </span>--ask-vault-pass
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/setup-base-ubuntu.yml<span class="w"> </span>--ask-vault-pass
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-proxmox-host.yml<span class="w"> </span>--ask-vault-pass
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-base-ubuntu.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div></li>
 </ul>
 </li>
@@ -2243,13 +2243,13 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
 </ul>
 </li>
 <li><strong>Atualize as Configurações de Rede das Máquinas Virtuais:</strong><ul>
-<li>Tente primeiro executar o playbook <code>ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass</code>.</li>
+<li>Tente primeiro executar o playbook <code>ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass</code>.</li>
 <li>Requisite um reboot das VMs após a execução do playbook para que as novas configurações de rede Cloud-Init tenham efeito.</li>
 <li>Verifique se as VMs estão acessíveis em seus novos IPs. Se não, ajuste manualmente via console Proxmox e <code>netplan apply</code>.</li>
 </ul>
 </li>
 <li><strong>Execute os Playbooks Ansible para Sincronizar o Resto da Configuração:</strong>
-    Rode <code>bash scripts/restore.sh</code> (ou o <code>full-deploy.yml</code>) para que o Ansible atualize todas as outras configurações que dependem dos novos IPs/CIDRs (regras de firewall PVE, regras UFW nas VMs, configurações NFS, arquivos dinâmicos do Traefik, etc.).</li>
+    Rode <code>bash server/scripts/restore.sh</code> (ou o <code>full-deploy.yml</code>) para que o Ansible atualize todas as outras configurações que dependem dos novos IPs/CIDRs (regras de firewall PVE, regras UFW nas VMs, configurações NFS, arquivos dinâmicos do Traefik, etc.).</li>
 <li><strong>Teste Toda a Conectividade e o Acesso a Todos os Serviços:</strong> Verifique o acesso local e externo (via Cloudflare Tunnel) a todos os seus serviços. Verifique os logs por erros.</li>
 </ol>
 <p>Migrações de hardware e mudanças de esquema de rede são operações significativas. Prossiga com cautela, divida o processo em etapas gerenciáveis, verifique cada etapa e, o mais importante, tenha backups confiáveis e testados para poder reverter se algo der muito errado. Sua Infraestrutura como Código com Ansible será uma aliada poderosa nesses processos.</p>
@@ -2273,7 +2273,7 @@ Ao restaurar, é <strong>extremamente importante</strong> que você use os <stro
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:42:52 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/">
       
       
         <link rel="prev" href="../02-visao-geral-arquitetura/10-indice-integracoes/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#guias-de-sustentacao-e-modificacao-da-infraestrutura" class="md-skip">
+        <a href="#-guias-de-sustentação-e-modificação-da-infraestrutura" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1254,7 +1254,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#objetivo-desta-secao" class="md-nav__link">
+  <a href="#objetivo-desta-seção" class="md-nav__link">
     <span class="md-ellipsis">
       
         Objetivo Desta Seção
@@ -1265,7 +1265,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#topicos-cobertos-nos-guias-de-sustentacao" class="md-nav__link">
+  <a href="#tópicos-cobertos-nos-guias-de-sustentação" class="md-nav__link">
     <span class="md-ellipsis">
       
         Tópicos Cobertos nos Guias de Sustentação
@@ -1938,7 +1938,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#objetivo-desta-secao" class="md-nav__link">
+  <a href="#objetivo-desta-seção" class="md-nav__link">
     <span class="md-ellipsis">
       
         Objetivo Desta Seção
@@ -1949,7 +1949,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#topicos-cobertos-nos-guias-de-sustentacao" class="md-nav__link">
+  <a href="#tópicos-cobertos-nos-guias-de-sustentação" class="md-nav__link">
     <span class="md-ellipsis">
       
         Tópicos Cobertos nos Guias de Sustentação
@@ -1979,9 +1979,9 @@
   
 
 
-<h1 id="guias-de-sustentacao-e-modificacao-da-infraestrutura">🛠️ Guias de Sustentação e Modificação da Infraestrutura<a class="headerlink" href="#guias-de-sustentacao-e-modificacao-da-infraestrutura" title="Permanent link">¶</a></h1>
+<h1 id="-guias-de-sustentação-e-modificação-da-infraestrutura">🛠️ Guias de Sustentação e Modificação da Infraestrutura<a class="headerlink" href="#-guias-de-sustentação-e-modificação-da-infraestrutura" title="Permanent link">¶</a></h1>
 <p>Bem-vindo à seção de <strong>Guias de Sustentação e Modificação</strong> da sua infraestrutura de servidor doméstico! Após ter concluído a <a href="../01-manual-implementacao/">Implementação Inicial</a> e ter uma compreensão da <a href="../02-visao-geral-arquitetura/">Visão Geral da Arquitetura</a>, esta seção é o seu manual prático para as operações do dia-a-dia, para realizar alterações, adicionar novos serviços e funcionalidades, solucionar problemas comuns, e gerenciar os diversos componentes do seu setup.</p>
-<h2 id="objetivo-desta-secao">Objetivo Desta Seção<a class="headerlink" href="#objetivo-desta-secao" title="Permanent link">¶</a></h2>
+<h2 id="objetivo-desta-seção">Objetivo Desta Seção<a class="headerlink" href="#objetivo-desta-seção" title="Permanent link">¶</a></h2>
 <p>O principal objetivo aqui é capacitá-lo a manter, evoluir e expandir sua infraestrutura de forma segura, consistente e alinhada com os princípios de Infraestrutura como Código (IaC) que estabelecemos. Queremos que você se sinta confiante para:</p>
 <ul>
 <li><strong>Expandir sua gama de serviços:</strong> Adicionar novas aplicações e containers Docker de forma integrada e segura, aproveitando a flexibilidade da nossa arquitetura com Traefik, Authelia e NFS.</li>
@@ -1991,7 +1991,7 @@
 <li><strong>Manter a integridade da sua Infraestrutura como Código (IaC):</strong> Reforçar as boas práticas ao fazer alterações, garantindo que sua configuração Ansible permaneça a fonte da verdade e que seu sistema seja sempre reprodutível.</li>
 </ul>
 <p>Manter uma infraestrutura dinâmica e auto-hospedada é uma jornada contínua de aprendizado e ajustes. Esta seção visa fornecer os guias práticos para tornar essa jornada mais suave e bem-sucedida.</p>
-<h2 id="topicos-cobertos-nos-guias-de-sustentacao">Tópicos Cobertos nos Guias de Sustentação<a class="headerlink" href="#topicos-cobertos-nos-guias-de-sustentacao" title="Permanent link">¶</a></h2>
+<h2 id="tópicos-cobertos-nos-guias-de-sustentação">Tópicos Cobertos nos Guias de Sustentação<a class="headerlink" href="#tópicos-cobertos-nos-guias-de-sustentação" title="Permanent link">¶</a></h2>
 <p>Esta seção está organizada nos seguintes guias práticos para ajudá-lo a operar e evoluir seu servidor doméstico:</p>
 <ol>
 <li><strong><a href="01-adicionando-novo-servico-docker/">Adicionando um Novo Serviço Docker à Infraestrutura</a>:</strong>
@@ -2015,7 +2015,7 @@
 <li><strong><a href="10-atualizacao-segura-componentes-criticos/">Atualização Segura de Componentes Críticos da Infraestrutura</a>:</strong>
     Estratégias e pontos de atenção para atualizar componentes fundamentais como Proxmox VE, Docker Engine, Traefik e Authelia de forma mais segura e controlada.</li>
 <li><strong><a href="11-hospedando-aplicacao-publica-dominio-raiz/">Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)</a>:</strong>
-    Considerações de segurança e configuração no Traefik para expor uma aplicação (idealmente um site estático) diretamente no seu domínio principal (e.g., <code>https://meudominio.com</code>).</li>
+    Considerações de segurança e configuração no Traefik para expor uma aplicação (idealmente um site estático) diretamente no seu domínio principal (e.g., <code>https://seudominio.com</code>).</li>
 <li><strong><a href="12-guia-snapshots-zfs/">Guia Prático de Snapshots ZFS</a>:</strong>
     Um guia detalhado sobre como criar, listar, gerenciar e utilizar os poderosos snapshots ZFS para recuperação rápida de dados e proteção local no seu host Proxmox.</li>
 <li><strong><a href="13-usando-geminicli/">Uso do Gemini CLI para Operações Assistidas por IA</a>:</strong>
@@ -2042,7 +2042,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

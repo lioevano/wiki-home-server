@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/04-gerenciando-redes-docker/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/04-gerenciando-redes-docker/">
       
       
         <link rel="prev" href="../03-troubleshooting-comum/">
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1400,7 +1400,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-rede-bridge-padrao-do-docker" class="md-nav__link">
+  <a href="#3-rede-bridge-padrão-do-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. Rede bridge Padrão do Docker
@@ -1416,7 +1416,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comandos-docker-uteis-para-gerenciamento-de-redes" class="md-nav__link">
+  <a href="#comandos-docker-úteis-para-gerenciamento-de-redes" class="md-nav__link">
     <span class="md-ellipsis">
       
         Comandos Docker Úteis para Gerenciamento de Redes
@@ -1427,7 +1427,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quando-considerar-a-criacao-de-novas-redes-docker" class="md-nav__link">
+  <a href="#quando-considerar-a-criação-de-novas-redes-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
         Quando Considerar a Criação de Novas Redes Docker?
@@ -1438,7 +1438,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#resolucao-de-nomes-dns-interna-do-docker-revisao" class="md-nav__link">
+  <a href="#resolução-de-nomes-dns-interna-do-docker-revisão" class="md-nav__link">
     <span class="md-ellipsis">
       
         Resolução de Nomes DNS Interna do Docker (Revisão)
@@ -2033,7 +2033,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-rede-bridge-padrao-do-docker" class="md-nav__link">
+  <a href="#3-rede-bridge-padrão-do-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. Rede bridge Padrão do Docker
@@ -2049,7 +2049,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comandos-docker-uteis-para-gerenciamento-de-redes" class="md-nav__link">
+  <a href="#comandos-docker-úteis-para-gerenciamento-de-redes" class="md-nav__link">
     <span class="md-ellipsis">
       
         Comandos Docker Úteis para Gerenciamento de Redes
@@ -2060,7 +2060,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quando-considerar-a-criacao-de-novas-redes-docker" class="md-nav__link">
+  <a href="#quando-considerar-a-criação-de-novas-redes-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
         Quando Considerar a Criação de Novas Redes Docker?
@@ -2071,7 +2071,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#resolucao-de-nomes-dns-interna-do-docker-revisao" class="md-nav__link">
+  <a href="#resolução-de-nomes-dns-interna-do-docker-revisão" class="md-nav__link">
     <span class="md-ellipsis">
       
         Resolução de Nomes DNS Interna do Docker (Revisão)
@@ -2171,14 +2171,14 @@
 </span></code></pre></div></li>
 <li><strong>Isolamento:</strong> Serviços que estão <em>apenas</em> na rede <code>internal_services</code> não são diretamente acessíveis pela rede <code>proxy</code> (e, portanto, não são diretamente acessíveis via Traefik a partir da internet), a menos que um container na rede <code>proxy</code> atue explicitamente como um gateway para eles.</li>
 </ul>
-<h3 id="3-rede-bridge-padrao-do-docker">3. Rede <code>bridge</code> Padrão do Docker<a class="headerlink" href="#3-rede-bridge-padrao-do-docker" title="Permanent link">¶</a></h3>
+<h3 id="3-rede-bridge-padrão-do-docker">3. Rede <code>bridge</code> Padrão do Docker<a class="headerlink" href="#3-rede-bridge-padrão-do-docker" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>Comportamento:</strong> Se você iniciar um container Docker sem especificar explicitamente uma rede (<code>--network</code> na CLI ou <code>networks:</code> no compose), ele é automaticamente conectado à rede <code>bridge</code> padrão criada pelo Docker Engine na sua inicialização.</li>
 <li><strong>Isolamento:</strong> Containers na rede <code>bridge</code> padrão podem se comunicar entre si (geralmente usando seus endereços IP internos, pois a resolução por nome pode ser limitada ou requerer links legados).</li>
 <li><strong>Acesso Externo (Host):</strong> Para expor um serviço de um container na rede <code>bridge</code> padrão, você precisa usar o mapeamento de portas (<code>-p HOST_PORT:CONTAINER_PORT</code>).</li>
 <li><strong>Nosso Uso:</strong> Em nossa arquitetura, nós <strong>explicitamente atribuímos todos os nossos containers de aplicação às redes customizadas <code>proxy</code> ou <code>internal_services</code></strong> para melhor controle, organização e para aproveitar a resolução DNS por nome de serviço. Evitamos usar a rede <code>bridge</code> padrão para serviços definidos em stacks.</li>
 </ul>
-<h2 id="comandos-docker-uteis-para-gerenciamento-de-redes">Comandos Docker Úteis para Gerenciamento de Redes<a class="headerlink" href="#comandos-docker-uteis-para-gerenciamento-de-redes" title="Permanent link">¶</a></h2>
+<h2 id="comandos-docker-úteis-para-gerenciamento-de-redes">Comandos Docker Úteis para Gerenciamento de Redes<a class="headerlink" href="#comandos-docker-úteis-para-gerenciamento-de-redes" title="Permanent link">¶</a></h2>
 <p>Execute estes comandos na VM onde o Docker está rodando (e.g., na <code>core-services-vm</code> via SSH) para inspecionar e gerenciar suas redes Docker:</p>
 <ul>
 <li>
@@ -2221,7 +2221,7 @@
         Evite remover manualmente as redes <code>proxy</code> ou <code>internal_services</code>, pois elas são gerenciadas pelo Ansible e são essenciais para o funcionamento das suas stacks. Se precisar recriá-las, é melhor usar o playbook Ansible.<p></p>
 </li>
 </ul>
-<h2 id="quando-considerar-a-criacao-de-novas-redes-docker">Quando Considerar a Criação de Novas Redes Docker?<a class="headerlink" href="#quando-considerar-a-criacao-de-novas-redes-docker" title="Permanent link">¶</a></h2>
+<h2 id="quando-considerar-a-criação-de-novas-redes-docker">Quando Considerar a Criação de Novas Redes Docker?<a class="headerlink" href="#quando-considerar-a-criação-de-novas-redes-docker" title="Permanent link">¶</a></h2>
 <p>Embora as redes <code>proxy</code> e <code>internal_services</code> cubram a maioria dos nossos casos de uso para esta arquitetura, podem surgir cenários onde redes adicionais sejam benéficas:</p>
 <ul>
 <li><strong>Isolamento Mais Granular entre Stacks ou Grupos de Serviços:</strong>
@@ -2231,7 +2231,7 @@
 <li><strong>Stacks de Terceiros com Redes Próprias:</strong>
     Algumas aplicações Docker Compose de terceiros que você pode encontrar online podem vir com suas próprias definições de rede internas (não marcadas como <code>external: true</code>). Ao implantá-las, o Docker Compose criará essas redes apenas para aquela stack. Isso é normal e ajuda no isolamento da stack. Se essa stack precisar interagir com nossas redes <code>proxy</code> ou <code>internal_services</code>, você pode adicioná-las como redes externas à definição da stack de terceiros.</li>
 </ul>
-<h2 id="resolucao-de-nomes-dns-interna-do-docker-revisao">Resolução de Nomes DNS Interna do Docker (Revisão)<a class="headerlink" href="#resolucao-de-nomes-dns-interna-do-docker-revisao" title="Permanent link">¶</a></h2>
+<h2 id="resolução-de-nomes-dns-interna-do-docker-revisão">Resolução de Nomes DNS Interna do Docker (Revisão)<a class="headerlink" href="#resolução-de-nomes-dns-interna-do-docker-revisão" title="Permanent link">¶</a></h2>
 <p>Uma das grandes vantagens de usar redes Docker <code>bridge</code> customizadas é a resolução DNS automática baseada no nome do serviço:</p>
 <ul>
 <li><strong>Dentro da Mesma Rede Customizada:</strong> Containers conectados à <strong>mesma rede Docker customizada</strong> (como <code>proxy</code> ou <code>internal_services</code>) podem se comunicar entre si usando diretamente o <strong>nome do serviço</strong> (conforme definido no <code>docker-compose.yml</code>) como se fosse um hostname. O Docker Engine fornece um servidor DNS embutido para cada rede customizada que lida com essa resolução.<ul>

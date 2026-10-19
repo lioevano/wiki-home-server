@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/07-cenarios-especificos-criacao-vms/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/07-cenarios-especificos-criacao-vms/">
       
       
         <link rel="prev" href="../06-gerenciando-recursos-vms/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cenarios-especificos-de-criacao-de-maquinas-virtuais-vms" class="md-skip">
+        <a href="#cenários-específicos-de-criação-de-máquinas-virtuais-vms" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1461,7 +1461,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-vm-para-desenvolvimento-ou-testes-isolados-e-descartaveis" class="md-nav__link">
+  <a href="#2-vm-para-desenvolvimento-ou-testes-isolados-e-descartáveis" class="md-nav__link">
     <span class="md-ellipsis">
       
         2. VM para Desenvolvimento ou Testes Isolados e Descartáveis
@@ -1472,7 +1472,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-vm-windows-para-aplicacoes-especificas-ou-testes" class="md-nav__link">
+  <a href="#3-vm-windows-para-aplicações-específicas-ou-testes" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. VM Windows (Para Aplicações Específicas ou Testes)
@@ -1971,7 +1971,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-vm-para-desenvolvimento-ou-testes-isolados-e-descartaveis" class="md-nav__link">
+  <a href="#2-vm-para-desenvolvimento-ou-testes-isolados-e-descartáveis" class="md-nav__link">
     <span class="md-ellipsis">
       
         2. VM para Desenvolvimento ou Testes Isolados e Descartáveis
@@ -1982,7 +1982,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-vm-windows-para-aplicacoes-especificas-ou-testes" class="md-nav__link">
+  <a href="#3-vm-windows-para-aplicações-específicas-ou-testes" class="md-nav__link">
     <span class="md-ellipsis">
       
         3. VM Windows (Para Aplicações Específicas ou Testes)
@@ -2023,7 +2023,7 @@
   
 
 
-<h1 id="cenarios-especificos-de-criacao-de-maquinas-virtuais-vms">Cenários Específicos de Criação de Máquinas Virtuais (VMs)<a class="headerlink" href="#cenarios-especificos-de-criacao-de-maquinas-virtuais-vms" title="Permanent link">¶</a></h1>
+<h1 id="cenários-específicos-de-criação-de-máquinas-virtuais-vms">Cenários Específicos de Criação de Máquinas Virtuais (VMs)<a class="headerlink" href="#cenários-específicos-de-criação-de-máquinas-virtuais-vms" title="Permanent link">¶</a></h1>
 <p>Embora nossa arquitetura principal se concentre na <code>core-services-vm</code> (para a maioria dos serviços Docker) e na <code>ai-desktop-vm</code> (para tarefas de IA com GPU passthrough), podem surgir cenários onde você precise ou deseje criar máquinas virtuais com propósitos mais específicos e isolados. Este guia explora alguns desses cenários comuns e as considerações para implementá-los no seu ambiente Proxmox VE.</p>
 <p>Lembre-se sempre da capacidade total do seu host Proxmox, especialmente a RAM (atualmente 48GB em nosso exemplo, o que oferece boa flexibilidade), ao planejar novas VMs. Cada VM consumirá recursos que poderiam ser usados por outras.</p>
 <h2 id="1-vm-para-firewallroteador-de-borda-eg-pfsense-opnsense">1. VM para Firewall/Roteador de Borda (e.g., pfSense, OPNsense)<a class="headerlink" href="#1-vm-para-firewallroteador-de-borda-eg-pfsense-opnsense" title="Permanent link">¶</a></h2>
@@ -2114,13 +2114,13 @@
 </ol>
 </li>
 </ul>
-<h2 id="2-vm-para-desenvolvimento-ou-testes-isolados-e-descartaveis">2. VM para Desenvolvimento ou Testes Isolados e Descartáveis<a class="headerlink" href="#2-vm-para-desenvolvimento-ou-testes-isolados-e-descartaveis" title="Permanent link">¶</a></h2>
+<h2 id="2-vm-para-desenvolvimento-ou-testes-isolados-e-descartáveis">2. VM para Desenvolvimento ou Testes Isolados e Descartáveis<a class="headerlink" href="#2-vm-para-desenvolvimento-ou-testes-isolados-e-descartáveis" title="Permanent link">¶</a></h2>
 <p>Precisa testar um novo software, uma configuração arriscada, compilar algo de fonte desconhecida, ou criar um ambiente de desenvolvimento específico sem poluir suas VMs principais ou sua máquina de trabalho? Uma VM de teste, possivelmente descartável, é a solução ideal.</p>
 <ul>
 <li><strong>Propósito:</strong> Ambientes isolados, temporários, ou para experimentação segura.</li>
 <li><strong>Criação Rápida e Fácil:</strong><ol>
 <li><strong>Clonar do Template Ubuntu Cloud-Init:</strong> Esta é a maneira mais rápida.<ul>
-<li><strong>Via UI do Proxmox:</strong> Clique com o botão direito no seu template <code>ubuntu-2204-cloudinit-base</code> -&gt; "Clone". Dê um novo VM ID e nome (e.g., <code>test-vm-01</code>), escolha "Full Clone".</li>
+<li><strong>Via UI do Proxmox:</strong> Clique com o botão direito no seu template <code>ubuntu-2404-cloudinit-template-v1</code> -&gt; "Clone". Dê um novo VM ID e nome (e.g., <code>test-vm-01</code>), escolha "Full Clone".</li>
 <li><strong>Via Ansible (<code>vm-deploy.yml</code>):</strong> Adicione uma nova entrada ao seu playbook <code>vm-deploy.yml</code> para a VM de teste. Isso é bom se você precisa recriá-la consistentemente.
     <div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Exemplo de adição ao vm-deploy.yml</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Deploy</span><span class="nv"> </span><span class="s">VM:</span><span class="nv"> </span><span class="s">test-environment-vm"</span>
@@ -2158,7 +2158,7 @@
 <li><strong>Snapshots Proxmox:</strong> Antes de instalar algo arriscado ou fazer uma mudança significativa na VM de teste, <strong>tire um snapshot dela no Proxmox.</strong> Se algo der errado, você pode reverter para o snapshot em segundos.</li>
 <li><strong>Descarte Fácil:</strong> Quando não precisar mais da VM de teste, você pode simplesmente desligá-la e deletá-la do Proxmox (clique com o botão direito -&gt; Remove). Se ela foi criada via Ansible e você não pretende recriá-la com a mesma config, remova também a entrada correspondente do <code>vm-deploy.yml</code> e do <code>hosts.ini</code>.</li>
 </ul>
-<h2 id="3-vm-windows-para-aplicacoes-especificas-ou-testes">3. VM Windows (Para Aplicações Específicas ou Testes)<a class="headerlink" href="#3-vm-windows-para-aplicacoes-especificas-ou-testes" title="Permanent link">¶</a></h2>
+<h2 id="3-vm-windows-para-aplicações-específicas-ou-testes">3. VM Windows (Para Aplicações Específicas ou Testes)<a class="headerlink" href="#3-vm-windows-para-aplicações-específicas-ou-testes" title="Permanent link">¶</a></h2>
 <p>Embora este guia foque primariamente em Linux para os serviços do servidor, você pode precisar de uma ou mais máquinas virtuais Windows para:
 *   Rodar aplicações que só existem para Windows.
 *   Testes de compatibilidade de software ou websites.
@@ -2183,7 +2183,7 @@
 <li>
 <div class="admonition warning">
 <p class="admonition-title">Drivers de GPU em VM Windows com Passthrough</p>
-Alguns drivers de GPU (especialmente NVIDIA, mas às vezes AMD também) podem detectar que estão rodando em um ambiente virtualizado e se recusar a instalar ou funcionar corretamente (e.g., "Code 43" no Gerenciador de Dispositivos). Podem ser necessários <a href="../../01-manual-implementacao/03-provisionamento-vms/#playbook-para-deploy-de-vm-ansibleplaybooksvm-deployyml">workarounds para esconder o status de VM do KVM</a> adicionando argumentos QEMU específicos na configuração da VM (e.g., via <code>vm_qemu_args</code> no Ansible ou diretamente no <code>.conf</code> da VM).</div>
+Alguns drivers de GPU (especialmente NVIDIA, mas às vezes AMD também) podem detectar que estão rodando em um ambiente virtualizado e se recusar a instalar ou funcionar corretamente (e.g., "Code 43" no Gerenciador de Dispositivos). Podem ser necessários <a href="../../01-manual-implementacao/03-provisionamento-vms/#33-playbook-para-deploy-de-vm-ansibleplaybooksvm-deployyml">workarounds para esconder o status de VM do KVM</a> adicionando argumentos QEMU específicos na configuração da VM (e.g., via <code>vm_qemu_args</code> no Ansible ou diretamente no <code>.conf</code> da VM).</div>
 </li>
 </ul>
 </li>
@@ -2256,7 +2256,7 @@ Alguns drivers de GPU (especialmente NVIDIA, mas às vezes AMD também) podem de
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:40:13 -03">18 de outubro de 2026</span>
   </span>
 
     

@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/02-virtualizacao-proxmox/">
+        <link rel="canonical" href="https://wiki.lioevano.com/02-visao-geral-arquitetura/02-virtualizacao-proxmox/">
       
       
         <link rel="prev" href="../01-fluxo-rede-acesso-externo/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#virtualizacao-com-proxmox-ve" class="md-skip">
+        <a href="#virtualização-com-proxmox-ve" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -991,7 +991,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#maquinas-virtuais-kvm-na-arquitetura" class="md-nav__link">
+  <a href="#máquinas-virtuais-kvm-na-arquitetura" class="md-nav__link">
     <span class="md-ellipsis">
       
         Máquinas Virtuais (KVM) na Arquitetura
@@ -1030,7 +1030,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gpu-passthrough-conceito-e-aplicacao" class="md-nav__link">
+  <a href="#gpu-passthrough-conceito-e-aplicação" class="md-nav__link">
     <span class="md-ellipsis">
       
         GPU Passthrough (Conceito e Aplicação)
@@ -1168,7 +1168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -2010,7 +2010,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#maquinas-virtuais-kvm-na-arquitetura" class="md-nav__link">
+  <a href="#máquinas-virtuais-kvm-na-arquitetura" class="md-nav__link">
     <span class="md-ellipsis">
       
         Máquinas Virtuais (KVM) na Arquitetura
@@ -2049,7 +2049,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#gpu-passthrough-conceito-e-aplicacao" class="md-nav__link">
+  <a href="#gpu-passthrough-conceito-e-aplicação" class="md-nav__link">
     <span class="md-ellipsis">
       
         GPU Passthrough (Conceito e Aplicação)
@@ -2079,7 +2079,7 @@
   
 
 
-<h1 id="virtualizacao-com-proxmox-ve">Virtualização com Proxmox VE<a class="headerlink" href="#virtualizacao-com-proxmox-ve" title="Permanent link">¶</a></h1>
+<h1 id="virtualização-com-proxmox-ve">Virtualização com Proxmox VE<a class="headerlink" href="#virtualização-com-proxmox-ve" title="Permanent link">¶</a></h1>
 <p>Proxmox Virtual Environment (PVE) é a espinha dorsal da nossa infraestrutura de servidor doméstico, fornecendo a plataforma para hospedar todas as nossas aplicações e serviços em máquinas virtuais (VMs) isoladas.</p>
 <h2 id="por-que-proxmox-ve">Por que Proxmox VE?<a class="headerlink" href="#por-que-proxmox-ve" title="Permanent link">¶</a></h2>
 <p>Proxmox VE foi escolhido por várias razões:</p>
@@ -2102,13 +2102,12 @@
 <li><strong>CPU (AMD Ryzen 5 5600G):</strong><ul>
 <li>Possui 6 núcleos / 12 threads.</li>
 <li>Os núcleos são alocados para as VMs conforme a necessidade. É importante não sobrealocar cronicamente os núcleos para evitar degradação de performance.</li>
-<li>Neste guia, a <code>core-services-vm</code> e a <code>ai-desktop-vm</code> recebem 4 vCPUs cada, o que representa uma sobrealocação se ambas estiverem em uso intenso simultaneamente. O PVE lida bem com sobrealocação leve para cargas de trabalho típicas de homelab.</li>
+<li>Neste guia, a <code>core-services-vm</code> recebe 6 vCPUs e a <code>ai-desktop-vm</code> 4 vCPUs (valores de <code>vm-deploy.yml</code>), o que representa uma sobrealocação dos 6 núcleos se ambas estiverem em uso intenso simultaneamente. O PVE lida bem com sobrealocação leve para cargas de trabalho típicas de homelab.</li>
 </ul>
 </li>
-<li><strong>RAM (16GB DDR4):</strong><ul>
-<li>Esta é a <strong>principal limitação</strong> do nosso hardware.</li>
-<li>O Proxmox host em si consome uma pequena quantidade de RAM (geralmente 1-2GB).</li>
-<li>O restante é dividido entre as VMs. A alocação de 6GB para <code>core-services-vm</code> e 8GB para <code>ai-desktop-vm</code> deixa pouca margem.</li>
+<li><strong>RAM (48GB DDR4):</strong><ul>
+<li>O Proxmox host em si consome uma pequena quantidade de RAM (geralmente 1-2GB), mais o ARC do ZFS, que usa a memória livre como cache e a devolve sob pressão.</li>
+<li>O restante é dividido entre as VMs: 16GB para a <code>core-services-vm</code> e 16GB para a <code>ai-desktop-vm</code>, o que deixa margem para o ARC e para aumentar a VM de IA se modelos maiores pedirem.</li>
 <li>O KSM (Kernel Samepage Merging) pode ser habilitado no Proxmox para deduplicar páginas de memória idênticas entre VMs, economizando RAM, mas com um pequeno custo de CPU. (O Node Exporter no host está configurado para coletar métricas KSM).</li>
 </ul>
 </li>
@@ -2122,18 +2121,18 @@
 </ul>
 </li>
 </ul>
-<h2 id="maquinas-virtuais-kvm-na-arquitetura">Máquinas Virtuais (KVM) na Arquitetura<a class="headerlink" href="#maquinas-virtuais-kvm-na-arquitetura" title="Permanent link">¶</a></h2>
+<h2 id="máquinas-virtuais-kvm-na-arquitetura">Máquinas Virtuais (KVM) na Arquitetura<a class="headerlink" href="#máquinas-virtuais-kvm-na-arquitetura" title="Permanent link">¶</a></h2>
 <p>Nesta arquitetura, utilizamos principalmente VMs KVM para isolamento completo de ambientes.</p>
 <ul>
 <li><strong><code>core-services-vm</code>:</strong><ul>
 <li><strong>Propósito:</strong> Hospedar a maioria dos serviços Docker, incluindo a stack de rede (Traefik, Cloudflared, Authelia), Portainer, Nextcloud, Home Assistant, stack de mídia e stack de monitoramento.</li>
-<li><strong>Recursos (Exemplo):</strong> 4 vCPUs, 6GB RAM, 80GB disco.</li>
+<li><strong>Recursos:</strong> 6 vCPUs, 16GB RAM, 100GB disco.</li>
 <li><strong>Sistema Operacional:</strong> Ubuntu Server (instalado via template Cloud-Init).</li>
 </ul>
 </li>
 <li><strong><code>ai-desktop-vm</code> (Opcional):</strong><ul>
 <li><strong>Propósito:</strong> Dedicada a tarefas de Inteligência Artificial (LLMs com Ollama, RAG) que podem se beneficiar de GPU passthrough (RX 5600XT). Pode também ter um ambiente desktop para interação direta.</li>
-<li><strong>Recursos (Exemplo):</strong> 4 vCPUs, 8GB RAM, 150GB disco.</li>
+<li><strong>Recursos:</strong> 4 vCPUs, 16GB RAM, 200GB disco.</li>
 <li><strong>Sistema Operacional:</strong> Ubuntu Server (ou Desktop, se GUI for primária).</li>
 <li><strong>GPU Passthrough:</strong> Configurado no Proxmox para dar à VM controle direto da GPU RX 5600XT.</li>
 </ul>
@@ -2164,7 +2163,7 @@
 </ul>
 </li>
 </ul>
-<h2 id="gpu-passthrough-conceito-e-aplicacao">GPU Passthrough (Conceito e Aplicação)<a class="headerlink" href="#gpu-passthrough-conceito-e-aplicacao" title="Permanent link">¶</a></h2>
+<h2 id="gpu-passthrough-conceito-e-aplicação">GPU Passthrough (Conceito e Aplicação)<a class="headerlink" href="#gpu-passthrough-conceito-e-aplicação" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>O que é:</strong> Permite que uma VM KVM tenha controle exclusivo sobre um dispositivo PCI físico do host, como uma placa gráfica.</li>
 <li><strong>Por que usar:</strong><ul>
@@ -2203,7 +2202,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:42:52 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:40:13 -03">18 de outubro de 2026</span>
   </span>
 
     

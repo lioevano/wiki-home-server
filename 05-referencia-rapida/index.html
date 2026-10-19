@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/05-referencia-rapida/">
+        <link rel="canonical" href="https://wiki.lioevano.com/05-referencia-rapida/">
       
       
         <link rel="prev" href="../04-manutencao-recuperacao/05-migrando-hardware-rede/">
@@ -85,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#referencia-rapida" class="md-skip">
+        <a href="#-referência-rápida" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1044,7 +1044,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1910,7 +1910,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comandos-uteis" class="md-nav__link">
+  <a href="#comandos-úteis" class="md-nav__link">
     <span class="md-ellipsis">
       
         Comandos Úteis
@@ -1921,7 +1921,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#solucao-de-problemas" class="md-nav__link">
+  <a href="#solução-de-problemas" class="md-nav__link">
     <span class="md-ellipsis">
       
         Solução de Problemas
@@ -1999,7 +1999,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#comandos-uteis" class="md-nav__link">
+  <a href="#comandos-úteis" class="md-nav__link">
     <span class="md-ellipsis">
       
         Comandos Úteis
@@ -2010,7 +2010,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#solucao-de-problemas" class="md-nav__link">
+  <a href="#solução-de-problemas" class="md-nav__link">
     <span class="md-ellipsis">
       
         Solução de Problemas
@@ -2040,7 +2040,7 @@
   
 
 
-<h1 id="referencia-rapida">📎 Referência Rápida<a class="headerlink" href="#referencia-rapida" title="Permanent link">¶</a></h1>
+<h1 id="-referência-rápida">📎 Referência Rápida<a class="headerlink" href="#-referência-rápida" title="Permanent link">¶</a></h1>
 <p>Conceitos essenciais, links úteis e alternativas para o servidor doméstico.</p>
 <h2 id="tecnologias-principais">Tecnologias Principais<a class="headerlink" href="#tecnologias-principais" title="Permanent link">¶</a></h2>
 <table>
@@ -2187,12 +2187,12 @@
 </tr>
 </tbody>
 </table>
-<h2 id="comandos-uteis">Comandos Úteis<a class="headerlink" href="#comandos-uteis" title="Permanent link">¶</a></h2>
+<h2 id="comandos-úteis">Comandos Úteis<a class="headerlink" href="#comandos-úteis" title="Permanent link">¶</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Criar snapshot ZFS antes de mudança arriscada</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>zfs<span class="w"> </span>snap<span class="w"> </span>tank/docker-volumes@antes-da-mudanca
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>zfs<span class="w"> </span>snap<span class="w"> </span>data/docker-volumes@antes-da-mudanca
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Restaurar snapshot ZFS</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>zfs<span class="w"> </span>rollback<span class="w"> </span>tank/docker-volumes@antes-da-mudanca
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>zfs<span class="w"> </span>rollback<span class="w"> </span>data/docker-volumes@antes-da-mudanca
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Listar stacks Docker rodando</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>docker<span class="w"> </span>compose<span class="w"> </span>ls
@@ -2201,12 +2201,12 @@
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>docker<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>--tail<span class="w"> </span><span class="m">50</span><span class="w"> </span>nome_do_container
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Rodar playbook específico</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>ansible/inventories/home/hosts.ini<span class="w"> </span>ansible/playbooks/setup-base-ubuntu.yml
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-base-ubuntu.yml
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Verificar status da VM</span>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>qm<span class="w"> </span>status<span class="w"> </span><span class="m">100</span><span class="w">  </span><span class="c1"># proxmox CLI para core-services-vm</span>
 </span></code></pre></div>
-<h2 id="solucao-de-problemas">Solução de Problemas<a class="headerlink" href="#solucao-de-problemas" title="Permanent link">¶</a></h2>
+<h2 id="solução-de-problemas">Solução de Problemas<a class="headerlink" href="#solução-de-problemas" title="Permanent link">¶</a></h2>
 <table>
 <thead>
 <tr>
@@ -2238,8 +2238,8 @@
 </tr>
 <tr>
 <td>Ollama não detecta GPU</td>
-<td>Driver ROCm/CUDA faltando</td>
-<td>Verificar <code>rocm-smi</code> ou <code>nvidia-smi</code> na VM</td>
+<td>Passthrough da GPU AMD ou <code>/dev/kfd</code>/<code>/dev/dri</code> ausentes</td>
+<td><code>docker logs ollama</code> e <code>ls /dev/kfd /dev/dri</code> na <code>ai-desktop-vm</code> (imagem <code>ollama/ollama:rocm</code>)</td>
 </tr>
 <tr>
 <td>LiteLLM retornando erro 429</td>
@@ -2268,7 +2268,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

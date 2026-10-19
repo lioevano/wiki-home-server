@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/02-modificando-configuracoes-existentes/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/02-modificando-configuracoes-existentes/">
       
       
         <link rel="prev" href="../01-adicionando-novo-servico-docker/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#modificando-configuracoes-existentes" class="md-skip">
+        <a href="#modificando-configurações-existentes" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1310,7 +1310,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#onde-as-configuracoes-residem-um-mapa-da-sua-infra" class="md-nav__link">
+  <a href="#onde-as-configurações-residem-um-mapa-da-sua-infra" class="md-nav__link">
     <span class="md-ellipsis">
       
         Onde as Configurações Residem? Um Mapa da Sua Infra
@@ -1321,7 +1321,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#processo-seguro-e-consistente-para-modificar-configuracoes" class="md-nav__link">
+  <a href="#processo-seguro-e-consistente-para-modificar-configurações" class="md-nav__link">
     <span class="md-ellipsis">
       
         Processo Seguro e Consistente para Modificar Configurações
@@ -1938,7 +1938,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#onde-as-configuracoes-residem-um-mapa-da-sua-infra" class="md-nav__link">
+  <a href="#onde-as-configurações-residem-um-mapa-da-sua-infra" class="md-nav__link">
     <span class="md-ellipsis">
       
         Onde as Configurações Residem? Um Mapa da Sua Infra
@@ -1949,7 +1949,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#processo-seguro-e-consistente-para-modificar-configuracoes" class="md-nav__link">
+  <a href="#processo-seguro-e-consistente-para-modificar-configurações" class="md-nav__link">
     <span class="md-ellipsis">
       
         Processo Seguro e Consistente para Modificar Configurações
@@ -1979,31 +1979,31 @@
   
 
 
-<h1 id="modificando-configuracoes-existentes">Modificando Configurações Existentes<a class="headerlink" href="#modificando-configuracoes-existentes" title="Permanent link">¶</a></h1>
+<h1 id="modificando-configurações-existentes">Modificando Configurações Existentes<a class="headerlink" href="#modificando-configurações-existentes" title="Permanent link">¶</a></h1>
 <p>Sua infraestrutura de servidor doméstico é uma entidade viva. Com o tempo, você inevitavelmente precisará ajustar configurações, atualizar parâmetros, ou refinar o comportamento de serviços existentes. Este guia descreve onde as principais peças de configuração residem em nossa arquitetura e como abordá-las de forma segura e consistente, mantendo a integridade da sua Infraestrutura como Código (IaC).</p>
-<h2 id="onde-as-configuracoes-residem-um-mapa-da-sua-infra">Onde as Configurações Residem? Um Mapa da Sua Infra<a class="headerlink" href="#onde-as-configuracoes-residem-um-mapa-da-sua-infra" title="Permanent link">¶</a></h2>
+<h2 id="onde-as-configurações-residem-um-mapa-da-sua-infra">Onde as Configurações Residem? Um Mapa da Sua Infra<a class="headerlink" href="#onde-as-configurações-residem-um-mapa-da-sua-infra" title="Permanent link">¶</a></h2>
 <p>Entender onde cada configuração está armazenada é o primeiro e mais crucial passo para uma modificação bem-sucedida e para evitar quebrar coisas acidentalmente.</p>
 <ol>
 <li>
 <p><strong>Ansible (Sua Máquina de Controle Ansible - Fonte da Verdade para IaC):</strong>
     O Ansible gerencia a configuração fundamental da sua infraestrutura.</p>
 <ul>
-<li><strong>Inventário (<code>home-server/ansible/inventories/home/hosts.ini</code>):</strong><ul>
+<li><strong>Inventário (<code>server/ansible/inventories/home/hosts.ini</code>):</strong><ul>
 <li>Define os IPs dos seus hosts (Proxmox, VMs) e como o Ansible se conecta a eles.</li>
 <li>Agrupa hosts para aplicação de configurações em massa.</li>
 <li>Contém variáveis de host (e.g., <code>GUI_ENABLED</code>) e variáveis de grupo.</li>
 </ul>
 </li>
-<li><strong>Variáveis Globais Não Sensíveis (<code>home-server/ansible/inventories/home/group_vars/all/main.yml</code>):</strong><ul>
+<li><strong>Variáveis Globais Não Sensíveis (<code>server/ansible/inventories/home/group_vars/all/main.yml</code>):</strong><ul>
 <li>Parâmetros comuns e não secretos aplicados a todos os hosts. Exemplos: caminhos base NFS, nomes de usuário padrão, CIDRs de rede permitidos, nomes de datasets ZFS.</li>
 </ul>
 </li>
-<li><strong>Ansible Vault (<code>home-server/ansible/inventories/home/group_vars/all/vault.yml</code>):</strong><ul>
+<li><strong>Ansible Vault (<code>server/ansible/inventories/home/group_vars/all/vault.yml</code>):</strong><ul>
 <li><strong>Local de TODOS os segredos</strong> gerenciados pelo Ansible: senhas de sistema, tokens de API (Cloudflare), segredos para Authelia, senhas de banco de dados para aplicações, etc.</li>
-<li><strong>Edição Segura:</strong> Sempre edite este arquivo com <code>ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml</code>.</li>
+<li><strong>Edição Segura:</strong> Sempre edite este arquivo com <code>ansible-vault edit inventories/home/group_vars/all/vault.yml</code>.</li>
 </ul>
 </li>
-<li><strong>Roles (<code>home-server/ansible/roles/...</code>):</strong><ul>
+<li><strong>Roles (<code>server/ansible/roles/...</code>):</strong><ul>
 <li>Contêm a lógica de configuração para componentes específicos (e.g., <code>infra/proxmox-host-config</code>, <code>common</code>, <code>infra/docker</code>, <code>infra/traefik-config</code>, <code>infra/authelia-config</code>).</li>
 <li><strong><code>tasks/main.yml</code>:</strong> Define as ações.</li>
 <li><strong><code>templates/</code>:</strong> Arquivos de template Jinja2 (<code>.j2</code>) que geram arquivos de configuração dinamicamente (e.g., <code>traefik.yml.j2</code>, <code>authelia/configuration.yml.j2</code>, <code>etc_exports.j2</code>).</li>
@@ -2011,7 +2011,7 @@
 <li><strong><code>defaults/main.yml</code> e <code>vars/main.yml</code>:</strong> Variáveis específicas do role.</li>
 </ul>
 </li>
-<li><strong>Playbooks (<code>home-server/ansible/playbooks/...</code>):</strong><ul>
+<li><strong>Playbooks (<code>server/ansible/playbooks/...</code>):</strong><ul>
 <li>Orquestram a aplicação de roles e tarefas aos hosts definidos no inventário.</li>
 </ul>
 </li>
@@ -2028,7 +2028,7 @@
 <li><code>/etc/default/grub</code> e <code>/etc/kernel/cmdline</code>: Opções de boot do kernel (para IOMMU, etc.).</li>
 <li><code>/etc/modules</code>, <code>/etc/modprobe.d/</code>: Módulos do kernel e blacklisting.</li>
 <li><code>/etc/exports</code>: Configuração do servidor NFS (gerada pelo Ansible).</li>
-<li><code>/etc/systemd/system/</code> (e <code>override.conf</code> em subdiretórios): Arquivos de unidade Systemd para serviços como Node Exporter (gerenciados por Ansible) ou Ollama (instalado por script, mas com override gerenciado por Ansible).</li>
+<li><code>/etc/systemd/system/</code> (e <code>override.conf</code> em subdiretórios): Arquivos de unidade Systemd para serviços como o Node Exporter (gerenciados por Ansible). O Ollama roda em container na stack <code>ai</code>, não como serviço systemd.</li>
 </ul>
 </li>
 </ul>
@@ -2055,18 +2055,18 @@
 <p><strong>Docker e Portainer (na <code>core-services-vm</code> ou <code>ai-desktop-vm</code>):</strong></p>
 <ul>
 <li><strong>Arquivos <code>docker-compose.yml</code> de cada Stack:</strong><ul>
-<li>Localizados no seu projeto Git em <code>home-server/docker/stacks/NOME_DA_STACK/docker-compose.yml</code>.</li>
+<li>Localizados no seu projeto Git em <code>server/docker/stacks/NOME_DA_STACK/docker-compose.yml</code>.</li>
 <li>Definem os serviços, imagens, volumes, redes, portas, variáveis de ambiente e labels Traefik para cada stack de aplicação.</li>
 <li><strong>As modificações são feitas nestes arquivos e depois aplicadas via Portainer ("Update the stack").</strong></li>
 </ul>
 </li>
-<li><strong>Variáveis de Ambiente e Secrets no Portainer:</strong><ul>
-<li>Ao criar/editar uma stack no Portainer, você pode carregar variáveis de um arquivo <code>.env</code> (que foi gerado pelo Ansible na VM).</li>
-<li><strong>Secrets críticos</strong> (senhas de banco de dados, tokens de API específicos da aplicação) são definidos <strong>manualmente</strong> como variáveis de ambiente diretamente na UI do Portainer para a stack.</li>
+<li><strong>Variáveis de Ambiente e Secrets:</strong><ul>
+<li>Ao criar/editar uma stack no Portainer, carregue o arquivo <code>.env</code> gerado pelo Ansible na VM.</li>
+<li><strong>Secrets críticos</strong> (senhas de banco de dados, tokens de API) ficam no vault e chegam ao <code>.env</code> pelo playbook da stack; para mudá-los, edite o vault e rode o playbook de novo. Nada é digitado na UI do Portainer.</li>
 </ul>
 </li>
 <li><strong>Volumes Docker Persistentes (Mapeados para os Diretórios NFS):</strong><ul>
-<li>Contêm os dados e arquivos de configuração internos das suas aplicações Docker (e.g., o <code>config.php</code> do Nextcloud dentro do seu volume de config, o banco de dados SQLite do Sonarr, os arquivos de mídia do Plex/Jellyfin). As modificações de configuração <em>dentro</em> da aplicação são salvas aqui.</li>
+<li>Contêm os dados e arquivos de configuração internos das suas aplicações Docker (e.g., o <code>config.php</code> do Nextcloud dentro do seu volume de config, o banco de dados SQLite do Sonarr, a biblioteca do Jellyfin). As modificações de configuração <em>dentro</em> da aplicação são salvas aqui.</li>
 </ul>
 </li>
 </ul>
@@ -2131,7 +2131,7 @@ Traefik gerencia este arquivo. A edição manual pode corrompê-lo e causar prob
 </ul>
 </li>
 </ol>
-<h2 id="processo-seguro-e-consistente-para-modificar-configuracoes">Processo Seguro e Consistente para Modificar Configurações<a class="headerlink" href="#processo-seguro-e-consistente-para-modificar-configuracoes" title="Permanent link">¶</a></h2>
+<h2 id="processo-seguro-e-consistente-para-modificar-configurações">Processo Seguro e Consistente para Modificar Configurações<a class="headerlink" href="#processo-seguro-e-consistente-para-modificar-configurações" title="Permanent link">¶</a></h2>
 <ol>
 <li>
 <p><strong>Identifique a Configuração e Onde Ela Reside:</strong> Use o mapa acima para determinar qual sistema ou arquivo controla a configuração que você deseja alterar.</p>
@@ -2158,17 +2158,17 @@ Traefik gerencia este arquivo. A edição manual pode corrompê-lo e causar prob
 <li><strong>Se a Configuração é Gerenciada pelo Ansible (Ideal):</strong><ol>
 <li>Edite o arquivo Ansible apropriado na sua máquina de controle (inventário, <code>main.yml</code>, <code>vault.yml</code>, um template <code>.j2</code>, ou as tasks de um role).</li>
 <li>Execute o playbook Ansible relevante para aplicar a mudança. Exemplo:
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/setup-core-networking.yml<span class="w"> </span>--ask-vault-pass
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-core-networking.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div></li>
 <li>O Ansible aplicará a mudança de forma idempotente. Se a configuração já estiver no estado desejado, nenhuma alteração será feita.</li>
 </ol>
 </li>
 <li><strong>Se a Mudança é em uma Stack Docker (via Portainer):</strong><ol>
-<li>Edite o arquivo <code>docker-compose.yml</code> correspondente no seu projeto Git (<code>home-server/docker/stacks/.../</code>).</li>
+<li>Edite o arquivo <code>docker-compose.yml</code> correspondente no seu projeto Git (<code>server/docker/stacks/.../</code>).</li>
 <li>No Portainer, navegue até a stack que você deseja modificar.</li>
 <li>Clique em "<strong>Editor</strong>".</li>
 <li>Cole o conteúdo do <code>docker-compose.yml</code> atualizado.</li>
-<li>Se necessário, modifique as variáveis de ambiente na UI do Portainer (especialmente secrets que não vêm do arquivo <code>.env</code>).</li>
+<li>Se mudou variáveis ou segredos, rode antes o playbook da stack e recarregue o <code>.env</code> em <strong>Env</strong>.</li>
 <li>Clique em "<strong>Update the stack</strong>".<ul>
 <li>Marque a opção "<strong>Re-pull image and redeploy</strong>" se você alterou a tag da imagem de um serviço e quer que o Portainer puxe a nova versão da imagem.</li>
 </ul>
@@ -2237,7 +2237,7 @@ Se a configuração que você alterou na UI do Proxmox também é definida pelo 
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

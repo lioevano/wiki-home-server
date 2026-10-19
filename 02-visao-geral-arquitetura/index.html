@@ -4,7 +4,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <meta content="Visão conceitual de como virtualização, armazenamento, automação, containers, rede e segurança se integram no servidor." name="description"/>
 <meta content="Léo Ivan" name="author"/>
-<link href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/" rel="canonical"/>
+<link href="https://wiki.lioevano.com/02-visao-geral-arquitetura/" rel="canonical"/>
 <link href="../01-manual-implementacao/09-painel-notificacoes/" rel="prev"/>
 <link href="01-fluxo-rede-acesso-externo/" rel="next"/>
 <link href="../assets/images/favicon.png" rel="icon"/>
@@ -32,7 +32,7 @@
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
 <div data-md-component="skip">
-<a class="md-skip" href="#visao-geral-da-arquitetura">
+<a class="md-skip" href="#-visão-geral-da-arquitetura">
           Ir para o conteúdo
         </a>
 </div>
@@ -436,7 +436,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#componentes-chave-e-suas-interacoes">
+<a class="md-nav__link" href="#componentes-chave-e-suas-interações">
 <span class="md-ellipsis">
       
         Componentes Chave e Suas Interações
@@ -520,7 +520,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="08-apis-llm-estrategia/">
+<a class="md-nav__link" href="07-apis-llm-estrategia/">
 <span class="md-ellipsis">
     
   
@@ -886,7 +886,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#componentes-chave-e-suas-interacoes">
+<a class="md-nav__link" href="#componentes-chave-e-suas-interações">
 <span class="md-ellipsis">
       
         Componentes Chave e Suas Interações
@@ -901,21 +901,23 @@
 </div>
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
-<h1 id="visao-geral-da-arquitetura">💡 Visão Geral da Arquitetura<a class="headerlink" href="#visao-geral-da-arquitetura" title="Permanent link">¶</a></h1>
+<h1 id="-visão-geral-da-arquitetura">💡 Visão Geral da Arquitetura<a class="headerlink" href="#-visão-geral-da-arquitetura" title="Permanent link">¶</a></h1>
 <p>Bem-vindo à seção de Visão Geral da Arquitetura! Após a implementação detalhada no <a href="../01-manual-implementacao/">Manual de Implementação</a>, esta seção tem como objetivo fornecer um entendimento conceitual de como os diversos componentes do seu servidor doméstico se integram e operam em conjunto.</p>
 <h2 id="objetivo">Objetivo<a class="headerlink" href="#objetivo" title="Permanent link">¶</a></h2>
 <p>Aqui, exploraremos a lógica por trás das escolhas de design, o fluxo de dados e interações entre as principais tecnologias utilizadas:</p>
 <ul>
-<li><strong>Fluxo de Rede e Acesso Externo Seguro:</strong> Como seus serviços são expostos à internet de forma segura.</li>
-<li><strong>Virtualização com Proxmox VE:</strong> A base para hospedar seus serviços em máquinas virtuais isoladas.</li>
-<li><strong>Estratégia de Armazenamento com ZFS e NFS:</strong> Como os dados são armazenados de forma resiliente e compartilhados.</li>
-<li><strong>Automação da Infraestrutura com Ansible:</strong> O poder da Infraestrutura como Código para gerenciamento e repetibilidade.</li>
-<li><strong>Gerenciamento de Containers com Docker e Portainer:</strong> Como as aplicações são empacotadas e executadas.</li>
-<li><strong>Princípios de Segurança Aplicados:</strong> As camadas de segurança implementadas em toda a stack.</li>
-<li><strong>Estratégia de APIs de LLM:</strong> Como combinar Ollama local, LiteLLM e provedores externos de forma coerente.</li>
+<li><strong><a href="01-fluxo-rede-acesso-externo/">Fluxo de Rede e Acesso Externo Seguro</a>:</strong> Como seus serviços são expostos à internet de forma segura.</li>
+<li><strong><a href="02-virtualizacao-proxmox/">Virtualização com Proxmox VE</a>:</strong> A base para hospedar seus serviços em máquinas virtuais isoladas.</li>
+<li><strong><a href="03-armazenamento-zfs-nfs/">Estratégia de Armazenamento com ZFS e NFS</a>:</strong> Como os dados são armazenados de forma resiliente e compartilhados.</li>
+<li><strong><a href="04-automacao-ansible/">Automação da Infraestrutura com Ansible</a>:</strong> O poder da Infraestrutura como Código para gerenciamento e repetibilidade.</li>
+<li><strong><a href="05-gerenciamento-containers/">Gerenciamento de Containers com Docker e Portainer</a>:</strong> Como as aplicações são empacotadas e executadas.</li>
+<li><strong><a href="06-principios-seguranca/">Princípios de Segurança Aplicados</a>:</strong> As camadas de segurança implementadas em toda a stack.</li>
+<li><strong><a href="07-apis-llm-estrategia/">Estratégia de APIs de LLM</a>:</strong> Como combinar Ollama local, LiteLLM e provedores externos de forma coerente.</li>
+<li><strong><a href="09-catalogo-aplicacoes/">Catálogo de Aplicações</a>:</strong> Os fatos de cada aplicação (stack, exposição, dados, métricas) que guiam as integrações.</li>
+<li><strong><a href="10-indice-integracoes/">Índice de Integrações</a>:</strong> As integrações entre aplicações, com regras verificáveis e os passos para adicionar ou remover.</li>
 </ul>
 <p>Esta seção é ideal para quem deseja entender o "porquê" das escolhas de arquitetura e como os diferentes sistemas colaboram, sem necessariamente se aprofundar nos comandos exatos de implementação (que já foram cobertos no manual).</p>
-<h2 id="componentes-chave-e-suas-interacoes">Componentes Chave e Suas Interações<a class="headerlink" href="#componentes-chave-e-suas-interacoes" title="Permanent link">¶</a></h2>
+<h2 id="componentes-chave-e-suas-interações">Componentes Chave e Suas Interações<a class="headerlink" href="#componentes-chave-e-suas-interações" title="Permanent link">¶</a></h2>
 <p>A arquitetura do nosso servidor doméstico é composta por várias camadas e tecnologias que trabalham em harmonia:</p>
 <pre class="mermaid"><code>graph LR
     subgraph "Camada de Acesso Externo"
@@ -960,7 +962,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:42:52 -03">13 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:31:28 -03">18 de outubro de 2026</span>
 </span>
 </aside>
 </article>

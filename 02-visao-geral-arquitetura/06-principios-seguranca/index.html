@@ -4,9 +4,9 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <meta content="Princípios de segurança aplicados: defesa em camadas, menor privilégio, 2FA, firewall e gestão de segredos." name="description"/>
 <meta content="Léo Ivan" name="author"/>
-<link href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/06-principios-seguranca/" rel="canonical"/>
+<link href="https://wiki.lioevano.com/02-visao-geral-arquitetura/06-principios-seguranca/" rel="canonical"/>
 <link href="../05-gerenciamento-containers/" rel="prev"/>
-<link href="../08-apis-llm-estrategia/" rel="next"/>
+<link href="../07-apis-llm-estrategia/" rel="next"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.7.1" name="generator"/>
 <title>Segurança - Wiki do Servidor do Léo Ivan</title>
@@ -32,7 +32,7 @@
 <input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
 <label class="md-overlay" for="__drawer"></label>
 <div data-md-component="skip">
-<a class="md-skip" href="#principios-de-seguranca-aplicados">
+<a class="md-skip" href="#princípios-de-segurança-aplicados">
           Ir para o conteúdo
         </a>
 </div>
@@ -517,7 +517,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#resiliencia-de-dados-e-backups">
+<a class="md-nav__link" href="#resiliência-de-dados-e-backups">
 <span class="md-ellipsis">
       
         Resiliência de Dados e Backups
@@ -529,7 +529,7 @@
 </nav>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../08-apis-llm-estrategia/">
+<a class="md-nav__link" href="../07-apis-llm-estrategia/">
 <span class="md-ellipsis">
     
   
@@ -904,7 +904,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#resiliencia-de-dados-e-backups">
+<a class="md-nav__link" href="#resiliência-de-dados-e-backups">
 <span class="md-ellipsis">
       
         Resiliência de Dados e Backups
@@ -919,7 +919,7 @@
 </div>
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
-<h1 id="principios-de-seguranca-aplicados">Princípios de Segurança Aplicados<a class="headerlink" href="#principios-de-seguranca-aplicados" title="Permanent link">¶</a></h1>
+<h1 id="princípios-de-segurança-aplicados">Princípios de Segurança Aplicados<a class="headerlink" href="#princípios-de-segurança-aplicados" title="Permanent link">¶</a></h1>
 <p>A segurança é uma preocupação primordial em qualquer servidor, especialmente um que pode expor serviços à internet. Esta arquitetura foi projetada com vários princípios e camadas de segurança em mente.</p>
 <h2 id="defesa-em-camadas-defense-in-depth">Defesa em Camadas (Defense in Depth)<a class="headerlink" href="#defesa-em-camadas-defense-in-depth" title="Permanent link">¶</a></h2>
 <p>A estratégia de segurança aqui não depende de uma única solução, mas de múltiplas camadas de proteção. Se uma camada falhar ou for contornada, outras ainda estarão em vigor.</p>
@@ -1036,7 +1036,7 @@
 </ul>
 </li>
 <li><strong>Senhas Fortes para Aplicações:</strong> Usar senhas únicas e fortes para as contas de administrador de cada aplicação (Nextcloud, Grafana, etc.).</li>
-<li><strong>Atualizações de Imagens Docker:</strong> Usar Watchtower (ou um processo manual regular) para manter as imagens Docker atualizadas para suas versões mais recentes e seguras.</li>
+<li><strong>Atualizações de Imagens Docker:</strong> O Diun avisa quando uma imagem tem versão nova, e a atualização é feita manualmente, depois de ler as notas de release, para manter as imagens nas versões mais recentes e seguras.</li>
 <li><strong><code>security_opt: [no-new-privileges:true]</code>:</strong> Usado em alguns <code>docker-compose.yml</code> para impedir que um container ganhe mais privilégios.</li>
 </ul>
 </li>
@@ -1046,7 +1046,7 @@
 <li><strong>Ansible Vault:</strong> Todas as senhas, tokens de API e outros dados sensíveis usados pela automação Ansible são armazenados de forma criptografada no arquivo <code>ansible/inventories/home/group_vars/all/vault.yml</code>.</li>
 <li><strong>Secrets das stacks:</strong> Todo segredo de aplicação fica no <code>vault.yml</code> e é gravado pelo Ansible no <code>.env</code> da stack (<code>/opt/portainer_stack_envs/*.env</code>, <code>mode: '0600'</code>), que o Portainer carrega no deploy. Nada é digitado à mão na UI do Portainer (ver "Origem dos valores" no índice de integrações).</li>
 </ul>
-<h2 id="resiliencia-de-dados-e-backups">Resiliência de Dados e Backups<a class="headerlink" href="#resiliencia-de-dados-e-backups" title="Permanent link">¶</a></h2>
+<h2 id="resiliência-de-dados-e-backups">Resiliência de Dados e Backups<a class="headerlink" href="#resiliência-de-dados-e-backups" title="Permanent link">¶</a></h2>
 <p>Embora não seja estritamente um princípio de segurança <em>contra intrusão</em>, a capacidade de recuperar dados após uma falha (de hardware, software, ou mesmo um ataque de ransomware) é uma parte crucial da postura geral de segurança e disponibilidade.</p>
 <ul>
 <li><strong>ZFS:</strong> Oferece integridade de dados, snapshots e RAID para o pool <code>/data</code>.</li>
@@ -1058,7 +1058,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 04:42:52 -03">13 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:40:13 -03">18 de outubro de 2026</span>
 </span>
 </aside>
 </article>

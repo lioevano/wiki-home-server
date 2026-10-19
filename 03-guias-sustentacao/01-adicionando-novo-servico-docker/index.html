@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/01-adicionando-novo-servico-docker/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/01-adicionando-novo-servico-docker/">
       
       
         <link rel="prev" href="../">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adicionando-um-novo-servico-docker-a-infraestrutura" class="md-skip">
+        <a href="#adicionando-um-novo-serviço-docker-à-infraestrutura" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1282,7 +1282,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#checklist-detalhado-para-adicionar-um-novo-servico-docker" class="md-nav__link">
+  <a href="#checklist-detalhado-para-adicionar-um-novo-serviço-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
         Checklist Detalhado para Adicionar um Novo Serviço Docker
@@ -1293,7 +1293,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#exemplo-pratico-adicionando-filebrowser-revisitado" class="md-nav__link">
+  <a href="#exemplo-prático-adicionando-filebrowser-revisitado" class="md-nav__link">
     <span class="md-ellipsis">
       
         Exemplo Prático: Adicionando FileBrowser (Revisitado)
@@ -1938,7 +1938,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#checklist-detalhado-para-adicionar-um-novo-servico-docker" class="md-nav__link">
+  <a href="#checklist-detalhado-para-adicionar-um-novo-serviço-docker" class="md-nav__link">
     <span class="md-ellipsis">
       
         Checklist Detalhado para Adicionar um Novo Serviço Docker
@@ -1949,7 +1949,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#exemplo-pratico-adicionando-filebrowser-revisitado" class="md-nav__link">
+  <a href="#exemplo-prático-adicionando-filebrowser-revisitado" class="md-nav__link">
     <span class="md-ellipsis">
       
         Exemplo Prático: Adicionando FileBrowser (Revisitado)
@@ -1979,14 +1979,14 @@
   
 
 
-<h1 id="adicionando-um-novo-servico-docker-a-infraestrutura">Adicionando um Novo Serviço Docker à Infraestrutura<a class="headerlink" href="#adicionando-um-novo-servico-docker-a-infraestrutura" title="Permanent link">¶</a></h1>
+<h1 id="adicionando-um-novo-serviço-docker-à-infraestrutura">Adicionando um Novo Serviço Docker à Infraestrutura<a class="headerlink" href="#adicionando-um-novo-serviço-docker-à-infraestrutura" title="Permanent link">¶</a></h1>
 <div class="admonition info">
 <p class="admonition-title">Fonte do checklist: catálogo + índice de integrações</p>
 <p>A lista do que uma aplicação nova precisa (roteamento, autenticação, acesso externo, métricas, logs, dados, variáveis, LLM, documentação) é definida no <a href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/">Catálogo de Aplicações</a> e no <a href="../../02-visao-geral-arquitetura/10-indice-integracoes/">Índice de Integrações</a>. Agentes de IA executam esse fluxo pela skill <code>add-app</code> (veja <code>AGENTS.md</code>). Este guia mostra o passo a passo manual com um exemplo.</p>
 </div>
 <p>Uma das grandes vantagens da nossa arquitetura baseada em Docker, Portainer e Traefik é a facilidade com que podemos adicionar novos serviços e aplicações ao nosso servidor doméstico. Este guia fornece um checklist detalhado e um exemplo prático para integrar uma nova aplicação containerizada de forma segura e consistente com o restante da infraestrutura.</p>
 <p>O processo geral envolve planejar o serviço, preparar os volumes e configurações (idealmente com Ansible), definir o serviço em um arquivo <code>docker-compose.yml</code>, e então implantá-lo via Portainer.</p>
-<h2 id="checklist-detalhado-para-adicionar-um-novo-servico-docker">Checklist Detalhado para Adicionar um Novo Serviço Docker<a class="headerlink" href="#checklist-detalhado-para-adicionar-um-novo-servico-docker" title="Permanent link">¶</a></h2>
+<h2 id="checklist-detalhado-para-adicionar-um-novo-serviço-docker">Checklist Detalhado para Adicionar um Novo Serviço Docker<a class="headerlink" href="#checklist-detalhado-para-adicionar-um-novo-serviço-docker" title="Permanent link">¶</a></h2>
 <p>Siga estes passos para garantir uma integração suave e bem-sucedida:</p>
 <ol>
 <li>
@@ -2032,7 +2032,7 @@
 <p><strong>Preparação de Volumes e Arquivo <code>.env</code> (Via Ansible - Recomendado):</strong>
     Para manter a consistência e automação (IaC):</p>
 <ul>
-<li>No seu projeto <code>home-server/ansible/</code>:<ul>
+<li>No seu projeto <code>server/ansible/</code>:<ul>
 <li>Crie um novo playbook Ansible, por exemplo, <code>ansible/playbooks/setup-novoservico-volumes.yml</code>.</li>
 <li>Este playbook deve ser direcionado à VM onde o novo serviço Docker rodará (e.g., <code>core-services-vm</code>).</li>
 <li><strong>Tarefas do Playbook:</strong><ol>
@@ -2057,7 +2057,7 @@
 </ul>
 </li>
 <li><strong>Execute o novo playbook Ansible:</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/setup-novoservico-volumes.yml<span class="w"> </span>--ask-vault-pass
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-novoservico-volumes.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div>
     Isso garante que os diretórios NFS e o arquivo <code>.env</code> com os caminhos corretos estejam prontos na VM antes de você tentar implantar a stack no Portainer.</li>
 </ul>
@@ -2065,7 +2065,7 @@
 <li>
 <p><strong>Escrever o Arquivo <code>docker-compose.yml</code> para a Nova Stack:</strong></p>
 <ul>
-<li>No seu projeto <code>home-server/</code>, crie um novo diretório para a stack, por exemplo, <code>docker/stacks/novoservico/</code>.</li>
+<li>No repositório, crie um novo diretório para a stack, por exemplo, <code>docker/stacks/novoservico/</code>.</li>
 <li>Dentro dele, crie o arquivo <code>docker-compose.yml</code>.</li>
 <li><strong>Estrutura Típica (Exemplo):</strong>
     <div class="language-yaml highlight"><span class="filename">Exemplo: docker/stacks/novoservico/docker-compose.yml</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># docker/stacks/novoservico/docker-compose.yml</span>
@@ -2121,7 +2121,7 @@
 </li>
 <li>
 <p><strong>Deploy da Nova Stack via Portainer:</strong>
-    Siga o processo descrito em <a href="../../01-manual-implementacao/06-deploy-core/">Deploy Core</a> (para stacks de infraestrutura) ou <a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de Apps</a> (para stacks de aplicações):</p>
+    Siga o processo descrito em <a href="../../01-manual-implementacao/07-deploy-apps/">Deploy de Apps</a> (a stack <code>core</code> não passa pelo Portainer; ver <a href="../../01-manual-implementacao/06-deploy-core/">Deploy Core</a>):</p>
 <ul>
 <li>Acesse o Portainer, selecione o <strong>endpoint Docker correto</strong> (e.g., <code>local</code> para <code>core-services-vm</code>).</li>
 <li>Vá para "Stacks" -&gt; "+ Add stack".</li>
@@ -2129,7 +2129,7 @@
 <li><strong>Build method:</strong> "Web editor". Cole o conteúdo do seu <code>docker-stacks/novoservico/docker-compose.yml</code>.</li>
 <li><strong>Environment variables (Advanced mode):</strong><ul>
 <li><strong>Load variables from .env file:</strong> Forneça o caminho <strong>DENTRO DA VM</strong> para o arquivo <code>.env</code> que foi preparado pelo Ansible (e.g., <code>/opt/portainer_stack_envs/novoservico.env</code>).</li>
-<li><strong>Adicionar Secrets Manualmente:</strong> Para quaisquer senhas ou tokens de API (e.g., <code>SENHA_DO_NOVOSERVICO_APP</code> se referenciada no compose), adicione-os aqui como variáveis de ambiente. <strong>NÃO</strong> coloque segredos diretamente no <code>docker-compose.yml</code> ou no arquivo <code>.env</code> versionado.</li>
+<li><strong>Segredos:</strong> senhas e tokens de API (e.g., <code>SENHA_DO_NOVOSERVICO_APP</code> referenciada no compose) entram no vault e são gravados no <code>.env</code> pelo playbook da stack; não os digite no Portainer nem os coloque no <code>docker-compose.yml</code>.</li>
 </ul>
 </li>
 <li>Clique em "<strong>Deploy the stack</strong>".</li>
@@ -2138,7 +2138,7 @@
 <li>
 <p><strong>Configuração de DNS na Cloudflare (se o serviço for exposto externamente):</strong></p>
 <ul>
-<li>Se você usa uma Ingress Rule wildcard (<code>*.{{ base_domain }}</code>) no seu Cloudflare Tunnel que aponta para o Traefik (conforme recomendado na <a href="../../01-manual-implementacao/05-rede-segura/#opção-2-gerenciamento-manual-de-ingress-rules-no-cloudflare-zero-trust-dashboard-recomendado-para-flexibilidade">Seção 5.5</a>), este passo pode não ser estritamente necessário, pois o novo subdomínio (<code>novoservico.{{ base_domain }}</code>) já será coberto e roteado para o Traefik.</li>
+<li>Se você usa uma Ingress Rule wildcard (<code>*.{{ base_domain }}</code>) no seu Cloudflare Tunnel que aponta para o Traefik (conforme recomendado na <a href="../../01-manual-implementacao/05-rede-segura/#55-configuração-de-dns-na-cloudflare">Seção 5.5</a>), este passo pode não ser estritamente necessário, pois o novo subdomínio (<code>novoservico.{{ base_domain }}</code>) já será coberto e roteado para o Traefik.</li>
 <li>Caso contrário, ou se você quiser uma entrada explícita, adicione manualmente um registro <strong>CNAME</strong> no painel DNS da Cloudflare:<ul>
 <li><strong>Type:</strong> <code>CNAME</code></li>
 <li><strong>Name:</strong> <code>novoservico</code> (o subdomínio do seu novo serviço, sem o domínio base).</li>
@@ -2159,7 +2159,7 @@
 </ul>
 </li>
 </ol>
-<h2 id="exemplo-pratico-adicionando-filebrowser-revisitado">Exemplo Prático: Adicionando <code>FileBrowser</code> (Revisitado)<a class="headerlink" href="#exemplo-pratico-adicionando-filebrowser-revisitado" title="Permanent link">¶</a></h2>
+<h2 id="exemplo-prático-adicionando-filebrowser-revisitado">Exemplo Prático: Adicionando <code>FileBrowser</code> (Revisitado)<a class="headerlink" href="#exemplo-prático-adicionando-filebrowser-revisitado" title="Permanent link">¶</a></h2>
 <p>FileBrowser é um gerenciador de arquivos web simples e eficaz. Vamos revisitar o exemplo, focando no fluxo completo.</p>
 <ol>
 <li>
@@ -2197,7 +2197,7 @@
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>FILEBROWSER_CONFIG_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/config
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>FILEBROWSER_SHARED_DATA_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/shared_files
 </span></code></pre></div></li>
-<li>Execute o playbook: <code>ansible-playbook ansible/playbooks/setup-filebrowser-volumes.yml --ask-vault-pass</code>.</li>
+<li>Execute o playbook: <code>ansible-playbook -i inventories/home/hosts.ini playbooks/setup-filebrowser-volumes.yml --ask-vault-pass</code>.</li>
 </ul>
 </li>
 <li>
@@ -2286,7 +2286,7 @@ Após o primeiro login no FileBrowser, vá para "Settings" -&gt; "User Managemen
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="13 de outubro de 2026 01:39:15 -03">13 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

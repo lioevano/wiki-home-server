@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/01-manual-implementacao/05-rede-segura/">
+        <link rel="canonical" href="https://wiki.lioevano.com/01-manual-implementacao/05-rede-segura/">
       
       
         <link rel="prev" href="../04-configuracao-base-vms-ubuntu/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#secao-5-implementacao-da-rede-segura-traefik-cloudflare-tunnel-authelia" class="md-skip">
+        <a href="#seção-5-implementação-da-rede-segura-traefik-cloudflare-tunnel-authelia" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -712,7 +712,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#51-entendendo-o-fluxo-de-trafego-e-o-conceito-de-proxy-reverso" class="md-nav__link">
+  <a href="#51-entendendo-o-fluxo-de-tráfego-e-o-conceito-de-proxy-reverso" class="md-nav__link">
     <span class="md-ellipsis">
       
         5.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso
@@ -757,7 +757,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#acoes-preparatorias-roles-ansible-para-configuracao" class="md-nav__link">
+  <a href="#ações-preparatórias-roles-ansible-para-configuração" class="md-nav__link">
     <span class="md-ellipsis">
       
         Ações Preparatórias: Roles Ansible para Configuração
@@ -779,7 +779,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executando-o-playbook-de-configuracao-da-rede-core" class="md-nav__link">
+  <a href="#executando-o-playbook-de-configuração-da-rede-core" class="md-nav__link">
     <span class="md-ellipsis">
       
         Executando o Playbook de Configuração da Rede Core
@@ -795,7 +795,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#55-configuracao-de-dns-na-cloudflare" class="md-nav__link">
+  <a href="#55-configuração-de-dns-na-cloudflare" class="md-nav__link">
     <span class="md-ellipsis">
       
         5.5. Configuração de DNS na Cloudflare
@@ -1190,7 +1190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -2010,7 +2010,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#51-entendendo-o-fluxo-de-trafego-e-o-conceito-de-proxy-reverso" class="md-nav__link">
+  <a href="#51-entendendo-o-fluxo-de-tráfego-e-o-conceito-de-proxy-reverso" class="md-nav__link">
     <span class="md-ellipsis">
       
         5.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso
@@ -2055,7 +2055,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#acoes-preparatorias-roles-ansible-para-configuracao" class="md-nav__link">
+  <a href="#ações-preparatórias-roles-ansible-para-configuração" class="md-nav__link">
     <span class="md-ellipsis">
       
         Ações Preparatórias: Roles Ansible para Configuração
@@ -2077,7 +2077,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executando-o-playbook-de-configuracao-da-rede-core" class="md-nav__link">
+  <a href="#executando-o-playbook-de-configuração-da-rede-core" class="md-nav__link">
     <span class="md-ellipsis">
       
         Executando o Playbook de Configuração da Rede Core
@@ -2093,7 +2093,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#55-configuracao-de-dns-na-cloudflare" class="md-nav__link">
+  <a href="#55-configuração-de-dns-na-cloudflare" class="md-nav__link">
     <span class="md-ellipsis">
       
         5.5. Configuração de DNS na Cloudflare
@@ -2123,28 +2123,28 @@
   
 
 
-<h1 id="secao-5-implementacao-da-rede-segura-traefik-cloudflare-tunnel-authelia">Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia)<a class="headerlink" href="#secao-5-implementacao-da-rede-segura-traefik-cloudflare-tunnel-authelia" title="Permanent link">¶</a></h1>
+<h1 id="seção-5-implementação-da-rede-segura-traefik-cloudflare-tunnel-authelia">Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia)<a class="headerlink" href="#seção-5-implementação-da-rede-segura-traefik-cloudflare-tunnel-authelia" title="Permanent link">¶</a></h1>
 <p>Esta seção é fundamental para expor seus serviços auto-hospedados à internet de forma segura, controlada e gerenciada. Implementaremos uma stack de rede robusta na <code>core-services-vm</code> composta por:</p>
 <ul>
 <li><strong>Traefik Proxy:</strong> Atuará como nosso proxy reverso, roteando o tráfego externo para os containers Docker corretos e gerenciando automaticamente os certificados SSL/TLS com Let's Encrypt.</li>
 <li><strong>Cloudflare Tunnel (<code>cloudflared</code>):</strong> Criará uma conexão de saída segura da nossa rede local para a rede global da Cloudflare. Isso elimina a necessidade de abrir portas no roteador doméstico e protege nosso endereço IP público.</li>
 <li><strong>Authelia:</strong> Servirá como um portal de autenticação e autorização centralizado, adicionando uma camada de segurança com Single Sign-On (SSO) e autenticação de dois fatores (2FA) para os serviços que escolhermos proteger.</li>
 </ul>
-<p>Todos esses componentes rodarão como containers Docker na <code>core-services-vm</code>, gerenciados via Docker Compose e, posteriormente, Portainer.</p>
-<h2 id="51-entendendo-o-fluxo-de-trafego-e-o-conceito-de-proxy-reverso">5.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso<a class="headerlink" href="#51-entendendo-o-fluxo-de-trafego-e-o-conceito-de-proxy-reverso" title="Permanent link">¶</a></h2>
+<p>Todos esses componentes rodarão como containers Docker na <code>core-services-vm</code>, implantados pelo Ansible (playbook <code>setup-core-networking.yml</code>) com Docker Compose. As stacks <code>apps</code> e <code>ai</code> são implantadas depois, pelo Portainer.</p>
+<h2 id="51-entendendo-o-fluxo-de-tráfego-e-o-conceito-de-proxy-reverso">5.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso<a class="headerlink" href="#51-entendendo-o-fluxo-de-tráfego-e-o-conceito-de-proxy-reverso" title="Permanent link">¶</a></h2>
 <p>Antes de mergulharmos na configuração, é vital entender como o tráfego de um usuário externo alcançará seus serviços internos:</p>
 <ol>
-<li><strong>Requisição do Usuário:</strong> O usuário digita <code>https://meuservico.{{ base_domain }}</code> no navegador (e.g., <code>https://nextcloud.meuhomelab.com</code>).</li>
+<li><strong>Requisição do Usuário:</strong> O usuário digita <code>https://meuservico.{{ base_domain }}</code> no navegador (e.g., <code>https://nextcloud.seudominio.com</code>).</li>
 <li><strong>Resolução DNS via Cloudflare:</strong> Os nameservers do seu domínio estão configurados para a Cloudflare. A Cloudflare não resolverá o subdomínio para o seu IP doméstico, mas para um endpoint da rede Cloudflare associado ao seu Cloudflare Tunnel.</li>
 <li><strong>Cloudflare Edge Network:</strong> A requisição do usuário chega à rede global da Cloudflare. Aqui, ela pode se beneficiar de proteções como mitigação de DDoS e Web Application Firewall (WAF) básico da Cloudflare. Seu IP doméstico real permanece oculto.</li>
 <li><strong>Cloudflare Tunnel (<code>cloudflared</code> Agent):</strong> O container <code>cloudflared</code> rodando na sua <code>core-services-vm</code> mantém uma conexão de <strong>saída</strong> persistente e criptografada com o data center da Cloudflare mais próximo. O tráfego destinado aos seus subdomínios configurados no túnel é "puxado" do Cloudflare Edge, através desta conexão segura, para o container <code>cloudflared</code> na sua rede local. <strong>Nenhuma porta de entrada precisa ser aberta no seu roteador doméstico.</strong></li>
-<li><strong><code>cloudflared</code> para Traefik:</strong> O container <code>cloudflared</code> recebe o tráfego do túnel e o encaminha para o container Traefik. No nosso <code>docker-compose.yml</code>, o <code>cloudflared</code> é configurado para enviar o tráfego para o serviço Docker <code>traefik</code> na porta <code>80</code> (dentro da rede Docker <code>proxy</code> compartilhada).</li>
+<li><strong><code>cloudflared</code> para Traefik:</strong> O container <code>cloudflared</code> recebe o tráfego do túnel e o encaminha para o container Traefik. No nosso <code>docker-compose.yml</code>, o Public Hostname do túnel envia o tráfego para <code>https://traefik:443</code> (serviço Docker <code>traefik</code> na rede <code>proxy</code> compartilhada, com <em>No TLS Verify</em>; ver a <a href="#55-configuração-de-dns-na-cloudflare">seção 5.5</a>).</li>
 <li><strong>Traefik (Proxy Reverso):</strong><ul>
 <li>Traefik escuta nas portas <code>80</code> (HTTP) e <code>443</code> (HTTPS) na <code>core-services-vm</code> (mapeadas do host da VM para o container Traefik).</li>
 <li><strong>Redirecionamento HTTP para HTTPS:</strong> Traefik está configurado para redirecionar automaticamente todo o tráfego chegando na porta <code>80</code> para HTTPS na porta <code>443</code>.</li>
-<li><strong>Roteamento Baseado em Host:</strong> Traefik inspeciona o cabeçalho <code>Host</code> da requisição HTTP (e.g., <code>nextcloud.meuhomelab.com</code>).</li>
+<li><strong>Roteamento Baseado em Host:</strong> Traefik inspeciona o cabeçalho <code>Host</code> da requisição HTTP (e.g., <code>nextcloud.seudominio.com</code>).</li>
 <li><strong>Middleware de Autenticação (Authelia):</strong> Se a rota do Traefik para o serviço estiver configurada com o middleware Authelia (e.g., <code>authelia-forwardauth@docker</code>), Traefik primeiro consulta o container Authelia para verificar a autenticação do usuário.<ul>
-<li>Se o usuário não estiver logado, Authelia instrui Traefik a redirecionar o usuário para o portal de login do Authelia (e.g., <code>https://auth.meuhomelab.com</code>).</li>
+<li>Se o usuário não estiver logado, Authelia instrui Traefik a redirecionar o usuário para o portal de login do Authelia (e.g., <code>https://auth.seudominio.com</code>).</li>
 <li>Após o login bem-sucedido (incluindo 2FA), Authelia estabelece uma sessão (via cookie) e informa ao Traefik que o usuário está autenticado.</li>
 </ul>
 </li>
@@ -2159,7 +2159,7 @@
 <p>Para uma representação gráfica detalhada deste fluxo, consulte o diagrama na seção <a href="../../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/">Fluxo de Rede e Acesso Externo da Visão Geral da Arquitetura</a>.</p>
 </div>
 <h2 id="52-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml">5.2. Docker Compose para a Stack Core (<code>docker/stacks/core/docker-compose.yml</code>)<a class="headerlink" href="#52-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml" title="Permanent link">¶</a></h2>
-<p>Esta stack fundamental inclui os containers Traefik e Cloudflared. Crie o arquivo <code>home-server/docker/stacks/core/docker-compose.yml</code> com o seguinte conteúdo:</p>
+<p>Esta stack fundamental inclui os containers Traefik e Cloudflared. Crie o arquivo <code>server/docker/stacks/core/docker-compose.yml</code> com o seguinte conteúdo:</p>
 <div class="language-yaml highlight"><span class="filename">docker/stacks/core/docker-compose.yml</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># docker/stacks/core/docker-compose.yml</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Infraestrutura base: Traefik + Cloudflare Tunnel + Authelia</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Roda na core-services-vm</span>
@@ -2268,8 +2268,7 @@
 <div class="admonition note">
 <p class="admonition-title">Variáveis de Ambiente no Docker Compose</p>
 <p>Variáveis como <code>${CORE_SERVICES_VM_IP_VAR}</code>, <code>${VM_NFS_MOUNT_BASE_PATH}</code>, <code>${ZFS_DOCKER_VOLUMES_DATASET_NAME}</code>, <code>${CLOUDFLARE_API_TOKEN_FROM_VAULT}</code>, <code>${BASE_DOMAIN_FROM_VAULT}</code>, e <code>${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}</code> são placeholders que serão substituídos:
-*Pelo Ansible quando ele gerar um arquivo <code>.env</code> para esta stack na <code>core-services-vm</code>.
-*   Ou, se você não usar um <code>.env</code> gerado por Ansible para esta stack específica, você precisaria definir essas variáveis diretamente como "Environment variables" da stack no Portainer. O método recomendado é via arquivo <code>.env</code> preparado por Ansible para consistência.</p>
+pelos valores que o playbook <code>setup-core-networking.yml</code> passa no bloco <code>environment:</code> da tarefa de deploy (vault, inventário e <code>group_vars</code>). A stack <code>core</code> não tem <code>.env</code> em disco nem é criada no Portainer.</p>
 </div>
 <h2 id="53-authelia-parte-de-dockerstackscoredocker-composeyml">5.3. Authelia (parte de <code>docker/stacks/core/docker-compose.yml</code>)<a class="headerlink" href="#53-authelia-parte-de-dockerstackscoredocker-composeyml" title="Permanent link">¶</a></h2>
 <p>Authelia fornecerá o portal de autenticação e o serviço de 2FA. O conteúdo está incluído em <code>docker/stacks/core/docker-compose.yml</code> junto com Traefik e Cloudflared.
@@ -2312,7 +2311,7 @@
 </span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">        </span><span class="nt">condition</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">service_healthy</span>
 </span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span><span class="w"> </span><span class="c1"># Labels Traefik para expor o portal Authelia e definir o middleware de autenticação</span>
 </span><span id="__span-1-39"><a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">      </span><span class="nt">traefik.enable</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
-</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">      </span><span class="c1"># --- Roteador para o portal Authelia (e.g., auth.meuhomelab.com) ---</span>
+</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">      </span><span class="c1"># --- Roteador para o portal Authelia (e.g., auth.seudominio.com) ---</span>
 </span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">      </span><span class="nt">traefik.http.routers.authelia-portal.rule</span><span class="p">:</span><span class="w"> </span><span class="s">"Host(`auth.${BASE_DOMAIN_FROM_VAULT}`)"</span>
 </span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">      </span><span class="nt">traefik.http.routers.authelia-portal.entrypoints</span><span class="p">:</span><span class="w"> </span><span class="s">"websecure"</span>
 </span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">      </span><span class="nt">traefik.http.routers.authelia-portal.tls.certresolver</span><span class="p">:</span><span class="w"> </span><span class="s">"letsencrypt"</span>
@@ -2347,27 +2346,27 @@
 </span><span id="__span-1-72"><a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a><span class="w">      </span><span class="nt">retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
 </span></code></pre></div><p></p>
 <h2 id="54-playbook-ansibleplaybookssetup-core-networkingyml">5.4. Playbook <code>ansible/playbooks/setup-core-networking.yml</code><a class="headerlink" href="#54-playbook-ansibleplaybookssetup-core-networkingyml" title="Permanent link">¶</a></h2>
-<p>Este playbook Ansible orquestra a preparação dos arquivos de configuração e o deploy das stacks <code>core</code> e <code>authelia</code>.</p>
+<p>Este playbook Ansible prepara os arquivos de configuração e faz o deploy da stack <code>core</code> (Traefik, Cloudflared e Authelia, num único compose).</p>
 <p><strong>Principais Ações do Playbook:</strong></p>
 <ol>
 <li><strong>Cria Redes Docker:</strong> Garante que as redes <code>proxy</code> e <code>internal_services</code> existam na <code>core-services-vm</code>.</li>
 <li><strong>Executa Role <code>infra/traefik-config</code>:</strong><ul>
 <li>Cria os diretórios de configuração e dados para Traefik no volume NFS.</li>
 <li>Copia o <code>traefik.yml</code> (config estática) templateado.</li>
-<li>Copia os arquivos de configuração dinâmica (middlewares como <code>security_headers.yml</code>, <code>nextcloud_middleware.yml</code>, e o roteamento para RAG services <code>rag_services.yml</code>) para o diretório apropriado.</li>
+<li>Copia os arquivos de configuração dinâmica (middlewares como <code>security_headers.yml</code>, <code>nextcloud_middleware.yml</code>, e o roteamento para os serviços da VM de IA em <code>rag_services.yml</code>) para o diretório apropriado.</li>
 <li>Garante que o arquivo <code>acme.json</code> (para certificados SSL) exista com as permissões corretas.</li>
 </ul>
 </li>
-<li><strong>Deploy da Stack <code>core</code>:</strong> Usa o módulo <code>community.docker.docker_compose_v2</code> para fazer deploy da stack <code>core</code> (Traefik, Cloudflared), injetando as variáveis de ambiente necessárias do Ansible Vault/<code>main.yml</code>.</li>
-<li><strong>Aguarda Traefik:</strong> Espera o healthcheck do Traefik passar antes de prosseguir.</li>
 <li><strong>Executa Role <code>infra/authelia-config</code>:</strong><ul>
-<li>Cria o diretório de configuração para Authelia no volume NFS.</li>
+<li>Cria os diretórios de configuração e do banco do Authelia no volume NFS.</li>
 <li>Copia o <code>configuration.yml</code> e o <code>users_database.yml</code> (base de usuários do backend <code>file</code>) templateados.</li>
 </ul>
 </li>
-<li><strong>Deploy da Stack <code>authelia</code>:</strong> Usa <code>community.docker.docker_compose_v2</code> para fazer deploy da stack <code>authelia</code> (Authelia app, Authelia DB), injetando as variáveis de ambiente.</li>
+<li><strong>Copia o compose para a VM:</strong> o módulo de deploy roda na <code>core-services-vm</code>, então o <code>docker/stacks/core/docker-compose.yml</code> do repositório é copiado para <code>/opt/stacks/core/</code> na VM.</li>
+<li><strong>Deploy da Stack <code>core</code>:</strong> Usa o módulo <code>community.docker.docker_compose_v2</code> sobre <code>/opt/stacks/core/</code>, injetando as variáveis de ambiente do Ansible Vault, do inventário e de <code>group_vars</code>.</li>
+<li><strong>Aguarda Traefik:</strong> Espera o healthcheck do Traefik passar.</li>
 </ol>
-<h3 id="acoes-preparatorias-roles-ansible-para-configuracao">Ações Preparatórias: Roles Ansible para Configuração<a class="headerlink" href="#acoes-preparatorias-roles-ansible-para-configuracao" title="Permanent link">¶</a></h3>
+<h3 id="ações-preparatórias-roles-ansible-para-configuração">Ações Preparatórias: Roles Ansible para Configuração<a class="headerlink" href="#ações-preparatórias-roles-ansible-para-configuração" title="Permanent link">¶</a></h3>
 <p>Antes de criar o playbook, precisamos dos roles que preparam os arquivos de configuração.</p>
 <h4 id="role-ansiblerolesinfratraefik-config">Role: <code>ansible/roles/infra/traefik-config/</code><a class="headerlink" href="#role-ansiblerolesinfratraefik-config" title="Permanent link">¶</a></h4>
 <p>Este role prepara os arquivos de configuração do Traefik.</p>
@@ -2428,7 +2427,7 @@
 </span><span id="__span-2-54"><a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_pgid</span><span class="nv"> </span><span class="s">}}"</span><span class="w"> </span><span class="c1"># Certifique-se que as permissões do NFS squash para este PUID/PGID</span>
 </span><span id="__span-2-55"><a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0600'</span><span class="w"> </span><span class="c1"># Permissões restritas para o arquivo de certificados SSL</span>
 </span></code></pre></div>
-<h5 id="templatestraefikymlj2-configuracao-estatica"><code>templates/traefik.yml.j2</code> (Configuração Estática)<a class="headerlink" href="#templatestraefikymlj2-configuracao-estatica" title="Permanent link">¶</a></h5>
+<h5 id="templatestraefikymlj2-configuração-estática"><code>templates/traefik.yml.j2</code> (Configuração Estática)<a class="headerlink" href="#templatestraefikymlj2-configuração-estática" title="Permanent link">¶</a></h5>
 <div class="language-yaml highlight"><span class="filename">ansible/roles/infra/traefik-config/templates/traefik.yml.j2</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># ansible/roles/infra/traefik-config/templates/traefik.yml.j2</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># Configuração Estática do Traefik (gerada por Ansible)</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
@@ -2504,7 +2503,7 @@
 </span><span id="__span-3-73"><a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a><span class="c1"># Healthcheck para o container Traefik (usado por depends_on: condition: service_healthy no docker-compose)</span>
 </span><span id="__span-3-74"><a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a><span class="nt">ping</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span><span class="w"> </span><span class="c1"># Habilita o entrypoint /ping para healthchecks do Traefik</span>
 </span></code></pre></div>
-<h5 id="templatessecurity_headersymlj2-middleware-de-seguranca"><code>templates/security_headers.yml.j2</code> (Middleware de Segurança)<a class="headerlink" href="#templatessecurity_headersymlj2-middleware-de-seguranca" title="Permanent link">¶</a></h5>
+<h5 id="templatessecurity_headersymlj2-middleware-de-segurança"><code>templates/security_headers.yml.j2</code> (Middleware de Segurança)<a class="headerlink" href="#templatessecurity_headersymlj2-middleware-de-segurança" title="Permanent link">¶</a></h5>
 <div class="language-yaml highlight"><span class="filename">ansible/roles/infra/traefik-config/templates/security_headers.yml.j2</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># ansible/roles/infra/traefik-config/templates/security_headers.yml.j2</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># (Copiado para /etc/traefik/dynamic_configs/security_headers.yml no container Traefik)</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Define um middleware para adicionar headers de segurança HTTP.</span>
@@ -2648,7 +2647,7 @@
 </span><span id="__span-7-30"><a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0640'</span>
 </span><span id="__span-7-31"><a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="w">  </span><span class="c1"># Base de usuários do backend 'file' (authentication_backend no configuration.yml).</span>
 </span></code></pre></div>
-<h5 id="templatesconfigurationymlj2-configuracao-principal-authelia"><code>templates/configuration.yml.j2</code> (Configuração Principal Authelia)<a class="headerlink" href="#templatesconfigurationymlj2-configuracao-principal-authelia" title="Permanent link">¶</a></h5>
+<h5 id="templatesconfigurationymlj2-configuração-principal-authelia"><code>templates/configuration.yml.j2</code> (Configuração Principal Authelia)<a class="headerlink" href="#templatesconfigurationymlj2-configuração-principal-authelia" title="Permanent link">¶</a></h5>
 <div class="language-yaml highlight"><span class="filename">ansible/roles/infra/authelia-config/templates/configuration.yml.j2</span><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># ansible/roles/infra/authelia-config/templates/configuration.yml.j2</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1"># Configuração Principal do Authelia (gerada por Ansible)</span>
 </span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
@@ -2745,7 +2744,7 @@
 </span><span id="__span-8-94"><a id="__codelineno-8-94" name="__codelineno-8-94" href="#__codelineno-8-94"></a><span class="w">    </span><span class="c1"># Cuidado ao usar bypass, pois anula a proteção do Authelia para essas condições.</span>
 </span><span id="__span-8-95"><a id="__codelineno-8-95" name="__codelineno-8-95" href="#__codelineno-8-95"></a><span class="w">    </span><span class="c1"># - domain: "servico_local.{{ base_domain }}"</span>
 </span><span id="__span-8-96"><a id="__codelineno-8-96" name="__codelineno-8-96" href="#__codelineno-8-96"></a><span class="w">    </span><span class="c1">#   networks: # IPs ou CIDRs da sua rede local</span>
-</span><span id="__span-8-97"><a id="__codelineno-8-97" name="__codelineno-8-97" href="#__codelineno-8-97"></a><span class="w">    </span><span class="c1">#     - "192.168.1.0/24"</span>
+</span><span id="__span-8-97"><a id="__codelineno-8-97" name="__codelineno-8-97" href="#__codelineno-8-97"></a><span class="w">    </span><span class="c1">#     - "192.168.15.0/24"</span>
 </span><span id="__span-8-98"><a id="__codelineno-8-98" name="__codelineno-8-98" href="#__codelineno-8-98"></a><span class="w">    </span><span class="c1">#   policy: bypass</span>
 </span><span id="__span-8-99"><a id="__codelineno-8-99" name="__codelineno-8-99" href="#__codelineno-8-99"></a>
 </span><span id="__span-8-100"><a id="__codelineno-8-100" name="__codelineno-8-100" href="#__codelineno-8-100"></a><span class="c1"># Notificador (para reset de senha, alertas de segurança, etc.) - ALTAMENTE RECOMENDADO</span>
@@ -2785,7 +2784,7 @@
 </span><span id="__span-8-134"><a id="__codelineno-8-134" name="__codelineno-8-134" href="#__codelineno-8-134"></a><span class="w">  </span><span class="nt">find_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2m</span><span class="w">   </span><span class="c1"># Janela de tempo para contar as tentativas falhas (e.g., 3 falhas em 2 minutos).</span>
 </span><span id="__span-8-135"><a id="__codelineno-8-135" name="__codelineno-8-135" href="#__codelineno-8-135"></a><span class="w">  </span><span class="nt">ban_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5m</span><span class="w">    </span><span class="c1"># Duração do banimento temporário.</span>
 </span></code></pre></div>
-<h5 id="templatesusers_databaseymlj2-usuarios-do-backend-file"><code>templates/users_database.yml.j2</code> (Usuários do backend <code>file</code>)<a class="headerlink" href="#templatesusers_databaseymlj2-usuarios-do-backend-file" title="Permanent link">¶</a></h5>
+<h5 id="templatesusers_databaseymlj2-usuários-do-backend-file"><code>templates/users_database.yml.j2</code> (Usuários do backend <code>file</code>)<a class="headerlink" href="#templatesusers_databaseymlj2-usuários-do-backend-file" title="Permanent link">¶</a></h5>
 <div class="language-yaml highlight"><span class="filename">ansible/roles/infra/authelia-config/templates/users_database.yml.j2</span><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># ansible/roles/infra/authelia-config/templates/users_database.yml.j2</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="c1"># Arquivo de Banco de Dados de Usuários Locais do Authelia (gerado por Ansible)</span>
 </span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Hashes de senha DEVEM ser gerados com 'authelia crypto hash generate argon2'</span>
@@ -2818,69 +2817,88 @@
 </span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">  </span><span class="nt">become</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">yes</span>
 </span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">  </span><span class="nt">vars_files</span><span class="p">:</span>
 </span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../inventories/home/group_vars/all/vault.yml</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
-</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Garantir</span><span class="nv"> </span><span class="s">que</span><span class="nv"> </span><span class="s">redes</span><span class="nv"> </span><span class="s">Docker</span><span class="nv"> </span><span class="s">globais</span><span class="nv"> </span><span class="s">(proxy,</span><span class="nv"> </span><span class="s">internal_services)</span><span class="nv"> </span><span class="s">existam"</span>
-</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">      </span><span class="nt">community.docker.docker_network</span><span class="p">:</span>
-</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">item</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
-</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">      </span><span class="nt">loop</span><span class="p">:</span>
-</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">proxy</span>
-</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">internal_services</span>
-</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>
-</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Incluir</span><span class="nv"> </span><span class="s">role</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">configs</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">Traefik"</span>
-</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a><span class="w">      </span><span class="nt">ansible.builtin.include_role</span><span class="p">:</span>
-</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">infra/traefik-config</span>
-</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>
-</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Incluir</span><span class="nv"> </span><span class="s">role</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">configs</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">Authelia"</span>
-</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a><span class="w">      </span><span class="nt">ansible.builtin.include_role</span><span class="p">:</span>
-</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">infra/authelia-config</span>
-</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>
-</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Deploy</span><span class="nv"> </span><span class="s">Core</span><span class="nv"> </span><span class="s">Stack</span><span class="nv"> </span><span class="s">(Traefik,</span><span class="nv"> </span><span class="s">Cloudflared,</span><span class="nv"> </span><span class="s">Authelia)"</span>
-</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a><span class="w">      </span><span class="nt">community.docker.docker_compose_v2</span><span class="p">:</span>
-</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">        </span><span class="nt">project_src</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">playbook_dir</span><span class="nv"> </span><span class="s">}}/../../docker/stacks/core/"</span>
-</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">        </span><span class="nt">files</span><span class="p">:</span>
-</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker-compose.yml</span>
-</span><span id="__span-10-29"><a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
-</span><span id="__span-10-30"><a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="w">        </span><span class="nt">remove_orphans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</span><span id="__span-10-31"><a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span class="w">        </span><span class="nt">pull</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always</span>
-</span><span id="__span-10-32"><a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="w">      </span><span class="nt">environment</span><span class="p">:</span>
-</span><span id="__span-10-33"><a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="w">        </span><span class="c1"># Traefik</span>
-</span><span id="__span-10-34"><a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a><span class="w">        </span><span class="nt">CLOUDFLARE_API_TOKEN_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">cloudflare_api_token</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-35"><a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a><span class="w">        </span><span class="nt">BASE_DOMAIN_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">base_domain</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-36"><a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a><span class="w">        </span><span class="c1"># Cloudflared</span>
-</span><span id="__span-10-37"><a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a><span class="w">        </span><span class="nt">CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">cloudflare_tunnel_token</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-38"><a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="w">        </span><span class="c1"># Authelia</span>
-</span><span id="__span-10-39"><a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a><span class="w">        </span><span class="nt">SYSTEM_TIMEZONE</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">system_timezone</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-40"><a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">        </span><span class="nt">AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">authelia_storage_postgres_password</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-41"><a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">        </span><span class="c1"># Volumes NFS</span>
-</span><span id="__span-10-42"><a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a><span class="w">        </span><span class="nt">VM_NFS_MOUNT_BASE_PATH</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-43"><a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a><span class="w">        </span><span class="nt">ZFS_DOCKER_VOLUMES_DATASET_NAME</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-44"><a id="__codelineno-10-44" name="__codelineno-10-44" href="#__codelineno-10-44"></a><span class="w">        </span><span class="nt">CORE_SERVICES_VM_IP_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">core_services_vm_ip_var</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-10-45"><a id="__codelineno-10-45" name="__codelineno-10-45" href="#__codelineno-10-45"></a><span class="w">      </span><span class="nt">register</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core_stack_deploy_result</span>
-</span><span id="__span-10-46"><a id="__codelineno-10-46" name="__codelineno-10-46" href="#__codelineno-10-46"></a>
-</span><span id="__span-10-47"><a id="__codelineno-10-47" name="__codelineno-10-47" href="#__codelineno-10-47"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Aguardar</span><span class="nv"> </span><span class="s">Traefik</span><span class="nv"> </span><span class="s">estar</span><span class="nv"> </span><span class="s">saudável"</span>
-</span><span id="__span-10-48"><a id="__codelineno-10-48" name="__codelineno-10-48" href="#__codelineno-10-48"></a><span class="w">      </span><span class="nt">community.docker.docker_container_info</span><span class="p">:</span>
-</span><span id="__span-10-49"><a id="__codelineno-10-49" name="__codelineno-10-49" href="#__codelineno-10-49"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
-</span><span id="__span-10-50"><a id="__codelineno-10-50" name="__codelineno-10-50" href="#__codelineno-10-50"></a><span class="w">      </span><span class="nt">register</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik_container_status</span>
-</span><span id="__span-10-51"><a id="__codelineno-10-51" name="__codelineno-10-51" href="#__codelineno-10-51"></a><span class="w">      </span><span class="nt">until</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik_container_status.container.State.Health.Status == "healthy"</span>
-</span><span id="__span-10-52"><a id="__codelineno-10-52" name="__codelineno-10-52" href="#__codelineno-10-52"></a><span class="w">      </span><span class="nt">retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15</span>
-</span><span id="__span-10-53"><a id="__codelineno-10-53" name="__codelineno-10-53" href="#__codelineno-10-53"></a><span class="w">      </span><span class="nt">delay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
-</span><span id="__span-10-54"><a id="__codelineno-10-54" name="__codelineno-10-54" href="#__codelineno-10-54"></a><span class="w">      </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core_stack_deploy_result.changed</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nt">vars</span><span class="p">:</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="w">    </span><span class="nt">core_stack_dir_on_vm</span><span class="p">:</span><span class="w"> </span><span class="s">"/opt/stacks/core"</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a><span class="w">  </span><span class="nt">tasks</span><span class="p">:</span>
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Garantir</span><span class="nv"> </span><span class="s">que</span><span class="nv"> </span><span class="s">redes</span><span class="nv"> </span><span class="s">Docker</span><span class="nv"> </span><span class="s">globais</span><span class="nv"> </span><span class="s">(proxy,</span><span class="nv"> </span><span class="s">internal_services)</span><span class="nv"> </span><span class="s">existam"</span>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="w">      </span><span class="nt">community.docker.docker_network</span><span class="p">:</span>
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">item</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a><span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="w">      </span><span class="nt">loop</span><span class="p">:</span>
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">proxy</span>
+</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">internal_services</span>
+</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Incluir</span><span class="nv"> </span><span class="s">role</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">configs</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">Traefik"</span>
+</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a><span class="w">      </span><span class="nt">ansible.builtin.include_role</span><span class="p">:</span>
+</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">infra/traefik-config</span>
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Incluir</span><span class="nv"> </span><span class="s">role</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">configs</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">Authelia"</span>
+</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a><span class="w">      </span><span class="nt">ansible.builtin.include_role</span><span class="p">:</span>
+</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">infra/authelia-config</span>
+</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a>
+</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a><span class="w">    </span><span class="c1"># O módulo de deploy roda na VM: o compose do repositório (máquina de controle) é copiado para lá.</span>
+</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Garantir</span><span class="nv"> </span><span class="s">diretório</span><span class="nv"> </span><span class="s">da</span><span class="nv"> </span><span class="s">stack</span><span class="nv"> </span><span class="s">core</span><span class="nv"> </span><span class="s">na</span><span class="nv"> </span><span class="s">VM"</span>
+</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a><span class="w">      </span><span class="nt">ansible.builtin.file</span><span class="p">:</span>
+</span><span id="__span-10-29"><a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a><span class="w">        </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">core_stack_dir_on_vm</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-30"><a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a><span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory</span>
+</span><span id="__span-10-31"><a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a><span class="w">        </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-10-32"><a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a><span class="w">        </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-10-33"><a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a><span class="w">        </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">"0755"</span>
+</span><span id="__span-10-34"><a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a>
+</span><span id="__span-10-35"><a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Copiar</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">compose</span><span class="nv"> </span><span class="s">da</span><span class="nv"> </span><span class="s">stack</span><span class="nv"> </span><span class="s">core</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">VM"</span>
+</span><span id="__span-10-36"><a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a><span class="w">      </span><span class="nt">ansible.builtin.copy</span><span class="p">:</span>
+</span><span id="__span-10-37"><a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a><span class="w">        </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">playbook_dir</span><span class="nv"> </span><span class="s">}}/../../docker/stacks/core/docker-compose.yml"</span>
+</span><span id="__span-10-38"><a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a><span class="w">        </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">core_stack_dir_on_vm</span><span class="nv"> </span><span class="s">}}/docker-compose.yml"</span>
+</span><span id="__span-10-39"><a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a><span class="w">        </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-10-40"><a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a><span class="w">        </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-10-41"><a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a><span class="w">        </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">"0644"</span>
+</span><span id="__span-10-42"><a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a>
+</span><span id="__span-10-43"><a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Deploy</span><span class="nv"> </span><span class="s">Core</span><span class="nv"> </span><span class="s">Stack</span><span class="nv"> </span><span class="s">(Traefik,</span><span class="nv"> </span><span class="s">Cloudflared,</span><span class="nv"> </span><span class="s">Authelia)"</span>
+</span><span id="__span-10-44"><a id="__codelineno-10-44" name="__codelineno-10-44" href="#__codelineno-10-44"></a><span class="w">      </span><span class="nt">community.docker.docker_compose_v2</span><span class="p">:</span>
+</span><span id="__span-10-45"><a id="__codelineno-10-45" name="__codelineno-10-45" href="#__codelineno-10-45"></a><span class="w">        </span><span class="nt">project_src</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">core_stack_dir_on_vm</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-46"><a id="__codelineno-10-46" name="__codelineno-10-46" href="#__codelineno-10-46"></a><span class="w">        </span><span class="nt">files</span><span class="p">:</span>
+</span><span id="__span-10-47"><a id="__codelineno-10-47" name="__codelineno-10-47" href="#__codelineno-10-47"></a><span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docker-compose.yml</span>
+</span><span id="__span-10-48"><a id="__codelineno-10-48" name="__codelineno-10-48" href="#__codelineno-10-48"></a><span class="w">        </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+</span><span id="__span-10-49"><a id="__codelineno-10-49" name="__codelineno-10-49" href="#__codelineno-10-49"></a><span class="w">        </span><span class="nt">remove_orphans</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-10-50"><a id="__codelineno-10-50" name="__codelineno-10-50" href="#__codelineno-10-50"></a><span class="w">        </span><span class="nt">pull</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">always</span>
+</span><span id="__span-10-51"><a id="__codelineno-10-51" name="__codelineno-10-51" href="#__codelineno-10-51"></a><span class="w">      </span><span class="nt">environment</span><span class="p">:</span>
+</span><span id="__span-10-52"><a id="__codelineno-10-52" name="__codelineno-10-52" href="#__codelineno-10-52"></a><span class="w">        </span><span class="c1"># Traefik</span>
+</span><span id="__span-10-53"><a id="__codelineno-10-53" name="__codelineno-10-53" href="#__codelineno-10-53"></a><span class="w">        </span><span class="nt">CLOUDFLARE_API_TOKEN_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">cloudflare_api_token</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-54"><a id="__codelineno-10-54" name="__codelineno-10-54" href="#__codelineno-10-54"></a><span class="w">        </span><span class="nt">BASE_DOMAIN_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">base_domain</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-55"><a id="__codelineno-10-55" name="__codelineno-10-55" href="#__codelineno-10-55"></a><span class="w">        </span><span class="c1"># Cloudflared</span>
+</span><span id="__span-10-56"><a id="__codelineno-10-56" name="__codelineno-10-56" href="#__codelineno-10-56"></a><span class="w">        </span><span class="nt">CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">cloudflare_tunnel_token</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-57"><a id="__codelineno-10-57" name="__codelineno-10-57" href="#__codelineno-10-57"></a><span class="w">        </span><span class="c1"># Authelia</span>
+</span><span id="__span-10-58"><a id="__codelineno-10-58" name="__codelineno-10-58" href="#__codelineno-10-58"></a><span class="w">        </span><span class="nt">SYSTEM_TIMEZONE</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">system_timezone</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-59"><a id="__codelineno-10-59" name="__codelineno-10-59" href="#__codelineno-10-59"></a><span class="w">        </span><span class="nt">AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">authelia_storage_postgres_password</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-60"><a id="__codelineno-10-60" name="__codelineno-10-60" href="#__codelineno-10-60"></a><span class="w">        </span><span class="c1"># Volumes NFS</span>
+</span><span id="__span-10-61"><a id="__codelineno-10-61" name="__codelineno-10-61" href="#__codelineno-10-61"></a><span class="w">        </span><span class="nt">VM_NFS_MOUNT_BASE_PATH</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-62"><a id="__codelineno-10-62" name="__codelineno-10-62" href="#__codelineno-10-62"></a><span class="w">        </span><span class="nt">ZFS_DOCKER_VOLUMES_DATASET_NAME</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-63"><a id="__codelineno-10-63" name="__codelineno-10-63" href="#__codelineno-10-63"></a><span class="w">        </span><span class="nt">CORE_SERVICES_VM_IP_VAR</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">core_services_vm_ip_var</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-10-64"><a id="__codelineno-10-64" name="__codelineno-10-64" href="#__codelineno-10-64"></a><span class="w">      </span><span class="nt">register</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core_stack_deploy_result</span>
+</span><span id="__span-10-65"><a id="__codelineno-10-65" name="__codelineno-10-65" href="#__codelineno-10-65"></a>
+</span><span id="__span-10-66"><a id="__codelineno-10-66" name="__codelineno-10-66" href="#__codelineno-10-66"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Aguardar</span><span class="nv"> </span><span class="s">Traefik</span><span class="nv"> </span><span class="s">estar</span><span class="nv"> </span><span class="s">saudável"</span>
+</span><span id="__span-10-67"><a id="__codelineno-10-67" name="__codelineno-10-67" href="#__codelineno-10-67"></a><span class="w">      </span><span class="nt">community.docker.docker_container_info</span><span class="p">:</span>
+</span><span id="__span-10-68"><a id="__codelineno-10-68" name="__codelineno-10-68" href="#__codelineno-10-68"></a><span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik</span>
+</span><span id="__span-10-69"><a id="__codelineno-10-69" name="__codelineno-10-69" href="#__codelineno-10-69"></a><span class="w">      </span><span class="nt">register</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik_container_status</span>
+</span><span id="__span-10-70"><a id="__codelineno-10-70" name="__codelineno-10-70" href="#__codelineno-10-70"></a><span class="w">      </span><span class="nt">until</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">traefik_container_status.container.State.Health.Status == "healthy"</span>
+</span><span id="__span-10-71"><a id="__codelineno-10-71" name="__codelineno-10-71" href="#__codelineno-10-71"></a><span class="w">      </span><span class="nt">retries</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15</span>
+</span><span id="__span-10-72"><a id="__codelineno-10-72" name="__codelineno-10-72" href="#__codelineno-10-72"></a><span class="w">      </span><span class="nt">delay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</span><span id="__span-10-73"><a id="__codelineno-10-73" name="__codelineno-10-73" href="#__codelineno-10-73"></a><span class="w">      </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">core_stack_deploy_result.changed</span>
 </span></code></pre></div>
-<h3 id="executando-o-playbook-de-configuracao-da-rede-core">Executando o Playbook de Configuração da Rede Core<a class="headerlink" href="#executando-o-playbook-de-configuracao-da-rede-core" title="Permanent link">¶</a></h3>
+<h3 id="executando-o-playbook-de-configuração-da-rede-core">Executando o Playbook de Configuração da Rede Core<a class="headerlink" href="#executando-o-playbook-de-configuração-da-rede-core" title="Permanent link">¶</a></h3>
 <ol>
 <li><strong>Verifique os Roles e Templates:</strong> Certifique-se de que todos os arquivos de role (<code>infra/traefik-config</code>, <code>infra/authelia-config</code>) e seus respectivos templates (<code>.j2</code> arquivos) estão criados e preenchidos com o código correto no seu projeto Ansible.</li>
-<li><strong>Execute a Partir da Máquina de Controle:</strong> Na sua máquina de controle Ansible, navegue até a raiz do seu projeto <code>home-server/</code>.</li>
+<li><strong>Execute a Partir da Máquina de Controle:</strong> Na sua máquina de controle Ansible, entre na pasta <code>server/ansible</code> do repositório.</li>
 <li>
 <p><strong>Execute o Playbook:</strong></p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>ansible-playbook<span class="w"> </span>ansible/playbooks/setup-core-networking.yml<span class="w"> </span>--ask-vault-pass
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-core-networking.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div>
 <p>Você será solicitado a fornecer a senha do Ansible Vault.</p>
 </li>
 </ol>
-<h2 id="55-configuracao-de-dns-na-cloudflare">5.5. Configuração de DNS na Cloudflare<a class="headerlink" href="#55-configuracao-de-dns-na-cloudflare" title="Permanent link">¶</a></h2>
-<p>Após o deploy bem-sucedido da stack de rede, especialmente do container <code>cloudflared</code> (Cloudflare Tunnel), você precisa configurar seus registros DNS na Cloudflare para que seus subdomínios (e.g., <code>portainer.meuhomelab.com</code>, <code>traefik.meuhomelab.com</code>, <code>auth.meuhomelab.com</code>) apontem corretamente para o seu túnel.</p>
+<h2 id="55-configuração-de-dns-na-cloudflare">5.5. Configuração de DNS na Cloudflare<a class="headerlink" href="#55-configuração-de-dns-na-cloudflare" title="Permanent link">¶</a></h2>
+<p>Após o deploy bem-sucedido da stack de rede, especialmente do container <code>cloudflared</code> (Cloudflare Tunnel), você precisa configurar seus registros DNS na Cloudflare para que seus subdomínios (e.g., <code>portainer.seudominio.com</code>, <code>traefik.seudominio.com</code>, <code>auth.seudominio.com</code>) apontem corretamente para o seu túnel.</p>
 <p><strong>Abordagem Recomendada: Usar Ingress Rules no Cloudflare Zero Trust Dashboard</strong></p>
 <p>Esta abordagem oferece a maior flexibilidade e é gerenciada centralmente no painel da Cloudflare. Assumindo que seu comando <code>cloudflared</code> no <code>docker-compose.yml</code> é:
 <code>command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run --token ${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}</code>
@@ -2892,7 +2910,7 @@
 <li>Clique na aba "<strong>Public Hostnames</strong>".</li>
 <li>Clique em "<strong>+ Add a public hostname</strong>" para cada serviço que você deseja expor.<ul>
 <li><strong>Subdomain:</strong> O prefixo do seu serviço (e.g., <code>portainer</code>, <code>traefik</code>, <code>auth</code>, <code>nextcloud</code>, <code>hass</code>, <code>grafana</code>, <code>openwebui</code>, etc.).</li>
-<li><strong>Domain:</strong> Selecione seu domínio base (<code>{{ base_domain }}</code> e.g., <code>meuhomelab.com</code>).</li>
+<li><strong>Domain:</strong> Selecione seu domínio base (<code>{{ base_domain }}</code> e.g., <code>seudominio.com</code>).</li>
 <li><strong>Path:</strong> Deixe em branco (a menos que você queira rotear caminhos específicos para serviços diferentes, o que é mais avançado e geralmente tratado pelo Traefik).</li>
 <li><strong>Service Type:</strong> <code>HTTPS</code>.</li>
 <li><strong>Service URL:</strong> <code>traefik:443</code><ul>
@@ -2955,7 +2973,7 @@ O <code>cloudflared</code> tentará criar e gerenciar automaticamente um registr
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="14 de outubro de 2026 14:43:46 -03">14 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     

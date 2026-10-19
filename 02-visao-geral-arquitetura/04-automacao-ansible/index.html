@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/02-visao-geral-arquitetura/04-automacao-ansible/">
+        <link rel="canonical" href="https://wiki.lioevano.com/02-visao-geral-arquitetura/04-automacao-ansible/">
       
       
         <link rel="prev" href="../03-armazenamento-zfs-nfs/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#automacao-da-infraestrutura-com-ansible" class="md-skip">
+        <a href="#automação-da-infraestrutura-com-ansible" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1047,7 +1047,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fluxo-de-trabalho-tipico-com-ansible" class="md-nav__link">
+  <a href="#fluxo-de-trabalho-típico-com-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fluxo de Trabalho Típico com Ansible
@@ -1058,7 +1058,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#principais-playbooks-e-seus-papeis-na-arquitetura" class="md-nav__link">
+  <a href="#principais-playbooks-e-seus-papéis-na-arquitetura" class="md-nav__link">
     <span class="md-ellipsis">
       
         Principais Playbooks e Seus Papéis na Arquitetura
@@ -1140,7 +1140,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1982,7 +1982,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fluxo-de-trabalho-tipico-com-ansible" class="md-nav__link">
+  <a href="#fluxo-de-trabalho-típico-com-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fluxo de Trabalho Típico com Ansible
@@ -1993,7 +1993,7 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#principais-playbooks-e-seus-papeis-na-arquitetura" class="md-nav__link">
+  <a href="#principais-playbooks-e-seus-papéis-na-arquitetura" class="md-nav__link">
     <span class="md-ellipsis">
       
         Principais Playbooks e Seus Papéis na Arquitetura
@@ -2023,7 +2023,7 @@
   
 
 
-<h1 id="automacao-da-infraestrutura-com-ansible">Automação da Infraestrutura com Ansible<a class="headerlink" href="#automacao-da-infraestrutura-com-ansible" title="Permanent link">¶</a></h1>
+<h1 id="automação-da-infraestrutura-com-ansible">Automação da Infraestrutura com Ansible<a class="headerlink" href="#automação-da-infraestrutura-com-ansible" title="Permanent link">¶</a></h1>
 <p>Ansible é a ferramenta de automação escolhida para esta arquitetura, permitindo que configuremos e gerencemos nosso servidor doméstico de forma programática, consistente e repetível. Isso é um pilar da filosofia de Infraestrutura como Código (IaC).</p>
 <h2 id="por-que-ansible">Por que Ansible?<a class="headerlink" href="#por-que-ansible" title="Permanent link">¶</a></h2>
 <ul>
@@ -2054,7 +2054,7 @@
 </li>
 <li><strong><code>ansible.cfg</code> (Opcional, na raiz do projeto Ansible):</strong> Pode ser usado para definir configurações padrão do Ansible para o projeto (e.g., caminho do inventário, roles_path, desabilitar host key checking para ambientes de teste - não recomendado para produção). Este guia não foca nele, mas é bom saber que existe.</li>
 </ul>
-<h2 id="fluxo-de-trabalho-tipico-com-ansible">Fluxo de Trabalho Típico com Ansible<a class="headerlink" href="#fluxo-de-trabalho-tipico-com-ansible" title="Permanent link">¶</a></h2>
+<h2 id="fluxo-de-trabalho-típico-com-ansible">Fluxo de Trabalho Típico com Ansible<a class="headerlink" href="#fluxo-de-trabalho-típico-com-ansible" title="Permanent link">¶</a></h2>
 <ol>
 <li><strong>Definir o Estado Desejado:</strong> Você descreve o estado final que deseja para seus sistemas nos playbooks e roles Ansible (e.g., "o pacote nginx deve estar instalado", "o serviço Docker deve estar rodando", "esta linha deve existir no arquivo de configuração X").</li>
 <li><strong>Executar o Playbook:</strong> A partir da sua <a href="../../01-manual-implementacao/01-maquina-controle-ansible/">máquina de controle Ansible</a>, você executa um comando como:
@@ -2069,7 +2069,7 @@
 <li><strong>Handlers:</strong> Se uma tarefa reportar "changed" e tiver um <code>notify</code> para um handler, esse handler será executado no final do play em cada host. Handlers são úteis para reiniciar serviços apenas se suas configurações mudaram.</li>
 <li><strong>Relatório:</strong> Ansible exibe um resumo das tarefas (ok, changed, unreachable, failed).</li>
 </ol>
-<h2 id="principais-playbooks-e-seus-papeis-na-arquitetura">Principais Playbooks e Seus Papéis na Arquitetura<a class="headerlink" href="#principais-playbooks-e-seus-papeis-na-arquitetura" title="Permanent link">¶</a></h2>
+<h2 id="principais-playbooks-e-seus-papéis-na-arquitetura">Principais Playbooks e Seus Papéis na Arquitetura<a class="headerlink" href="#principais-playbooks-e-seus-papéis-na-arquitetura" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong><code>setup-proxmox-host.yml</code>:</strong><ul>
 <li><strong>Alvo:</strong> <code>proxmox_main_host</code>.</li>
@@ -2088,12 +2088,12 @@
 </li>
 <li><strong><code>setup-core-networking.yml</code>:</strong><ul>
 <li><strong>Alvo:</strong> <code>core-services-vm</code>.</li>
-<li><strong>Função:</strong> Prepara arquivos de configuração para Traefik e Authelia, e faz o deploy das stacks Docker <code>core</code> (Traefik, Cloudflared) e <code>authelia</code>.</li>
+<li><strong>Função:</strong> Prepara arquivos de configuração para Traefik e Authelia, e faz o deploy da stack Docker <code>core</code> (Traefik, Cloudflared e Authelia).</li>
 </ul>
 </li>
 <li><strong>Playbooks <code>setup-&lt;stack&gt;-volumes.yml</code> (e.g., <code>setup-media-stack-volumes.yml</code>):</strong><ul>
 <li><strong>Alvo:</strong> VM específica onde a stack Docker rodará (geralmente <code>core-services-vm</code> ou <code>ai-desktop-vm</code>).</li>
-<li><strong>Função:</strong> Criar os diretórios necessários nos volumes NFS e gerar o arquivo <code>.env</code> com caminhos e variáveis para a respectiva stack Docker a ser implantada via Portainer.</li>
+<li><strong>Função:</strong> Criar os diretórios necessários nos volumes NFS e gerar o arquivo <code>.env</code> com caminhos, variáveis e segredos (do vault) da respectiva stack Docker a ser implantada via Portainer (<code>apps</code> e <code>ai</code>; a <code>core</code> é implantada pelo próprio Ansible).</li>
 </ul>
 </li>
 <li><strong><code>full-deploy.yml</code>:</strong><ul>
@@ -2122,7 +2122,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:40:13 -03">18 de outubro de 2026</span>
   </span>
 
     

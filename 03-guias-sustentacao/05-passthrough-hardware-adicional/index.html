@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/05-passthrough-hardware-adicional/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/05-passthrough-hardware-adicional/">
       
       
         <link rel="prev" href="../04-gerenciando-redes-docker/">
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1394,7 +1394,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#revisao-gpu-passthrough-para-vms" class="md-nav__link">
+  <a href="#revisão-gpu-passthrough-para-vms" class="md-nav__link">
     <span class="md-ellipsis">
       
         Revisão: GPU Passthrough para VMs
@@ -1960,7 +1960,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#revisao-gpu-passthrough-para-vms" class="md-nav__link">
+  <a href="#revisão-gpu-passthrough-para-vms" class="md-nav__link">
     <span class="md-ellipsis">
       
         Revisão: GPU Passthrough para VMs
@@ -2034,7 +2034,7 @@
 <p class="admonition-title">Complexidade e Estabilidade</p>
 <p>O passthrough de hardware, especialmente dispositivos PCI, pode adicionar complexidade à sua configuração e, em alguns casos, levar a instabilidade do host Proxmox ou da VM se não for feito corretamente. Sempre proceda com cautela, faça backups da configuração da sua VM antes de tentar passthrough de PCI, e pesquise especificamente sobre a compatibilidade do seu hardware. Dispositivos USB são geralmente mais simples e seguros de passar.</p>
 </div>
-<h2 id="revisao-gpu-passthrough-para-vms">Revisão: GPU Passthrough para VMs<a class="headerlink" href="#revisao-gpu-passthrough-para-vms" title="Permanent link">¶</a></h2>
+<h2 id="revisão-gpu-passthrough-para-vms">Revisão: GPU Passthrough para VMs<a class="headerlink" href="#revisão-gpu-passthrough-para-vms" title="Permanent link">¶</a></h2>
 <p>A configuração de GPU passthrough é um processo específico e detalhado que envolve:
 1.  Habilitação de <strong>IOMMU</strong> (AMD-Vi / Intel VT-d) e virtualização de CPU (AMD-V / Intel VT-x) na BIOS/UEFI do host Proxmox.
 2.  Configuração do <strong>kernel do Proxmox</strong> (parâmetros no GRUB, carregamento de módulos <code>vfio</code>).

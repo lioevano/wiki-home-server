@@ -9,7 +9,7 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://lioevano.github.io/wiki-home-server/03-guias-sustentacao/13-usando-geminicli/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/13-usando-geminicli/">
       
       
         <link rel="prev" href="../12-guia-snapshots-zfs/">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#13-usando-o-geminicli-para-interacao-inteligente-com-o-servidor" class="md-skip">
+        <a href="#usando-o-gemini-cli-para-interação-inteligente-com-o-servidor" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -1046,7 +1046,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../02-visao-geral-arquitetura/08-apis-llm-estrategia/" class="md-nav__link">
+      <a href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/" class="md-nav__link">
         
   
   
@@ -1564,6 +1564,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -1606,6 +1608,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1614,19 +1618,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#13-usando-o-geminicli-para-interacao-inteligente-com-o-servidor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        13. Usando o GeminiCLI para Interação Inteligente com o Servidor
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="13. Usando o GeminiCLI para Interação Inteligente com o Servidor">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#instalacao-e-configuracao-via-ansible" class="md-nav__link">
+  <a href="#instalação-e-configuração-via-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
         Instalação e Configuração via Ansible
@@ -1635,9 +1627,9 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#casos-de-uso-praticos-no-home-server" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#casos-de-uso-práticos-no-home-server" class="md-nav__link">
     <span class="md-ellipsis">
       
         Casos de Uso Práticos no Home Server
@@ -1645,13 +1637,47 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Casos de Uso Práticos no Home Server">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-análise-de-logs-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Análise de Logs do Sistema
+      
+    </span>
+  </a>
+  
 </li>
         
           <li class="md-nav__item">
-  <a href="#automacoes-e-integracoes" class="md-nav__link">
+  <a href="#2-geração-de-comandos-e-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Automações e Integrações
+        2. Geração de Comandos e Scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-troubleshooting-assistido-por-ia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Troubleshooting Assistido por IA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-documentação-e-explicação-de-comandos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Documentação e Explicação de Comandos
       
     </span>
   </a>
@@ -1660,6 +1686,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automações-e-integrações" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automações e Integrações
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1952,6 +1989,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1960,19 +1999,7 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#13-usando-o-geminicli-para-interacao-inteligente-com-o-servidor" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        13. Usando o GeminiCLI para Interação Inteligente com o Servidor
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="13. Usando o GeminiCLI para Interação Inteligente com o Servidor">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#instalacao-e-configuracao-via-ansible" class="md-nav__link">
+  <a href="#instalação-e-configuração-via-ansible" class="md-nav__link">
     <span class="md-ellipsis">
       
         Instalação e Configuração via Ansible
@@ -1981,9 +2008,9 @@
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#casos-de-uso-praticos-no-home-server" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#casos-de-uso-práticos-no-home-server" class="md-nav__link">
     <span class="md-ellipsis">
       
         Casos de Uso Práticos no Home Server
@@ -1991,13 +2018,47 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Casos de Uso Práticos no Home Server">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-análise-de-logs-do-sistema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Análise de Logs do Sistema
+      
+    </span>
+  </a>
+  
 </li>
         
           <li class="md-nav__item">
-  <a href="#automacoes-e-integracoes" class="md-nav__link">
+  <a href="#2-geração-de-comandos-e-scripts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Automações e Integrações
+        2. Geração de Comandos e Scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-troubleshooting-assistido-por-ia" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Troubleshooting Assistido por IA
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-documentação-e-explicação-de-comandos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Documentação e Explicação de Comandos
       
     </span>
   </a>
@@ -2006,6 +2067,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automações-e-integrações" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automações e Integrações
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2029,17 +2101,14 @@
   
 
 
-  <h1>Gemini CLI</h1>
-
-<hr>
-<h2 id="13-usando-o-geminicli-para-interacao-inteligente-com-o-servidor">13. Usando o GeminiCLI para Interação Inteligente com o Servidor<a class="headerlink" href="#13-usando-o-geminicli-para-interacao-inteligente-com-o-servidor" title="Permanent link">¶</a></h2>
+<h1 id="usando-o-gemini-cli-para-interação-inteligente-com-o-servidor">Usando o Gemini CLI para Interação Inteligente com o Servidor<a class="headerlink" href="#usando-o-gemini-cli-para-interação-inteligente-com-o-servidor" title="Permanent link">¶</a></h1>
 <p>Nossa arquitetura de home server é poderosa, mas a interação com ela, especialmente para tarefas de manutenção, análise de logs e troubleshooting, geralmente acontece através da linha de comando (CLI). Para turbinar essa interação, integramos o <strong>Gemini CLI</strong> (<code>@google/gemini-cli</code>), a ferramenta de código aberto do Google que leva o poder dos modelos de linguagem da Google (Gemini) diretamente para o seu terminal.</p>
 <p>O GeminiCLI permite que você faça perguntas em linguagem natural sobre o seu sistema, gere comandos, analise arquivos e muito mais, tudo isso com o contexto do seu filesystem. É como ter um assistente de DevOps experiente disponível 24/7 diretamente no seu shell.</p>
 <div class="admonition warning">
 <p class="admonition-title">Ferramenta Não-Oficial e Segurança</p>
 <p>O Gemini CLI é instalado via <code>npm</code> (pacote <code>@google/gemini-cli</code>), por isso o role instala <code>nodejs</code> e <code>npm</code> antes. Embora seja extremamente útil, sempre exerça cautela. <strong>Nunca execute comandos gerados por uma IA em um ambiente de produção sem antes revisá-los cuidadosamente.</strong> Trate as sugestões da IA como as de um assistente júnior: úteis, mas que exigem supervisão sênior (a sua!).</p>
 </div>
-<h3 id="instalacao-e-configuracao-via-ansible">Instalação e Configuração via Ansible<a class="headerlink" href="#instalacao-e-configuracao-via-ansible" title="Permanent link">¶</a></h3>
+<h2 id="instalação-e-configuração-via-ansible">Instalação e Configuração via Ansible<a class="headerlink" href="#instalação-e-configuração-via-ansible" title="Permanent link">¶</a></h2>
 <p>A instalação do GeminiCLI e a configuração da chave de API serão gerenciadas pelo Ansible para garantir consistência em todas as VMs relevantes (como a <code>core-services-vm</code> e a <code>ai-desktop-vm</code>).</p>
 <ol>
 <li>
@@ -2091,18 +2160,18 @@
     Inclua este novo role nos playbooks que configuram suas VMs principais, como <code>setup-core-services-vm.yml</code>.</p>
 </li>
 </ol>
-<h3 id="casos-de-uso-praticos-no-home-server">Casos de Uso Práticos no Home Server<a class="headerlink" href="#casos-de-uso-praticos-no-home-server" title="Permanent link">¶</a></h3>
+<h2 id="casos-de-uso-práticos-no-home-server">Casos de Uso Práticos no Home Server<a class="headerlink" href="#casos-de-uso-práticos-no-home-server" title="Permanent link">¶</a></h2>
 <p>Após a execução do Ansible, você pode acessar a VM via SSH e começar a usar o <code>gemini</code> ou <code>g</code> na linha de comando. O grande diferencial do GeminiCLI é sua capacidade de interagir com arquivos e com a saída de outros comandos (stdin).</p>
-<h4 id="1-analise-de-logs-do-sistema">1. Análise de Logs do Sistema<a class="headerlink" href="#1-analise-de-logs-do-sistema" title="Permanent link">¶</a></h4>
+<h3 id="1-análise-de-logs-do-sistema">1. Análise de Logs do Sistema<a class="headerlink" href="#1-análise-de-logs-do-sistema" title="Permanent link">¶</a></h3>
 <p>Imagine que um container está se comportando de forma estranha. Em vez de ler centenas de linhas de log, você pode pedir ao Gemini para fazer isso por você.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Peça ao Gemini para resumir os últimos 100 logs de um container</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>docker<span class="w"> </span>logs<span class="w"> </span>--tail<span class="w"> </span><span class="m">100</span><span class="w"> </span>nextcloud_app<span class="w"> </span><span class="p">|</span><span class="w"> </span>gemini<span class="w"> </span><span class="s2">"Resuma estes logs. Há algum erro crítico ou aviso recorrente?"</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Output (Exemplo):</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Parece que há múltiplos avisos de 'login failed' do endereço IP 192.168.1.100.</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Parece que há múltiplos avisos de 'login failed' do endereço IP 192.168.15.100.</span>
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Há também um erro de conexão com o banco de dados que ocorreu uma vez, mas não se repetiu.</span>
 </span></code></pre></div>
-<h4 id="2-geracao-de-comandos-e-scripts">2. Geração de Comandos e Scripts<a class="headerlink" href="#2-geracao-de-comandos-e-scripts" title="Permanent link">¶</a></h4>
+<h3 id="2-geração-de-comandos-e-scripts">2. Geração de Comandos e Scripts<a class="headerlink" href="#2-geração-de-comandos-e-scripts" title="Permanent link">¶</a></h3>
 <p>Precisa de um comando <code>find</code> ou <code>awk</code> complexo que você nunca lembra de cabeça? Peça ao Gemini.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Peça para gerar um comando</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>gemini<span class="w"> </span><span class="s2">"Gere um comando para encontrar todos os arquivos .log no diretório /var/log que foram modificados nos últimos 2 dias e que contenham a palavra 'ERROR'"</span>
@@ -2112,7 +2181,7 @@
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Você pode então copiar, revisar e executar o comando.</span>
 </span></code></pre></div>
-<h4 id="3-troubleshooting-assistido-por-ia">3. Troubleshooting Assistido por IA<a class="headerlink" href="#3-troubleshooting-assistido-por-ia" title="Permanent link">¶</a></h4>
+<h3 id="3-troubleshooting-assistido-por-ia">3. Troubleshooting Assistido por IA<a class="headerlink" href="#3-troubleshooting-assistido-por-ia" title="Permanent link">¶</a></h3>
 <p>Seu serviço Traefik não está funcionando. Você pode passar o arquivo de configuração para o Gemini e pedir uma análise.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Analise um arquivo de configuração em busca de erros</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>gemini<span class="w"> </span>-f<span class="w"> </span>/etc/traefik/traefik.yml<span class="w"> </span><span class="s2">"Analise este arquivo de configuração do Traefik. Há algum erro de sintaxe ou configuração comum que possa estar causando problemas?"</span>
@@ -2120,7 +2189,7 @@
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Output (Exemplo):</span>
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># Na seção 'entrypoints', o endereço 'websecure' está definido como ':443', mas não há uma configuração TLS associada a ele. Você precisa adicionar a seção 'tls:' com um 'certresolver'.</span>
 </span></code></pre></div>
-<h4 id="4-documentacao-e-explicacao-de-comandos">4. Documentação e Explicação de Comandos<a class="headerlink" href="#4-documentacao-e-explicacao-de-comandos" title="Permanent link">¶</a></h4>
+<h3 id="4-documentação-e-explicação-de-comandos">4. Documentação e Explicação de Comandos<a class="headerlink" href="#4-documentação-e-explicação-de-comandos" title="Permanent link">¶</a></h3>
 <p>Encontrou um script complexo na internet? Peça ao Gemini para explicá-lo.</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Explique um comando complexo</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>gemini<span class="w"> </span><span class="s2">"Explique o que este comando faz, passo a passo: tar -czf - /home/ubuntu/data | ssh user@remote 'cat &gt; /backup/data.tar.gz'"</span>
@@ -2132,7 +2201,7 @@
 </span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># 3. `ssh user@remote '...'`: Conecta-se ao servidor 'remote' como o usuário 'user'.</span>
 </span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="c1"># 4. `'cat &gt; /backup/data.tar.gz'`: Executa o comando `cat` no servidor remoto, que lê da sua entrada padrão (que está recebendo os dados do backup) e escreve os dados no arquivo `/backup/data.tar.gz`.</span>
 </span></code></pre></div>
-<h3 id="automacoes-e-integracoes">Automações e Integrações<a class="headerlink" href="#automacoes-e-integracoes" title="Permanent link">¶</a></h3>
+<h2 id="automações-e-integrações">Automações e Integrações<a class="headerlink" href="#automações-e-integrações" title="Permanent link">¶</a></h2>
 <p>O poder do GeminiCLI é ampliado quando combinado com outras ferramentas e scripts.</p>
 <ul>
 <li><strong>Scripts de Saúde do Sistema:</strong> Crie um script bash que coleta várias métricas do sistema (uso de disco, status de containers, logs recentes) e as passa para o Gemini com um prompt para "gerar um relatório de saúde do sistema em uma frase". Agende este script para rodar via cron e enviar o resultado para uma notificação do n8n.</li>
@@ -2159,7 +2228,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
   </span>
 
     
