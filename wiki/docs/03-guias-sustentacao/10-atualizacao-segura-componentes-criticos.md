@@ -96,7 +96,7 @@ Manter o Docker Engine, `containerd`, e `docker-compose-plugin` atualizados na `
         *   **Via Linha de Comando (na VM):**
             ```bash
             # Para cada diretório de stack
-            # cd /caminho/para/home-server/docker/stacks/nome_da_stack/
+            # cd /caminho/para/homeserver/server/docker/stacks/nome_da_stack/
             # docker compose down # Se os arquivos compose estiverem na VM
             # Ou, de forma mais geral e bruta:
             # docker stop $(docker ps -aq)
@@ -128,7 +128,7 @@ Manter o Docker Engine, `containerd`, e `docker-compose-plugin` atualizados na `
         *   **Via Linha de Comando (na VM):**
             ```bash
             # Para cada diretório de stack
-            # cd /caminho/para/home-server/docker/stacks/nome_da_stack/
+            # cd /caminho/para/homeserver/server/docker/stacks/nome_da_stack/
             # docker compose up -d
             ```
     8.  **Verifique os Logs dos Containers:** Após reiniciar os containers, verifique seus logs no Portainer para garantir que todos iniciaram corretamente e estão funcionando com a nova versão do Docker Engine.

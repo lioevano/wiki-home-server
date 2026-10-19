@@ -43,7 +43,7 @@ Siga estes passos cuidadosamente para instalar o Proxmox VE:
             * **Email:** Forneça um endereço de email válido. O sistema Proxmox pode enviar notificações importantes para este email.
         * **Management Network Configuration:**
             * **Management Interface:** Selecione a interface de rede correta do seu servidor (sua porta Ethernet Gigabit).
-            * **Hostname (FQDN):** Defina um nome de host completo para seu servidor Proxmox. Exemplo: `pve.meudominio.com` (substitua `meudominio.com` pelo seu domínio real).
+            * **Hostname (FQDN):** Defina um nome de host completo para seu servidor Proxmox. Exemplo: `pve.seudominio.com` (substitua `seudominio.com` pelo seu domínio real).
             * **IP Address (CIDR):** Defina um **endereço IP estático** para o seu host Proxmox. Este IP não deve estar na faixa DHCP do seu roteador para evitar conflitos. Exemplo: `192.168.15.10/24` (substitua pela sua sub-rede e IP desejado). **Anote este IP!**
             * **Gateway:** O endereço IP do seu roteador doméstico. Exemplo: `192.168.15.1`.
             * **DNS Server:** Um servidor DNS. Pode ser um DNS público (e.g., `1.1.1.1` da Cloudflare, ou `8.8.8.8` do Google) ou o IP do seu DNS local (e.g., se você tiver um Pi-hole, que pode ser `192.168.15.1` se o roteador também for o DNS, ou outro IP).
@@ -444,7 +444,7 @@ WantedBy=multi-user.target
 
 # Variáveis Ansible usadas (definidas em group_vars/all/main.yml e vault.yml):
 # {{ zfs_base_pool_path }}: Caminho base do pool ZFS (e.g., /data)
-# {{ vm_nfs_allowed_clients_cidr }}: CIDR da sub-rede das VMs (e.g., 192.168.1.0/24)
+# {{ vm_nfs_allowed_clients_cidr }}: CIDR da sub-rede das VMs (e.g., 192.168.15.0/24)
 # {{ docker_puid }}: User ID numérico do usuário 'dockeruser' nas VMs.
 # {{ docker_pgid }}: Group ID numérico do grupo 'dockergroup' nas VMs.
 
@@ -545,11 +545,11 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
 ### Executando o Playbook `setup-proxmox-host.yml`
 
 1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/node_exporter_host.service.j2`, `templates/etc_exports.j2`, e `handlers/main.yml` com o conteúdo apropriado.
-2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, navegue até a raiz do seu projeto `home-server/`.
+2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 
     ```bash
-    ansible-playbook ansible/playbooks/setup-proxmox-host.yml --ask-vault-pass
+    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass
     ```
 
     Você será solicitado a fornecer a senha do Ansible Vault que você criou na [Seção 1.2](01-maquina-controle-ansible.md#12-criação-e-gerenciamento-de-variáveis-sensíveis-ansible-vault).

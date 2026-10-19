@@ -42,11 +42,11 @@ O processo é bastante similar a [adicionar uma stack completamente nova](01-adi
         1.  Edite o playbook Ansible correspondente à **stack existente** (e.g., `ansible/playbooks/setup-media-stack-volumes.yml`).
         2.  Adicione tasks `ansible.builtin.file` para criar os novos subdiretórios de volume.
         3.  Modifique a task `ansible.builtin.template` que gera o arquivo `.env` da stack para incluir as novas variáveis de caminho ou outras variáveis necessárias para o novo serviço.
-        4.  Execute o playbook Ansible atualizado: `ansible-playbook ansible/playbooks/setup-media-stack-volumes.yml --ask-vault-pass`.
+        4.  Execute o playbook Ansible atualizado: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-media-stack-volumes.yml --ask-vault-pass`.
             Isso garante que os diretórios e o arquivo `.env` na VM estejam prontos antes de atualizar a stack no Portainer.
 
 3.  **Modifique o Arquivo `docker-compose.yml` da Stack Existente:**
-    *   Localize o arquivo `docker-compose.yml` da stack que você deseja modificar no seu projeto Git (e.g., `home-server/docker/stacks/apps/docker-compose.yml`).
+    *   Localize o arquivo `docker-compose.yml` da stack que você deseja modificar no seu projeto Git (e.g., `server/docker/stacks/apps/docker-compose.yml`).
     *   Abra-o em um editor de texto.
     *   **Adicione a Definição do Novo Serviço:**
         *   Na seção `services:` do `docker-compose.yml`, adicione uma nova entrada (um novo bloco de serviço) para o seu novo container. Siga a mesma estrutura e indentação dos serviços já existentes.

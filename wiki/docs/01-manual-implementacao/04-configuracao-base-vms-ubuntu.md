@@ -76,7 +76,7 @@ Este arquivo contém as tarefas principais do role `common`.
 
 - name: "Montar datasets ZFS do Proxmox Host via NFS na VM"
   ansible.posix.mount:
-    src: "{{ hostvars[groups['proxmox_hosts'][0]]['ansible_host'] }}:{{ zfs_base_pool_path }}/{{ item.dataset_name }}" # Ex: 192.168.1.10:/data/docker-volumes
+    src: "{{ hostvars[groups['proxmox_hosts'][0]]['ansible_host'] }}:{{ zfs_base_pool_path }}/{{ item.dataset_name }}" # Ex: 192.168.15.66:/data/docker-volumes
     path: "{{ vm_nfs_mount_base_path }}/{{ item.dataset_name }}"       # Ex: /mnt/pve_data_zfs/docker-volumes
     fstype: nfs
     # Opções de montagem NFS otimizadas. vers=4.2 é recomendado se suportado pelo host Proxmox.
@@ -484,11 +484,11 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
 ### Executando o Playbook `setup-base-ubuntu.yml`
 
 1. **Verifique os Roles:** Certifique-se de que os roles `common`, `infra/docker`, e `apps/desktop-environment` (se for usar a funcionalidade de GUI) estão criados e preenchidos com o código correto nos seus respectivos diretórios dentro de `ansible/roles/`.
-2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, navegue até a raiz do seu projeto `home-server/`.
+2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 
     ```bash
-    ansible-playbook ansible/playbooks/setup-base-ubuntu.yml --ask-vault-pass
+    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-base-ubuntu.yml --ask-vault-pass
     ```
 
     Você será solicitado a fornecer a senha do Ansible Vault.

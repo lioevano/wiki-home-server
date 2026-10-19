@@ -60,7 +60,7 @@ docker compose ls
 docker logs -f --tail 50 nome_do_container
 
 # Rodar playbook específico
-ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-base-ubuntu.yml
+ansible-playbook -i inventories/home/hosts.ini playbooks/setup-base-ubuntu.yml
 
 # Verificar status da VM
 qm status 100  # proxmox CLI para core-services-vm

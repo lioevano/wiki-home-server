@@ -12,7 +12,7 @@ Este guia descreve os passos gerais para reconstruir sua infraestrutura base do 
 2.  **Backups dos seus dados persistentes de containers Docker:**
     *   Idealmente, um backup completo dos seus datasets ZFS `/data/docker-volumes`, `/data/media`, etc., feito com uma ferramenta como BorgBackup para um destino externo.
     *   No mínimo, dumps recentes dos seus bancos de dados importantes (Authelia, Nextcloud, Grafana) salvos no dataset `/data/backups/db_dumps` (ou em um backup off-site).
-3.  **Seu repositório Ansible `home-server/` completo e atualizado**, com todas as configurações da sua infraestrutura, seguramente armazenado em um serviço Git remoto (e.g., GitHub, GitLab).
+3.  **Seu repositório `homeserver` completo e atualizado**, com todas as configurações da sua infraestrutura, seguramente armazenado em um serviço Git remoto (e.g., GitHub, GitLab).
 4.  **Acesso seguro à sua senha do Ansible Vault.**
 
 !!! critical "A Importância dos Backups Off-Site"
@@ -83,7 +83,7 @@ Siga estes passos metodicamente:
 
 6.  **Preparar sua Máquina de Controle Ansible e o Repositório:**
     *   Se sua máquina de controle Ansible original foi perdida ou não está configurada, prepare uma nova seguindo a [**Seção 1.1: Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)**](../01-manual-implementacao/01-maquina-controle-ansible.md#11-instalação-do-ambiente-de-controle-scriptsbootstrapsh).
-    *   Clone seu repositório `home-server` do seu serviço Git remoto (GitHub, GitLab, etc.) para sua máquina de controle.
+    *   Clone seu repositório `homeserver` do seu serviço Git remoto (GitHub, GitLab, etc.) para sua máquina de controle.
     *   Certifique-se de que você tem acesso à sua **senha do Ansible Vault**.
 
 7.  **Executar os Playbooks Ansible para Reconfigurar a Infraestrutura:**
@@ -95,11 +95,11 @@ Siga estes passos metodicamente:
         *   Na sua máquina de controle Ansible, copie sua chave SSH pública (`~/.ssh/id_ed25519_homelab.pub`) para este novo usuário no host Proxmox usando `ssh-copy-id`.
         *   Teste a conexão SSH e a capacidade de `sudo` sem senha.
     2.  **Executar o Playbook `full-deploy.yml` (ou o script `restore.sh`):**
-        Na raiz do seu projeto `home-server/` na máquina de controle Ansible:
+        Na raiz do repositório, na máquina de controle Ansible (o `restore.sh` entra sozinho em `server/ansible`):
         ```bash
-        bash scripts/restore.sh # Este script executa o full-deploy.yml e lida com a senha do vault
+        bash server/scripts/restore.sh # Este script executa o full-deploy.yml e lida com a senha do vault
         # OU, se preferir executar diretamente:
-        # ansible-playbook ansible/playbooks/full-deploy.yml --ask-vault-pass
+        # cd server/ansible && ansible-playbook -i inventories/home/hosts.ini playbooks/full-deploy.yml --ask-vault-pass
         ```
         O playbook `full-deploy.yml` não executa o `vm-deploy.yml`: as VMs vêm da restauração (se precisar recriá-las, rode-o antes). Ele irá:
         *   Executar `setup-proxmox-host.yml`: Reconfigurar o host Proxmox (NFS server, firewall, pacotes, Node Exporter, etc.) para o estado definido.

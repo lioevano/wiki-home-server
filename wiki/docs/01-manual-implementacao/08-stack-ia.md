@@ -19,14 +19,14 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
 - **Open WebUI**: Interface web para chat com LLMs. Usa o LiteLLM como API compatível com OpenAI (`OPENAI_API_BASE_URL=http://litellm:4000/v1`, chave `LITELLM_MASTER_KEY`) e o Ollama direto para gerenciar modelos locais. Acessível em `https://openwebui.seudominio.com` (Traefik da `core-services-vm` + Authelia, router `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2`) ou na LAN em `http://ai-desktop-ip:3000`.
 - **OpenClaw**: CLI agent para terminal. Conecta ao LiteLLM.
 - **OpenClaude**: Assistente AI com memória persistente e integração com ferramentas locais.
-- **Diun (`diun_ai`)**: Avisa (via n8n → Telegram) quando sai imagem nova de algum container desta VM; chama `https://n8n.<domínio>/webhook/notificar` com `NOTIFICACOES_WEBHOOK_TOKEN`. Veja [Painel e Notificações](09-painel-notificacoes.md).
+- **Diun (`diun_ai`)**: Avisa (via n8n → Telegram) quando sai imagem nova de algum container desta VM; chama `https://n8n.seudominio.com/webhook/notificar` com `NOTIFICACOES_WEBHOOK_TOKEN`. Veja [Painel e Notificações](09-painel-notificacoes.md).
 - **Promtail (`promtail_ai`)**: Envia os logs dos containers e do sistema desta VM ao Loki da `core-services-vm` (`http://<core_services_vm_ip_var>:3100`). A configuração é gerada de `ansible/templates/promtail-config.yml.j2` pelo `setup-ai-volumes.yml`.
 
 ## Deploy
 
 1. Execute o playbook de volumes:
    ```bash
-   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml
+   ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-volumes.yml
    ```
 
 2. **Se Portainer está gerenciando a ai-desktop-vm:**
@@ -58,11 +58,11 @@ O `ai.env` é gerado por `ansible/playbooks/setup-ai-volumes.yml` (via `ansible/
 
 ### Passos manuais ao mudar variáveis ou segredos
 
-1. Confira no vault real (`ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`) que `litellm_master_key`, `llm_api_keys.*` e `openwebui_secret_key` estão preenchidos; gere chaves novas com `openssl rand -hex 32` (evite `$`, `#`, aspas e espaços: o `.env` não usa aspas).
+1. Confira no vault real (`ansible-vault edit inventories/home/group_vars/all/vault.yml`) que `litellm_master_key`, `llm_api_keys.*` e `openwebui_secret_key` estão preenchidos; gere chaves novas com `openssl rand -hex 32` (evite `$`, `#`, aspas e espaços: o `.env` não usa aspas).
 2. Simule e depois aplique o playbook (sem `--diff`, que imprimiria os segredos do `.env` no terminal):
    ```bash
-   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml --ask-vault-pass --check
-   ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-ai-volumes.yml --ask-vault-pass
+   ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-volumes.yml --ask-vault-pass --check
+   ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-volumes.yml --ask-vault-pass
    ```
 3. No Portainer, abra a stack `ai`, recarregue `/opt/portainer_stack_envs/ai.env` em **Env** e clique em **Update the stack**.
 

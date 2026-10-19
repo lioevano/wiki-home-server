@@ -39,11 +39,11 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
 
 ### Passos manuais ao mudar variáveis ou segredos
 
-1. Confira no vault real (`ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`) que as chaves da tabela acima estão preenchidas (evite `$`, `#`, aspas e espaços nos segredos: o `.env` não usa aspas).
+1. Confira no vault real (`ansible-vault edit inventories/home/group_vars/all/vault.yml`) que as chaves da tabela acima estão preenchidas (evite `$`, `#`, aspas e espaços nos segredos: o `.env` não usa aspas).
 2. Rode cada playbook primeiro com `--check` e depois sem (não use `--diff`, que imprimiria os segredos do `.env` no terminal):
    ```bash
    for pb in setup-productivity-automation-volumes setup-media-stack-volumes setup-n8n-volumes setup-monitoring-stack-volumes; do
-     ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/$pb.yml --ask-vault-pass --check
+     ansible-playbook -i inventories/home/hosts.ini playbooks/$pb.yml --ask-vault-pass --check
    done
    # sem erros? repita o laço sem --check
    ```
@@ -56,20 +56,20 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
 
 ## Preparação dos Volumes
 
-Os volumes são criados pelos playbooks Ansible:
+Os volumes são criados pelos playbooks Ansible `ansible/playbooks/setup-productivity-automation-volumes.yml`, `ansible/playbooks/setup-media-stack-volumes.yml`, `ansible/playbooks/setup-n8n-volumes.yml` e `ansible/playbooks/setup-monitoring-stack-volumes.yml`. A partir de `server/ansible`:
 
 ```bash
 # Volumes Nextcloud + automação
-ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-productivity-automation-volumes.yml
+ansible-playbook -i inventories/home/hosts.ini playbooks/setup-productivity-automation-volumes.yml
 
 # Volumes mídia
-ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-media-stack-volumes.yml
+ansible-playbook -i inventories/home/hosts.ini playbooks/setup-media-stack-volumes.yml
 
 # Volumes n8n
-ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-n8n-volumes.yml
+ansible-playbook -i inventories/home/hosts.ini playbooks/setup-n8n-volumes.yml
 
 # Volumes monitoramento (gera prometheus.yml, Loki, Promtail, blackbox, alertas do Grafana, Diun e Homepage)
-ansible-playbook -i ansible/inventories/home/hosts.ini ansible/playbooks/setup-monitoring-stack-volumes.yml
+ansible-playbook -i inventories/home/hosts.ini playbooks/setup-monitoring-stack-volumes.yml
 ```
 
 O playbook de monitoramento renderiza as configurações a partir de `ansible/templates/prometheus.yml.j2`, `ansible/templates/loki-local-config.yaml.j2`, `ansible/templates/promtail-config.yml.j2`, `ansible/templates/blackbox.yml.j2`, `ansible/templates/grafana/alerting/` e `ansible/templates/homepage/` (ver [Painel e Notificações](09-painel-notificacoes.md)), e o `.env` da stack a partir de `ansible/templates/portainer_stack_env.j2`.

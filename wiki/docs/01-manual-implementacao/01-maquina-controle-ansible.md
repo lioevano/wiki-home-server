@@ -10,7 +10,7 @@ A máquina de controle Ansible é o seu "cockpit" para automação. É a partir 
 
 *   Uma máquina (PC/Notebook) com Linux, macOS ou Windows (usando WSL2).
 *   Acesso à Internet para baixar pacotes e coleções Ansible.
-*   O projeto `home-server` clonado do seu repositório Git, ou com a estrutura de diretórios criada conforme a [Seção 0.2: Estrutura do Repositório Git](00-preparacao-planejamento.md#02-estrutura-do-repositório-git-do-projeto-home-server).
+*   O repositório `homeserver` clonado do seu repositório Git, ou com a estrutura de diretórios criada conforme a [Seção 0.2: Estrutura do Repositório Git](00-preparacao-planejamento.md#02-estrutura-do-repositório-git-do-projeto-homeserver).
 
 ## 1.1. Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)
 
@@ -18,7 +18,7 @@ Para simplificar e padronizar a configuração da sua máquina de controle, util
 
 ### Conteúdo do Script `scripts/bootstrap.sh`
 
-O arquivo `home-server/scripts/bootstrap.sh` contém:
+O arquivo `server/scripts/bootstrap.sh` contém:
 ```bash
 #!/bin/bash
 # scripts/bootstrap.sh
@@ -109,7 +109,7 @@ echo -e "${YELLOW}--------------------------------------------------------------
 ### Executando o Script `bootstrap.sh`
 
 1.  **Torne o script executável:**
-    Na raiz do seu projeto `home-server/`:
+    Na pasta `server/` do repositório:
     ```bash
     chmod +x scripts/bootstrap.sh
     ```
@@ -173,9 +173,9 @@ collections:
 Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser armazenados em texto plano no seu repositório Git. O Ansible Vault é a ferramenta integrada do Ansible para criptografar esses dados.
 
 1.  **Crie o Arquivo Vault:**
-    Na raiz do seu projeto `home-server/` (onde o `ansible.cfg` estaria, ou onde o Ansible o encontrará), execute:
+    Na pasta `server/ansible` do repositório (onde está o `ansible.cfg`), execute:
     ```bash
-    ansible-vault create ansible/inventories/home/group_vars/all/vault.yml
+    ansible-vault create inventories/home/group_vars/all/vault.yml
     ```
     *   Você será solicitado a **criar e confirmar uma senha para o Vault**. Escolha uma senha forte e única.
 !!! critical "Guarde Bem a Senha do Vault!"
@@ -190,7 +190,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     # ansible/inventories/home/group_vars/all/vault.yml.example
     # MODELO versionado. Copie para vault.yml, preencha e criptografe:
     #   cp vault.yml.example vault.yml && ansible-vault encrypt vault.yml
-    # Depois, edite SEMPRE com: ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml
+    # Depois, edite SEMPRE com: ansible-vault edit inventories/home/group_vars/all/vault.yml
 
     # --- Credenciais Proxmox ---
     # Usuário e senha para a API do Proxmox.
@@ -237,7 +237,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     # --- Configurações Gerais ---
     # Email para notificações do Let's Encrypt (renovação de certificados, problemas).
     letsencrypt_email: "seu_email_valido_para_lets_encrypt@example.com"
-    # Seu domínio base, SEM https:// ou www (e.g., meuhomelab.com).
+    # Seu domínio base, SEM https:// ou www (e.g., seudominio.com).
     base_domain: "seudominio.com"
     # Fuso horário para os sistemas. Encontre o seu com `timedatectl list-timezones` no Linux.
     system_timezone: "America/Sao_Paulo" # Exemplo, ajuste para o seu.
@@ -290,7 +290,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     !!! important "Como Editar o Arquivo Vault no Futuro"
         Para editar o arquivo `vault.yml` após sua criação, SEMPRE use o comando:
         ```bash
-        ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml
+        ansible-vault edit inventories/home/group_vars/all/vault.yml
         ```
         Você será solicitado a fornecer a senha do Vault que você definiu. **Não tente editar o arquivo criptografado diretamente.**
 
@@ -308,7 +308,7 @@ O inventário Ansible é o coração da sua automação. Ele define:
 
 ### Arquivo de Hosts (`ansible/inventories/home/hosts.ini`)
 
-Crie o arquivo `home-server/ansible/inventories/home/hosts.ini`. Este arquivo define seus servidores e VMs. **Ajuste os endereços IP e nomes de host conforme sua rede e preferências.**
+Crie o arquivo `server/ansible/inventories/home/hosts.ini`. Este arquivo define seus servidores e VMs. **Ajuste os endereços IP e nomes de host conforme sua rede e preferências.**
 
 ```ini title="ansible/inventories/home/hosts.ini"
 # ansible/inventories/home/hosts.ini
@@ -362,7 +362,7 @@ ai_desktop_vm_ip_var=192.168.15.68
 !!! info "Configuração do Ansible do projeto"
     O arquivo `ansible/ansible.cfg` define o inventário padrão (`inventories/home/hosts.ini`), o `roles_path` e opções como `host_key_checking`. Rode os comandos `ansible-playbook` a partir de `server/ansible/` para que ele seja carregado.
 
-Crie o arquivo `home-server/ansible/inventories/home/group_vars/all/main.yml`. Este arquivo define variáveis que se aplicam a todos os hosts no seu inventário e que não são secretas (segredos vão no `vault.yml`).
+Crie o arquivo `server/ansible/inventories/home/group_vars/all/main.yml`. Este arquivo define variáveis que se aplicam a todos os hosts no seu inventário e que não são secretas (segredos vão no `vault.yml`).
 
 ```yaml title="ansible/inventories/home/group_vars/all/main.yml"
 # ansible/inventories/home/group_vars/all/main.yml

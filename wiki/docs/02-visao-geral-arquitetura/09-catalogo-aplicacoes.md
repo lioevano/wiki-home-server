@@ -23,7 +23,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | Stack / VM | `<stack>` / `<vm>` — stack = pasta em `docker/stacks/` ou `ansible:<role>`; aplicação presente em mais de uma VM lista cada par separado por `;` |
 | Serviços | nomes exatos no compose; o primeiro é o principal |
 | Exposição | `publica` (internet, sem login) · `protegida` (internet, com Authelia) · `interna` (só rede local/Docker) |
-| Subdomínio | subdomínio em `<sub>.<domínio>`, ou `—` se `interna` |
+| Subdomínio | subdomínio em `<sub>.seudominio.com`, ou `—` se `interna` |
 | Dados | `nfs` (datasets ZFS via NFS, com snapshots) · `local` (disco da VM) · `nenhum` |
 | Métricas | `sim` se o Prometheus coleta métricas da aplicação · `não` |
 | Provê | ids de integrações que a aplicação fornece, ou `—` |

@@ -66,13 +66,13 @@ Para esta função, você precisará de uma máquina secundária (ou sua máquin
 *   **Cliente SSH:**
     *   OpenSSH (nativo em Linux e macOS).
     *   PuTTY (popular para Windows, ou use o cliente SSH nativo do Windows Terminal/PowerShell).
-    *   **Domínio Próprio Registrado:** (e.g., `meudominio.com`)
+    *   **Domínio Próprio Registrado:** (e.g., `seudominio.com`)
     !!! important "Domínio Próprio é Essencial"
         Este guia depende de um domínio próprio para acesso externo seguro via Cloudflare Tunnel e para a correta emissão de certificados SSL/TLS.
     *   **Conta Cloudflare:** Crie uma [conta gratuita na Cloudflare](https://www.cloudflare.com/).
     *   Você precisará configurar seu domínio para usar os **nameservers da Cloudflare**.
 
-## 0.2. Estrutura do Repositório Git do Projeto (`home-server`)
+## 0.2. Estrutura do Repositório Git do Projeto (`homeserver`)
 
 Graças ao Ansible, vamos adotar a Infraestrutura como Código (IaC), gerenciando todas as configurações e scripts em um repositório Git.
 
@@ -116,6 +116,11 @@ homeserver/                 # repositório lioevano/wiki-home-server
 ├── .gitignore
 └── README.md
 ```
+
+!!! info "Convenções usadas na wiki"
+    *   **Comandos Ansible** rodam a partir da pasta `server/ansible` (onde está o `ansible.cfg`), na forma `ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml`. Caminhos de arquivos do server são relativos a `server/` (ex.: `ansible/playbooks/...`, `docker/stacks/...`).
+    *   **Domínio:** no texto, `seudominio.com` representa o seu domínio; nos templates Jinja e blocos literais aparece `{{ base_domain }}`.
+    *   **Rede:** os exemplos usam a LAN `192.168.15.0/24` (host Proxmox `192.168.15.66`, `core-services-vm` `192.168.15.67`, `ai-desktop-vm` `192.168.15.68`, como no `hosts.ini`).
 
 ### Ações Imediatas para Estruturação do Projeto
 

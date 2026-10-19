@@ -23,7 +23,7 @@ O alerta "n8n fora do ar" vai direto do Grafana ao Telegram, sem passar pelo n8n
 
 ### Disponibilidade (blackbox-exporter)
 
-O serviço `blackbox-exporter` (stack `apps`, redes `internal_services` e `proxy`, sem porta publicada) testa cada aplicação pela **URL interna** (ex.: `http://n8n:5678/healthz`, `http://jellyfin:8096/health`). A URL pública não serve para isso: ela passa pelo Authelia, que responde com o redirecionamento para o login mesmo com a aplicação parada. A configuração vem de `ansible/templates/blackbox.yml.j2`, gerada pelo `ansible/playbooks/setup-monitoring-stack-volumes.yml` em `<NFS>/blackbox/config/blackbox.yml`, com três módulos: `http_2xx` (padrão), `http_2xx_inseguro` (Portainer, certificado autoassinado) e `tls_traefik` (entra pela 443 do Traefik com o nome `auth.<domínio>` e mede o certificado Let's Encrypt real — o que o túnel mostra na internet é o certificado da Cloudflare).
+O serviço `blackbox-exporter` (stack `apps`, redes `internal_services` e `proxy`, sem porta publicada) testa cada aplicação pela **URL interna** (ex.: `http://n8n:5678/healthz`, `http://jellyfin:8096/health`). A URL pública não serve para isso: ela passa pelo Authelia, que responde com o redirecionamento para o login mesmo com a aplicação parada. A configuração vem de `ansible/templates/blackbox.yml.j2`, gerada pelo `ansible/playbooks/setup-monitoring-stack-volumes.yml` em `<NFS>/blackbox/config/blackbox.yml`, com três módulos: `http_2xx` (padrão), `http_2xx_inseguro` (Portainer, certificado autoassinado) e `tls_traefik` (entra pela 443 do Traefik com o nome `auth.seudominio.com` e mede o certificado Let's Encrypt real — o que o túnel mostra na internet é o certificado da Cloudflare).
 
 Os alvos ficam no job `blackbox_http` de `ansible/templates/prometheus.yml.j2`, um por aplicação, com `labels: {app: <id do catálogo>}` (regra NTF-1). Para conferir no Prometheus: `probe_success` (1 = no ar) e `probe_ssl_earliest_cert_expiry{app="traefik"}` (validade do certificado). Se o próprio `blackbox-exporter` cair, a regra `host-sem-resposta` dispara (ela também observa `up{job="blackbox_http"}`).
 
@@ -53,7 +53,7 @@ O workflow fica no repositório como arquivo estático, `ansible/files/n8n/notif
 3. **Formatar** — reconhece Grafana (lista `alerts`), Diun (`diun_version`), Radarr/Sonarr (`eventType`) ou genérico (`titulo`, `mensagem`, `gravidade`, `app`) e monta a mensagem: 🔴 crítico, 🟠 aviso, 🟢 resolvido/ok, ℹ️ informação. Payload desconhecido vira notificação genérica.
 4. **Telegram** — `sendMessage` com `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID`, lidos do ambiente do n8n (`N8N_BLOCK_ENV_ACCESS_IN_NODE=false`).
 
-O Authelia libera só `n8n.<domínio>/webhook/…` (regra `bypass` com `resources`, em `ansible/roles/infra/authelia-config/templates/configuration.yml.j2`); a interface do n8n continua protegida.
+O Authelia libera só `n8n.seudominio.com/webhook/…` (regra `bypass` com `resources`, em `ansible/roles/infra/authelia-config/templates/configuration.yml.j2`); a interface do n8n continua protegida.
 
 ### Atualizações (Diun)
 
@@ -62,13 +62,13 @@ Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCH
 | Serviço | Stack / VM | Webhook |
 |---|---|---|
 | `diun` | `apps` / `core-services-vm` | `http://n8n:5678/webhook/notificar` (rede `proxy`) |
-| `diun_ai` | `ai` / `ai-desktop-vm` | `https://n8n.<domínio>/webhook/notificar` |
+| `diun_ai` | `ai` / `ai-desktop-vm` | `https://n8n.seudominio.com/webhook/notificar` |
 
 Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`).
 
 ### Painel (Homepage)
 
-A Homepage (`https://home.<domínio>`, protegida pelo Authelia) roda na stack `apps` e lê três arquivos gerados pelo `setup-monitoring-stack-volumes.yml` em `<NFS>/homepage/config/`, a partir de `ansible/templates/homepage/`:
+A Homepage (`https://home.seudominio.com`, protegida pelo Authelia) roda na stack `apps` e lê três arquivos gerados pelo `setup-monitoring-stack-volumes.yml` em `<NFS>/homepage/config/`, a partir de `ansible/templates/homepage/`:
 
 | Arquivo | Conteúdo |
 |---|---|
@@ -193,12 +193,12 @@ Sem a chave, o widget mostra erro; atalho e status continuam funcionando.
 
 ```bash
 # deve chegar uma mensagem no Telegram (resposta 200)
-curl -s -o /dev/null -w '%{http_code}\n' -X POST "https://n8n.<domínio>/webhook/notificar" \
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "https://n8n.seudominio.com/webhook/notificar" \
   -H "Authorization: Bearer <notificacoes_webhook_token>" -H "Content-Type: application/json" \
   -d '{"titulo":"Teste","mensagem":"Webhook funcionando","gravidade":"ok"}'
 
 # sem o token: 401 e nenhuma mensagem
-curl -s -o /dev/null -w '%{http_code}\n' -X POST "https://n8n.<domínio>/webhook/notificar" -d '{}'
+curl -s -o /dev/null -w '%{http_code}\n' -X POST "https://n8n.seudominio.com/webhook/notificar" -d '{}'
 ```
 
 No Grafana: **Alerting → Contact points → n8n → Test** (e o mesmo em `telegram-direto`).

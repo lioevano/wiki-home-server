@@ -12,22 +12,22 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
 
 1.  **Ansible (Sua Máquina de Controle Ansible - Fonte da Verdade para IaC):**
     O Ansible gerencia a configuração fundamental da sua infraestrutura.
-    *   **Inventário (`home-server/ansible/inventories/home/hosts.ini`):**
+    *   **Inventário (`server/ansible/inventories/home/hosts.ini`):**
         *   Define os IPs dos seus hosts (Proxmox, VMs) e como o Ansible se conecta a eles.
         *   Agrupa hosts para aplicação de configurações em massa.
         *   Contém variáveis de host (e.g., `GUI_ENABLED`) e variáveis de grupo.
-    *   **Variáveis Globais Não Sensíveis (`home-server/ansible/inventories/home/group_vars/all/main.yml`):**
+    *   **Variáveis Globais Não Sensíveis (`server/ansible/inventories/home/group_vars/all/main.yml`):**
         *   Parâmetros comuns e não secretos aplicados a todos os hosts. Exemplos: caminhos base NFS, nomes de usuário padrão, CIDRs de rede permitidos, nomes de datasets ZFS.
-    *   **Ansible Vault (`home-server/ansible/inventories/home/group_vars/all/vault.yml`):**
+    *   **Ansible Vault (`server/ansible/inventories/home/group_vars/all/vault.yml`):**
         *   **Local de TODOS os segredos** gerenciados pelo Ansible: senhas de sistema, tokens de API (Cloudflare), segredos para Authelia, senhas de banco de dados para aplicações, etc.
-        *   **Edição Segura:** Sempre edite este arquivo com `ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml`.
-    *   **Roles (`home-server/ansible/roles/...`):**
+        *   **Edição Segura:** Sempre edite este arquivo com `ansible-vault edit inventories/home/group_vars/all/vault.yml`.
+    *   **Roles (`server/ansible/roles/...`):**
         *   Contêm a lógica de configuração para componentes específicos (e.g., `infra/proxmox-host-config`, `common`, `infra/docker`, `infra/traefik-config`, `infra/authelia-config`).
         *   **`tasks/main.yml`:** Define as ações.
         *   **`templates/`:** Arquivos de template Jinja2 (`.j2`) que geram arquivos de configuração dinamicamente (e.g., `traefik.yml.j2`, `authelia/configuration.yml.j2`, `etc_exports.j2`).
         *   **`handlers/main.yml`:** Ações acionadas por mudanças (e.g., reiniciar um serviço).
         *   **`defaults/main.yml` e `vars/main.yml`:** Variáveis específicas do role.
-    *   **Playbooks (`home-server/ansible/playbooks/...`):**
+    *   **Playbooks (`server/ansible/playbooks/...`):**
         *   Orquestram a aplicação de roles e tarefas aos hosts definidos no inventário.
 
 2.  **Host Proxmox VE:**
@@ -54,7 +54,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
 
 4.  **Docker e Portainer (na `core-services-vm` ou `ai-desktop-vm`):**
     *   **Arquivos `docker-compose.yml` de cada Stack:**
-        *   Localizados no seu projeto Git em `home-server/docker/stacks/NOME_DA_STACK/docker-compose.yml`.
+        *   Localizados no seu projeto Git em `server/docker/stacks/NOME_DA_STACK/docker-compose.yml`.
         *   Definem os serviços, imagens, volumes, redes, portas, variáveis de ambiente e labels Traefik para cada stack de aplicação.
         *   **As modificações são feitas nestes arquivos e depois aplicadas via Portainer ("Update the stack").**
     *   **Variáveis de Ambiente e Secrets:**
@@ -121,11 +121,11 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         1.  Edite o arquivo Ansible apropriado na sua máquina de controle (inventário, `main.yml`, `vault.yml`, um template `.j2`, ou as tasks de um role).
         2.  Execute o playbook Ansible relevante para aplicar a mudança. Exemplo:
             ```bash
-            ansible-playbook ansible/playbooks/setup-core-networking.yml --ask-vault-pass
+            ansible-playbook -i inventories/home/hosts.ini playbooks/setup-core-networking.yml --ask-vault-pass
             ```
         3.  O Ansible aplicará a mudança de forma idempotente. Se a configuração já estiver no estado desejado, nenhuma alteração será feita.
     *   **Se a Mudança é em uma Stack Docker (via Portainer):**
-        1.  Edite o arquivo `docker-compose.yml` correspondente no seu projeto Git (`home-server/docker/stacks/.../`).
+        1.  Edite o arquivo `docker-compose.yml` correspondente no seu projeto Git (`server/docker/stacks/.../`).
         2.  No Portainer, navegue até a stack que você deseja modificar.
         3.  Clique em "**Editor**".
         4.  Cole o conteúdo do `docker-compose.yml` atualizado.

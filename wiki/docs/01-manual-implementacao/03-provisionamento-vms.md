@@ -435,11 +435,11 @@ Certifique-se de que o arquivo `ansible/playbooks/vm-deploy.yml` exista com o se
 
 ### Executando o Playbook de Deploy das VMs
 
-1. Na sua máquina de controle Ansible, navegue até a raiz do projeto `home-server/`.
+1. Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 2. Execute o playbook:
 
     ```bash
-    ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass
+    ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass
     ```
 
 Após a execução, suas VMs (`core-services-vm` e `ai-desktop-vm`, se habilitada) devem estar criadas no Proxmox, configuradas com os parâmetros básicos de Cloud-Init e, se tudo correu bem com o `wait_for`, prontas para as próximas etapas de configuração.

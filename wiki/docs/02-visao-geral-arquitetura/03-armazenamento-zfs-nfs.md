@@ -41,9 +41,9 @@ Enquanto o ZFS gerencia o armazenamento no host Proxmox, precisamos de uma forma
     *   O arquivo `/etc/exports` no host Proxmox define quais datasets ZFS são compartilhados, para quais clientes (as VMs) e com quais permissões.
     *   **Exemplo de entrada em `/etc/exports` (gerado por Ansible):**
         ```
-        /data/docker-volumes 192.168.1.0/24(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)
+        /data/docker-volumes 192.168.15.0/24(rw,sync,no_subtree_check,all_squash,anonuid=1000,anongid=1000)
         ```
-        Isto compartilha o dataset `/data/docker-volumes` com qualquer cliente na sub-rede `192.168.1.0/24` com permissões de leitura/escrita (`rw`), modo síncrono (`sync`), e mapeia todos os acessos para o UID 1000 e GID 1000 no servidor (correspondendo ao `dockeruser:dockergroup` nas VMs).
+        Isto compartilha o dataset `/data/docker-volumes` com qualquer cliente na sub-rede `192.168.15.0/24` com permissões de leitura/escrita (`rw`), modo síncrono (`sync`), e mapeia todos os acessos para o UID 1000 e GID 1000 no servidor (correspondendo ao `dockeruser:dockergroup` nas VMs).
 *   **Cliente NFS nas VMs (`core-services-vm`, `ai-desktop-vm`):**
     *   O pacote `nfs-common` é instalado nas VMs.
     *   O Ansible configura o arquivo `/etc/fstab` em cada VM para montar automaticamente os compartilhamentos NFS do host Proxmox durante o boot.

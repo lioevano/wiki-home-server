@@ -43,7 +43,7 @@ Esta seção está organizada nos seguintes guias práticos para ajudá-lo a ope
 10. **[Atualização Segura de Componentes Críticos da Infraestrutura](10-atualizacao-segura-componentes-criticos.md):**
     Estratégias e pontos de atenção para atualizar componentes fundamentais como Proxmox VE, Docker Engine, Traefik e Authelia de forma mais segura e controlada.
 11. **[Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)](11-hospedando-aplicacao-publica-dominio-raiz.md):**
-    Considerações de segurança e configuração no Traefik para expor uma aplicação (idealmente um site estático) diretamente no seu domínio principal (e.g., `https://meudominio.com`).
+    Considerações de segurança e configuração no Traefik para expor uma aplicação (idealmente um site estático) diretamente no seu domínio principal (e.g., `https://seudominio.com`).
 12. **[Guia Prático de Snapshots ZFS](12-guia-snapshots-zfs.md):**
     Um guia detalhado sobre como criar, listar, gerenciar e utilizar os poderosos snapshots ZFS para recuperação rápida de dados e proteção local no seu host Proxmox.
 13. **[Uso do Gemini CLI para Operações Assistidas por IA](13-usando-geminicli.md):**

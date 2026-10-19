@@ -1,7 +1,7 @@
 # ansible/inventories/home/group_vars/all/vault.yml.example
 # MODELO versionado. Copie para vault.yml, preencha e criptografe:
 #   cp vault.yml.example vault.yml && ansible-vault encrypt vault.yml
-# Depois, edite SEMPRE com: ansible-vault edit ansible/inventories/home/group_vars/all/vault.yml
+# Depois, edite SEMPRE com: ansible-vault edit inventories/home/group_vars/all/vault.yml
 
 # --- Credenciais Proxmox ---
 # Usuário e senha para a API do Proxmox.
@@ -48,7 +48,7 @@ authelia_storage_encryption_key: "CHAVE_DE_CRIPTOGRAFIA_DO_STORAGE_DO_AUTHELIA"
 # --- Configurações Gerais ---
 # Email para notificações do Let's Encrypt (renovação de certificados, problemas).
 letsencrypt_email: "seu_email_valido_para_lets_encrypt@example.com"
-# Seu domínio base, SEM https:// ou www (e.g., meuhomelab.com).
+# Seu domínio base, SEM https:// ou www (e.g., seudominio.com).
 base_domain: "seudominio.com"
 # Fuso horário para os sistemas. Encontre o seu com `timedatectl list-timezones` no Linux.
 system_timezone: "America/Sao_Paulo" # Exemplo, ajuste para o seu.

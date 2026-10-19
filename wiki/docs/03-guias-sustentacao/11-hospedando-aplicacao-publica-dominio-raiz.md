@@ -4,7 +4,7 @@ description: "Como publicar uma aplicação (ex.: blog) no domínio raiz com Clo
 
 # Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)
 
-Em muitos casos, você pode desejar hospedar uma aplicação que seja publicamente acessível diretamente no seu domínio raiz (apex domain), por exemplo, `https://meudominio.com`, em vez de um subdomínio como `https://blog.meudominio.com`. Um caso de uso comum para isso é um blog pessoal, um site de portfólio, ou uma landing page.
+Em muitos casos, você pode desejar hospedar uma aplicação que seja publicamente acessível diretamente no seu domínio raiz (apex domain), por exemplo, `https://seudominio.com`, em vez de um subdomínio como `https://blog.seudominio.com`. Um caso de uso comum para isso é um blog pessoal, um site de portfólio, ou uma landing page.
 
 Isso é totalmente possível com a nossa arquitetura existente (Cloudflare Tunnel + Traefik), mas requer algumas considerações específicas de segurança e configuração no Traefik para garantir que apenas a aplicação desejada seja exposta no domínio raiz, sem comprometer outros serviços ou a segurança geral.
 
@@ -25,8 +25,8 @@ Hospedar uma aplicação publicamente, especialmente no domínio raiz que é fre
 *   **Exposição da Lógica do Proxy Reverso (Traefik):**
     *   **Risco:** Uma configuração incorreta no Traefik para o domínio raiz poderia acidentalmente expor outros serviços internos que não deveriam ser públicos, ou até mesmo o dashboard do Traefik se não estiver protegido corretamente por Authelia.
     *   **Mitigação:**
-        1.  **Regra de Roteador Traefik Muito Específica:** Crie uma regra de roteador no Traefik **exclusivamente** para o domínio raiz (e.g., `Host(\`meudominio.com\`)`).
-        2.  **Prioridade de Roteadores:** Se você tiver outras regras mais genéricas (como um wildcard `HostS(\`*.meudominio.com\`)` para Authelia), certifique-se de que a regra do domínio raiz tenha uma **prioridade mais alta** (um número maior no Traefik) para ser correspondida primeiro, evitando que a regra wildcard "capture" o tráfego do domínio raiz indevidamente.
+        1.  **Regra de Roteador Traefik Muito Específica:** Crie uma regra de roteador no Traefik **exclusivamente** para o domínio raiz (e.g., `Host(\`seudominio.com\`)`).
+        2.  **Prioridade de Roteadores:** Se você tiver outras regras mais genéricas (como um wildcard `HostS(\`*.seudominio.com\`)` para Authelia), certifique-se de que a regra do domínio raiz tenha uma **prioridade mais alta** (um número maior no Traefik) para ser correspondida primeiro, evitando que a regra wildcard "capture" o tráfego do domínio raiz indevidamente.
         3.  **NÃO Aplicar Authelia ao Blog Público:** A menos que partes específicas do seu blog público exijam login (o que é incomum para a página principal de um blog), **não** aplique o middleware `authelia-forwardauth@docker` ao roteador do Traefik para o seu domínio raiz. Aplique apenas middlewares essenciais, como os de headers de segurança.
 
 *   **Ataques de Negação de Serviço (DDoS) ou Abuso na Aplicação Pública:**
@@ -89,7 +89,7 @@ Para máxima segurança, performance e mínimo consumo de recursos ao hospedar u
     *   Crie um arquivo `docker-compose.yml` para um container Nginx que sirva os arquivos estáticos do volume NFS.
 
         ```yaml
-        # home-server/docker/stacks/blog_raiz/docker-compose.yml
+        # Exemplo: stack nova blog_raiz/docker-compose.yml (não faz parte do repositório)
         version: '3.9'
 
         networks:
@@ -141,7 +141,7 @@ Para máxima segurança, performance e mínimo consumo de recursos ao hospedar u
 
 ## 3. Configurando o Traefik para o Domínio Raiz
 
-Independentemente de você usar um blog estático ou uma aplicação dinâmica (como WordPress ou Ghost), você precisará de uma regra de roteador no Traefik específica para o seu domínio raiz (e.g., `meudominio.com`).
+Independentemente de você usar um blog estático ou uma aplicação dinâmica (como WordPress ou Ghost), você precisará de uma regra de roteador no Traefik específica para o seu domínio raiz (e.g., `seudominio.com`).
 
 *   **Roteador Específico para o Domínio Raiz:**
     No `docker-compose.yml` do seu blog (ou do servidor web Nginx/Caddy que o serve), as labels Traefik são cruciais. Veja o exemplo do Nginx acima. Os pontos chave são:
@@ -156,7 +156,7 @@ Independentemente de você usar um blog estático ou uma aplicação dinâmica (
             Exemplo: `traefik.http.routers.meu_blog_raiz.middlewares: "securityHeaders@file"`
 
 *   **Redirecionamento de `www` para não-`www` (ou vice-versa) - Opcional, mas Recomendado para SEO:**
-    É uma boa prática escolher uma forma canônica para o seu domínio (com `www` ou sem `www`) e redirecionar a outra para ela. Suponha que você queira que `https://www.meudominio.com` redirecione para `https://meudominio.com`.
+    É uma boa prática escolher uma forma canônica para o seu domínio (com `www` ou sem `www`) e redirecionar a outra para ela. Suponha que você queira que `https://www.seudominio.com` redirecione para `https://seudominio.com`.
     Você pode configurar isso no Traefik usando um middleware de redirecionamento. Adicione estas labels ao serviço do seu blog (e.g., ao `meu_blog_nginx`):
 
     ```yaml

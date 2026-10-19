@@ -16,7 +16,7 @@ Todos esses componentes rodarão como containers Docker na `core-services-vm`, i
 
 Antes de mergulharmos na configuração, é vital entender como o tráfego de um usuário externo alcançará seus serviços internos:
 
-1. **Requisição do Usuário:** O usuário digita `https://meuservico.{{ base_domain }}` no navegador (e.g., `https://nextcloud.meuhomelab.com`).
+1. **Requisição do Usuário:** O usuário digita `https://meuservico.{{ base_domain }}` no navegador (e.g., `https://nextcloud.seudominio.com`).
 2. **Resolução DNS via Cloudflare:** Os nameservers do seu domínio estão configurados para a Cloudflare. A Cloudflare não resolverá o subdomínio para o seu IP doméstico, mas para um endpoint da rede Cloudflare associado ao seu Cloudflare Tunnel.
 3. **Cloudflare Edge Network:** A requisição do usuário chega à rede global da Cloudflare. Aqui, ela pode se beneficiar de proteções como mitigação de DDoS e Web Application Firewall (WAF) básico da Cloudflare. Seu IP doméstico real permanece oculto.
 4. **Cloudflare Tunnel (`cloudflared` Agent):** O container `cloudflared` rodando na sua `core-services-vm` mantém uma conexão de **saída** persistente e criptografada com o data center da Cloudflare mais próximo. O tráfego destinado aos seus subdomínios configurados no túnel é "puxado" do Cloudflare Edge, através desta conexão segura, para o container `cloudflared` na sua rede local. **Nenhuma porta de entrada precisa ser aberta no seu roteador doméstico.**
@@ -24,9 +24,9 @@ Antes de mergulharmos na configuração, é vital entender como o tráfego de um
 6. **Traefik (Proxy Reverso):**
     * Traefik escuta nas portas `80` (HTTP) e `443` (HTTPS) na `core-services-vm` (mapeadas do host da VM para o container Traefik).
     * **Redirecionamento HTTP para HTTPS:** Traefik está configurado para redirecionar automaticamente todo o tráfego chegando na porta `80` para HTTPS na porta `443`.
-    * **Roteamento Baseado em Host:** Traefik inspeciona o cabeçalho `Host` da requisição HTTP (e.g., `nextcloud.meuhomelab.com`).
+    * **Roteamento Baseado em Host:** Traefik inspeciona o cabeçalho `Host` da requisição HTTP (e.g., `nextcloud.seudominio.com`).
     * **Middleware de Autenticação (Authelia):** Se a rota do Traefik para o serviço estiver configurada com o middleware Authelia (e.g., `authelia-forwardauth@docker`), Traefik primeiro consulta o container Authelia para verificar a autenticação do usuário.
-        * Se o usuário não estiver logado, Authelia instrui Traefik a redirecionar o usuário para o portal de login do Authelia (e.g., `https://auth.meuhomelab.com`).
+        * Se o usuário não estiver logado, Authelia instrui Traefik a redirecionar o usuário para o portal de login do Authelia (e.g., `https://auth.seudominio.com`).
         * Após o login bem-sucedido (incluindo 2FA), Authelia estabelece uma sessão (via cookie) e informa ao Traefik que o usuário está autenticado.
     * **Gerenciamento de Certificados SSL/TLS (Let's Encrypt):** Traefik automaticamente solicita, renova e gerencia certificados SSL/TLS da Let's Encrypt para todos os seus subdomínios expostos. Ele utiliza o **desafio DNS-01** com a API da Cloudflare (usando o token API que configuraremos), o que é robusto e não requer que portas HTTP estejam abertas para o mundo. Os certificados são armazenados no arquivo `acme.json` (em um volume NFS).
     * **Roteamento para o Serviço Docker de Destino:** Com base nas *labels* Docker definidas no `docker-compose.yml` do serviço de destino (e após autenticação bem-sucedida, se aplicável), Traefik encaminha a requisição para o container Docker correto e sua porta interna.
@@ -37,7 +37,7 @@ Antes de mergulharmos na configuração, é vital entender como o tráfego de um
 
 ## 5.2. Docker Compose para a Stack Core (`docker/stacks/core/docker-compose.yml`)
 
-Esta stack fundamental inclui os containers Traefik e Cloudflared. Crie o arquivo `home-server/docker/stacks/core/docker-compose.yml` com o seguinte conteúdo:
+Esta stack fundamental inclui os containers Traefik e Cloudflared. Crie o arquivo `server/docker/stacks/core/docker-compose.yml` com o seguinte conteúdo:
 
 ```yaml title="docker/stacks/core/docker-compose.yml"
 # docker/stacks/core/docker-compose.yml
@@ -193,7 +193,7 @@ services:
         condition: service_healthy
     labels: # Labels Traefik para expor o portal Authelia e definir o middleware de autenticação
       traefik.enable: "true"
-      # --- Roteador para o portal Authelia (e.g., auth.meuhomelab.com) ---
+      # --- Roteador para o portal Authelia (e.g., auth.seudominio.com) ---
       traefik.http.routers.authelia-portal.rule: "Host(`auth.${BASE_DOMAIN_FROM_VAULT}`)"
       traefik.http.routers.authelia-portal.entrypoints: "websecure"
       traefik.http.routers.authelia-portal.tls.certresolver: "letsencrypt"
@@ -649,7 +649,7 @@ access_control:
     # Cuidado ao usar bypass, pois anula a proteção do Authelia para essas condições.
     # - domain: "servico_local.{{ base_domain }}"
     #   networks: # IPs ou CIDRs da sua rede local
-    #     - "192.168.1.0/24"
+    #     - "192.168.15.0/24"
     #   policy: bypass
 
 # Notificador (para reset de senha, alertas de segurança, etc.) - ALTAMENTE RECOMENDADO
@@ -813,7 +813,7 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
 
 ## 5.5. Configuração de DNS na Cloudflare
 
-Após o deploy bem-sucedido da stack de rede, especialmente do container `cloudflared` (Cloudflare Tunnel), você precisa configurar seus registros DNS na Cloudflare para que seus subdomínios (e.g., `portainer.meuhomelab.com`, `traefik.meuhomelab.com`, `auth.meuhomelab.com`) apontem corretamente para o seu túnel.
+Após o deploy bem-sucedido da stack de rede, especialmente do container `cloudflared` (Cloudflare Tunnel), você precisa configurar seus registros DNS na Cloudflare para que seus subdomínios (e.g., `portainer.seudominio.com`, `traefik.seudominio.com`, `auth.seudominio.com`) apontem corretamente para o seu túnel.
 
 **Abordagem Recomendada: Usar Ingress Rules no Cloudflare Zero Trust Dashboard**
 
@@ -827,7 +827,7 @@ Esta abordagem oferece a maior flexibilidade e é gerenciada centralmente no pai
 4. Clique na aba "**Public Hostnames**".
 5. Clique em "**+ Add a public hostname**" para cada serviço que você deseja expor.
     * **Subdomain:** O prefixo do seu serviço (e.g., `portainer`, `traefik`, `auth`, `nextcloud`, `hass`, `grafana`, `openwebui`, etc.).
-    * **Domain:** Selecione seu domínio base (`{{ base_domain }}` e.g., `meuhomelab.com`).
+    * **Domain:** Selecione seu domínio base (`{{ base_domain }}` e.g., `seudominio.com`).
     * **Path:** Deixe em branco (a menos que você queira rotear caminhos específicos para serviços diferentes, o que é mais avançado e geralmente tratado pelo Traefik).
     * **Service Type:** `HTTPS`.
     * **Service URL:** `traefik:443`

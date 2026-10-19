@@ -41,7 +41,7 @@ Siga estes passos para garantir uma integração suave e bem-sucedida:
 
 2.  **Preparação de Volumes e Arquivo `.env` (Via Ansible - Recomendado):**
     Para manter a consistência e automação (IaC):
-    *   No seu projeto `home-server/ansible/`:
+    *   No seu projeto `server/ansible/`:
         *   Crie um novo playbook Ansible, por exemplo, `ansible/playbooks/setup-novoservico-volumes.yml`.
         *   Este playbook deve ser direcionado à VM onde o novo serviço Docker rodará (e.g., `core-services-vm`).
         *   **Tarefas do Playbook:**
@@ -62,12 +62,12 @@ Siga estes passos para garantir uma integração suave e bem-sucedida:
                     ```
     *   **Execute o novo playbook Ansible:**
         ```bash
-        ansible-playbook ansible/playbooks/setup-novoservico-volumes.yml --ask-vault-pass
+        ansible-playbook -i inventories/home/hosts.ini playbooks/setup-novoservico-volumes.yml --ask-vault-pass
         ```
         Isso garante que os diretórios NFS e o arquivo `.env` com os caminhos corretos estejam prontos na VM antes de você tentar implantar a stack no Portainer.
 
 3.  **Escrever o Arquivo `docker-compose.yml` para a Nova Stack:**
-    *   No seu projeto `home-server/`, crie um novo diretório para a stack, por exemplo, `docker/stacks/novoservico/`.
+    *   No repositório, crie um novo diretório para a stack, por exemplo, `docker/stacks/novoservico/`.
     *   Dentro dele, crie o arquivo `docker-compose.yml`.
     *   **Estrutura Típica (Exemplo):**
         ```yaml title="Exemplo: docker/stacks/novoservico/docker-compose.yml"
@@ -176,7 +176,7 @@ FileBrowser é um gerenciador de arquivos web simples e eficaz. Vamos revisitar 
         FILEBROWSER_CONFIG_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/config
         FILEBROWSER_SHARED_DATA_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/shared_files
         ```
-    *   Execute o playbook: `ansible-playbook ansible/playbooks/setup-filebrowser-volumes.yml --ask-vault-pass`.
+    *   Execute o playbook: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-filebrowser-volumes.yml --ask-vault-pass`.
 
 3.  **`docker-compose.yml` para FileBrowser (`docker/stacks/filebrowser/docker-compose.yml`):**
     ```yaml

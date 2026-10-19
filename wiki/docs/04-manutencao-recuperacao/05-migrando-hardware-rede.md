@@ -36,7 +36,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         *   Garanta que você tem **backups completos e recentes de todas as suas VMs Proxmox**, salvos em um local acessível (idealmente no seu pool `/data/backups/vms` e também uma cópia off-site). Verifique se os backups foram concluídos com sucesso.
         *   Faça um **backup completo dos seus dados do pool ZFS `/data`** (que contém `docker-volumes`, `media`, `downloads`, etc.). A melhor forma é usar [BorgBackup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#b-volumes-de-arquivos-configs-docker-mídia-downloads-modelos-rag) para um destino externo. Se não usa Borg, pelo menos `rsync` para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.
         *   Faça um backup da [configuração do seu host Proxmox antigo](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#1-configuração-do-host-proxmox-ve) (arquivos de `/etc/`).
-        *   Certifique-se de que seu **repositório Ansible `home-server/` está totalmente atualizado e enviado (`pushed`) para seu Git remote** (GitHub, GitLab, etc.).
+        *   Certifique-se de que seu **repositório `homeserver` está totalmente atualizado e enviado (`pushed`) para seu Git remote** (GitHub, GitLab, etc.).
         *   Tenha sua **senha do Ansible Vault** em local seguro.
         *   **Teste a restauração de uma VM e de alguns dados importantes de seus backups em um ambiente de teste, se possível, ANTES da migração.**
 
@@ -85,13 +85,13 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
     *   **Não inicie as VMs ainda** após a restauração, a menos que o Ansible precise delas ligadas para alguma configuração inicial (o que não é o caso aqui para as tasks de `vm-deploy.yml` que ajustam hardware).
 
 6.  **Atualizar Configurações Ansible (na sua Máquina de Controle Ansible):**
-    *   **Inventário (`home-server/ansible/inventories/home/hosts.ini`):**
+    *   **Inventário (`server/ansible/inventories/home/hosts.ini`):**
         *   Se o endereço IP do seu novo host Proxmox mudou, atualize o valor de `ansible_host` para `proxmox_main_host`.
         *   Confirme se os endereços IP das VMs (definidos em `ansible_host` para `core-services-vm` e `ai-desktop-vm`) ainda são os que você planeja que elas usem (e que seu roteador/DHCP está configurado para atribuí-los ou que a config Cloud-Init os definirá).
     *   **Passthrough de PCI (Playbook `vm-deploy.yml`):**
         1.  No novo host Proxmox, use o comando `lspci -nn` no shell para encontrar os **novos IDs PCI** da sua GPU AMD RX 5600XT (e quaisquer outros dispositivos de passthrough, como placas de rede). Lembre-se de pegar tanto o ID do dispositivo de vídeo quanto o do dispositivo de áudio da GPU.
-        2.  Edite o arquivo `home-server/ansible/playbooks/vm-deploy.yml`. Na seção de deploy da `ai-desktop-vm` (ou qualquer outra VM que use passthrough), atualize a lista `vm_host_pci_devices` com os **novos IDs PCI corretos** do novo hardware.
-    *   **Outras Variáveis Específicas do Host:** Revise `home-server/ansible/inventories/home/group_vars/all/main.yml` para quaisquer outras variáveis que possam ser dependentes do hardware específico do host (e.g., nomes de interface de rede se você os referenciou em algum lugar, embora o uso de `vmbr0` como padrão deva minimizar isso).
+        2.  Edite o arquivo `server/ansible/playbooks/vm-deploy.yml`. Na seção de deploy da `ai-desktop-vm` (ou qualquer outra VM que use passthrough), atualize a lista `vm_host_pci_devices` com os **novos IDs PCI corretos** do novo hardware.
+    *   **Outras Variáveis Específicas do Host:** Revise `server/ansible/inventories/home/group_vars/all/main.yml` para quaisquer outras variáveis que possam ser dependentes do hardware específico do host (e.g., nomes de interface de rede se você os referenciou em algum lugar, embora o uso de `vmbr0` como padrão deva minimizar isso).
 
 7.  **Executar os Playbooks Ansible para Configurar o Novo Ambiente:**
     1.  **Prepare o Novo Host Proxmox para ser Gerenciado pelo Ansible:**
@@ -101,11 +101,11 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         *   Teste a conexão SSH e a capacidade de `sudo` sem senha.
         (Estes são os mesmos passos da [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
     2.  **Execute o Playbook Mestre `full-deploy.yml` (ou o script `restore.sh`):**
-        Na raiz do seu projeto `home-server/` na máquina de controle Ansible:
+        Na raiz do repositório, na máquina de controle Ansible (o `restore.sh` entra sozinho em `server/ansible`):
         ```bash
-        bash scripts/restore.sh # Este script executa o full-deploy.yml e lida com a senha do vault
+        bash server/scripts/restore.sh # Este script executa o full-deploy.yml e lida com a senha do vault
         # OU, se preferir executar diretamente:
-        # ansible-playbook ansible/playbooks/full-deploy.yml --ask-vault-pass
+        # cd server/ansible && ansible-playbook -i inventories/home/hosts.ini playbooks/full-deploy.yml --ask-vault-pass
         ```
         Isto irá:
         *   Configurar o novo host Proxmox (NFS, firewall, pacotes, Node Exporter, etc.).
@@ -148,11 +148,11 @@ Se você precisar alterar o esquema de IP da sua rede doméstica (e.g., seu rote
     *   **Serviço de Rede:** Reinicie o serviço de rede (`sudo systemctl restart networking`) ou, de forma mais segura, reinicie o host Proxmox.
         !!! warning "Acesso ao Host Proxmox Após Mudança de IP"
             Após mudar o IP do host Proxmox, você precisará usar o novo IP para acessá-lo via SSH ou interface web.
-3.  **Inventário Ansible (`home-server/ansible/inventories/home/hosts.ini`):**
+3.  **Inventário Ansible (`server/ansible/inventories/home/hosts.ini`):**
     *   Atualize o valor de `ansible_host` para `proxmox_main_host` com o novo IP do Proxmox.
     *   Atualize os valores de `ansible_host` para `core-services-vm` e `ai-desktop-vm` com os novos IPs estáticos que você planeja para elas na nova sub-rede.
     *   Atualize as variáveis de referência de IP no final do arquivo (e.g., `proxmox_host_ip_var`, `core_services_vm_ip_var`, `ai_desktop_vm_ip_var`).
-4.  **Variáveis Globais Ansible (`home-server/ansible/inventories/home/group_vars/all/main.yml`):**
+4.  **Variáveis Globais Ansible (`server/ansible/inventories/home/group_vars/all/main.yml`):**
     *   `vm_cloud_init_gateway`: Atualize para o novo endereço IP do seu roteador/gateway.
     *   `proxmox_ssh_allowed_cidrs` e `proxmox_web_ui_allowed_cidrs`: Atualize para o novo CIDR da sua LAN (e.g., `10.0.10.0/24`).
     *   `vm_nfs_allowed_clients_cidr`: Atualize para o novo CIDR da sua sub-rede de VMs (geralmente o mesmo da LAN, e.g., `10.0.10.0/24`).
@@ -161,7 +161,7 @@ Se você precisar alterar o esquema de IP da sua rede doméstica (e.g., seu rote
     *   **Após atualizar os IPs no inventário Ansible (`hosts.ini`) e o `vm_cloud_init_gateway` em `main.yml`:**
         1.  **Execute o playbook `vm-deploy.yml`:**
             ```bash
-            ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass
+            ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass
             ```
             O módulo `community.proxmox.proxmox_kvm` tentará atualizar a configuração de Cloud-Init da VM. Para que a nova configuração de rede tenha efeito, a VM **precisará ser reiniciada**. O Ansible pode não forçar o reboot aqui, então você pode precisar fazer isso manualmente via UI do Proxmox ou `sudo reboot` dentro da VM.
         2.  **Verificação:** Após o reboot da VM, verifique se ela obteve o novo IP estático, gateway e DNS.
@@ -174,8 +174,8 @@ Se você precisar alterar o esquema de IP da sua rede doméstica (e.g., seu rote
     *   Os playbooks Ansible (`setup-proxmox-host.yml` para PVE Firewall e `setup-base-ubuntu.yml` para UFW nas VMs) usam as variáveis `proxmox_*_allowed_cidrs` e `vm_nfs_allowed_clients_cidr`.
     *   Após você ter atualizado essas variáveis no seu `group_vars/all/main.yml`, **re-execute esses playbooks** para que o Ansible atualize as regras de firewall para permitir os novos CIDRs da sua rede.
         ```bash
-        ansible-playbook ansible/playbooks/setup-proxmox-host.yml --ask-vault-pass
-        ansible-playbook ansible/playbooks/setup-base-ubuntu.yml --ask-vault-pass
+        ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass
+        ansible-playbook -i inventories/home/hosts.ini playbooks/setup-base-ubuntu.yml --ask-vault-pass
         ```
 7.  **Configurações de Aplicações Específicas que Referenciam IPs (Raro, mas Verifique):**
     *   Idealmente, nenhuma das suas aplicações Docker deve ter sido configurada para usar IPs fixos da sua LAN diretamente em suas configurações. Elas devem usar nomes de serviço Docker para comunicação interna ou serem acessadas via Traefik/DNS para acesso externo.
@@ -194,11 +194,11 @@ Se você precisar alterar o esquema de IP da sua rede doméstica (e.g., seu rote
     *   Reinicie os serviços de rede do host (`sudo systemctl restart networking`) ou, de forma mais segura, reinicie o host Proxmox.
     *   Verifique se o host Proxmox está acessível na rede com seu novo endereço IP.
 6.  **Atualize as Configurações de Rede das Máquinas Virtuais:**
-    *   Tente primeiro executar o playbook `ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass`.
+    *   Tente primeiro executar o playbook `ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass`.
     *   Requisite um reboot das VMs após a execução do playbook para que as novas configurações de rede Cloud-Init tenham efeito.
     *   Verifique se as VMs estão acessíveis em seus novos IPs. Se não, ajuste manualmente via console Proxmox e `netplan apply`.
 7.  **Execute os Playbooks Ansible para Sincronizar o Resto da Configuração:**
-    Rode `bash scripts/restore.sh` (ou o `full-deploy.yml`) para que o Ansible atualize todas as outras configurações que dependem dos novos IPs/CIDRs (regras de firewall PVE, regras UFW nas VMs, configurações NFS, arquivos dinâmicos do Traefik, etc.).
+    Rode `bash server/scripts/restore.sh` (ou o `full-deploy.yml`) para que o Ansible atualize todas as outras configurações que dependem dos novos IPs/CIDRs (regras de firewall PVE, regras UFW nas VMs, configurações NFS, arquivos dinâmicos do Traefik, etc.).
 8.  **Teste Toda a Conectividade e o Acesso a Todos os Serviços:** Verifique o acesso local e externo (via Cloudflare Tunnel) a todos os seus serviços. Verifique os logs por erros.
 
 Migrações de hardware e mudanças de esquema de rede são operações significativas. Prossiga com cautela, divida o processo em etapas gerenciáveis, verifique cada etapa e, o mais importante, tenha backups confiáveis e testados para poder reverter se algo der muito errado. Sua Infraestrutura como Código com Ansible será uma aliada poderosa nesses processos.

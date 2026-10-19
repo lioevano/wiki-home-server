@@ -74,7 +74,7 @@ Imagine que um container está se comportando de forma estranha. Em vez de ler c
 docker logs --tail 100 nextcloud_app | gemini "Resuma estes logs. Há algum erro crítico ou aviso recorrente?"
 
 # Output (Exemplo):
-# Parece que há múltiplos avisos de 'login failed' do endereço IP 192.168.1.100.
+# Parece que há múltiplos avisos de 'login failed' do endereço IP 192.168.15.100.
 # Há também um erro de conexão com o banco de dados que ocorreu uma vez, mas não se repetiu.
 ```
 

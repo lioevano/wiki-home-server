@@ -38,7 +38,7 @@ Aumentar ou diminuir o número de processadores virtuais (vCPUs) ou a quantidade
 
 3.  **Atualize a Configuração Ansible (Passo Crucial para Manter a IaC):**
     Esta é uma etapa **fundamental** para garantir que sua Infraestrutura como Código (Ansible) reflita o estado real da sua infraestrutura.
-    *   Na sua máquina de controle Ansible, abra o arquivo `home-server/ansible/playbooks/vm-deploy.yml`.
+    *   Na sua máquina de controle Ansible, abra o arquivo `server/ansible/playbooks/vm-deploy.yml`.
     *   Localize a seção de deploy da VM que você acabou de modificar na UI do Proxmox (e.g., a task para `core-services-vm` ou `ai-desktop-vm`).
     *   Atualize as variáveis `vm_cores` e `vm_memory` (em MiB) para corresponder exatamente aos novos valores que você configurou na UI do Proxmox.
         ```yaml
@@ -60,7 +60,7 @@ Aumentar ou diminuir o número de processadores virtuais (vCPUs) ou a quantidade
 4.  **Execute o Playbook Ansible para Registrar o Novo Estado Desejado:**
     Rode o playbook `vm-deploy.yml` a partir da sua máquina de controle Ansible. Como a VM já existe, o Ansible (através do módulo `community.proxmox.proxmox_kvm` com `update: true` e `state: present`) deve apenas verificar se os recursos da VM no Proxmox correspondem ao definido no playbook. Se você acabou de fazer a mudança na UI, ele deve reportar "ok" para as tasks de configuração de recursos. Se houvesse uma divergência (e.g., você mudou na UI mas esqueceu de mudar no Ansible e rodou o playbook), o Ansible tentaria aplicar os valores do playbook.
     ```bash
-    ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass
+    ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass
     ```
     !!! warning "Idempotência e Sincronização de Estado"
         Se você não atualizar os arquivos Ansible após uma mudança manual na UI do Proxmox, na próxima vez que o playbook `vm-deploy.yml` for executado, ele poderá tentar **reverter os recursos da VM para os valores antigos** que estavam definidos no playbook. Manter a UI do Proxmox e seus arquivos Ansible sincronizados é a chave para uma IaC eficaz. **A configuração Ansible deve ser a fonte da verdade.**
@@ -99,7 +99,7 @@ Aumentar o tamanho de um disco virtual existente é uma operação relativamente
         ```
     *   Execute o playbook Ansible para registrar a mudança:
         ```bash
-        ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass
+        ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass
         ```
 
 4.  **Expanda o Sistema de Arquivos DENTRO da VM:**
@@ -157,7 +157,7 @@ Se você precisar de um espaço de armazenamento separado dentro de uma VM (e n�
             format: "qcow2" # O formato que você escolheu
         # ...
         ```
-    *   Execute `ansible-playbook ansible/playbooks/vm-deploy.yml --ask-vault-pass`. O Ansible deve reconhecer o disco existente.
+    *   Execute `ansible-playbook -i inventories/home/hosts.ini playbooks/vm-deploy.yml --ask-vault-pass`. O Ansible deve reconhecer o disco existente.
 
 3.  **Particione, Formate e Monte o Novo Disco DENTRO da VM:**
     *   Inicie a VM (ou reinicie se já estava rodando para que ela detecte o novo hardware).
