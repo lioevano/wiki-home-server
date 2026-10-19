@@ -119,13 +119,11 @@ Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando se
     # Assumindo os valores padrão de zfs_*_dataset_name do main.yml:
     # zfs_docker_volumes_dataset_name: "docker-volumes"
     # zfs_media_dataset_name: "media"
-    # zfs_downloads_dataset_name: "downloads"
     # zfs_rag_sources_dataset_name: "rag_sources"
     # zfs_backups_dataset_name: "backups"
 
     root@pve:~# zfs create data/docker-volumes
     root@pve:~# zfs create data/media
-    root@pve:~# zfs create data/downloads
     root@pve:~# zfs create data/rag_sources
     root@pve:~# zfs create data/backups
     ```
@@ -351,11 +349,8 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 # Compartilhamento para volumes Docker gerais
 {{ zfs_base_pool_path }}/{{ zfs_docker_volumes_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
-# Compartilhamento para dados de mídia
+# Compartilhamento para mídia e torrents (mesmo dataset: a importação das *arr é por hardlink)
 {{ zfs_base_pool_path }}/{{ zfs_media_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
-
-# Compartilhamento para downloads
-{{ zfs_base_pool_path }}/{{ zfs_downloads_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)
 {% if zfs_rag_sources_dataset_name is defined and 'ai-desktop-vm' in groups['virtual_machines'] %}

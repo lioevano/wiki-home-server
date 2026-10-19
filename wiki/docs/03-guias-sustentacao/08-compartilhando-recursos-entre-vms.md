@@ -10,9 +10,9 @@ Esta página explora algumas das abordagens mais comuns para realizar esse compa
 
 ## 1. NFS (Network File System) - Já em Uso na Arquitetura
 
-Nossa arquitetura já utiliza extensivamente o NFS. O host Proxmox VE atua como um servidor NFS, exportando os datasets ZFS (como `data/docker-volumes`, `data/media`, `data/downloads`) para a `core-services-vm` e a `ai-desktop-vm`. Essas VMs, por sua vez, atuam como clientes NFS, montando esses compartilhamentos para que os containers Docker possam usar os dados persistentes.
+Nossa arquitetura já utiliza extensivamente o NFS. O host Proxmox VE atua como um servidor NFS, exportando os datasets ZFS (como `data/docker-volumes` e `data/media`) para a `core-services-vm` e a `ai-desktop-vm`. Essas VMs, por sua vez, atuam como clientes NFS, montando esses compartilhamentos para que os containers Docker possam usar os dados persistentes.
 
-*   **Caso de Uso Principal na Arquitetura Atual:** Compartilhar grandes volumes de dados (configurações Docker, bibliotecas de mídia, downloads, modelos de IA) do host Proxmox para as VMs Linux que rodam os containers.
+*   **Caso de Uso Principal na Arquitetura Atual:** Compartilhar grandes volumes de dados (configurações Docker, bibliotecas de mídia e torrents, modelos de IA) do host Proxmox para as VMs Linux que rodam os containers.
 *   **Estendendo para Novas VMs ou Entre VMs:**
     Você pode usar o mesmo princípio para compartilhar dados entre VMs ou de uma VM para outra, ou do host Proxmox para uma nova VM.
     *   **Compartilhar de uma VM para Outra:**

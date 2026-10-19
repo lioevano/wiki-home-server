@@ -421,8 +421,7 @@ zfs_base_pool_path: "/data"
 # Nomes dos datasets ZFS a serem criados sob o pool 'data'.
 # Estes serão montados em, por exemplo, /data/docker-volumes, /data/media, etc.
 zfs_docker_volumes_dataset_name: "docker-volumes"
-zfs_media_dataset_name: "media"
-zfs_downloads_dataset_name: "downloads"
+zfs_media_dataset_name: "media"             # Mídia e torrents no mesmo dataset (/data na stack media; hardlinks).
 zfs_rag_sources_dataset_name: "rag_sources"       # Para a VM de IA, se usada.
 zfs_backups_dataset_name: "backups"
 

@@ -108,3 +108,12 @@ def test_recyclarr_renderiza():
     assert "r" * 32 in str(cfg["radarr"]) and "http://radarr:7878" in str(cfg["radarr"])
     tarefa = next(t for t in _tasks() if "recyclarr.yml.j2" in str(t.get("ansible.builtin.template", {}).get("src", "")))
     assert tarefa["ansible.builtin.template"]["mode"] == "0600"
+
+
+# --- Dataset único ---
+
+def test_sem_dataset_downloads():
+    for f in (ROOT / "server").rglob("*"):
+        if f.is_file():
+            t = f.read_text(encoding="utf-8", errors="ignore")
+            assert "zfs_downloads_dataset_name" not in t and "ZFS_DOWNLOADS" not in t, f

@@ -56,7 +56,7 @@ Execute estes comandos no **shell do seu host Proxmox VE**, como usuário `root`
         sudo zfs snapshot -r data/docker-volumes@checkpoint_semanal
 
         # Tira um snapshot de TODO o pool 'data' e de TODOS os seus datasets
-        # (docker-volumes, media, downloads, rag_sources, backups)
+        # (docker-volumes, media, rag_sources, backups)
         sudo zfs snapshot -r data@backup_sistema_completo_20230815
         ```
 

@@ -170,7 +170,7 @@ Proxmox VE tem um sistema de backup integrado robusto para VMs.
 
 ### 3. Dados Persistentes dos Containers Docker (Volumes NFS)
 
-Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/docker-volumes`, `/data/media`, `/data/downloads`, `/data/rag_sources`) e são montados nas VMs via NFS para os containers Docker.
+Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/docker-volumes`, `/data/media`, `/data/rag_sources`) e são montados nas VMs via NFS para os containers Docker.
 
 #### A. Bancos de Dados das Aplicações (PostgreSQL para Authelia, Nextcloud, Grafana)
 
@@ -224,7 +224,7 @@ Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/do
         ```
         (Substitua os nomes e usuários conforme o banco de dados que está restaurando).
 
-#### B. Volumes de Arquivos (Configs Docker, Mídia, Downloads, Modelos RAG)
+#### B. Volumes de Arquivos (Configs Docker, Mídia, Modelos RAG)
 
 Estes são os diretórios e arquivos dentro dos seus datasets ZFS (`/data/docker-volumes`, `/data/media`, etc.).
 
@@ -261,7 +261,6 @@ Estes são os diretórios e arquivos dentro dos seus datasets ZFS (`/data/docker
                     ::"${ARCHIVE_NAME}" \
                     {{ zfs_base_pool_path }}/docker-volumes \
                     {{ zfs_base_pool_path }}/media \
-                    {{ zfs_base_pool_path }}/downloads \
                     {{ zfs_base_pool_path }}/rag_sources \
                     --exclude '{{ zfs_base_pool_path }}/backups' # NÃO FAÇA BACKUP DO DIRETÓRIO DE BACKUPS EM SI!
                     # Adicione outros --exclude para caches, arquivos temporários grandes, etc.

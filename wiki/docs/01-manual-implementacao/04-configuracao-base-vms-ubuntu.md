@@ -87,7 +87,6 @@ Este arquivo contém as tarefas principais do role `common`.
   loop: # Itera sobre os datasets ZFS definidos em group_vars/all/main.yml
     - { dataset_name: "{{ zfs_docker_volumes_dataset_name }}" }
     - { dataset_name: "{{ zfs_media_dataset_name }}" }
-    - { dataset_name: "{{ zfs_downloads_dataset_name }}" }
     # Monta o dataset de RAG Sources apenas se a VM atual estiver no grupo 'ai_desktop_vm'
     # e se zfs_rag_sources_dataset_name estiver definido.
     - { dataset_name: "{{ zfs_rag_sources_dataset_name }}", when_condition: "'ai-desktop-vm' in group_names and zfs_rag_sources_dataset_name is defined" }
@@ -183,7 +182,7 @@ Handlers para o role `common`.
   * Configurar o fuso horário da VM usando a variável `{{ system_timezone }}`.
   * **Configurar Cliente NFS:**
     * Criar o ponto de montagem base na VM (e.g., `/mnt/pve_data_zfs`, definido por `{{ vm_nfs_mount_base_path }}`).
-    * Montar os datasets ZFS compartilhados pelo host Proxmox (e.g., `docker-volumes`, `media`, `downloads`, `rag_sources`) nos subdiretórios correspondentes, adicionando entradas ao `/etc/fstab` para persistência.
+    * Montar os datasets ZFS compartilhados pelo host Proxmox (e.g., `docker-volumes`, `media`, `rag_sources`) nos subdiretórios correspondentes, adicionando entradas ao `/etc/fstab` para persistência.
   * **Criar Usuário e Grupo Docker:**
     * Criar o grupo `{{ docker_group_name_on_vm }}` com o GID `{{ docker_pgid }}`.
     * Criar o usuário `{{ docker_user_name_on_vm }}` com o UID `{{ docker_puid }}`, associado ao grupo acima, e com uma senha definida.

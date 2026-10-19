@@ -55,7 +55,6 @@
   loop: # Itera sobre os datasets ZFS definidos em group_vars/all/main.yml
     - { dataset_name: "{{ zfs_docker_volumes_dataset_name }}" }
     - { dataset_name: "{{ zfs_media_dataset_name }}" }
-    - { dataset_name: "{{ zfs_downloads_dataset_name }}" }
     # Monta o dataset de RAG Sources apenas se a VM atual estiver no grupo 'ai_desktop_vm'
     # e se zfs_rag_sources_dataset_name estiver definido.
     - { dataset_name: "{{ zfs_rag_sources_dataset_name }}", when_condition: "'ai-desktop-vm' in group_names and zfs_rag_sources_dataset_name is defined" }
