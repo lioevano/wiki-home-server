@@ -15,7 +15,7 @@ proxmox_storage_vm_disks: "local-lvm"
 # Storage no Proxmox onde ISOs e templates de VM são armazenados (geralmente 'local' no SSD NVMe).
 proxmox_storage_iso_templates: "local"
 # Nome do template Ubuntu Cloud-Init que será criado no Proxmox.
-proxmox_ubuntu_template_name: "ubuntu-2204-cloudinit-template-v1"
+proxmox_ubuntu_template_name: "ubuntu-2404-cloudinit-template-v1"
 
 # --- Configurações Padrão para Máquinas Virtuais (VMs) ---
 # Nome do usuário Ansible a ser criado nas VMs via Cloud-Init.

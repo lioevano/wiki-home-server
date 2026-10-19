@@ -51,7 +51,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
         ```bash
         journalctl -xe # Mostra os últimos logs com explicações de erros
         journalctl -f # Segue os logs do sistema em tempo real
-        journalctl -u nome_do_servico.service # Logs de um serviço systemd específico (e.g., sshd, nfs-kernel-server, ollama)
+        journalctl -u nome_do_servico.service # Logs de um serviço systemd específico (e.g., sshd, nfs-kernel-server, node_exporter)
         journalctl -p err # Mostra apenas logs com prioridade de erro ou superior
         ```
     *   **`dmesg`:** Mostra mensagens do buffer do kernel. Útil para problemas de hardware, drivers, ou erros de baixo nível.
@@ -205,7 +205,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
     5.  **Sincronia de Relógio:**
         *   Certifique-se de que o relógio na `core-services-vm` (e, portanto, nos containers) está sincronizado corretamente com um servidor NTP. Desvios significativos de tempo podem afetar a validação de códigos TOTP para 2FA.
     6.  **Configuração do Middleware `authelia-forwardauth@docker` no Traefik:**
-        *   No `docker-compose.yml` da stack Authelia (Seção 5.3), a definição do middleware `traefik.http.middlewares.authelia-forwardauth.forwardauth.address` está correta, apontando para `http://authelia:9091/api/verify...`?
+        *   No `docker-compose.yml` da stack `core` (serviço `authelia`, [seção 5.3](../01-manual-implementacao/05-rede-segura.md#53-authelia-parte-de-dockerstackscoredocker-composeyml)), a definição do middleware `traefik.http.middlewares.authelia-forwardauth.forwardauth.address` está correta, apontando para `http://authelia:9091/api/verify...`?
         *   Os serviços que você quer proteger no Traefik estão referenciando este middleware corretamente (e.g., `middlewares: "authelia-forwardauth@docker"`)?
 
 ### 5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)

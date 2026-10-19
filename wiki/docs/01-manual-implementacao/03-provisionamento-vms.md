@@ -47,7 +47,7 @@ Siga estes passos na **interface web do Proxmox VE** ou, para os comandos de dow
     * **Aba General:**
         * **Node:** Selecione seu nó Proxmox (e.g., `pve`).
         * **VM ID:** Escolha um ID numérico único que esteja fora da sua faixa usual de VMs de produção. IDs altos como `9000`, `9001`, etc., são comumente usados para templates. Exemplo: `9000`.
-        * **Name:** Dê um nome descritivo, e.g., `ubuntu-2204-cloudinit-base`.
+        * **Name:** Dê um nome descritivo, e.g., `ubuntu-2404-cloudinit-template-v1` (o mesmo valor de `proxmox_ubuntu_template_name`).
     * **Aba OS:**
         * Selecione a opção **"Do not use any media"**.
         * **Guest OS Type:** `Linux`.

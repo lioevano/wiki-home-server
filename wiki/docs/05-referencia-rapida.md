@@ -48,10 +48,10 @@ Use apenas se algo não atender suas necessidades. A stack principal já funcion
 
 ```bash
 # Criar snapshot ZFS antes de mudança arriscada
-zfs snap tank/docker-volumes@antes-da-mudanca
+zfs snap data/docker-volumes@antes-da-mudanca
 
 # Restaurar snapshot ZFS
-zfs rollback tank/docker-volumes@antes-da-mudanca
+zfs rollback data/docker-volumes@antes-da-mudanca
 
 # Listar stacks Docker rodando
 docker compose ls
@@ -74,5 +74,5 @@ qm status 100  # proxmox CLI para core-services-vm
 | 502 Bad Gateway | Traefik não resolve o serviço | Ver labels do container e rede `proxy` |
 | Authelia pedindo login em loop | Cookie/SSL mismatch | Verificar que `traefik.http.routers.*.tls` está ativo |
 | NFS mount falhando na VM | Serviço NFS parou no host | `systemctl status nfs-kernel-server` no Proxmox |
-| Ollama não detecta GPU | Driver ROCm/CUDA faltando | Verificar `rocm-smi` ou `nvidia-smi` na VM |
+| Ollama não detecta GPU | Passthrough da GPU AMD ou `/dev/kfd`/`/dev/dri` ausentes | `docker logs ollama` e `ls /dev/kfd /dev/dri` na `ai-desktop-vm` (imagem `ollama/ollama:rocm`) |
 | LiteLLM retornando erro 429 | Rate limit da API externa | Verificar config `config.yaml` do LiteLLM |

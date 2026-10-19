@@ -27,11 +27,10 @@ O Proxmox VE gerencia os recursos de hardware do servidor físico e os distribui
 *   **CPU (AMD Ryzen 5 5600G):**
     *   Possui 6 núcleos / 12 threads.
     *   Os núcleos são alocados para as VMs conforme a necessidade. É importante não sobrealocar cronicamente os núcleos para evitar degradação de performance.
-    *   Neste guia, a `core-services-vm` e a `ai-desktop-vm` recebem 4 vCPUs cada, o que representa uma sobrealocação se ambas estiverem em uso intenso simultaneamente. O PVE lida bem com sobrealocação leve para cargas de trabalho típicas de homelab.
-*   **RAM (16GB DDR4):**
-    *   Esta é a **principal limitação** do nosso hardware.
-    *   O Proxmox host em si consome uma pequena quantidade de RAM (geralmente 1-2GB).
-    *   O restante é dividido entre as VMs. A alocação de 6GB para `core-services-vm` e 8GB para `ai-desktop-vm` deixa pouca margem.
+    *   Neste guia, a `core-services-vm` recebe 6 vCPUs e a `ai-desktop-vm` 4 vCPUs (valores de `vm-deploy.yml`), o que representa uma sobrealocação dos 6 núcleos se ambas estiverem em uso intenso simultaneamente. O PVE lida bem com sobrealocação leve para cargas de trabalho típicas de homelab.
+*   **RAM (48GB DDR4):**
+    *   O Proxmox host em si consome uma pequena quantidade de RAM (geralmente 1-2GB), mais o ARC do ZFS, que usa a memória livre como cache e a devolve sob pressão.
+    *   O restante é dividido entre as VMs: 16GB para a `core-services-vm` e 16GB para a `ai-desktop-vm`, o que deixa margem para o ARC e para aumentar a VM de IA se modelos maiores pedirem.
     *   O KSM (Kernel Samepage Merging) pode ser habilitado no Proxmox para deduplicar páginas de memória idênticas entre VMs, economizando RAM, mas com um pequeno custo de CPU. (O Node Exporter no host está configurado para coletar métricas KSM).
 *   **Armazenamento:**
     *   **SSD NVMe 1TB:** Usado para o sistema operacional Proxmox VE e para os discos virtuais das VMs (`local-lvm`). Isso garante boot rápido do host e boa performance de I/O para as VMs.
@@ -45,11 +44,11 @@ Nesta arquitetura, utilizamos principalmente VMs KVM para isolamento completo de
 
 *   **`core-services-vm`:**
     *   **Propósito:** Hospedar a maioria dos serviços Docker, incluindo a stack de rede (Traefik, Cloudflared, Authelia), Portainer, Nextcloud, Home Assistant, stack de mídia e stack de monitoramento.
-    *   **Recursos (Exemplo):** 4 vCPUs, 6GB RAM, 80GB disco.
+    *   **Recursos:** 6 vCPUs, 16GB RAM, 100GB disco.
     *   **Sistema Operacional:** Ubuntu Server (instalado via template Cloud-Init).
 *   **`ai-desktop-vm` (Opcional):**
     *   **Propósito:** Dedicada a tarefas de Inteligência Artificial (LLMs com Ollama, RAG) que podem se beneficiar de GPU passthrough (RX 5600XT). Pode também ter um ambiente desktop para interação direta.
-    *   **Recursos (Exemplo):** 4 vCPUs, 8GB RAM, 150GB disco.
+    *   **Recursos:** 4 vCPUs, 16GB RAM, 200GB disco.
     *   **Sistema Operacional:** Ubuntu Server (ou Desktop, se GUI for primária).
     *   **GPU Passthrough:** Configurado no Proxmox para dar à VM controle direto da GPU RX 5600XT.
 

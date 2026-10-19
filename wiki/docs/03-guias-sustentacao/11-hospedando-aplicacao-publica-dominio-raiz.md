@@ -19,7 +19,7 @@ Hospedar uma aplicação publicamente, especialmente no domínio raiz que é fre
         2.  **Priorize Sites Estáticos (Hugo, Jekyll, Pelican, Eleventy):** Esta é a **opção mais segura** para um blog ou site público. Eles geram arquivos HTML, CSS e JavaScript estáticos. A única coisa que você precisa é de um servidor web simples (como Nginx ou Caddy rodando em um container Docker) para servir esses arquivos. A superfície de ataque na camada da aplicação do blog em si é mínima ou inexistente.
         3.  **Containers com Menor Privilégio:** Se usar uma aplicação dinâmica, tente rodar o container com um usuário não-root (configurando `PUID`/`PGID`) sempre que possível.
         4.  **Volumes com Permissões Restritas:** Garanta que o container da aplicação pública só tenha permissão de escrita nos diretórios que ele realmente precisa (e.g., um diretório de uploads, se houver), e permissão de leitura no resto.
-        5.  **Atualizações Regulares da Imagem Docker:** Use Watchtower (com cautela para aplicações críticas) ou atualize manualmente a imagem Docker do seu blog/servidor web regularmente.
+        5.  **Atualizações Regulares da Imagem Docker:** O Diun avisa quando sai versão nova da imagem; atualize a imagem Docker do seu blog/servidor web manualmente e com regularidade.
         6.  **Web Application Firewall (WAF):** A Cloudflare já oferece um WAF básico. Para aplicações dinâmicas como WordPress, considere habilitar e configurar o conjunto de regras gerenciadas da Cloudflare ou regras específicas para WordPress para bloquear ataques comuns.
 
 *   **Exposição da Lógica do Proxy Reverso (Traefik):**

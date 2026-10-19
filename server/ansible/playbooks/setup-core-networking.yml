@@ -3,6 +3,8 @@
   become: yes
   vars_files:
     - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    core_stack_dir_on_vm: "/opt/stacks/core"
 
   tasks:
     - name: "Garantir que redes Docker globais (proxy, internal_services) existam"
@@ -21,9 +23,26 @@
       ansible.builtin.include_role:
         name: infra/authelia-config
 
+    # O módulo de deploy roda na VM: o compose do repositório (máquina de controle) é copiado para lá.
+    - name: "Garantir diretório da stack core na VM"
+      ansible.builtin.file:
+        path: "{{ core_stack_dir_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: "Copiar o compose da stack core para a VM"
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../docker/stacks/core/docker-compose.yml"
+        dest: "{{ core_stack_dir_on_vm }}/docker-compose.yml"
+        owner: root
+        group: root
+        mode: "0644"
+
     - name: "Deploy Core Stack (Traefik, Cloudflared, Authelia)"
       community.docker.docker_compose_v2:
-        project_src: "{{ playbook_dir }}/../../docker/stacks/core/"
+        project_src: "{{ core_stack_dir_on_vm }}"
         files:
           - docker-compose.yml
         state: present

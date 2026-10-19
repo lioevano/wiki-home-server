@@ -10,7 +10,7 @@ Esta seção é fundamental para expor seus serviços auto-hospedados à interne
 * **Cloudflare Tunnel (`cloudflared`):** Criará uma conexão de saída segura da nossa rede local para a rede global da Cloudflare. Isso elimina a necessidade de abrir portas no roteador doméstico e protege nosso endereço IP público.
 * **Authelia:** Servirá como um portal de autenticação e autorização centralizado, adicionando uma camada de segurança com Single Sign-On (SSO) e autenticação de dois fatores (2FA) para os serviços que escolhermos proteger.
 
-Todos esses componentes rodarão como containers Docker na `core-services-vm`, gerenciados via Docker Compose e, posteriormente, Portainer.
+Todos esses componentes rodarão como containers Docker na `core-services-vm`, implantados pelo Ansible (playbook `setup-core-networking.yml`) com Docker Compose. As stacks `apps` e `ai` são implantadas depois, pelo Portainer.
 
 ## 5.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso
 
@@ -20,7 +20,7 @@ Antes de mergulharmos na configuração, é vital entender como o tráfego de um
 2. **Resolução DNS via Cloudflare:** Os nameservers do seu domínio estão configurados para a Cloudflare. A Cloudflare não resolverá o subdomínio para o seu IP doméstico, mas para um endpoint da rede Cloudflare associado ao seu Cloudflare Tunnel.
 3. **Cloudflare Edge Network:** A requisição do usuário chega à rede global da Cloudflare. Aqui, ela pode se beneficiar de proteções como mitigação de DDoS e Web Application Firewall (WAF) básico da Cloudflare. Seu IP doméstico real permanece oculto.
 4. **Cloudflare Tunnel (`cloudflared` Agent):** O container `cloudflared` rodando na sua `core-services-vm` mantém uma conexão de **saída** persistente e criptografada com o data center da Cloudflare mais próximo. O tráfego destinado aos seus subdomínios configurados no túnel é "puxado" do Cloudflare Edge, através desta conexão segura, para o container `cloudflared` na sua rede local. **Nenhuma porta de entrada precisa ser aberta no seu roteador doméstico.**
-5. **`cloudflared` para Traefik:** O container `cloudflared` recebe o tráfego do túnel e o encaminha para o container Traefik. No nosso `docker-compose.yml`, o `cloudflared` é configurado para enviar o tráfego para o serviço Docker `traefik` na porta `80` (dentro da rede Docker `proxy` compartilhada).
+5. **`cloudflared` para Traefik:** O container `cloudflared` recebe o tráfego do túnel e o encaminha para o container Traefik. No nosso `docker-compose.yml`, o Public Hostname do túnel envia o tráfego para `https://traefik:443` (serviço Docker `traefik` na rede `proxy` compartilhada, com *No TLS Verify*; ver a [seção 5.5](#55-configuração-de-dns-na-cloudflare)).
 6. **Traefik (Proxy Reverso):**
     * Traefik escuta nas portas `80` (HTTP) e `443` (HTTPS) na `core-services-vm` (mapeadas do host da VM para o container Traefik).
     * **Redirecionamento HTTP para HTTPS:** Traefik está configurado para redirecionar automaticamente todo o tráfego chegando na porta `80` para HTTPS na porta `443`.
@@ -148,8 +148,7 @@ services:
 
 !!! note "Variáveis de Ambiente no Docker Compose"
     Variáveis como `${CORE_SERVICES_VM_IP_VAR}`, `${VM_NFS_MOUNT_BASE_PATH}`, `${ZFS_DOCKER_VOLUMES_DATASET_NAME}`, `${CLOUDFLARE_API_TOKEN_FROM_VAULT}`, `${BASE_DOMAIN_FROM_VAULT}`, e `${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}` são placeholders que serão substituídos:
-    *Pelo Ansible quando ele gerar um arquivo `.env` para esta stack na `core-services-vm`.
-    *   Ou, se você não usar um `.env` gerado por Ansible para esta stack específica, você precisaria definir essas variáveis diretamente como "Environment variables" da stack no Portainer. O método recomendado é via arquivo `.env` preparado por Ansible para consistência.
+    pelos valores que o playbook `setup-core-networking.yml` passa no bloco `environment:` da tarefa de deploy (vault, inventário e `group_vars`). A stack `core` não tem `.env` em disco nem é criada no Portainer.
 
 ## 5.3. Authelia (parte de `docker/stacks/core/docker-compose.yml`)
 
@@ -231,7 +230,7 @@ services:
 
 ## 5.4. Playbook `ansible/playbooks/setup-core-networking.yml`
 
-Este playbook Ansible orquestra a preparação dos arquivos de configuração e o deploy das stacks `core` e `authelia`.
+Este playbook Ansible prepara os arquivos de configuração e faz o deploy da stack `core` (Traefik, Cloudflared e Authelia, num único compose).
 
 **Principais Ações do Playbook:**
 
@@ -239,14 +238,14 @@ Este playbook Ansible orquestra a preparação dos arquivos de configuração e 
   2. **Executa Role `infra/traefik-config`:**
       * Cria os diretórios de configuração e dados para Traefik no volume NFS.
       * Copia o `traefik.yml` (config estática) templateado.
-      * Copia os arquivos de configuração dinâmica (middlewares como `security_headers.yml`, `nextcloud_middleware.yml`, e o roteamento para RAG services `rag_services.yml`) para o diretório apropriado.
+      * Copia os arquivos de configuração dinâmica (middlewares como `security_headers.yml`, `nextcloud_middleware.yml`, e o roteamento para os serviços da VM de IA em `rag_services.yml`) para o diretório apropriado.
       * Garante que o arquivo `acme.json` (para certificados SSL) exista com as permissões corretas.
-  3. **Deploy da Stack `core`:** Usa o módulo `community.docker.docker_compose_v2` para fazer deploy da stack `core` (Traefik, Cloudflared), injetando as variáveis de ambiente necessárias do Ansible Vault/`main.yml`.
-  4. **Aguarda Traefik:** Espera o healthcheck do Traefik passar antes de prosseguir.
-  5. **Executa Role `infra/authelia-config`:**
-      * Cria o diretório de configuração para Authelia no volume NFS.
+  3. **Executa Role `infra/authelia-config`:**
+      * Cria os diretórios de configuração e do banco do Authelia no volume NFS.
       * Copia o `configuration.yml` e o `users_database.yml` (base de usuários do backend `file`) templateados.
-  6. **Deploy da Stack `authelia`:** Usa `community.docker.docker_compose_v2` para fazer deploy da stack `authelia` (Authelia app, Authelia DB), injetando as variáveis de ambiente.
+  4. **Copia o compose para a VM:** o módulo de deploy roda na `core-services-vm`, então o `docker/stacks/core/docker-compose.yml` do repositório é copiado para `/opt/stacks/core/` na VM.
+  5. **Deploy da Stack `core`:** Usa o módulo `community.docker.docker_compose_v2` sobre `/opt/stacks/core/`, injetando as variáveis de ambiente do Ansible Vault, do inventário e de `group_vars`.
+  6. **Aguarda Traefik:** Espera o healthcheck do Traefik passar.
 
 ### Ações Preparatórias: Roles Ansible para Configuração
 
@@ -730,6 +729,8 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
   become: yes
   vars_files:
     - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    core_stack_dir_on_vm: "/opt/stacks/core"
 
   tasks:
     - name: "Garantir que redes Docker globais (proxy, internal_services) existam"
@@ -748,9 +749,26 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
       ansible.builtin.include_role:
         name: infra/authelia-config
 
+    # O módulo de deploy roda na VM: o compose do repositório (máquina de controle) é copiado para lá.
+    - name: "Garantir diretório da stack core na VM"
+      ansible.builtin.file:
+        path: "{{ core_stack_dir_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: "Copiar o compose da stack core para a VM"
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../../docker/stacks/core/docker-compose.yml"
+        dest: "{{ core_stack_dir_on_vm }}/docker-compose.yml"
+        owner: root
+        group: root
+        mode: "0644"
+
     - name: "Deploy Core Stack (Traefik, Cloudflared, Authelia)"
       community.docker.docker_compose_v2:
-        project_src: "{{ playbook_dir }}/../../docker/stacks/core/"
+        project_src: "{{ core_stack_dir_on_vm }}"
         files:
           - docker-compose.yml
         state: present
@@ -784,11 +802,11 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
 ### Executando o Playbook de Configuração da Rede Core
 
 1. **Verifique os Roles e Templates:** Certifique-se de que todos os arquivos de role (`infra/traefik-config`, `infra/authelia-config`) e seus respectivos templates (`.j2` arquivos) estão criados e preenchidos com o código correto no seu projeto Ansible.
-2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, navegue até a raiz do seu projeto `home-server/`.
+2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 
     ```bash
-    ansible-playbook ansible/playbooks/setup-core-networking.yml --ask-vault-pass
+    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-core-networking.yml --ask-vault-pass
     ```
 
     Você será solicitado a fornecer a senha do Ansible Vault.

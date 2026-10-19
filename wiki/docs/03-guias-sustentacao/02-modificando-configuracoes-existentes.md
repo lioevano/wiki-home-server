@@ -39,7 +39,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   `/etc/default/grub` e `/etc/kernel/cmdline`: Opções de boot do kernel (para IOMMU, etc.).
         *   `/etc/modules`, `/etc/modprobe.d/`: Módulos do kernel e blacklisting.
         *   `/etc/exports`: Configuração do servidor NFS (gerada pelo Ansible).
-        *   `/etc/systemd/system/` (e `override.conf` em subdiretórios): Arquivos de unidade Systemd para serviços como Node Exporter (gerenciados por Ansible) ou Ollama (instalado por script, mas com override gerenciado por Ansible).
+        *   `/etc/systemd/system/` (e `override.conf` em subdiretórios): Arquivos de unidade Systemd para serviços como o Node Exporter (gerenciados por Ansible). O Ollama roda em container na stack `ai`, não como serviço systemd.
 
 3.  **Máquinas Virtuais (VMs - `core-services-vm`, `ai-desktop-vm`):**
     As configurações base são gerenciadas pelo Ansible.
@@ -57,11 +57,11 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   Localizados no seu projeto Git em `home-server/docker/stacks/NOME_DA_STACK/docker-compose.yml`.
         *   Definem os serviços, imagens, volumes, redes, portas, variáveis de ambiente e labels Traefik para cada stack de aplicação.
         *   **As modificações são feitas nestes arquivos e depois aplicadas via Portainer ("Update the stack").**
-    *   **Variáveis de Ambiente e Secrets no Portainer:**
-        *   Ao criar/editar uma stack no Portainer, você pode carregar variáveis de um arquivo `.env` (que foi gerado pelo Ansible na VM).
-        *   **Secrets críticos** (senhas de banco de dados, tokens de API específicos da aplicação) são definidos **manualmente** como variáveis de ambiente diretamente na UI do Portainer para a stack.
+    *   **Variáveis de Ambiente e Secrets:**
+        *   Ao criar/editar uma stack no Portainer, carregue o arquivo `.env` gerado pelo Ansible na VM.
+        *   **Secrets críticos** (senhas de banco de dados, tokens de API) ficam no vault e chegam ao `.env` pelo playbook da stack; para mudá-los, edite o vault e rode o playbook de novo. Nada é digitado na UI do Portainer.
     *   **Volumes Docker Persistentes (Mapeados para os Diretórios NFS):**
-        *   Contêm os dados e arquivos de configuração internos das suas aplicações Docker (e.g., o `config.php` do Nextcloud dentro do seu volume de config, o banco de dados SQLite do Sonarr, os arquivos de mídia do Plex/Jellyfin). As modificações de configuração *dentro* da aplicação são salvas aqui.
+        *   Contêm os dados e arquivos de configuração internos das suas aplicações Docker (e.g., o `config.php` do Nextcloud dentro do seu volume de config, o banco de dados SQLite do Sonarr, a biblioteca do Jellyfin). As modificações de configuração *dentro* da aplicação são salvas aqui.
 
 5.  **Traefik (Configuração via `core-services-vm`):**
     *   **Configuração Estática (`traefik.yml`):**
@@ -129,7 +129,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         2.  No Portainer, navegue até a stack que você deseja modificar.
         3.  Clique em "**Editor**".
         4.  Cole o conteúdo do `docker-compose.yml` atualizado.
-        5.  Se necessário, modifique as variáveis de ambiente na UI do Portainer (especialmente secrets que não vêm do arquivo `.env`).
+        5.  Se mudou variáveis ou segredos, rode antes o playbook da stack e recarregue o `.env` em **Env**.
         6.  Clique em "**Update the stack**".
             *   Marque a opção "**Re-pull image and redeploy**" se você alterou a tag da imagem de um serviço e quer que o Portainer puxe a nova versão da imagem.
     *   **Se a Mudança é na Configuração Estática do Traefik ou Authelia (arquivos `.yml` principais):**

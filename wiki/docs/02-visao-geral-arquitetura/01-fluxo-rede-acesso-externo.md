@@ -27,8 +27,8 @@ sequenceDiagram
     CF_Edge->>CFT_Agent: 4. Tráfego encaminhado via Túnel Seguro (conexão de saída)
     Note over CF_Edge, CFT_Agent: Seu IP doméstico NUNCA é exposto!
 
-    CFT_Agent->>Traefik_Proxy: 5. Encaminha requisição HTTP para Traefik (porta 80 interna)
-    Note over CFT_Agent, Traefik_Proxy: Traefik escuta em 80/443 na VM, CFT direciona para ele.
+    CFT_Agent->>Traefik_Proxy: 5. Encaminha a requisição para https://traefik:443 (rede Docker proxy)
+    Note over CFT_Agent, Traefik_Proxy: No TLS Verify: o nome interno traefik não bate com o certificado do domínio.
 
     Traefik_Proxy->>Traefik_Proxy: 6. Roteamento baseado em Host (app.seudominio.com)
     Traefik_Proxy->>Authelia_Auth: 7. Verifica Autenticação (Middleware Authelia)

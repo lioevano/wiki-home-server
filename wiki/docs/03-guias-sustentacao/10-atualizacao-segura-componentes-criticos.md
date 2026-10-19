@@ -156,13 +156,14 @@ Traefik e Authelia são componentes críticos da nossa camada de rede e seguran�
         *   Se as notas de release indicarem breaking changes que afetam sua configuração, atualize seus templates Ansible (`.j2` para `traefik.yml` ou `authelia/configuration.yml`) e/ou os arquivos de configuração dinâmica do Traefik, ou as labels Docker nos `docker-compose.yml` de outros serviços (se as mudanças do Traefik as afetarem).
         *   Execute os playbooks Ansible relevantes para aplicar essas mudanças de configuração aos volumes NFS **ANTES** de atualizar a imagem do container.
     4.  **Atualize a Tag da Imagem Docker no `docker-compose.yml`:**
-        *   Edite o arquivo `docker-compose.yml` da stack relevante (`core/docker-compose.yml` para Traefik, `authelia/docker-compose.yml` para Authelia).
+        *   Edite o arquivo `docker-compose.yml` da stack relevante (`docker/stacks/core/docker-compose.yml`, que contém Traefik, Cloudflared e Authelia).
         *   Altere a tag da imagem para a nova versão desejada (e.g., de `image: traefik:v2.10.5` para `image: traefik:v2.11.2`).
-    5.  **Atualize a Stack no Portainer:**
-        1.  Vá para a stack relevante ("core" ou "authelia") no Portainer.
-        2.  Clique em "Editor".
-        3.  Cole o conteúdo do `docker-compose.yml` atualizado (com a nova tag da imagem).
-        4.  Clique em "**Update the stack**". **Certifique-se de que a opção "Re-pull image and redeploy" (ou similar) esteja marcada** para que o Portainer puxe a nova versão da imagem.
+    5.  **Reaplique a Stack `core` pelo Ansible** (ela não é gerenciada pelo Portainer). A partir de `server/ansible`:
+        ```bash
+        ansible-playbook -i inventories/home/hosts.ini playbooks/setup-core-networking.yml --ask-vault-pass --check
+        ansible-playbook -i inventories/home/hosts.ini playbooks/setup-core-networking.yml --ask-vault-pass
+        ```
+        O playbook copia o compose atualizado para a VM e sobe a stack com `pull: always`.
     6.  **Monitore os Logs do Container Atualizado:**
         *   Imediatamente após a atualização, verifique os logs do container Traefik ou Authelia no Portainer. Procure por erros de inicialização, problemas ao carregar a configuração, ou falhas de conexão com dependências (como o DB do Authelia).
     7.  **Teste Exaustivamente:**
@@ -173,9 +174,8 @@ Traefik e Authelia são componentes críticos da nossa camada de rede e seguran�
 
 Este processo é geralmente menos arriscado que os componentes de infraestrutura, mas ainda requer cuidado.
 
-*   **Usando Watchtower (com `WATCHTOWER_LABEL_ENABLE=true`):**
-    *   Se você configurou o Watchtower para atualizar apenas containers com a label `com.centurylinklabs.watchtower.enable=true`, ele cuidará de puxar as imagens mais recentes (respeitando a tag que você especificou no `docker-compose.yml` - se você usou `latest`, ele pegará a `latest`; se usou `app:v1.2`, ele não atualizará para `app:v1.3` a menos que `v1.2` seja atualizada no registro).
-    *   Monitore os logs do Watchtower para ver o que foi atualizado.
+*   **Aviso de Novas Versões (Diun):**
+    *   O Diun (`diun` na `core-services-vm`, `diun_ai` na `ai-desktop-vm`) verifica os registros e avisa no Telegram, via n8n, quando a imagem de um container ganha versão nova (ver [Painel e Notificações](../01-manual-implementacao/09-painel-notificacoes.md)). Ele **não** atualiza nada: a atualização é sempre o processo manual abaixo.
 *   **Atualização Manual (Recomendado para Controle Fino ou Tags de Versão Específicas):**
     1.  **Leia as Notas de Release** da aplicação específica para a nova versão. Algumas aplicações (especialmente complexas como Nextcloud) podem ter passos de migração ou comandos `occ` que precisam ser executados após uma atualização.
     2.  **Faça Backup dos Volumes de Dados da Aplicação:** Crie um snapshot ZFS do subdiretório relevante em `data/docker-volumes` (e.g., `data/docker-volumes/nextcloud`). Se a aplicação usa um banco de dados dedicado (como o PostgreSQL para Nextcloud), faça um dump desse banco de dados.

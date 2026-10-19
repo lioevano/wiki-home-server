@@ -120,14 +120,14 @@ Siga estes passos para garantir uma integração suave e bem-sucedida:
         Use nomes consistentes e descritivos para seus roteadores e serviços Traefik (e.g., `traefik.http.routers.nomedoservico...`). O placeholder `{{ base_domain }}` nas labels será substituído pelo valor real se o container Traefik tiver acesso a essa variável (o que ele tem, via `BASE_DOMAIN_FROM_VAULT` passada para ele).
 
 4.  **Deploy da Nova Stack via Portainer:**
-    Siga o processo descrito em [Deploy Core](../01-manual-implementacao/06-deploy-core.md) (para stacks de infraestrutura) ou [Deploy de Apps](../01-manual-implementacao/07-deploy-apps.md) (para stacks de aplicações):
+    Siga o processo descrito em [Deploy de Apps](../01-manual-implementacao/07-deploy-apps.md) (a stack `core` não passa pelo Portainer; ver [Deploy Core](../01-manual-implementacao/06-deploy-core.md)):
     *   Acesse o Portainer, selecione o **endpoint Docker correto** (e.g., `local` para `core-services-vm`).
     *   Vá para "Stacks" -> "+ Add stack".
     *   **Nome:** Dê um nome para a stack (e.g., `novoservico-stack`).
     *   **Build method:** "Web editor". Cole o conteúdo do seu `docker-stacks/novoservico/docker-compose.yml`.
     *   **Environment variables (Advanced mode):**
         *   **Load variables from .env file:** Forneça o caminho **DENTRO DA VM** para o arquivo `.env` que foi preparado pelo Ansible (e.g., `/opt/portainer_stack_envs/novoservico.env`).
-        *   **Adicionar Secrets Manualmente:** Para quaisquer senhas ou tokens de API (e.g., `SENHA_DO_NOVOSERVICO_APP` se referenciada no compose), adicione-os aqui como variáveis de ambiente. **NÃO** coloque segredos diretamente no `docker-compose.yml` ou no arquivo `.env` versionado.
+        *   **Segredos:** senhas e tokens de API (e.g., `SENHA_DO_NOVOSERVICO_APP` referenciada no compose) entram no vault e são gravados no `.env` pelo playbook da stack; não os digite no Portainer nem os coloque no `docker-compose.yml`.
     *   Clique em "**Deploy the stack**".
 
 5.  **Configuração de DNS na Cloudflare (se o serviço for exposto externamente):**

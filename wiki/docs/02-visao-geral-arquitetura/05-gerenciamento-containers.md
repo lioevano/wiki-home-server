@@ -42,8 +42,7 @@ Embora o Docker Compose seja poderoso na linha de comando, o Portainer oferece u
     *   **Gerenciamento de Endpoints:** Conecta-se ao Docker Engine local na `core-services-vm`. Opcionalmente, pode gerenciar outros Docker Engines remotos via Portainer Agent (como na `ai-desktop-vm`).
     *   **Stacks:** Permite implantar e gerenciar aplicações definidas por arquivos `docker-compose.yml`.
         *   Você pode colar o conteúdo do `docker-compose.yml` no editor web.
-        *   Carregar variáveis de ambiente de um arquivo `.env` (preparado pelo Ansible).
-        *   Definir secrets (variáveis de ambiente sensíveis) diretamente na UI do Portainer.
+        *   Carregar variáveis de ambiente de um arquivo `.env` preparado pelo Ansible, que já traz os segredos do vault (nada é digitado na UI).
         *   Atualizar, parar, iniciar e remover stacks.
     *   **Containers:** Listar, inspecionar, ver logs, abrir console, parar, iniciar, remover containers individuais.
     *   **Volumes:** Listar e gerenciar volumes Docker (embora neste guia, os volumes principais sejam mapeamentos de caminhos NFS, não volumes Docker gerenciados pelo Portainer).
@@ -52,16 +51,15 @@ Embora o Docker Compose seja poderoso na linha de comando, o Portainer oferece u
 
 ## Fluxo de Deploy de um Serviço Docker com Portainer (Recapitulação)
 
-1.  **Preparação Ansible (Opcional, mas Recomendado):**
+1.  **Preparação Ansible:**
     *   O playbook `setup-<stack>-volumes.yml` cria os diretórios necessários nos volumes NFS na VM de destino.
-    *   Gera um arquivo `.env` (e.g., `/opt/portainer_stack_envs/minha_stack.env`) na VM com caminhos de volume e variáveis não sensíveis.
+    *   Gera um arquivo `.env` (e.g., `/opt/portainer_stack_envs/minha_stack.env`) na VM com caminhos de volume, variáveis e segredos do vault (modo `0600`).
 2.  **No Portainer:**
     *   Navegue para "Stacks" -> "+ Add stack".
     *   Dê um nome à stack.
     *   Cole o conteúdo do `docker-compose.yml` da aplicação.
     *   Em "Environment variables" (modo avançado):
         *   "Load variables from .env file": Especifique o caminho para o arquivo `.env` na VM (e.g., `/opt/portainer_stack_envs/minha_stack.env`).
-        *   Adicione manualmente quaisquer secrets (senhas de DB, API keys) como variáveis de ambiente.
     *   Clique em "Deploy the stack".
 3.  **Verificação:**
     *   Portainer executa os comandos `docker compose` para criar as redes (se definidas no compose e não `external`), puxar imagens e iniciar os containers.

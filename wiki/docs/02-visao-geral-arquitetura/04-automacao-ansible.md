@@ -57,10 +57,10 @@ A organização dos arquivos Ansible no nosso projeto é crucial para a manuteni
     *   **Função:** Aplica configurações base (pacotes, fuso horário, cliente NFS, UFW, Node Exporter VM). Instala Docker Engine e Portainer na `core-services-vm`. Instala GUI opcional.
 *   **`setup-core-networking.yml`:**
     *   **Alvo:** `core-services-vm`.
-    *   **Função:** Prepara arquivos de configuração para Traefik e Authelia, e faz o deploy das stacks Docker `core` (Traefik, Cloudflared) e `authelia`.
+    *   **Função:** Prepara arquivos de configuração para Traefik e Authelia, e faz o deploy da stack Docker `core` (Traefik, Cloudflared e Authelia).
 *   **Playbooks `setup-<stack>-volumes.yml` (e.g., `setup-media-stack-volumes.yml`):**
     *   **Alvo:** VM específica onde a stack Docker rodará (geralmente `core-services-vm` ou `ai-desktop-vm`).
-    *   **Função:** Criar os diretórios necessários nos volumes NFS e gerar o arquivo `.env` com caminhos e variáveis para a respectiva stack Docker a ser implantada via Portainer.
+    *   **Função:** Criar os diretórios necessários nos volumes NFS e gerar o arquivo `.env` com caminhos, variáveis e segredos (do vault) da respectiva stack Docker a ser implantada via Portainer (`apps` e `ai`; a `core` é implantada pelo próprio Ansible).
 *   **`full-deploy.yml`:**
     *   **Função:** Playbook mestre que importa e executa os playbooks acima em uma sequência lógica para um deploy completo da infraestrutura base. Usado para o setup inicial ou para garantir que toda a infraestrutura esteja no estado desejado.
 

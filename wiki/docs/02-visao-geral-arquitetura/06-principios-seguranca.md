@@ -103,7 +103,7 @@ graph TD
         *   Muitos containers (especialmente os da linuxserver.io) são configurados para rodar com um usuário não-root dentro do container, usando as variáveis de ambiente `PUID` (User ID) e `PGID` (Group ID).
         *   Esses `PUID`/`PGID` correspondem ao usuário `dockeruser` e grupo `dockergroup` criados nas VMs, que por sua vez são os "donos" dos arquivos nos volumes NFS devido às opções de `anonuid`/`anongid` no export NFS.
     *   **Senhas Fortes para Aplicações:** Usar senhas únicas e fortes para as contas de administrador de cada aplicação (Nextcloud, Grafana, etc.).
-    *   **Atualizações de Imagens Docker:** Usar Watchtower (ou um processo manual regular) para manter as imagens Docker atualizadas para suas versões mais recentes e seguras.
+    *   **Atualizações de Imagens Docker:** O Diun avisa quando uma imagem tem versão nova, e a atualização é feita manualmente, depois de ler as notas de release, para manter as imagens nas versões mais recentes e seguras.
     *   **`security_opt: [no-new-privileges:true]`:** Usado em alguns `docker-compose.yml` para impedir que um container ganhe mais privilégios.
 
 ## Gerenciamento de Segredos

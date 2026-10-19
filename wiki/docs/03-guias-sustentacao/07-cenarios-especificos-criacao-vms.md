@@ -83,7 +83,7 @@ Precisa testar um novo software, uma configuração arriscada, compilar algo de 
 *   **Propósito:** Ambientes isolados, temporários, ou para experimentação segura.
 *   **Criação Rápida e Fácil:**
     1.  **Clonar do Template Ubuntu Cloud-Init:** Esta é a maneira mais rápida.
-        *   **Via UI do Proxmox:** Clique com o botão direito no seu template `ubuntu-2204-cloudinit-base` -> "Clone". Dê um novo VM ID e nome (e.g., `test-vm-01`), escolha "Full Clone".
+        *   **Via UI do Proxmox:** Clique com o botão direito no seu template `ubuntu-2404-cloudinit-template-v1` -> "Clone". Dê um novo VM ID e nome (e.g., `test-vm-01`), escolha "Full Clone".
         *   **Via Ansible (`vm-deploy.yml`):** Adicione uma nova entrada ao seu playbook `vm-deploy.yml` para a VM de teste. Isso é bom se você precisa recriá-la consistentemente.
             ```yaml
             # Exemplo de adição ao vm-deploy.yml

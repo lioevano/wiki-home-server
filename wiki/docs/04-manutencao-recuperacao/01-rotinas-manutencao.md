@@ -64,7 +64,7 @@ Manter todo o software atualizado é uma das tarefas de manutenção mais críti
 
 Manter suas imagens Docker e as aplicações rodando dentro dos containers atualizadas é tão crucial quanto atualizar os sistemas operacionais.
 
-Consulte a seção [Atualização Segura de Componentes Críticos da Infraestrutura](../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md) para detalhes sobre como atualizar Traefik, Authelia e outras aplicações Docker individuais, incluindo o uso de **Watchtower** para automação ou o processo manual via Portainer.
+Consulte a seção [Atualização Segura de Componentes Críticos da Infraestrutura](../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md) para detalhes sobre como atualizar Traefik, Authelia e outras aplicações Docker individuais, incluindo os avisos de versão nova do **Diun** e o processo manual via Portainer (ou pelo Ansible, no caso da stack `core`).
 
 **Princípios Chave para Atualizar Containers:**
 1.  **Leia as Notas de Release da Aplicação/Imagem:** Verifique por breaking changes ou passos de migração.
@@ -96,9 +96,9 @@ Utilize ativamente a Stack de Monitoramento (Prometheus, Grafana, Loki) — veja
     *   Tráfego de Rede (por interface, por VM).
     *   Status e Performance do Pool ZFS (saúde, capacidade, IOPS, latência, ARC stats).
     *   Métricas do Node Exporter de cada sistema.
-    *   Métricas de containers Docker (se você adicionar um exportador como o cAdvisor).
+    *   Status dos containers no painel Homepage e sondas do blackbox-exporter (ver [Painel e Notificações](../01-manual-implementacao/09-painel-notificacoes.md)).
     *   Métricas do Cloudflare Tunnel.
-*   **Alertas (Prometheus Alertmanager / Grafana Alerting):**
+*   **Alertas (Grafana Alerting → n8n → Telegram):**
     *   Configure alertas para condições críticas que exigem sua atenção imediata:
         *   Uso de disco acima de um limite (e.g., 85-90%).
         *   Uso de CPU ou RAM consistentemente muito alto.
@@ -124,9 +124,8 @@ Seu pool ZFS `/data` é o coração do armazenamento de dados.
     *   **Verificar Status do Scrub:** `sudo zpool status data` (mostrará o progresso).
     *   **Agendar com `cron` (e.g., `sudo crontab -e` no host Proxmox):**
         `0 2 1 * * /sbin/zpool scrub data # Roda às 2 AM no primeiro dia de cada mês`
-*   **Alertas de Saúde do ZFS por Email:**
+*   **Alertas de Saúde do ZFS:**
     *   Um script simples de verificação (`zpool status -x`) pode ser agendado no host e avisar pelo `scripts/notify.sh` (ver [snapshots ZFS na página de backups](02-backup-restore-estrategia.md#4-zfs-snapshots-proteção-local-rápida-no-host-proxmox)); o alerta `zfs-degradado` do Grafana já cobre o pool degradado.
-    *   Certifique-se de que o host Proxmox está configurado para enviar emails (e.g., `mailutils` instalado e configurado com `ssmtp` ou `postfix` para retransmitir através de um servidor SMTP).
     *   Agende este script para rodar com frequência (e.g., a cada poucas horas ou diariamente).
 
 ## 6. Verificação e Teste de Backups
@@ -159,4 +158,4 @@ Ferramentas de diagnóstico versionadas em `server/scripts/validation/`:
 | `scripts/validation/check_nfs_permissions.sh` | Diagnostica e corrige problemas comuns de permissão nos compartilhamentos NFS. |
 | `scripts/validation/check_yaml_integrity.py` | Verifica a sintaxe de todos os YAML de `ansible/` e `docker/`. |
 
-A coerência entre esta wiki e o `server/` é verificada por `python tools/dev.py check` (veja o `CLAUDE.md` na raiz do repositório).
+A coerência entre esta wiki e o `server/` é verificada por `python tools/dev.py check` (veja o `AGENTS.md` na raiz do repositório).

@@ -46,7 +46,6 @@ Isto inclui as configurações do próprio hypervisor Proxmox VE, definições d
     *   `/etc/smartd.conf` (Configuração do monitoramento S.M.A.R.T. de discos)
     *   `/etc/zfs/` (Configuração do ZFS, embora os metadados do pool estejam nos discos)
     *   `/etc/exports` (Configuração do servidor NFS, gerada por Ansible)
-    *   `/etc/systemd/system/ollama.service.d/override.conf` (Se você instalou Ollama diretamente no host e customizou o serviço)
     *   Quaisquer outros arquivos de configuração importantes que você tenha modificado manualmente no host.
 *   **Como Fazer Backup (Script Agendado no Host Proxmox):**
     *   Use um script para arquivar esses arquivos e diretórios importantes em um arquivo `.tar.gz` e salvá-lo no seu dataset de backups ZFS (e.g., `/data/backups/proxmox_host_config/`).
@@ -101,7 +100,6 @@ Isto inclui as configurações do próprio hypervisor Proxmox VE, definições d
         /etc/smartd.conf
         /etc/zfs
         /etc/exports
-        /etc/systemd/system/ollama.service.d/override.conf
         "
         # Outros locais importantes podem incluir /root (para scripts), /usr/local/sbin (para scripts customizados)
 

@@ -29,8 +29,8 @@ O processo é bastante similar a [adicionar uma stack completamente nova](01-adi
     *   **Persistência de Dados (Volumes):**
         *   O novo serviço precisa de volumes persistentes?
         *   Se sim, crie (ou planeje criar via Ansible) um subdiretório para ele **dentro da estrutura de volumes da stack existente**.
-            *   Exemplo: Se a stack `media-services` usa `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/media_stack_configs/`, você poderia criar `.../media_stack_configs/novo_servico_midia/config` para o novo serviço.
-        *   Adicione as variáveis de caminho para estes novos volumes ao arquivo `.env` da stack existente (e.g., `/opt/portainer_stack_envs/media.env`) se você usa variáveis para caminhos no seu compose.
+            *   Exemplo: Se a stack `apps` usa `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/media_stack_configs/`, você poderia criar `.../media_stack_configs/novo_servico_midia/config` para o novo serviço.
+        *   Adicione as variáveis de caminho para estes novos volumes ao arquivo `.env` da stack existente (e.g., `/opt/portainer_stack_envs/apps.env`) se você usa variáveis para caminhos no seu compose.
     *   **Configuração de Rede:**
         *   A quais redes Docker (já definidas ou usadas pela stack existente) o novo serviço precisa se conectar? (e.g., `proxy`, `internal_services`, ou uma rede interna específica daquela stack).
         *   Precisa ser exposto via Traefik? Se sim, qual subdomínio? Será protegido por Authelia?
@@ -68,7 +68,7 @@ O processo é bastante similar a [adicionar uma stack completamente nova](01-adi
           radarr:
             # ... (configuração do Radarr como já existe) ...
 
-          # --- NOVO SERVIÇO ADICIONADO À STACK 'media-services' ---
+          # --- NOVO SERVIÇO ADICIONADO À STACK 'apps' ---
           meu_novo_utilitario_midia:
             image: alguma_imagem/utilitario_midia:tag_especifica
             container_name: utilitario_midia
@@ -96,18 +96,17 @@ O processo é bastante similar a [adicionar uma stack completamente nova](01-adi
     *   **Verifique as Variáveis de Ambiente:**
         *   O novo serviço pode reutilizar variáveis já presentes no `.env` da stack (como `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE`).
         *   Se ele precisar de novas variáveis não sensíveis, adicione-as ao arquivo `.env` da stack (e ao playbook Ansible que o gera).
-        *   Se ele precisar de novos **secrets**, você os adicionará manualmente na UI do Portainer no próximo passo.
+        *   Se ele precisar de novos **secrets**, adicione-os ao vault e ao `stack_configs` do playbook, que os grava no `.env` (modo `0600`).
 
 4.  **Atualize a Stack Existente via Portainer:**
     *   Acesse sua instância Portainer.
     *   Selecione o endpoint Docker correto.
     *   Vá para "**Stacks**".
-    *   Localize e clique na stack existente que você modificou (e.g., `media-services`).
+    *   Localize e clique na stack existente que você modificou (e.g., `apps`).
     *   Clique em "**Editor**".
     *   **Substitua o conteúdo do editor web** pelo conteúdo completo do seu arquivo `docker-compose.yml` atualizado (que agora inclui o novo serviço).
     *   **Variáveis de Ambiente:**
-        *   Se você modificou o arquivo `.env` da stack na VM (via Ansible), o Portainer *deveria* recarregá-lo automaticamente se você usou a opção "Load variables from .env file" originalmente. Para ter certeza, você pode re-especificar o caminho para o arquivo `.env` da stack (e.g., `/opt/portainer_stack_envs/media.env`).
-        *   Adicione manualmente quaisquer **novos secrets** (senhas, tokens de API) que o novo serviço possa requerer.
+        *   Se você modificou o `.env` da stack na VM (via Ansible), monte de novo o `apps.env` (ver [Deploy de Apps](../01-manual-implementacao/07-deploy-apps.md#passos-manuais-ao-mudar-variáveis-ou-segredos)) e recarregue-o em **Env**: o Portainer não relê o arquivo sozinho.
     *   Clique no botão "**Update the stack**".
         *   !!! important "Opções de Atualização"
             Ao atualizar, o Portainer geralmente oferece opções como:
@@ -123,7 +122,7 @@ O processo é bastante similar a [adicionar uma stack completamente nova](01-adi
 
 ## Exemplo Prático: Adicionando `Bazarr` (Gerenciador de Legendas) à Stack de Mídia
 
-Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `media-services` e agora quer adicionar o [Bazarr](https://www.bazarr.media/) para gerenciar e baixar legendas automaticamente.
+Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `apps` e agora quer adicionar o [Bazarr](https://www.bazarr.media/) para gerenciar e baixar legendas automaticamente.
 
 1.  **Planejamento (Bazarr):**
     *   Imagem: `lscr.io/linuxserver/bazarr:latest` (ou uma tag de versão específica).
@@ -134,7 +133,7 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `med
 
 2.  **Preparação Ansible (Atualizar `setup-media-stack-volumes.yml`):**
     *   Adicione uma task `ansible.builtin.file` para criar o diretório `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/bazarr/config`.
-    *   Atualize a task `ansible.builtin.template` que gera `/opt/portainer_stack_envs/media.env` para incluir:
+    *   Atualize a task `ansible.builtin.template` que gera `/opt/portainer_stack_envs/apps.env` para incluir:
         ```env
         # ... (variáveis existentes para Jellyfin, Sonarr, etc.) ...
         MEDIA_STACK_BAZARR_CONFIG_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/bazarr/config
@@ -174,10 +173,10 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `med
           - radarr
     ```
 
-4.  **Atualizar Stack `media-services` no Portainer:**
-    *   Vá para a stack `media-services` -> Editor.
+4.  **Atualizar a Stack `apps` no Portainer:**
+    *   Vá para a stack `apps` -> Editor.
     *   Cole o `docker-compose.yml` completo e atualizado (com Bazarr incluído).
-    *   Verifique se o "Path on disk" para o `/opt/portainer_stack_envs/media.env` está correto (ele deve ser recarregado ou as novas variáveis como `MEDIA_STACK_BAZARR_CONFIG_PATH` não serão reconhecidas, a menos que você as defina manualmente na UI do Portainer). Para garantir, você pode re-especificar o caminho.
+    *   Recarregue o `/opt/portainer_stack_envs/apps.env` remontado em **Env**; sem isso, novas variáveis como `MEDIA_STACK_BAZARR_CONFIG_PATH` não são reconhecidas.
     *   Clique em "Update the stack", marcando "Re-pull image and redeploy".
 
 5.  **DNS e Testes:**

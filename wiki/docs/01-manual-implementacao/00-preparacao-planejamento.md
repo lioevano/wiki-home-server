@@ -35,7 +35,7 @@ Para esta implementação, estou utilizando o seguinte setup:
 *   **GPU (para passthrough):** AMD RX 5600XT.
 *   **RAM:** **48GB DDR4**.
 !!! note "Upgrade de RAM"
-    O guia original foi pensado para 16GB de RAM. Esta versão considera 48GB, o que oferece muito mais flexibilidade para o tamanho e número de VMs e serviços. As alocações de RAM para VMs serão mais generosas.
+    Os 48GB permitem 16GB para cada VM (`core-services-vm` e `ai-desktop-vm`) e ainda sobram para o host e o cache ARC do ZFS.
 *   **Armazenamento Primário (Proxmox OS e Discos das VMs):** SSD NVMe 1TB.
 *   **Armazenamento Secundário (Pool de Dados ZFS `/data`):** 2x HDDs de 500GB. Serão configurados em um pool ZFS espelhado (RAID 1) para redundância.
 !!! note "Espaço Útil ZFS para Dados"
@@ -78,7 +78,7 @@ Graças ao Ansible, vamos adotar a Infraestrutura como Código (IaC), gerenciand
 
 ### Estrutura de Diretórios Proposta
 
-A estrutura do seu projeto `home-server/` será:
+A estrutura do repositório é:
 ```text
 homeserver/                 # repositório lioevano/wiki-home-server
 ├── server/                 # implementação (reflete a wiki)
@@ -108,8 +108,10 @@ homeserver/                 # repositório lioevano/wiki-home-server
 │       └── validation/
 ├── wiki/                   # esta documentação (MkDocs): mkdocs.yml, docs/
 ├── tools/                  # dev.py (tarefas) e wikisync (wiki -> server)
-├── .claude/                # skills e permissões do Claude Code
-├── CLAUDE.md               # contexto do projeto para o Claude
+├── .agents/skills/         # skills canônicas (agnósticas de LLM)
+├── .claude/skills/         # invólucros das skills para o Claude Code
+├── AGENTS.md               # entrada canônica para agentes (CLAUDE.md só importa)
+├── CLAUDE.md
 ├── INDEX.md                # mapa do repositório (mantido pela skill update-index)
 ├── .gitignore
 └── README.md
@@ -119,21 +121,19 @@ homeserver/                 # repositório lioevano/wiki-home-server
 
 Na sua máquina de controle Ansible:
 
-1.  **Crie o diretório raiz do projeto e navegue até ele:**
+1.  **Clone o repositório** (ou um fork seu) e entre nele:
 ```bash
-mkdir home-server && cd home-server
+git clone https://github.com/lioevano/wiki-home-server.git homeserver && cd homeserver
 ```
-2.  **Inicialize o repositório Git:**
+2.  **Começando do zero, sem clonar:** crie a pasta e inicialize o Git:
 ```bash
-git init
+mkdir homeserver && cd homeserver && git init
 ```
-3.  **Crie a estrutura de diretórios completa** conforme detalhado no seu documento original (e resumido acima). Use `mkdir -p` para eficiência.
+3.  **Crie a estrutura de diretórios** da árvore acima (o clone já a traz). Use `mkdir -p` para eficiência.
 Exemplo parcial:
 ```bash
-mkdir -p ansible/inventories/home/group_vars/all ansible/playbooks ansible/roles/common docker/stacks/core scripts
+mkdir -p server/ansible/inventories/home/group_vars/all server/ansible/playbooks server/ansible/roles/common server/docker/stacks/core server/scripts wiki/docs
 ```
-!!! tip "Dica para Criar Estrutura"
-    Você pode listar a estrutura completa e usar um script simples ou até pedir a uma IA para gerar os comandos `mkdir -p` para você.
 4.  **Crie o arquivo `.gitignore` com o seguinte conteúdo:**
 ```gitignore title=".gitignore (raiz do repositório)"
 # Ambientes Python
@@ -170,14 +170,14 @@ Thumbs.db
 .idea/
 ```
 
-5.  **Crie o modelo de variáveis das stacks Docker** em `docker/stacks/.env.template`. Ele documenta todas as variáveis `${...}` usadas pelos `docker-compose.yml`; os `.env` reais (gerados pelo Ansible ou definidos no Portainer) nunca são versionados.
+5.  **Crie o modelo de variáveis das stacks Docker** em `docker/stacks/.env.template`. Ele documenta todas as variáveis `${...}` usadas pelos `docker-compose.yml`; os `.env` reais (gerados pelo Ansible) nunca são versionados.
 
 ```bash title="docker/stacks/.env.template"
 # docker/stacks/.env.template
 # Contrato de variáveis usadas pelos docker-compose.yml das stacks (core, apps, ai).
 # Este MODELO pode ser versionado; os arquivos .env REAIS nunca são commitados.
-# Em produção, os .env são gerados pelo Ansible (templates/portainer_stack_env.j2,
-# playbooks setup-*-volumes.yml) ou definidos como "Environment variables" no Portainer.
+# Em produção, os .env das stacks apps e ai são gerados pelo Ansible (templates/portainer_stack_env.j2,
+# playbooks setup-*-volumes.yml); a stack core recebe as variáveis no playbook setup-core-networking.yml.
 
 # --- Comuns ---
 SYSTEM_TIMEZONE=America/Sao_Paulo
@@ -266,12 +266,12 @@ ANTHROPIC_API_KEY=
 GEMINI_API_KEY=
 ```
 !!! important "Segurança de Segredos com .gitignore"
-    O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e será criptografado. Adicioná-lo ao `.gitignore` é uma camada extra de precaução contra commits acidentais se você o descriptografar localmente. Arquivos `.env` reais com segredos (gerados nas VMs ou gerenciados pelo Portainer) **NUNCA** devem ser commitados.
+    O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e só é versionado **criptografado** (começa com `$ANSIBLE_VAULT;`); por isso ele não está no `.gitignore`. Cópias abertas (`*.decrypted*`) são bloqueadas pelo `.gitignore`. Arquivos `.env` reais com segredos (gerados pelo Ansible nas VMs) **NUNCA** devem ser commitados.
 5.  **Crie um arquivo `README.md` inicial** na raiz do projeto com uma breve descrição.
 6.  **Adicione todos os arquivos criados e faça o primeiro commit:**
 ```bash
 git add .
-git commit -m "Estrutura inicial do projeto home-server e IaC"
+git commit -m "Estrutura inicial do projeto homeserver e IaC"
 ```
 7.  **(Recomendado)** Configure um repositório Git remoto (e.g., GitHub, GitLab) e envie (`push`) suas alterações.
 
