@@ -224,3 +224,101 @@ def test_immich_json_0600():
              if str(t.get("ansible.builtin.template", {}).get("dest", "")).endswith("/immich.json"))
     assert t["ansible.builtin.template"]["src"].endswith("immich/immich.json.j2")
     assert t["ansible.builtin.template"]["mode"] == "0600"
+
+
+# --- Stack cloud (Nextcloud, cron, Collabora) ---
+
+CLOUD = ROOT / "server/docker/stacks/cloud/docker-compose.yml"
+APPS = ROOT / "server/docker/stacks/apps/docker-compose.yml"
+PB_CLOUD = ROOT / "server/ansible/playbooks/setup-cloud-stack-volumes.yml"
+HOOK_TPL = "templates/nextcloud/10-homeserver.sh.j2"
+DUMP_TPL = "templates/nextcloud/backup-nextcloud-db.sh.j2"
+MIDDLEWARE_TPL = "roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2"
+
+
+def test_cloud_servicos_e_apps_sem_nextcloud():
+    assert set(_svc(CLOUD)) == {"nextcloud_app", "nextcloud_cron", "nextcloud_redis", "nextcloud_db", "collabora"}
+    assert not [n for n in _svc(APPS) if n.startswith("nextcloud")]
+
+
+def test_cron_igual_ao_app():
+    s = _svc(CLOUD)
+    assert s["nextcloud_cron"]["image"] == s["nextcloud_app"]["image"] == "nextcloud:${NEXTCLOUD_MAJOR}-apache"
+    assert s["nextcloud_cron"]["entrypoint"] == "/cron.sh"
+    assert s["nextcloud_cron"]["volumes"] == s["nextcloud_app"]["volumes"]
+
+
+def test_nextcloud_publico_com_dav():
+    app = _svc(CLOUD)["nextcloud_app"]
+    lab = str(app["labels"])
+    assert "nextcloud-dav@file" in lab and "nextcloud-headers@file" in lab and "authelia" not in lab
+    assert "Host(`nextcloud.${BASE_DOMAIN_FROM_VAULT}`)" in lab
+    env = _env(app)
+    assert env["TRUSTED_PROXIES"] == "172.16.0.0/12"
+    assert env["OVERWRITEPROTOCOL"] == "https"
+    assert env["OVERWRITECLIURL"] == "https://nextcloud.${BASE_DOMAIN_FROM_VAULT}"
+    assert env["NEXTCLOUD_OIDC_CLIENT_SECRET"] == "${NEXTCLOUD_OIDC_CLIENT_SECRET}"
+    assert _volume(app, "/docker-entrypoint-hooks.d/before-starting") == \
+        "${CLOUD_STACK_NEXTCLOUD_HOOKS_PATH}:/docker-entrypoint-hooks.d/before-starting:ro"
+    mw = yaml.safe_load(render(MIDDLEWARE_TPL))["http"]["middlewares"]
+    rr = mw["nextcloud-dav"]["redirectRegex"]
+    assert rr["regex"] == "^https://(.*)/.well-known/(?:card|cal)dav"
+    assert rr["replacement"] == "https://${1}/remote.php/dav/" and rr["permanent"] is True
+
+
+def test_collabora_wopi_pela_lan():
+    c = _svc(CLOUD)["collabora"]
+    assert c["extra_hosts"] == ["nextcloud.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP_VAR}"]
+    env = _env(c)
+    assert env["aliasgroup1"] == "https://nextcloud.${BASE_DOMAIN_FROM_VAULT}:443"
+    assert env["server_name"] == "office.${BASE_DOMAIN_FROM_VAULT}"
+    assert "--o:ssl.enable=false" in env["extra_params"] and "--o:ssl.termination=true" in env["extra_params"]
+    assert "Host(`office.${BASE_DOMAIN_FROM_VAULT}`)" in str(c["labels"]) and "authelia" not in str(c["labels"])
+
+
+def test_banco_nextcloud_local():
+    db = _svc(CLOUD)["nextcloud_db"]
+    assert _volume(db, "/var/lib/postgresql/data").startswith("${CLOUD_STACK_NEXTCLOUD_DB_PATH}")
+    cfg = _configs(PB_CLOUD, "cloud.env")
+    assert cfg["CLOUD_STACK_NEXTCLOUD_DB_PATH"].startswith("{{ vm_local_data_path }}/")
+    assert cfg["CLOUD_STACK_NEXTCLOUD_DATA_PATH"] == "{{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}"
+
+
+def test_variaveis_cloud_no_env():
+    assert _vars_compose(CLOUD) <= set(_configs(PB_CLOUD, "cloud.env")) | COMUNS
+    assert _env_task(PB_CLOUD, "cloud.env")["ansible.builtin.template"]["mode"] == "0600"
+
+
+def test_hook_sem_segredo_e_idempotente(tmp_path):
+    out = render(HOOK_TPL, base_domain=DOM, oidc_clients=OIDC)
+    assert OIDC["nextcloud"]["secret"] not in out and OIDC["immich"]["secret"] not in out
+    assert '"$NEXTCLOUD_OIDC_CLIENT_SECRET"' in out
+    for linha in (l for l in out.splitlines() if "app:install" in l):
+        assert "|| " in linha and "app:enable" in linha.split("|| ", 1)[1], linha
+    for trecho in ("app:disable photos", "user_oidc:provider", "allow_multiple_user_backends", "wopi_url",
+                   "public_wopi_url", "wopi_allowlist", "max_chunk_size", "default_phone_region",
+                   f"https://auth.{DOM}/.well-known/openid-configuration", f"https://office.{DOM}"):
+        assert trecho in out, trecho
+    f = tmp_path / "h.sh"
+    f.write_text(out)
+    assert subprocess.run(["bash", "-n", str(f)]).returncode == 0
+    t = next(t for t in _pb_tasks(PB_CLOUD)
+             if str(t.get("ansible.builtin.template", {}).get("src", "")).endswith("10-homeserver.sh.j2"))
+    assert t["ansible.builtin.template"]["mode"] == "0755"
+
+
+def test_dump_diario_do_nextcloud():
+    tarefas = _pb_tasks(PB_CLOUD)
+    script = next(t for t in tarefas
+                  if str(t.get("ansible.builtin.template", {}).get("src", "")).endswith("backup-nextcloud-db.sh.j2"))
+    assert script["ansible.builtin.template"]["mode"] == "0750"
+    copias = {t["ansible.builtin.copy"]["dest"]: t["ansible.builtin.copy"]["content"]
+              for t in tarefas if "ansible.builtin.copy" in t}
+    timer = next(v for k, v in copias.items() if k.endswith(".timer"))
+    assert "OnCalendar=" in timer and "Persistent=true" in timer
+    assert any(k.endswith(".service") for k in copias)
+    sd = next(t for t in tarefas if "ansible.builtin.systemd" in t)["ansible.builtin.systemd"]
+    assert sd["name"].endswith(".timer") and sd["enabled"] is True and sd.get("daemon_reload") is True
+    out = render(DUMP_TPL, vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes")
+    assert "pg_dump" in out and "/mnt/pve_data_zfs/docker-volumes/nextcloud/db-dumps" in out
+    assert "-mtime +14" in out and "-delete" in out

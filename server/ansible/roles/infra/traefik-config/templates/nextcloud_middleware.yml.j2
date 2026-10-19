@@ -29,3 +29,10 @@ http:
         customResponseHeaders:
           X-Robots-Tag: "noindex, nofollow"
           X-Permitted-Cross-Domain-Policies: "none"
+    # Descoberta de CalDAV/CardDAV (DAVx⁵ e o aviso do painel de administração do Nextcloud):
+    # /.well-known/caldav e /.well-known/carddav levam ao endpoint WebDAV do Nextcloud.
+    nextcloud-dav:
+      redirectRegex:
+        regex: "^https://(.*)/.well-known/(?:card|cal)dav"
+        replacement: "https://${1}/remote.php/dav/"
+        permanent: true

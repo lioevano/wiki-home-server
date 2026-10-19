@@ -1,0 +1,43 @@
+#!/bin/bash
+# ansible/templates/nextcloud/10-homeserver.sh.j2
+# Hook before-starting da imagem oficial do Nextcloud (roda como www-data a cada início do container,
+# depois da instalação). Gerado pelo setup-cloud-stack-volumes.yml; página 11.
+# Idempotente: cada passo pode rodar de novo sem efeito. Sem 'set -e' de propósito: se o hook falhar,
+# o entrypoint não sobe o Nextcloud; uma falha passageira (loja de apps fora, Collabora ainda subindo)
+# vira só um aviso no log (docker logs nextcloud_app).
+# Sem segredos neste arquivo: o segredo do cliente OIDC chega pela variável NEXTCLOUD_OIDC_CLIENT_SECRET.
+set -u
+
+occ() { php /var/www/html/occ "$@"; }
+aviso() { echo "homeserver-hook: aviso: $*" >&2; }
+
+# Apps: login pelo Authelia, documentos (Collabora), calendário e contatos. Fotos ficam no Immich.
+for app in user_oidc richdocuments calendar contacts; do
+  occ app:install "$app" || occ app:enable "$app" || aviso "não instalou/ativou $app"
+done
+occ app:disable photos || aviso "não desativou photos"
+
+# Provedor OIDC (cria ou atualiza): uid = usuário do Authelia, sem hash.
+occ user_oidc:provider Authelia \
+  --clientid=nextcloud \
+  --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
+  --discoveryuri="https://auth.{{ base_domain }}/.well-known/openid-configuration" \
+  --scope="openid email profile groups" \
+  --unique-uid=0 \
+  --mapping-uid=preferred_username || aviso "provedor OIDC não configurado"
+occ config:system:set user_oidc default_token_endpoint_auth_method --value=client_secret_post || aviso "user_oidc auth method"
+occ config:system:set user_oidc enrich_login_id_token_with_userinfo --value=true --type=boolean || aviso "user_oidc userinfo"
+# Login direto no Authelia; a conta local de emergência (ncadmin) entra por /login?direct=1.
+occ config:system:set user_oidc allow_multiple_user_backends --value=0 --type=integer || aviso "user_oidc backends"
+
+# Collabora: o Nextcloud fala com ele pela rede Docker; o navegador, por office.; só aceita chamadas das redes Docker.
+occ config:app:set richdocuments wopi_url --value=http://collabora:9980 || aviso "richdocuments wopi_url"
+occ config:app:set richdocuments public_wopi_url --value="https://office.{{ base_domain }}" || aviso "richdocuments public_wopi_url"
+occ config:app:set richdocuments wopi_allowlist --value=172.16.0.0/12 || aviso "richdocuments wopi_allowlist"
+
+# Uploads pelo navegador em pedaços de 50 MiB (o túnel da Cloudflare recusa requisições acima de 100 MB).
+occ config:app:set files max_chunk_size --value=52428800 || aviso "max_chunk_size"
+occ config:system:set default_phone_region --value=BR || aviso "default_phone_region"
+occ config:system:set maintenance_window_start --value=4 --type=integer || aviso "maintenance_window_start"
+
+exit 0

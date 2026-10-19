@@ -1,0 +1,115 @@
+# ansible/playbooks/setup-cloud-stack-volumes.yml
+# Prepara a stack cloud (Nextcloud, cron, Collabora): diretórios, hook de configuração do Nextcloud,
+# dump diário do banco (timer systemd) e cloud.env (página 11).
+- name: Setup Cloud Stack Volumes and Environment
+  hosts: core_services
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+
+  tasks:
+    - name: Garantir diretório de envs do Portainer
+      ansible.builtin.file:
+        path: "{{ portainer_env_files_dest_path_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Criar diretórios do Nextcloud no NFS
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop:
+        - html
+        - config
+        - hooks
+        - db-dumps
+
+    # Disco local: banco fora do NFS; o backup dele é o dump diário em nextcloud/db-dumps.
+    - name: Criar diretório local do banco do Nextcloud
+      ansible.builtin.file:
+        path: "{{ vm_local_data_path }}/nextcloud-db"
+        state: directory
+        mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório
+
+    - name: Gerar o hook de configuração do Nextcloud (sem segredos; roda a cada início do container)
+      ansible.builtin.template:
+        src: ../templates/nextcloud/10-homeserver.sh.j2
+        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/hooks/10-homeserver.sh"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0755'
+
+    - name: Instalar o script de dump do banco do Nextcloud
+      ansible.builtin.template:
+        src: ../templates/nextcloud/backup-nextcloud-db.sh.j2
+        dest: /usr/local/sbin/backup-nextcloud-db.sh
+        owner: root
+        group: root
+        mode: '0750'
+
+    - name: Instalar o serviço systemd do dump
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/backup-nextcloud-db.service
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Dump diário do Postgres do Nextcloud (página 11)
+          After=docker.service
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/sbin/backup-nextcloud-db.sh
+
+    - name: Instalar o timer systemd do dump
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/backup-nextcloud-db.timer
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [Unit]
+          Description=Agenda o dump diário do Postgres do Nextcloud
+
+          [Timer]
+          OnCalendar=*-*-* 03:30:00
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+
+    - name: Habilitar o timer do dump
+      ansible.builtin.systemd:
+        name: backup-nextcloud-db.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    - name: Generate .env file for cloud stack
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/cloud.env"
+        owner: root
+        group: root
+        mode: '0600' # contém senhas e o segredo do cliente OIDC
+      vars:
+        stack_name: cloud
+        stack_configs:
+          - { name: 'NEXTCLOUD_MAJOR', value: "{{ nextcloud_major }}" }
+          - { name: 'CLOUD_STACK_NEXTCLOUD_HTML_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/html" }
+          - { name: 'CLOUD_STACK_NEXTCLOUD_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/config" }
+          - { name: 'CLOUD_STACK_NEXTCLOUD_HOOKS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/hooks" }
+          - { name: 'CLOUD_STACK_NEXTCLOUD_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}" }
+          - { name: 'CLOUD_STACK_NEXTCLOUD_DB_PATH', value: "{{ vm_local_data_path }}/nextcloud-db" }
+          - { name: 'NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ nextcloud_db_password }}" }
+          - { name: 'NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV', value: "{{ nextcloud_admin_initial_password }}" }
+          - { name: 'NEXTCLOUD_OIDC_CLIENT_SECRET', value: "{{ oidc_clients.nextcloud.secret }}" }
+          - { name: 'CORE_SERVICES_VM_IP_VAR', value: "{{ core_services_vm_ip_var }}" }

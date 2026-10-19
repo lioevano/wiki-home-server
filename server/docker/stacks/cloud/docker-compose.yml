@@ -1,0 +1,128 @@
+# docker/stacks/cloud/docker-compose.yml
+# Stack de arquivos: Nextcloud (arquivos, calendário, contatos), cron, Redis, Postgres e Collabora.
+# Variáveis: /opt/portainer_stack_envs/cloud.env, gerado por ansible/playbooks/setup-cloud-stack-volumes.yml.
+# Configuração do Nextcloud no hook ansible/templates/nextcloud/10-homeserver.sh.j2 (apps, OIDC, Collabora).
+# Página: 01-manual-implementacao/11-fotos-arquivos.md
+
+x-nextcloud-volumes: &nextcloud-volumes
+  - "${CLOUD_STACK_NEXTCLOUD_HTML_PATH}:/var/www/html"
+  - "${CLOUD_STACK_NEXTCLOUD_DATA_PATH}:/var/www/html/data" # dataset files (NFS, com cota)
+  - "${CLOUD_STACK_NEXTCLOUD_CONFIG_PATH}:/var/www/html/config"
+  - "${CLOUD_STACK_NEXTCLOUD_HOOKS_PATH}:/docker-entrypoint-hooks.d/before-starting:ro"
+
+services:
+  nextcloud_db:
+    image: postgres:15-alpine
+    container_name: nextcloud_db
+    restart: unless-stopped
+    volumes:
+      - "${CLOUD_STACK_NEXTCLOUD_DB_PATH}:/var/lib/postgresql/data" # disco local da VM; backup = dump diário no NFS
+    environment:
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
+      - TZ=${SYSTEM_TIMEZONE}
+    networks:
+      - internal_services
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextcloud -d nextcloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nextcloud_redis:
+    image: redis:7-alpine
+    container_name: nextcloud_redis
+    restart: unless-stopped
+    networks:
+      - internal_services
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  nextcloud_app:
+    image: nextcloud:${NEXTCLOUD_MAJOR}-apache
+    container_name: nextcloud_app
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes: *nextcloud-volumes
+    environment:
+      - POSTGRES_HOST=nextcloud_db
+      - POSTGRES_DB=nextcloud
+      - POSTGRES_USER=nextcloud
+      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
+      - NEXTCLOUD_ADMIN_USER=ncadmin
+      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${BASE_DOMAIN_FROM_VAULT} localhost ${CORE_SERVICES_VM_IP_VAR} nextcloud_app
+      - NEXTCLOUD_OIDC_CLIENT_SECRET=${NEXTCLOUD_OIDC_CLIENT_SECRET} # lido pelo hook (sem gravar em arquivo)
+      - TRUSTED_PROXIES=172.16.0.0/12 # Traefik e cloudflared (redes Docker)
+      - APACHE_DISABLE_REWRITE_IP=1
+      - OVERWRITEPROTOCOL=https
+      - OVERWRITECLIURL=https://nextcloud.${BASE_DOMAIN_FROM_VAULT}
+      - PHP_MEMORY_LIMIT=512M
+      - PHP_UPLOAD_LIMIT=4G
+      - TZ=${SYSTEM_TIMEZONE}
+      - REDIS_HOST=nextcloud_redis
+    depends_on:
+      nextcloud_db:
+        condition: service_healthy
+      nextcloud_redis:
+        condition: service_healthy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.nextcloud.rule: "Host(`nextcloud.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.nextcloud.entrypoints: "websecure"
+      traefik.http.routers.nextcloud.tls.certresolver: "letsencrypt"
+      # Sem authelia-forwardauth: os clientes de sincronização não passam por ele; o login é o OIDC do Authelia.
+      traefik.http.routers.nextcloud.middlewares: "nextcloud-dav@file,nextcloud-headers@file"
+      traefik.http.services.nextcloud-svc.loadbalancer.server.port: "80"
+
+  # Tarefas de fundo do Nextcloud (limpeza, versões, prévias, lembretes do calendário) a cada 5 minutos.
+  nextcloud_cron:
+    image: nextcloud:${NEXTCLOUD_MAJOR}-apache
+    container_name: nextcloud_cron
+    restart: unless-stopped
+    entrypoint: /cron.sh
+    networks:
+      - internal_services
+    volumes: *nextcloud-volumes
+    depends_on:
+      nextcloud_db:
+        condition: service_healthy
+      nextcloud_redis:
+        condition: service_healthy
+
+  # Edição de documentos no navegador (Nextcloud Office). O navegador acessa office.; o Collabora volta ao
+  # Nextcloud pela LAN (extra_hosts → Traefik na core-services-vm), sem dar a volta pela Cloudflare.
+  collabora:
+    image: collabora/code:latest
+    container_name: collabora
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    extra_hosts:
+      - "nextcloud.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP_VAR}"
+    environment:
+      aliasgroup1: "https://nextcloud.${BASE_DOMAIN_FROM_VAULT}:443" # só abre documentos deste Nextcloud
+      server_name: "office.${BASE_DOMAIN_FROM_VAULT}"
+      extra_params: "--o:ssl.enable=false --o:ssl.termination=true" # TLS termina no Traefik
+      dictionaries: "pt_BR en_US"
+      TZ: ${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.collabora.rule: "Host(`office.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.collabora.entrypoints: "websecure"
+      traefik.http.routers.collabora.tls.certresolver: "letsencrypt"
+      # Sem Authelia: o navegador carrega o editor dentro do Nextcloud; cada documento exige o token WOPI.
+      traefik.http.services.collabora-svc.loadbalancer.server.port: "9980"
+
+networks:
+  proxy:
+    external: true
+  internal_services:
+    external: true

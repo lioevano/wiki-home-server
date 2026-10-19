@@ -16,20 +16,6 @@
         group: root
         mode: '0755'
 
-    # --- Nextcloud directories ---
-    - name: Create Nextcloud config directories on NFS volume
-      ansible.builtin.file:
-        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/{{ item }}"
-        state: directory
-        owner: "{{ docker_puid }}"
-        group: "{{ docker_pgid }}"
-        mode: '0775'
-      loop:
-        - html
-        - data
-        - config
-        - db_pg
-
     # --- Home Assistant directory ---
     - name: Create Home Assistant config directory on NFS volume
       ansible.builtin.file:
@@ -40,22 +26,18 @@
         mode: '0775'
 
     # --- .env files ---
-    - name: Generate .env file for productivity stack (Nextcloud)
+    # O Nextcloud saiu para a stack cloud (setup-cloud-stack-volumes.yml). O productivity.env ficou só com
+    # o IP da core-services-vm, usado pelo Prometheus da stack apps (porta 9090 na LAN).
+    - name: Generate .env file for productivity stack (IP da core-services-vm)
       ansible.builtin.template:
         src: ../templates/portainer_stack_env.j2
         dest: "{{ portainer_env_files_dest_path_on_vm }}/productivity.env"
         owner: root
         group: root
-        mode: '0600'
+        mode: '0644'
       vars:
         stack_name: productivity
         stack_configs:
-          - { name: 'PROD_STACK_NEXTCLOUD_DB_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/db_pg" }
-          - { name: 'PROD_STACK_NEXTCLOUD_HTML_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/html" }
-          - { name: 'PROD_STACK_NEXTCLOUD_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/data" }
-          - { name: 'PROD_STACK_NEXTCLOUD_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/config" }
-          - { name: 'NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ nextcloud_db_password }}" }
-          - { name: 'NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV', value: "{{ nextcloud_admin_initial_password }}" }
           - { name: 'CORE_SERVICES_VM_IP_VAR', value: "{{ core_services_vm_ip_var }}" }
 
     - name: Generate .env file for automation stack (Home Assistant)

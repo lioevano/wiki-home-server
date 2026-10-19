@@ -1,5 +1,5 @@
 # docker/stacks/apps/docker-compose.yml
-# Aplicações: produtividade, monitoramento e automação (a mídia fica em docker/stacks/media)
+# Aplicações: monitoramento e automação (mídia em docker/stacks/media; fotos e arquivos em docker/stacks/photos e cloud)
 # Roda na core-services-vm
 version: '3.9'
 
@@ -12,75 +12,6 @@ networks:
     external: true
 
 services:
-  # ===================== PRODUTIVIDADE =====================
-
-  nextcloud_db:
-    image: postgres:15-alpine
-    container_name: nextcloud_db
-    restart: unless-stopped
-    volumes:
-      - "${PROD_STACK_NEXTCLOUD_DB_PATH}:/var/lib/postgresql/data"
-    environment:
-      - POSTGRES_DB=nextcloud
-      - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
-      - TZ=${SYSTEM_TIMEZONE}
-    networks:
-      - internal_services
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nextcloud -d nextcloud"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  nextcloud_redis:
-    image: redis:7-alpine
-    container_name: nextcloud_redis
-    restart: unless-stopped
-    networks:
-      - internal_services
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-  nextcloud_app:
-    image: nextcloud:latest
-    container_name: nextcloud_app
-    restart: unless-stopped
-    networks:
-      - proxy
-      - internal_services
-    volumes:
-      - "${PROD_STACK_NEXTCLOUD_HTML_PATH}:/var/www/html"
-      - "${PROD_STACK_NEXTCLOUD_DATA_PATH}:/var/www/html/data"
-      - "${PROD_STACK_NEXTCLOUD_CONFIG_PATH}:/var/www/html/config"
-    environment:
-      - POSTGRES_HOST=nextcloud_db
-      - POSTGRES_DB=nextcloud
-      - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
-      - NEXTCLOUD_ADMIN_USER=ncadmin
-      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV}
-      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${BASE_DOMAIN_FROM_VAULT} localhost ${CORE_SERVICES_VM_IP_VAR} nextcloud_app
-      - PHP_MEMORY_LIMIT=512M
-      - PHP_UPLOAD_LIMIT=4G
-      - TZ=${SYSTEM_TIMEZONE}
-      - REDIS_HOST=nextcloud_redis
-    depends_on:
-      nextcloud_db:
-        condition: service_healthy
-      nextcloud_redis:
-        condition: service_healthy
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.nextcloud.rule: "Host(`nextcloud.${BASE_DOMAIN_FROM_VAULT}`)"
-      traefik.http.routers.nextcloud.entrypoints: "websecure"
-      traefik.http.routers.nextcloud.tls.certresolver: "letsencrypt"
-      traefik.http.routers.nextcloud.middlewares: "authelia-forwardauth@docker,nextcloud-headers@file"
-      traefik.http.services.nextcloud-svc.loadbalancer.server.port: "80"
-
   # ===================== MONITORAMENTO =====================
 
   prometheus:

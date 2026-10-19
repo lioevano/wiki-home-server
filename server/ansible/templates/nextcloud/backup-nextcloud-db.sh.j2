@@ -1,0 +1,14 @@
+#!/bin/bash
+# ansible/templates/nextcloud/backup-nextcloud-db.sh.j2
+# Dump diário do Postgres do Nextcloud (o banco fica no disco local da VM, fora dos snapshots ZFS).
+# Instalado em /usr/local/sbin pelo setup-cloud-stack-volumes.yml e chamado pelo timer systemd
+# backup-nextcloud-db.timer. Restauração: página 11.
+set -euo pipefail
+
+destino="{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/db-dumps"
+arquivo="$destino/nextcloud-$(date +%F).dump"
+
+docker exec nextcloud_db pg_dump -U nextcloud -d nextcloud -Fc > "$arquivo.tmp"
+mv "$arquivo.tmp" "$arquivo"
+# Mantém duas semanas de dumps.
+find "$destino" -name 'nextcloud-*.dump' -mtime +14 -delete
