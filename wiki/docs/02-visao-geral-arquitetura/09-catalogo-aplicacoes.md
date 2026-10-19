@@ -36,14 +36,18 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 |---|---|---|---|---|---|---|---|---|---|---|
 | `alloy` | monitoramento | ansible:infra/alloy / proxmox_main_host; ansible:infra/alloy / core-services-vm; ansible:infra/alloy / ai-desktop-vm | `alloy` | interna | — | nenhum | sim | `logs`, `metricas` | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy) |
 | `authelia` | infra | core / core-services-vm | `authelia`, `authelia_db` | publica | `auth` | nfs | não | `autenticacao` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
+| `bazarr` | mídia | media / core-services-vm | `bazarr` | protegida | `bazarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `blackbox-exporter` | monitoramento | apps / core-services-vm | `blackbox-exporter` | interna | — | nfs | sim | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `cloudflared` | infra | core / core-services-vm | `cloudflared` | interna | — | nenhum | sim | `acesso-externo` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
 | `diun` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `diun`, `diun_ai` | interna | — | nfs | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `docker-socket-proxy` | infra | apps / core-services-vm | `docker-socket-proxy` | interna | — | nenhum | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
+| `flaresolverr` | mídia | media / core-services-vm | `flaresolverr` | interna | — | nenhum | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `gluetun` | mídia | media / core-services-vm | `gluetun` | interna | — | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `grafana` | monitoramento | apps / core-services-vm | `grafana`, `grafana_db` | protegida | `grafana` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `homeassistant` | automação | apps / core-services-vm | `homeassistant` | protegida | `hass` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `homepage` | infra | apps / core-services-vm | `homepage` | protegida | `home` | nfs | não | `painel` | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
-| `jellyfin` | mídia | apps / core-services-vm | `jellyfin` | protegida | `jellyfin` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
+| `jellyfin` | mídia | media / core-services-vm | `jellyfin` | publica | `jellyfin` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `lidarr` | mídia | media / core-services-vm | `lidarr` | protegida | `lidarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `litellm` | ia | ai / ai-desktop-vm | `litellm` | interna | — | nfs | não | `llm` | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `loki` | monitoramento | apps / core-services-vm | `loki` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `n8n` | automação | apps / core-services-vm | `n8n` | protegida | `n8n` | nfs | não | `notificacoes` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
@@ -54,7 +58,10 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `openclaw` | ia | ai / ai-desktop-vm | `openclaw` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | protegida | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |
 | `prometheus` | monitoramento | apps / core-services-vm | `prometheus` | protegida | `prometheus` | nfs | sim | `metricas` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
-| `qbittorrent` | mídia | apps / core-services-vm | `qbittorrent` | protegida | `qbittorrent` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
-| `radarr` | mídia | apps / core-services-vm | `radarr` | protegida | `radarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
-| `sonarr` | mídia | apps / core-services-vm | `sonarr` | protegida | `sonarr` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
+| `prowlarr` | mídia | media / core-services-vm | `prowlarr` | protegida | `prowlarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `qbittorrent` | mídia | media / core-services-vm | `qbittorrent` | protegida | `qbittorrent` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `radarr` | mídia | media / core-services-vm | `radarr` | protegida | `radarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `recyclarr` | mídia | media / core-services-vm | `recyclarr` | interna | — | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `seerr` | mídia | media / core-services-vm | `seerr` | publica | `pedidos` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `sonarr` | mídia | media / core-services-vm | `sonarr` | protegida | `sonarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `traefik` | infra | core / core-services-vm | `traefik` | protegida | `traefik` | nfs | não | `roteamento` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |

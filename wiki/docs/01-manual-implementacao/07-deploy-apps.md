@@ -1,17 +1,16 @@
 ---
-description: "Deploy das aplicações na stack apps: Nextcloud, mídia, monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible."
+description: "Deploy das aplicações na stack apps: Nextcloud, monitoramento, n8n e Home Assistant, com preparação de volumes via Ansible."
 ---
 
-# Seção 7: Deploy de Aplicações (Nextcloud, Mídia, Monitoramento, n8n, Home Assistant)
+# Seção 7: Deploy de Aplicações (Nextcloud, Monitoramento, n8n, Home Assistant)
 
-Todas as aplicações são agora gerenciadas em um único compose file: `docker/stacks/apps/docker-compose.yml`.
+As aplicações ficam em um único compose: `docker/stacks/apps/docker-compose.yml`. A mídia tem stack própria (`media`), descrita na [Seção 10](10-midia.md).
 
 ## Visão Geral dos Serviços
 
 | Categoria | Serviços | Acesso |
 |---|---|---|
 | Produtividade | Nextcloud (+ Postgres, Redis) | `nextcloud.seudominio.com` |
-| Mídia | Jellyfin, Sonarr, Radarr, qBittorrent | `jellyfin.`, `sonarr.`, `radarr.`, `qbittorrent.` |
 | Monitoramento | Prometheus, Grafana (+ Postgres), Loki, blackbox-exporter, Diun, Homepage, docker-socket-proxy | `prometheus.`, `grafana.`, `home.` |
 | Automação | n8n, Home Assistant | `n8n.`, `hass.` |
 
@@ -33,16 +32,15 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
 |---|---|---|
 | `productivity.env` | `setup-productivity-automation-volumes.yml` | `NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV` (vault `nextcloud_db_password`), `NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV` (vault `nextcloud_admin_initial_password`), `CORE_SERVICES_VM_IP_VAR` (`core_services_vm_ip_var` do `hosts.ini`) |
 | `automation.env` | `setup-productivity-automation-volumes.yml` | caminhos do Home Assistant |
-| `media.env` | `setup-media-stack-volumes.yml` | caminhos de mídia |
 | `n8n.env` | `setup-n8n-volumes.yml` | caminho de configuração e subdomínio; `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` (vault `telegram_bot_token`, `telegram_chat_id`, `notificacoes_webhook_token`) para o workflow de notificações. O login do n8n é a conta de dono criada no primeiro acesso, atrás do Authelia |
-| `monitoring.env` | `setup-monitoring-stack-volumes.yml` | `GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_db_password`), `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_admin_initial_password`); `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` para os alertas do Grafana; credenciais dos widgets da Homepage (`HOMEPAGE_VAR_*`, vault `homepage_widget_keys`) |
+| `monitoring.env` | `setup-monitoring-stack-volumes.yml` | `GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_db_password`), `GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV` (vault `grafana_admin_initial_password`); `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` para os alertas do Grafana; credenciais dos widgets da Homepage (`HOMEPAGE_VAR_*`, vault `homepage_widget_keys` e `arr_api_keys`) |
 
 ### Passos manuais ao mudar variáveis ou segredos
 
 1. Confira no vault real (`ansible-vault edit inventories/home/group_vars/all/vault.yml`) que as chaves da tabela acima estão preenchidas (evite `$`, `#`, aspas e espaços nos segredos: o `.env` não usa aspas).
 2. Rode cada playbook primeiro com `--check` e depois sem (não use `--diff`, que imprimiria os segredos do `.env` no terminal):
    ```bash
-   for pb in setup-productivity-automation-volumes setup-media-stack-volumes setup-n8n-volumes setup-monitoring-stack-volumes; do
+   for pb in setup-productivity-automation-volumes setup-n8n-volumes setup-monitoring-stack-volumes; do
      ansible-playbook -i inventories/home/hosts.ini playbooks/$pb.yml --ask-vault-pass --check
    done
    # sem erros? repita o laço sem --check
@@ -50,20 +48,17 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
    Depois junte os arquivos num só `apps.env` para o Portainer (contém segredos: `0600`):
    ```bash
    # na core-services-vm
-   sudo sh -c 'umask 077; cd /opt/portainer_stack_envs && cat productivity.env automation.env media.env n8n.env monitoring.env > apps.env && chmod 600 apps.env'
+   sudo sh -c 'umask 077; cd /opt/portainer_stack_envs && cat productivity.env automation.env n8n.env monitoring.env > apps.env && chmod 600 apps.env'
    ```
 3. No Portainer, abra a stack `apps`, recarregue `apps.env` em **Env** e clique em **Update the stack**.
 
 ## Preparação dos Volumes
 
-Os volumes são criados pelos playbooks Ansible `ansible/playbooks/setup-productivity-automation-volumes.yml`, `ansible/playbooks/setup-media-stack-volumes.yml`, `ansible/playbooks/setup-n8n-volumes.yml` e `ansible/playbooks/setup-monitoring-stack-volumes.yml`. A partir de `server/ansible`:
+Os volumes são criados pelos playbooks Ansible `ansible/playbooks/setup-productivity-automation-volumes.yml`, `ansible/playbooks/setup-n8n-volumes.yml` e `ansible/playbooks/setup-monitoring-stack-volumes.yml`. A partir de `server/ansible`:
 
 ```bash
 # Volumes Nextcloud + automação
 ansible-playbook -i inventories/home/hosts.ini playbooks/setup-productivity-automation-volumes.yml
-
-# Volumes mídia
-ansible-playbook -i inventories/home/hosts.ini playbooks/setup-media-stack-volumes.yml
 
 # Volumes n8n
 ansible-playbook -i inventories/home/hosts.ini playbooks/setup-n8n-volumes.yml
@@ -78,15 +73,10 @@ O playbook de monitoramento renderiza as configurações a partir de `ansible/te
 
 Para desativar um serviço que não usa, adicione `enabled: false` nas labels do Traefik do serviço no compose, ou comente o bloco inteiro do serviço.
 
-**Plex em vez de Jellyfin** — o compose consolidado inclui apenas o Jellyfin. Para trocar, use as skills `remove-app` (jellyfin) e `add-app` (plex), que ajustam compose, playbook de volumes, variáveis, catálogo e integrações juntos.
 
 ## Notas por Serviço
 
 - **Nextcloud**: Requer Postgres e Redis. Dados em NFS. `trusted_domains` configurado automaticamente.
-- **Jellyfin**: Hardware transcoding via `/dev/dri` (iGPU). Se usar CPU, remova o device.
-  - *Notificações (NTF-3):* instale o plugin **Webhook** (Painel → Plugins → Catálogo), adicione um *Generic Destination* para `http://n8n:5678/webhook/notificar` com o cabeçalho `Authorization: Bearer <notificacoes_webhook_token>` e o modelo `{"titulo": "{{NotificationType}}", "mensagem": "{{Name}}", "gravidade": "info", "app": "jellyfin"}`.
-- **Sonarr/Radarr**: Dependem do qBittorrent para downloads. Configure o client de torrent no Sonarr/Radarr após o deploy.
-  - *Notificações (NTF-3):* em **Settings → Connect → + → Webhook**: URL `http://n8n:5678/webhook/notificar`, método `POST`, cabeçalho `Authorization: Bearer <notificacoes_webhook_token>`; marque os eventos desejados (ex.: *On Import*, *On Health Issue*). O n8n reconhece o formato nativo (`eventType`).
 - **Prometheus**: Recebe as métricas dos Alloys por *remote write* (`--web.enable-remote-write-receiver`) e publica a porta 9090 no IP da `core-services-vm` (`${CORE_SERVICES_VM_IP_VAR}:9090`), só para a LAN, como o Loki; a interface continua em `prometheus.seudominio.com`, atrás do Authelia. O job `alloy` de `ansible/templates/prometheus.yml.j2` raspa o `/metrics` do Alloy de cada host (porta 12345) para saber se ele está vivo ([seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)).
 - **Grafana**: Login inicial `admin` / senha do vault (`grafana_admin_initial_password`). Os datasources Prometheus (`http://prometheus:9090`) e Loki (`http://loki:3100`) são provisionados automaticamente pelo `setup-monitoring-stack-volumes.yml` (pasta `grafana/provisioning`, montada em `/etc/grafana/provisioning`).
 - **Loki**: Guarda os logs que o Grafana Alloy coleta em cada host (containers, journal e `/var/log`; [seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)), que substituiu o Promtail. O Loki usa schema v13 com índice TSDB (`ansible/templates/loki-local-config.yaml.j2`), o formato exigido pelo Loki 3. O Loki publica a porta 3100 no IP da `core-services-vm` (`${CORE_SERVICES_VM_IP_VAR}:3100`) para receber os logs dos Alloys de todos os hosts; ele não tem autenticação, então a porta só deve ser alcançável pela LAN (não crie rota no Traefik nem no túnel para ela). Portas publicadas pelo Docker não passam pelo UFW da VM, então a proteção é a própria LAN.

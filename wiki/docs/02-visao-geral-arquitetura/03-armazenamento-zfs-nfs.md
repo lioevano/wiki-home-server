@@ -25,7 +25,7 @@ ZFS é mais do que apenas um sistema de arquivos; é também um gerenciador de v
 No host Proxmox, criamos um pool ZFS chamado `data` usando os dois HDDs de 500GB. Dentro deste pool, organizamos os dados com os seguintes datasets principais:
 
 *   `data/docker-volumes`: Armazena os dados persistentes de configuração e aplicação dos containers Docker. É o mais crítico para as operações dos serviços.
-*   `data/media`: Mídia e torrents no **mesmo** dataset, montado como `/data` na stack `media`: `torrents/{movies,tv,music}` recebe os downloads do qBittorrent e `media/{movies,tv,music}` é a biblioteca do Jellyfin. Como os dois estão no mesmo sistema de arquivos, o Sonarr, o Radarr e o Lidarr importam por **hardlink**: o arquivo não é copiado e não ocupa espaço dobrado enquanto o torrent semeia (layout do TRaSH Guides).
+*   `data/media`: Mídia e torrents no **mesmo** dataset, montado como `/data` na stack `media`: `torrents/{movies,tv,music}` recebe os downloads do qBittorrent e `media/{movies,tv,music}` é a biblioteca do Jellyfin. Como os dois estão no mesmo sistema de arquivos, o Sonarr, o Radarr e o Lidarr importam por **hardlink**: o arquivo não é copiado e não ocupa espaço dobrado enquanto o torrent semeia (layout do TRaSH Guides; ver [Mídia](../01-manual-implementacao/10-midia.md#dados-data-único)).
 *   `data/rag_sources`: (Se a `ai-desktop-vm` for usada) Para armazenar os modelos LLM do Ollama e as fontes de dados para aplicações RAG.
 *   `data/backups`: Destino para backups de VMs do Proxmox e, potencialmente, dumps de bancos de dados das aplicações.
 

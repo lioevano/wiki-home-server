@@ -14,7 +14,7 @@ Prometheus ── Alloy (disco/RAM/CPU/ZFS/reinícios)┼─► Grafana Alerting
 Loki ── logs (login falho no Authelia) ───────┘                     │
 Diun (core e IA) ── imagem nova ────────────────────────────────────┤
 scripts/notify.sh (backups) e Proxmox ──────────────────────────────┼─► n8n /webhook/notificar ─► Telegram
-Radarr, Sonarr, Home Assistant, Jellyfin ── webhook da app ─────────┘
+*arr, Seerr, Home Assistant, Jellyfin ── webhook da app ──────────┘
 ```
 
 O alerta "n8n fora do ar" vai direto do Grafana ao Telegram, sem passar pelo n8n.
@@ -33,7 +33,7 @@ O `setup-monitoring-stack-volumes.yml` gera em `<NFS>/grafana/provisioning/alert
 
 | Arquivo | Conteúdo |
 |---|---|
-| `rules.yml` | 10 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta` (o `up` do job `alloy` de cada host, ou de um alvo do blackbox), `zfs-degradado`, `container-reiniciando` (zeragens do contador de CPU do container no cAdvisor do Alloy; reinícios mais rápidos que 1 s escapam), `authelia-logins-falhos` |
+| `rules.yml` | 11 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `qbittorrent-ou-vpn-fora` (a probe do qBittorrent passa pelo gluetun: falha também quando a VPN cai), `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta` (o `up` do job `alloy` de cada host, ou de um alvo do blackbox), `zfs-degradado`, `container-reiniciando` (zeragens do contador de CPU do container no cAdvisor do Alloy; reinícios mais rápidos que 1 s escapam), `authelia-logins-falhos` |
 | `contact-points.yml` | `n8n` (webhook interno com `Authorization: Bearer`) e `telegram-direto` (bot do Telegram) |
 | `policies.yml` | tudo vai para `n8n`, agrupado por `alertname` e `app`; só `n8n-fora-do-ar` vai para `telegram-direto` |
 
@@ -153,7 +153,7 @@ NOTIFICACOES_WEBHOOK_TOKEN=<notificacoes_webhook_token do vault>
 
 ### Webhooks nas aplicações (NTF-3)
 
-Radarr, Sonarr, Jellyfin e Home Assistant mandam eventos próprios ao n8n; o passo de cada um está nas notas por serviço da [página de apps](07-deploy-apps.md#notas-por-serviço).
+Sonarr, Radarr, Lidarr, Prowlarr, Seerr e Jellyfin ([Mídia](10-midia.md#notificações-ntf-3)) e Home Assistant ([página de apps](07-deploy-apps.md#notas-por-serviço)) mandam eventos próprios ao n8n.
 
 ### Bot do Telegram e importação do workflow
 
@@ -180,7 +180,9 @@ Depois do primeiro acesso a cada aplicação, gere a credencial e grave-a no vau
 | Aplicação | Onde gerar | Chave no vault |
 |---|---|---|
 | Jellyfin | Painel → Chaves de API | `homepage_widget_keys.jellyfin` |
-| Radarr / Sonarr | Settings → General → API Key | `homepage_widget_keys.radarr` / `.sonarr` |
+| Sonarr / Radarr / Lidarr / Prowlarr | fixadas pelo vault (não precisam ser geradas) | `arr_api_keys.*` |
+| Bazarr | Settings → General → API Key | `homepage_widget_keys.bazarr` |
+| Seerr | Settings → General → API Key | `homepage_widget_keys.seerr` |
 | Nextcloud | app *serverinfo*: `occ config:app:set serverinfo token --value <token>` | `homepage_widget_keys.nextcloud` |
 | Home Assistant | Perfil → Tokens de acesso de longa duração | `homepage_widget_keys.homeassistant` |
 | Portainer | Conta → Access tokens | `homepage_widget_keys.portainer` |

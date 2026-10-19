@@ -22,7 +22,7 @@ Cada integração liga uma aplicação **provedora** (ex.: Traefik) às aplicaç
 
 Uma seção pode ter subseções extras **de referência** (ex.: `### Origem dos valores`) depois das cinco obrigatórias; as skills as seguem ao corrigir ou adicionar.
 
-**Serviço principal** é o primeiro da coluna Serviços. Regras de roteamento e autenticação valem para ele; aplicações `ansible:<role>` têm a evidência nas tasks/labels do role, não em compose.
+**Serviço principal** é o primeiro da coluna Serviços. Regras de roteamento e autenticação valem para ele; aplicações `ansible:<role>` têm a evidência nas tasks/labels do role, não em compose. Serviço com `network_mode: service:<outro>` (hoje o `qbittorrent`, na rede do `gluetun`) tem o router, as redes e o middleware no serviço `<outro>`, que vale como evidência das regras de roteamento e autenticação.
 
 ---
 
@@ -174,6 +174,7 @@ Remover `loki` e `loki-local-config.yaml.j2` e os blocos `loki.*` do `config.all
 - **DAD-1** — Dados = `nfs`: os volumes de dados persistentes usam `${VM_NFS_MOUNT_BASE_PATH}/…` ou uma variável `*_PATH` criada pelo playbook de volumes da stack (que a aponta para o NFS). Binds de sistema (`/var/run/docker.sock`, `/etc/localtime`, logs do Docker) não contam. *Evidência:* `volumes:` + playbook.
 - **DAD-2** — Dados = `local`: a página da aplicação tem aviso de que os dados ficam fora dos snapshots ZFS **e** a página de backup lista a aplicação. *Evidência:* as duas páginas.
 - **DAD-3** — o playbook `setup-<stack>-volumes.yml` cria os diretórios usados pela aplicação. *Evidência:* tasks `ansible.builtin.file` do playbook.
+- **DAD-4** — aplicação de Categoria `mídia` que acessa arquivos de mídia monta `/data` (ou uma subpasta) sempre a partir de `${MEDIA_STACK_DATA_PATH}`, nunca de duas variáveis diferentes: o hardlink da importação exige o mesmo sistema de arquivos. *Evidência:* `volumes:` do compose da stack `media`.
 
 ### Ao adicionar (por consumidor)
 1. `nfs`: diretórios no playbook de volumes e variável `*_PATH` (ver `variaveis`).
@@ -300,7 +301,7 @@ Entrada única: `POST /webhook/notificar` no n8n com `Authorization: Bearer <NOT
 ### Regras
 - **NTF-1** — disponibilidade: aplicação com Exposição `publica`/`protegida` tem alvo pela **URL interna** do serviço principal (ex.: `http://n8n:5678/healthz`; a URL pública passa pelo Authelia e não mede a aplicação) com `labels: {app: <id>}` no job `blackbox_http`; o alvo do `traefik` usa o módulo `tls_traefik` (mede também o certificado). Das `interna`, só `litellm` (`http://<ai_desktop_vm_ip_var>:4000/health/liveliness`) e `loki` (`http://loki:3100/ready`) têm alvo — as demais `interna` → `—`. *Evidência:* `prometheus.yml.j2`.
 - **NTF-2** — atualizações: existe um serviço do `diun` na mesma VM da aplicação (Stack/VM do `diun` × da aplicação). Aplicações sem container, instaladas como pacote do sistema (hoje o `alloy`), ficam fora: o Diun só observa imagens, e a versão do pacote é fixada no `group_vars` (`alloy_version`). *Evidência:* catálogo e composes.
-- **NTF-3** — eventos: aplicação com webhook nativo (`radarr`, `sonarr`, `homeassistant`, `jellyfin` via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → `✋`. Demais → `—`.
+- **NTF-3** — eventos: aplicação com webhook nativo (`radarr`, `sonarr`, `lidarr`, `prowlarr`, `seerr`, `homeassistant`, `jellyfin` via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → `✋`. Demais → `—`.
 - **NTF-4 (sobra)** — nenhum alvo do `blackbox_http` nem regra de alerta com `app` que não exista no catálogo. *Evidência:* `prometheus.yml.j2` e `rules.yml.j2`.
 
 ### Ao adicionar (por consumidor)
@@ -330,7 +331,7 @@ Aplicação `interna` entra com `+painel` em Ajustes (atalho para a URL da LAN).
 
 ### Regras
 - **PNL-1** — a aplicação tem entrada no `services.yaml.j2` (nome = id do catálogo), no grupo da sua Categoria, com `href` `https://<Subdomínio>.{{ base_domain }}` (ou URL da LAN para `+painel`) e status: na `core-services-vm`, `server: core` e `container: <container_name>` (estado do container); em outra VM, `siteMonitor` pela URL da LAN (a URL pública passa pelo Authelia). *Evidência:* template.
-- **PNL-2** — aplicação com widget oficial da Homepage (`jellyfin`, `radarr`, `sonarr`, `qbittorrent`, `nextcloud`, `homeassistant`, `grafana`, `prometheus`, `portainer`) tem `widget` na entrada; credenciais só como `{{HOMEPAGE_VAR_<APP>_...}}`, com valor vindo do vault (`homepage_widget_keys.<app>`, ou `grafana_admin_initial_password`) pelo playbook. O `traefik` fica sem widget (a API só existe atrás do Authelia). *Evidência:* template, compose da Homepage e playbook.
+- **PNL-2** — aplicação com widget oficial da Homepage (`jellyfin`, `radarr`, `sonarr`, `lidarr`, `prowlarr`, `bazarr`, `seerr`, `qbittorrent`, `nextcloud`, `homeassistant`, `grafana`, `prometheus`, `portainer`) tem `widget` na entrada; credenciais só como `{{HOMEPAGE_VAR_<APP>_...}}`, com valor vindo do vault (`homepage_widget_keys.<app>`, `arr_api_keys.<app>` para sonarr, radarr, lidarr e prowlarr, ou `grafana_admin_initial_password`) pelo playbook. O `traefik` fica sem widget (a API só existe atrás do Authelia). *Evidência:* template, compose da Homepage e playbook.
 - **PNL-3 (sobra)** — nenhuma entrada no `services.yaml.j2` sem aplicação correspondente no catálogo. *Evidência:* template.
 
 ### Ao adicionar (por consumidor)

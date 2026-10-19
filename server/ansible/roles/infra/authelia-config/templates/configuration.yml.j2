@@ -86,6 +86,13 @@ access_control:
         - "^/webhook/.*$"
       policy: bypass
 
+    # Aplicações públicas (Exposição = publica no catálogo), com login próprio: os apps do Jellyfin
+    # não passam pelo Authelia, e o Seerr entra com a conta do Jellyfin (página 10).
+    - domain: "jellyfin.{{ base_domain }}"
+      policy: bypass
+    - domain: "pedidos.{{ base_domain }}"
+      policy: bypass
+
     # Regra geral para todos os outros subdomínios do seu domínio base: requer dois fatores.
     - domain: "*.{{ base_domain }}"
       policy: two_factor # Requer login bem-sucedido com primeiro e segundo fator

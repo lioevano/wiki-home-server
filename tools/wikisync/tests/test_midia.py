@@ -166,3 +166,20 @@ def test_chaves_homepage_das_arr_vem_de_arr_api_keys():
     for app in ("bazarr", "seerr"):
         assert "homepage_widget_keys.%s" % app in pb
     assert "homepage_widget_keys.sonarr" not in pb and "homepage_widget_keys.radarr" not in pb
+
+
+def test_homepage_recebe_todas_as_variaveis_do_painel():
+    src = (ROOT / "server/ansible/templates/homepage/services.yaml.j2").read_text(encoding="utf-8")
+    usadas = set(re.findall(r"\{\{(HOMEPAGE_VAR_[A-Z_]+)\}\}", src))
+    env = _env(_svc(APPS)["homepage"])
+    assert usadas <= set(env), usadas - set(env)
+
+
+def test_authelia_bypass_para_publicas_antes_do_curinga():
+    src = (ROOT / "server/ansible/roles/infra/authelia-config/templates/configuration.yml.j2").read_text(encoding="utf-8")
+    regras = yaml.safe_load(re.sub(r"\{\{[^}]+\}\}", "x", src))["access_control"]["rules"]
+    dominios = [r["domain"] for r in regras]
+    curinga = dominios.index("*.x")
+    for sub in ("jellyfin.x", "pedidos.x"):
+        i = dominios.index(sub)
+        assert i < curinga and regras[i]["policy"] == "bypass"

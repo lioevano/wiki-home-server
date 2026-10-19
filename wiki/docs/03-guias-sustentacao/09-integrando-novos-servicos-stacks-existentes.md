@@ -122,7 +122,10 @@ O processo é bastante similar a [adicionar uma stack completamente nova](01-adi
 
 ## Exemplo Prático: Adicionando `Bazarr` (Gerenciador de Legendas) à Stack de Mídia
 
-Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `apps` e agora quer adicionar o [Bazarr](https://www.bazarr.media/) para gerenciar e baixar legendas automaticamente.
+!!! note "Exemplo histórico"
+    O Bazarr já faz parte da stack `media` ([Seção 10](../01-manual-implementacao/10-midia.md)). O exemplo continua válido como roteiro para acrescentar outro serviço a uma stack existente.
+
+Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `media` e agora quer adicionar o [Bazarr](https://www.bazarr.media/) para gerenciar e baixar legendas automaticamente.
 
 1.  **Planejamento (Bazarr):**
     *   Imagem: `lscr.io/linuxserver/bazarr:latest` (ou uma tag de versão específica).
@@ -133,7 +136,7 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `app
 
 2.  **Preparação Ansible (Atualizar `setup-media-stack-volumes.yml`):**
     *   Adicione uma task `ansible.builtin.file` para criar o diretório `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/bazarr/config`.
-    *   Atualize a task `ansible.builtin.template` que gera `/opt/portainer_stack_envs/apps.env` para incluir:
+    *   Atualize a task `ansible.builtin.template` que gera `/opt/portainer_stack_envs/media.env` para incluir:
         ```env
         # ... (variáveis existentes para Jellyfin, Sonarr, etc.) ...
         MEDIA_STACK_BAZARR_CONFIG_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/bazarr/config
@@ -173,10 +176,10 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `app
           - radarr
     ```
 
-4.  **Atualizar a Stack `apps` no Portainer:**
-    *   Vá para a stack `apps` -> Editor.
+4.  **Atualizar a Stack `media` no Portainer:**
+    *   Vá para a stack `media` -> Editor.
     *   Cole o `docker-compose.yml` completo e atualizado (com Bazarr incluído).
-    *   Recarregue o `/opt/portainer_stack_envs/apps.env` remontado em **Env**; sem isso, novas variáveis como `MEDIA_STACK_BAZARR_CONFIG_PATH` não são reconhecidas.
+    *   Recarregue o `/opt/portainer_stack_envs/media.env` em **Env**; sem isso, novas variáveis como `MEDIA_STACK_BAZARR_CONFIG_PATH` não são reconhecidas.
     *   Clique em "Update the stack", marcando "Re-pull image and redeploy".
 
 5.  **DNS e Testes:**
