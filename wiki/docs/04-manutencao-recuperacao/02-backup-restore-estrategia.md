@@ -181,7 +181,7 @@ Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/do
 *   **Como Fazer Backup (Scripts Agendados na `core-services-vm`):**
     *   Para cada banco de dados (Authelia, Nextcloud, Grafana), crie um script shell na `core-services-vm` que use `docker exec` para executar o comando `pg_dump` dentro do container Docker do respectivo banco de dados.
     *   Salve os arquivos de dump (`.sql.gz`) em um subdiretório do seu montado NFS de backups (e.g., `/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/nextcloud/`, `/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/authelia/`, etc.).
-    *   **Exemplo de Script para Nextcloud DB (já detalhado na subseção desta própria página sobre backup lógico do PostgreSQL e na [Rotina de Manutenção 01](01-rotinas-manutencao.md#exemplo-de-script-backup_postgres_nextcloudsh)):**
+    *   **Exemplo de Script para Nextcloud DB (backup lógico do PostgreSQL; ver também as [rotinas de manutenção](01-rotinas-manutencao.md)):**
         ```bash
         #!/bin/bash
         # /opt/homelab_scripts/backup_postgres_nextcloud.sh (na core-services-vm)

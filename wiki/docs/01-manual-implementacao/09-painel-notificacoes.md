@@ -153,7 +153,7 @@ NOTIFICACOES_WEBHOOK_TOKEN=<notificacoes_webhook_token do vault>
 
 ### Webhooks nas aplicações (NTF-3)
 
-Radarr, Sonarr, Jellyfin e Home Assistant mandam eventos próprios ao n8n; o passo de cada um está nas notas por serviço da [página de apps](07-deploy-apps.md#notas-por-servico).
+Radarr, Sonarr, Jellyfin e Home Assistant mandam eventos próprios ao n8n; o passo de cada um está nas notas por serviço da [página de apps](07-deploy-apps.md#notas-por-serviço).
 
 ### Bot do Telegram e importação do workflow
 

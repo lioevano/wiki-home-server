@@ -444,7 +444,7 @@ Certifique-se de que o arquivo `ansible/playbooks/vm-deploy.yml` exista com o se
 
 Após a execução, suas VMs (`core-services-vm` e `ai-desktop-vm`, se habilitada) devem estar criadas no Proxmox, configuradas com os parâmetros básicos de Cloud-Init e, se tudo correu bem com o `wait_for`, prontas para as próximas etapas de configuração.
 
-## 3.4. Configuração de GPU Passthrough (Host Proxmox) - Revisão
+## 3.4. Configuração de GPU Passthrough (Host Proxmox)
 
 Se você planeja usar a `ai-desktop-vm` com a RX 5600XT para aceleração de IA ou outras tarefas gráficas, a configuração de GPU passthrough no **host Proxmox** é um pré-requisito. Este é um processo avançado e os detalhes podem variar ligeiramente dependendo do seu hardware específico e versão do Proxmox.
 

@@ -34,7 +34,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
     *   !!! critical "Este é o Passo Mais Importante e Não Pode Ser Ignorado!"
         Antes de iniciar qualquer migração:
         *   Garanta que você tem **backups completos e recentes de todas as suas VMs Proxmox**, salvos em um local acessível (idealmente no seu pool `/data/backups/vms` e também uma cópia off-site). Verifique se os backups foram concluídos com sucesso.
-        *   Faça um **backup completo dos seus dados do pool ZFS `/data`** (que contém `docker-volumes`, `media`, `downloads`, etc.). A melhor forma é usar [BorgBackup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#b-volumes-de-arquivos-configs-docker-mídia-etc) para um destino externo. Se não usa Borg, pelo menos `rsync` para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.
+        *   Faça um **backup completo dos seus dados do pool ZFS `/data`** (que contém `docker-volumes`, `media`, `downloads`, etc.). A melhor forma é usar [BorgBackup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#b-volumes-de-arquivos-configs-docker-mídia-downloads-modelos-rag) para um destino externo. Se não usa Borg, pelo menos `rsync` para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.
         *   Faça um backup da [configuração do seu host Proxmox antigo](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#1-configuração-do-host-proxmox-ve) (arquivos de `/etc/`).
         *   Certifique-se de que seu **repositório Ansible `home-server/` está totalmente atualizado e enviado (`pushed`) para seu Git remote** (GitHub, GitLab, etc.).
         *   Tenha sua **senha do Ansible Vault** em local seguro.
@@ -99,7 +99,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         *   Adicione-o ao grupo `sudo` e configure `NOPASSWD` para `sudo`.
         *   Na sua máquina de controle Ansible, copie sua chave SSH pública (`~/.ssh/id_ed25519_homelab.pub`) para este novo usuário no host Proxmox usando `ssh-copy-id`.
         *   Teste a conexão SSH e a capacidade de `sudo` sem senha.
-        (Estes são os mesmos passos da [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-importante)).
+        (Estes são os mesmos passos da [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
     2.  **Execute o Playbook Mestre `full-deploy.yml` (ou o script `restore.sh`):**
         Na raiz do seu projeto `home-server/` na máquina de controle Ansible:
         ```bash
@@ -124,7 +124,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         3.  Sem fazer alterações no compose (a menos que necessário), clique em "**Update the stack**". Marque "**Re-pull image and redeploy**" se quiser garantir que as imagens estão corretas ou se houve alguma mudança na configuração da VM que possa afetar os containers (como IPs, se referenciados incorretamente).
         *   Isso força o Portainer a reconciliar o estado da stack com sua definição e com os arquivos `.env` que o Ansible pode ter recriado/atualizado.
     *   **Dados das Aplicações:** Como o conteúdo dos seus datasets ZFS (e.g., `/data/docker-volumes/nextcloud`, `/data/media`) foi migrado, suas aplicações Docker, ao serem reiniciadas com seus volumes corretamente mapeados, devem encontrar seus dados e configurações anteriores.
-    *   **Restauração de Dumps de DB:** Se você optou por restaurar os dados do pool ZFS de um backup que não era o mais recente, e você tem dumps de banco de dados mais recentes, restaure esses dumps manualmente agora (conforme descrito na [Estratégia de Backup](02-backup-restore-estrategia.md#como-restaurar-um-banco-de-dados-postgresql-de-um-dump)).
+    *   **Restauração de Dumps de DB:** Se você optou por restaurar os dados do pool ZFS de um backup que não era o mais recente, e você tem dumps de banco de dados mais recentes, restaure esses dumps manualmente agora (conforme descrito na [Estratégia de Backup](02-backup-restore-estrategia.md#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana)).
 
 9.  **Testar Tudo Exaustivamente:**
     *   Verifique o acesso a todos os seus serviços web através dos seus subdomínios.

@@ -150,7 +150,7 @@ Traefik e Authelia são componentes críticos da nossa camada de rede e seguran�
         *   **Arquivos de Configuração:** Faça uma cópia dos seus arquivos de configuração atuais (e.g., `traefik.yml`, `authelia/configuration.yml` e o diretório de config dinâmica do Traefik) que estão nos volumes NFS. Seus templates Ansible `.j2` já estão no Git, mas o arquivo renderizado no volume é o que está em uso.
         *   **Dados Persistentes:**
             *   Para Traefik: Faça backup do `acme.json` (contém seus certificados SSL!).
-            *   Para Authelia: Faça um dump do banco de dados PostgreSQL do Authelia ([ver estratégia de backup de DB](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#bancos-de-dados-postgresql-de-authelia-nextcloud-grafana)).
+            *   Para Authelia: Faça um dump do banco de dados PostgreSQL do Authelia ([ver estratégia de backup de DB](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana)).
         *   Crie um snapshot ZFS do dataset `data/docker-volumes` no host Proxmox.
     3.  **Adapte Suas Configurações (SE NECESSÁRIO):**
         *   Se as notas de release indicarem breaking changes que afetam sua configuração, atualize seus templates Ansible (`.j2` para `traefik.yml` ou `authelia/configuration.yml`) e/ou os arquivos de configuração dinâmica do Traefik, ou as labels Docker nos `docker-compose.yml` de outros serviços (se as mudanças do Traefik as afetarem).

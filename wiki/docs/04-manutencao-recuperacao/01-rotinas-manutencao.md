@@ -125,7 +125,7 @@ Seu pool ZFS `/data` é o coração do armazenamento de dados.
     *   **Agendar com `cron` (e.g., `sudo crontab -e` no host Proxmox):**
         `0 2 1 * * /sbin/zpool scrub data # Roda às 2 AM no primeiro dia de cada mês`
 *   **Alertas de Saúde do ZFS por Email:**
-    *   O script `check_zfs.sh` (mencionado na Seção 11.2 do seu documento original, e que pode ser adaptado da nossa [seção de backups](02-backup-restore-estrategia.md#script-check_zfssh-no-proxmox-host)) pode ser agendado para verificar o status do pool e enviar um email se detectar problemas.
+    *   Um script simples de verificação (`zpool status -x`) pode ser agendado no host e avisar pelo `scripts/notify.sh` (ver [snapshots ZFS na página de backups](02-backup-restore-estrategia.md#4-zfs-snapshots-proteção-local-rápida-no-host-proxmox)); o alerta `zfs-degradado` do Grafana já cobre o pool degradado.
     *   Certifique-se de que o host Proxmox está configurado para enviar emails (e.g., `mailutils` instalado e configurado com `ssmtp` ou `postfix` para retransmitir através de um servidor SMTP).
     *   Agende este script para rodar com frequência (e.g., a cada poucas horas ou diariamente).
 

@@ -4,7 +4,7 @@ Wiki e implementação de um servidor doméstico com Proxmox VE, ZFS/NFS, Ansibl
 Traefik, Cloudflare Tunnel e Authelia. A wiki (`wiki/`) é a fonte da verdade; o `server/`
 contém a implementação e é verificado contra ela pelo `tools/wikisync`.
 
-- Site: https://lioevano.github.io/wiki-home-server/
+- Site: https://wiki.lioevano.com/
 - Comece por [`CLAUDE.md`](CLAUDE.md) (fluxo de trabalho) e [`INDEX.md`](INDEX.md) (mapa do repositório).
 
 ```bash

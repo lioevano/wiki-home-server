@@ -131,7 +131,7 @@ Siga estes passos para garantir uma integração suave e bem-sucedida:
     *   Clique em "**Deploy the stack**".
 
 5.  **Configuração de DNS na Cloudflare (se o serviço for exposto externamente):**
-    *   Se você usa uma Ingress Rule wildcard (`*.{{ base_domain }}`) no seu Cloudflare Tunnel que aponta para o Traefik (conforme recomendado na [Seção 5.5](../01-manual-implementacao/05-rede-segura.md#opção-2-gerenciamento-manual-de-ingress-rules-no-cloudflare-zero-trust-dashboard-recomendado-para-flexibilidade)), este passo pode não ser estritamente necessário, pois o novo subdomínio (`novoservico.{{ base_domain }}`) já será coberto e roteado para o Traefik.
+    *   Se você usa uma Ingress Rule wildcard (`*.{{ base_domain }}`) no seu Cloudflare Tunnel que aponta para o Traefik (conforme recomendado na [Seção 5.5](../01-manual-implementacao/05-rede-segura.md#55-configuração-de-dns-na-cloudflare)), este passo pode não ser estritamente necessário, pois o novo subdomínio (`novoservico.{{ base_domain }}`) já será coberto e roteado para o Traefik.
     *   Caso contrário, ou se você quiser uma entrada explícita, adicione manualmente um registro **CNAME** no painel DNS da Cloudflare:
         *   **Type:** `CNAME`
         *   **Name:** `novoservico` (o subdomínio do seu novo serviço, sem o domínio base).

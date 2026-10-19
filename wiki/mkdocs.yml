@@ -1,5 +1,5 @@
 site_name: Wiki do Servidor do Léo Ivan
-site_url: https://lioevano.github.io/wiki-home-server/
+site_url: https://wiki.lioevano.com/
 site_author: Léo Ivan
 site_description: >-
   Guia completo para implementação e manutenção de um servidor doméstico
@@ -74,6 +74,10 @@ markdown_extensions:
   - toc:
       permalink: true
       toc_depth: 3
+      # Mantém acentos nas âncoras (#instalação-...), como os links da wiki são escritos.
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
   - attr_list
 
 nav:

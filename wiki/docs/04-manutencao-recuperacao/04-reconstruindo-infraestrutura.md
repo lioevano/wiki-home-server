@@ -91,7 +91,7 @@ Siga estes passos metodicamente:
 
     1.  **Preparar o Novo Host Proxmox para ser Gerenciado pelo Ansible:**
         *   No shell do novo host Proxmox (como `root`), crie o usuário Ansible dedicado (`{{ proxmox_ansible_user_on_host }}` e.g., `proxmox_ansible_user`).
-        *   Adicione-o ao grupo `sudo` e configure `NOPASSWD` para `sudo` (conforme detalhado na [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-importante)).
+        *   Adicione-o ao grupo `sudo` e configure `NOPASSWD` para `sudo` (conforme detalhado na [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
         *   Na sua máquina de controle Ansible, copie sua chave SSH pública (`~/.ssh/id_ed25519_homelab.pub`) para este novo usuário no host Proxmox usando `ssh-copy-id`.
         *   Teste a conexão SSH e a capacidade de `sudo` sem senha.
     2.  **Executar o Playbook `full-deploy.yml` (ou o script `restore.sh`):**
@@ -120,7 +120,7 @@ Siga estes passos metodicamente:
         4.  **Adicione manualmente quaisquer SECRETS** (senhas de DB, API keys específicas da aplicação) como variáveis de ambiente na UI do Portainer.
         5.  Clique em "**Deploy the stack**".
     *   **Dados das Aplicações:** Como o conteúdo do dataset `/data/docker-volumes` (e outros como `/data/media`) foi restaurado (seja pela importação do pool ZFS original ou de um backup off-site), suas aplicações Docker, ao serem reiniciadas com seus volumes corretamente mapeados, devem encontrar seus dados e configurações anteriores.
-        *   **Restauração de Dumps de DB:** Se você tem dumps de banco de dados mais recentes do que o estado dos volumes ZFS restaurados, ou se a restauração do volume do DB não foi perfeita, você pode precisar restaurar os dumps de banco de dados manualmente (conforme descrito na [Estratégia de Backup](02-backup-restore-estrategia.md#como-restaurar-um-banco-de-dados-postgresql-de-um-dump)).
+        *   **Restauração de Dumps de DB:** Se você tem dumps de banco de dados mais recentes do que o estado dos volumes ZFS restaurados, ou se a restauração do volume do DB não foi perfeita, você pode precisar restaurar os dumps de banco de dados manualmente (conforme descrito na [Estratégia de Backup](02-backup-restore-estrategia.md#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana)).
 
 9.  **Testar Tudo Exaustivamente:**
     *   Verifique o acesso a cada serviço web via seu subdomínio Cloudflare.

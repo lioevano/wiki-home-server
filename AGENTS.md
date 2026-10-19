@@ -6,7 +6,7 @@ Repositório único (`lioevano/wiki-home-server`) do servidor doméstico do Léo
 Proxmox VE + ZFS/NFS, Ansible, Docker/Portainer, Traefik, Cloudflare Tunnel e Authelia.
 
 - `wiki/` — documentação MkDocs, **fonte da verdade** da infraestrutura. Publicada em
-  https://lioevano.github.io/wiki-home-server/ pelo GitHub Actions (branch `gh-pages`).
+  https://wiki.lioevano.com/ pelo GitHub Actions (branch `gh-pages`; domínio próprio via `wiki/docs/CNAME`).
 - `server/` — implementação (Ansible, stacks Docker, scripts). **Reflete a wiki.**
 - `tools/` — `dev.py` (executor de tarefas) e `wikisync` (verificação/sincronização wiki → server).
 
