@@ -22,6 +22,12 @@ entryPoints:
           permanent: true # Usa redirecionamento 301 (permanente)
   websecure: # Entrypoint principal para HTTPS na porta 443
     address: ":443"
+    # O cloudflared chega pela rede Docker 'proxy' (172.16.0.0/12) e informa o IP real do visitante em
+    # X-Forwarded-For. Confiar só nessa faixa deixa as aplicações (ex.: Jellyfin) distinguirem acesso
+    # da internet de acesso local; clientes da LAN chegam com o próprio IP e não podem forjar o cabeçalho.
+    forwardedHeaders:
+      trustedIPs:
+        - "172.16.0.0/12"
     http:
       tls:
         certResolver: "letsencrypt" # Resolvedor padrão para certificados TLS

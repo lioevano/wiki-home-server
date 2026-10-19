@@ -77,15 +77,18 @@ As *arr usam `<APP>__AUTH__METHOD=External`: a interface já está atrás do Aut
 
 ## Primeira configuração
 
-Estes passos ficam no banco de cada aplicação e são feitos na interface, uma vez:
+Estes passos ficam no banco de cada aplicação e são feitos na interface, uma vez.
 
-1. **ProtonVPN:** em account.protonvpn.com → *Downloads* → *WireGuard configuration*, gere uma configuração com **NAT-PMP (Port Forwarding)** ligado, num servidor P2P. Copie o `PrivateKey` para o vault (`protonvpn_wireguard_private_key`) e rode o playbook. O encaminhamento de porta exige plano pago.
-2. **qBittorrent** (`qbittorrent.seudominio.com`): troque a senha inicial (veja `docker logs qbittorrent`); em *Opções → Web UI* marque **Bypass authentication for clients on localhost** (o gluetun grava a porta encaminhada por essa API); caminho padrão `/data/torrents`; categorias `movies`, `tv` e `music` em `/data/torrents/<categoria>`.
-3. **Prowlarr:** *Settings → Indexers*: proxy FlareSolverr em `http://flaresolverr:8191` com a tag `flaresolverr` (use a tag nos indexadores atrás de Cloudflare); *Settings → Apps*: Sonarr, Radarr e Lidarr em `http://<app>:<porta>`, com Prowlarr Server `http://prowlarr:9696` e as chaves de `arr_api_keys`; depois, os indexadores.
-4. **Sonarr, Radarr e Lidarr:** *Settings → Download Clients*: qBittorrent em host `gluetun`, porta `8088`, categoria `tv` / `movies` / `music`; *Media Management*: pastas raiz `/data/media/tv`, `/data/media/movies`, `/data/media/music` e **Use Hardlinks instead of Copy** ligado.
-5. **Bazarr:** *Settings → Sonarr/Radarr* com `http://sonarr:8989` e `http://radarr:7878` e as chaves; idioma **Portuguese (Brazil)**; provedores de legenda.
-6. **Jellyfin:** bibliotecas em `/data/media/movies`, `/data/media/tv` e `/data/media/music`; *Dashboard → Users*: no admin, desmarque **Allow remote connections**; em *Networking*, ajuste **Login attempts before lockout**; crie os usuários da família.
-7. **Seerr** (`pedidos.seudominio.com`): entre com o Jellyfin (`http://jellyfin:8096`); Sonarr e Radarr com `http://sonarr:8989` e `http://radarr:7878` e as chaves de `arr_api_keys`.
+!!! warning "Jellyfin e Seerr primeiro"
+    Os dois são públicos desde o primeiro **Deploy the stack**: quem abrir `jellyfin.` ou `pedidos.` antes de você conclui o assistente inicial e vira administrador. Faça os passos 1 e 2 logo depois do deploy, antes de qualquer outro.
+
+1. **Jellyfin** (`jellyfin.seudominio.com`): conclua o assistente criando o admin; bibliotecas em `/data/media/movies`, `/data/media/tv` e `/data/media/music`. Em *Dashboard → Networking*, ponha `traefik` em **Known proxies** (assim o Jellyfin lê o IP real que o Traefik repassa e sabe o que vem da internet) e ajuste **Login attempts before lockout**. Em *Dashboard → Users*, no admin, desmarque **Allow remote connections**; crie os usuários da família. Confira de fora de casa (dados móveis) que o admin não entra.
+2. **Seerr** (`pedidos.seudominio.com`): conclua o assistente entrando com o Jellyfin (`http://jellyfin:8096`); Sonarr e Radarr com `http://sonarr:8989` e `http://radarr:7878` e as chaves de `arr_api_keys`.
+3. **ProtonVPN:** em account.protonvpn.com → *Downloads* → *WireGuard configuration*, gere uma configuração com **NAT-PMP (Port Forwarding)** ligado, num servidor P2P. Copie o `PrivateKey` para o vault (`protonvpn_wireguard_private_key`) e rode o playbook. O encaminhamento de porta exige plano pago.
+4. **qBittorrent** (`qbittorrent.seudominio.com`): troque a senha inicial (veja `docker logs qbittorrent`); em *Opções → Web UI* marque **Bypass authentication for clients on localhost** (o gluetun grava a porta encaminhada por essa API); em *Opções → Downloads*, **Default Torrent Management Mode = Automatic** e caminho padrão `/data/torrents`; categorias `movies`, `tv` e `music` em `/data/torrents/<categoria>`. Depois, aplique a porta: `docker restart gluetun` e em seguida `docker restart qbittorrent` (o qBittorrent perde a rede quando o gluetun reinicia); confira em *Opções → Conexão* a porta que aparece no log do gluetun (`docker logs gluetun | grep -i "port forwarded"`).
+5. **Prowlarr:** *Settings → Indexers*: proxy FlareSolverr em `http://flaresolverr:8191` com a tag `flaresolverr` (use a tag nos indexadores atrás de Cloudflare); *Settings → Apps*: Sonarr, Radarr e Lidarr em `http://<app>:<porta>`, com Prowlarr Server `http://prowlarr:9696` e as chaves de `arr_api_keys`; depois, os indexadores.
+6. **Sonarr, Radarr e Lidarr:** *Settings → Download Clients*: qBittorrent em host `gluetun`, porta `8088`, categoria `tv` / `movies` / `music`; *Media Management*: pastas raiz `/data/media/tv`, `/data/media/movies`, `/data/media/music` e **Use Hardlinks instead of Copy** ligado.
+7. **Bazarr:** *Settings → Sonarr/Radarr* com `http://sonarr:8989` e `http://radarr:7878` e as chaves; idioma **Portuguese (Brazil)**; provedores de legenda.
 8. **Homepage:** gere as chaves de API do Bazarr (*Settings → General*) e do Seerr (*Settings → General*) e grave-as em `homepage_widget_keys.bazarr` e `.seerr`; rode o `setup-monitoring-stack-volumes.yml` (ver [Painel e Notificações](09-painel-notificacoes.md)).
 
 ### Notificações (NTF-3)
@@ -100,7 +103,8 @@ Webhook para `http://n8n:5678/webhook/notificar`, com o cabeçalho `Authorizatio
 
 | Situação | Comportamento |
 |---|---|
-| VPN cai | O firewall do gluetun corta a saída do qBittorrent; a probe `gluetun:8088` falha e o alerta `qbittorrent-ou-vpn-fora` avisa no Telegram; o gluetun reconecta sozinho. |
+| VPN cai | O firewall do gluetun corta a saída do qBittorrent; o servidor de saúde do gluetun (`gluetun:9999`) passa a responder 500, a probe falha e o alerta `qbittorrent-ou-vpn-fora` avisa no Telegram; o gluetun reconecta sozinho. |
+| gluetun reinicia | O qBittorrent fica sem rede até reiniciar também: `docker restart qbittorrent` (o compose já faz isso quando a stack é atualizada); a probe `gluetun:8088` falha enquanto isso. |
 | Porta encaminhada muda | O gluetun roda `VPN_PORT_FORWARDING_UP_COMMAND` e grava a porta nova no qBittorrent. |
 | Indexador atrás de Cloudflare | O Prowlarr passa pelo FlareSolverr (tag `flaresolverr`). |
 | Recyclarr falha | O erro aparece no log (Grafana → Loki, `container_name="recyclarr"`); as *arr seguem com a configuração anterior. |
@@ -108,10 +112,11 @@ Webhook para `http://n8n:5678/webhook/notificar`, com o cabeçalho `Authorizatio
 ## Teste de ponta a ponta
 
 1. IP de saída do qBittorrent é da Proton: `docker exec qbittorrent curl -s ifconfig.me` (compare com o IP de casa).
-2. Kill switch: `docker stop gluetun` → `docker exec qbittorrent curl -s -m 5 ifconfig.me` falha; `docker start gluetun`.
-3. Peça no Seerr um título de domínio público e acompanhe: Sonarr/Radarr → qBittorrent → importação.
-4. Hardlink: `stat -c %h <arquivo em /data/media/...>` mostra `2` enquanto o torrent semeia.
-5. A legenda pt-BR aparece ao lado do arquivo, e o título aparece no Jellyfin.
+2. Kill switch: `docker stop gluetun` → `docker exec qbittorrent curl -s -m 5 ifconfig.me` falha; `docker start gluetun` e depois `docker restart qbittorrent`.
+3. Porta encaminhada: a porta de *Opções → Conexão* do qBittorrent é a do log do gluetun (`port forwarded`).
+4. Peça no Seerr um título de domínio público e acompanhe: Sonarr/Radarr → qBittorrent → importação.
+5. Hardlink: `stat -c %h <arquivo em /data/media/...>` mostra `2` enquanto o torrent semeia.
+6. A legenda pt-BR aparece ao lado do arquivo, e o título aparece no Jellyfin.
 
 !!! tip "Plex em vez de Jellyfin"
     O compose inclui apenas o Jellyfin. Para trocar, use as skills `remove-app` (jellyfin) e `add-app` (plex), que ajustam compose, playbook de volumes, variáveis, catálogo e integrações juntos.

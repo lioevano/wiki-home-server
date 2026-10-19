@@ -221,6 +221,9 @@ services:
       VPN_PORT_FORWARDING: "on"
       # WebUI do qBittorrent (8088) aceita conexões das redes Docker (Traefik, *arr, Homepage, blackbox).
       FIREWALL_INPUT_PORTS: "8088"
+      # Servidor de saúde nas redes Docker: 200 com o túnel ativo, 500 sem ele. É ele que o blackbox
+      # usa para saber se a VPN caiu (a WebUI continua respondendo mesmo sem túnel).
+      HEALTH_SERVER_ADDRESS: ":9999"
       # Grava no qBittorrent a porta encaminhada pela Proton (exige "Bypass authentication for clients on localhost").
       VPN_PORT_FORWARDING_UP_COMMAND: >-
         /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}" http://127.0.0.1:8088/api/v2/app/setPreferences'
@@ -244,6 +247,7 @@ services:
     depends_on:
       gluetun:
         condition: service_healthy
+        restart: true # se o gluetun for recriado, o qBittorrent reinicia junto (senão fica sem rede)
     volumes:
       - "${MEDIA_STACK_QBITTORRENT_CONFIG_PATH}:/config"
       - "${MEDIA_STACK_DATA_PATH}/torrents:/data/torrents"

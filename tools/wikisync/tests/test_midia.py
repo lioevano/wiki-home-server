@@ -127,9 +127,10 @@ PROM_VARS = dict(proxmox_host_ip_var="192.168.15.66", core_services_vm_ip_var="1
 
 def test_blackbox_midia():
     cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups={}, **PROM_VARS))
-    alvos = {c["labels"]["app"]: c["targets"][0] for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
-             for c in j["static_configs"]}
-    assert alvos["qbittorrent"] == "http://gluetun:8088/"
+    pares = [(c["labels"]["app"], c["targets"][0]) for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
+             for c in j["static_configs"]]
+    alvos = dict(pares)
+    assert ("qbittorrent", "http://gluetun:8088/") in pares
     assert alvos["seerr"] == "http://seerr:5055/api/v1/status"
     for app, url in (("lidarr", "http://lidarr:8686/ping"), ("prowlarr", "http://prowlarr:9696/ping"),
                      ("bazarr", "http://bazarr:6767/")):
@@ -183,3 +184,44 @@ def test_authelia_bypass_para_publicas_antes_do_curinga():
     for sub in ("jellyfin.x", "pedidos.x"):
         i = dominios.index(sub)
         assert i < curinga and regras[i]["policy"] == "bypass"
+
+
+
+# --- Correções da revisão final ---
+
+PAGINA10 = ROOT / "wiki/docs/01-manual-implementacao/10-midia.md"
+
+
+def test_vpn_fora_detectado_pela_saude_do_gluetun():
+    # O firewall do gluetun aceita entrada das redes Docker mesmo com o túnel caído: a WebUI segue
+    # respondendo. Quem reflete o túnel é o servidor de saúde do gluetun (200 ok / 500 fora).
+    assert _env(_svc(MEDIA)["gluetun"])["HEALTH_SERVER_ADDRESS"] == ":9999"
+    cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups={}, **PROM_VARS))
+    pares = [(c["labels"]["app"], c["targets"][0]) for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
+             for c in j["static_configs"]]
+    assert ("qbittorrent", "http://gluetun:9999/") in pares
+
+
+def test_qbittorrent_reinicia_junto_com_o_gluetun():
+    # Container com network_mode: service:gluetun perde a rede quando o gluetun é recriado.
+    assert _svc(MEDIA)["qbittorrent"]["depends_on"]["gluetun"]["restart"] is True
+    texto = PAGINA10.read_text(encoding="utf-8")
+    assert "docker restart qbittorrent" in texto
+
+
+def test_traefik_repassa_ip_real_do_cliente():
+    # Sem confiar nos cabeçalhos X-Forwarded-For do cloudflared, o Jellyfin vê todo acesso como local.
+    cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/traefik.yml.j2",
+                                base_domain="seudominio.com", letsencrypt_email="a@b.c"))
+    assert "172.16.0.0/12" in cfg["entryPoints"]["websecure"]["forwardedHeaders"]["trustedIPs"]
+    texto = PAGINA10.read_text(encoding="utf-8")
+    assert "Known proxies" in texto
+
+
+def test_assistentes_publicos_logo_apos_o_deploy():
+    # Jellyfin e Seerr ficam públicos: o assistente inicial vem antes de qualquer outro passo.
+    texto = PAGINA10.read_text(encoding="utf-8")
+    primeira = texto.index("## Primeira configuração")
+    passos = texto[primeira:]
+    assert passos.index("**Jellyfin") < passos.index("**ProtonVPN")
+    assert passos.index("**Seerr") < passos.index("**ProtonVPN")

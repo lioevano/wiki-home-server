@@ -68,7 +68,9 @@ scrape_configs:
       - targets: ['http://prometheus:9090/-/healthy']
         labels: {app: 'prometheus'}
       - targets: ['http://gluetun:8088/']
-        labels: {app: 'qbittorrent'} # via gluetun: falha também quando a VPN cai (kill switch)
+        labels: {app: 'qbittorrent'} # WebUI pela rede do gluetun: falha se o gluetun ou o qBittorrent cair
+      - targets: ['http://gluetun:9999/']
+        labels: {app: 'qbittorrent'} # saúde do gluetun: 500 quando o túnel da VPN cai
       - targets: ['http://radarr:7878/ping']
         labels: {app: 'radarr'}
       - targets: ['http://sonarr:8989/ping']
