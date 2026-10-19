@@ -47,6 +47,13 @@ zfs_docker_volumes_dataset_name: "docker-volumes"
 zfs_media_dataset_name: "media"             # Mídia e torrents no mesmo dataset (/data na stack media; hardlinks).
 zfs_rag_sources_dataset_name: "rag_sources"       # Para a VM de IA, se usada.
 zfs_backups_dataset_name: "backups"
+zfs_photos_dataset_name: "photos"           # Fotos do Immich (uploads, miniaturas e dumps do banco). Criado com cota.
+zfs_files_dataset_name: "files"             # Diretório de dados do Nextcloud. Criado com cota.
+
+# --- Disco local das VMs ---
+# Bancos que não podem ficar em NFS (o Immich exige disco local) ficam aqui, fora dos snapshots ZFS;
+# o backup deles são os dumps diários gravados no NFS (página 11).
+vm_local_data_path: "/opt/local-data"
 
 # --- Caminhos de Montagem NFS DENTRO das VMs ---
 # Ponto de montagem base DENTRO das VMs para os datasets ZFS compartilhados do Host Proxmox.
@@ -72,3 +79,13 @@ n8n_subdomain: "n8n"
 # --- Grafana Alloy (coletor de logs e métricas; role infra/alloy) ---
 # Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.
 alloy_version: "1.20.*"
+
+# --- Fotos e arquivos (página 11) ---
+# Versão do Immich: todos os containers usam a mesma; atualize de propósito, lendo as notas da release.
+immich_version: "v3.3.3"
+# Versão principal do Nextcloud (imagem nextcloud:<major>-apache). Suba uma versão principal por vez.
+nextcloud_major: "34"
+# Login por senha do Immich: ligado só até vincular a conta ao Authelia (OIDC); depois, false.
+immich_password_login: true
+# Ajustes da configuração do Immich, mesclados por cima da base do immich.json (chaves da documentação do Immich).
+immich_config_overrides: {}

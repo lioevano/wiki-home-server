@@ -121,12 +121,22 @@ Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando se
     # zfs_media_dataset_name: "media"
     # zfs_rag_sources_dataset_name: "rag_sources"
     # zfs_backups_dataset_name: "backups"
+    # zfs_photos_dataset_name: "photos"
+    # zfs_files_dataset_name: "files"
 
     root@pve:~# zfs create data/docker-volumes
     root@pve:~# zfs create data/media
     root@pve:~# zfs create data/rag_sources
     root@pve:~# zfs create data/backups
+    # Fotos e arquivos com cota (ajuste os tamanhos ao seu acervo; ver a página 11):
+    root@pve:~# zfs create -o quota=150G data/photos
+    root@pve:~# zfs create -o quota=75G data/files
     ```
+
+    A cota limita o quanto fotos e arquivos podem crescer no pool compartilhado com a mídia. Para mudar depois: `zfs set quota=200G data/photos`. Um dataset com cota aparece para o `df` (e para o alerta `disco-cheio`) com o tamanho da cota, então o aviso de espaço chega antes de o pool encher.
+
+    !!! tip "Discos novos para fotos e arquivos"
+        Quando chegarem discos novos, crie um pool para eles e mova o dataset sem mudar nenhum caminho do Ansible: pare as stacks `photos`/`cloud`, faça `zfs snapshot data/photos@migra`, `zfs send data/photos@migra | zfs recv novopool/photos`, renomeie o antigo (`zfs rename data/photos data/photos-antigo`) e aponte o novo para o mesmo lugar (`zfs set mountpoint=/data/photos novopool/photos`). Reinicie o NFS (`exportfs -ra`), suba as stacks, confira e só então apague o antigo.
 
     Por padrão, esses datasets serão automaticamente montados pelo ZFS em `/data/docker-volumes`, `/data/media`, etc., no host Proxmox.
 
@@ -351,6 +361,10 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 # Compartilhamento para mídia e torrents (mesmo dataset: a importação das *arr é por hardlink)
 {{ zfs_base_pool_path }}/{{ zfs_media_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+
+# Compartilhamentos de fotos (Immich) e arquivos (Nextcloud), montados só na core-services-vm
+{{ zfs_base_pool_path }}/{{ zfs_photos_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+{{ zfs_base_pool_path }}/{{ zfs_files_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)
 {% if zfs_rag_sources_dataset_name is defined and 'ai-desktop-vm' in groups['virtual_machines'] %}
