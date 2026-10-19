@@ -3525,7 +3525,7 @@
 </tr>
 <tr>
 <td>Arquivos</td>
-<td><code>ansible/templates/prometheus.yml.j2</code>; playbook <code>ansible/playbooks/setup-monitoring-stack-volumes.yml</code> (renderiza o template)</td>
+<td><code>ansible/templates/prometheus.yml.j2</code>; playbook <code>ansible/playbooks/setup-monitoring-stack-volumes.yml</code> (renderiza o template); <code>ansible/roles/infra/alloy/templates/config.alloy.j2</code> (métricas de host e containers por <code>remote_write</code>)</td>
 </tr>
 <tr>
 <td>Páginas</td>
@@ -3540,8 +3540,9 @@
 <h3 id="regras_3">Regras<a class="headerlink" href="#regras_3" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>MET-1</strong> — existe um <code>job_name</code> em <code>prometheus.yml.j2</code> cujo target aponta para um serviço da aplicação (<code>&lt;serviço&gt;:&lt;porta&gt;</code>). O próprio <code>prometheus</code> cumpre com o job <code>prometheus</code> (<code>localhost:9090</code>). <em>Evidência:</em> <code>scrape_configs</code>.</li>
-<li><strong>MET-2 (sobra)</strong> — todo job aponta para um serviço do catálogo com Métricas = sim, <strong>exceto</strong> jobs <code>node_exporter_*</code>, que monitoram hosts/VMs (não aplicações). <em>Evidência:</em> <code>scrape_configs</code>.</li>
+<li><strong>MET-2 (sobra)</strong> — todo job aponta para um serviço do catálogo com Métricas = sim (o job <code>alloy</code> aponta para o <code>alloy</code> de cada host). <em>Evidência:</em> <code>scrape_configs</code>.</li>
 </ul>
+<p>Métricas de host e por container não dependem desta integração: o Alloy de cada host as envia por <code>remote_write</code> (<code>node_*</code> e, nas VMs, <code>container_*</code> do cAdvisor), para qualquer aplicação, sem regra por consumidor. MET-1 vale para as aplicações com <code>/metrics</code> próprio.</p>
 <h3 id="ao-adicionar-por-consumidor_3">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor_3" title="Permanent link">¶</a></h3>
 <ol>
 <li>Confirmar na documentação oficial a porta/caminho de métricas; adicionar o job em <code>prometheus.yml.j2</code> (template estrutural) e citar na página da aplicação.</li>
@@ -3564,7 +3565,7 @@
 <tbody>
 <tr>
 <td>Provedor</td>
-<td><code>loki</code> (coleta pelo <code>promtail</code>)</td>
+<td><code>loki</code> (coleta pelo <code>alloy</code>)</td>
 </tr>
 <tr>
 <td>Aplica-se a</td>
@@ -3572,11 +3573,11 @@
 </tr>
 <tr>
 <td>Arquivos</td>
-<td>compose do consumidor; <code>ansible/templates/promtail-config.yml.j2</code> (renderizado por <code>setup-monitoring-stack-volumes.yml</code> e, na VM de IA, por <code>setup-ai-volumes.yml</code>)</td>
+<td>compose do consumidor; <code>ansible/roles/infra/alloy/templates/config.alloy.j2</code> (role <code>infra/alloy</code>, aplicado por <code>setup-base-ubuntu.yml</code> e <code>setup-proxmox-host.yml</code>); <code>ansible/templates/loki-local-config.yaml.j2</code></td>
 </tr>
 <tr>
 <td>Páginas</td>
-<td><code>01-manual-implementacao/07-deploy-apps.md</code>; <code>01-manual-implementacao/08-stack-ia.md</code> (<code>promtail_ai</code>)</td>
+<td><code>01-manual-implementacao/04-configuracao-base-vms-ubuntu.md</code> (seção 4.4); <code>01-manual-implementacao/07-deploy-apps.md</code></td>
 </tr>
 <tr>
 <td>Manual</td>
@@ -3586,18 +3587,18 @@
 </table>
 <h3 id="regras_4">Regras<a class="headerlink" href="#regras_4" title="Permanent link">¶</a></h3>
 <ul>
-<li><strong>LOG-1</strong> — nenhum serviço da aplicação sobrescreve <code>logging:</code> (o Promtail lê os logs JSON padrão do Docker em <code>/var/lib/docker/containers</code>). <em>Evidência:</em> compose do serviço.</li>
-<li><strong>LOG-2</strong> — há um <code>promtail</code> rodando na <strong>mesma VM</strong> da aplicação (hoje na <code>core-services-vm</code>, serviço <code>promtail</code> da stack <code>apps</code>, e na <code>ai-desktop-vm</code>, serviço <code>promtail_ai</code> da stack <code>ai</code>, que envia ao Loki pela porta 3100 publicada no IP da <code>core-services-vm</code>). <em>Evidência:</em> catálogo (Stack/VM do <code>promtail</code>) × Stack/VM da aplicação.</li>
+<li><strong>LOG-1</strong> — nenhum serviço da aplicação sobrescreve <code>logging:</code> (o Alloy lê os logs pela API do Docker, que depende do driver padrão). <em>Evidência:</em> compose do serviço.</li>
+<li><strong>LOG-2</strong> — a VM da aplicação está num grupo do inventário que recebe o role <code>infra/alloy</code> (hoje <code>proxmox_hosts</code>, pelo <code>setup-proxmox-host.yml</code>, e <code>ubuntu_vms</code>, pelo <code>setup-base-ubuntu.yml</code>). <em>Evidência:</em> catálogo (Stack/VM da aplicação) × <code>hosts.ini</code> × playbooks.</li>
 </ul>
 <h3 id="ao-adicionar-por-consumidor_4">Ao adicionar (por consumidor)<a class="headerlink" href="#ao-adicionar-por-consumidor_4" title="Permanent link">¶</a></h3>
 <ol>
 <li>Não definir <code>logging:</code> no compose.</li>
-<li>Se a VM ainda não tem <code>promtail</code>: apontar a lacuna no plano (<code>LOG-2</code>) e propor ao usuário.</li>
+<li>Se a VM da aplicação não está em <code>ubuntu_vms</code>: apontar a lacuna no plano (<code>LOG-2</code>) e propor ao usuário incluí-la no grupo ou aplicar o role <code>infra/alloy</code> a ela.</li>
 </ol>
 <h3 id="ao-remover-por-consumidor_4">Ao remover (por consumidor)<a class="headerlink" href="#ao-remover-por-consumidor_4" title="Permanent link">¶</a></h3>
 <p>Nada a fazer.</p>
 <h3 id="ao-remover-o-provedor_4">Ao remover o provedor<a class="headerlink" href="#ao-remover-o-provedor_4" title="Permanent link">¶</a></h3>
-<p>Remover <code>loki</code>/<code>promtail</code> e <code>promtail-config.yml.j2</code>/<code>loki-local-config.yaml.j2</code> (via wiki); avisar que os logs deixam de ser centralizados; revisar datasources do <code>grafana</code>.</p>
+<p>Remover <code>loki</code> e <code>loki-local-config.yaml.j2</code> e os blocos <code>loki.*</code> do <code>config.alloy.j2</code> (via wiki); avisar que os logs deixam de ser centralizados; revisar datasources do <code>grafana</code> e a regra <code>authelia-logins-falhos</code>.</p>
 <hr>
 <h2 id="dados">dados<a class="headerlink" href="#dados" title="Permanent link">¶</a></h2>
 <table>
@@ -3877,7 +3878,7 @@
 <h3 id="regras_9">Regras<a class="headerlink" href="#regras_9" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>NTF-1</strong> — disponibilidade: aplicação com Exposição <code>publica</code>/<code>protegida</code> tem alvo pela <strong>URL interna</strong> do serviço principal (ex.: <code>http://n8n:5678/healthz</code>; a URL pública passa pelo Authelia e não mede a aplicação) com <code>labels: {app: &lt;id&gt;}</code> no job <code>blackbox_http</code>; o alvo do <code>traefik</code> usa o módulo <code>tls_traefik</code> (mede também o certificado). Das <code>interna</code>, só <code>litellm</code> (<code>http://&lt;ai_desktop_vm_ip_var&gt;:4000/health/liveliness</code>) e <code>loki</code> (<code>http://loki:3100/ready</code>) têm alvo — as demais <code>interna</code> → <code>—</code>. <em>Evidência:</em> <code>prometheus.yml.j2</code>.</li>
-<li><strong>NTF-2</strong> — atualizações: existe um serviço do <code>diun</code> na mesma VM da aplicação (Stack/VM do <code>diun</code> × da aplicação). <em>Evidência:</em> catálogo e composes.</li>
+<li><strong>NTF-2</strong> — atualizações: existe um serviço do <code>diun</code> na mesma VM da aplicação (Stack/VM do <code>diun</code> × da aplicação). Aplicações sem container, instaladas como pacote do sistema (hoje o <code>alloy</code>), ficam fora: o Diun só observa imagens, e a versão do pacote é fixada no <code>group_vars</code> (<code>alloy_version</code>). <em>Evidência:</em> catálogo e composes.</li>
 <li><strong>NTF-3</strong> — eventos: aplicação com webhook nativo (<code>radarr</code>, <code>sonarr</code>, <code>homeassistant</code>, <code>jellyfin</code> via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → <code>✋</code>. Demais → <code>—</code>.</li>
 <li><strong>NTF-4 (sobra)</strong> — nenhum alvo do <code>blackbox_http</code> nem regra de alerta com <code>app</code> que não exista no catálogo. <em>Evidência:</em> <code>prometheus.yml.j2</code> e <code>rules.yml.j2</code>.</li>
 </ul>
@@ -3945,7 +3946,7 @@
 <hr>
 <h2 id="pendências-da-auditoria-inicial">Pendências da auditoria inicial<a class="headerlink" href="#pendências-da-auditoria-inicial" title="Permanent link">¶</a></h2>
 <p>Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) foram corrigidos pela skill <code>fix-integrations</code>.</p>
-<p>Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (Promtail na VM de IA, Open WebUI <code>protegida</code>, job <code>glances</code> removido).</p>
+<p>Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (coleta de logs na VM de IA — hoje pelo Alloy, que substituiu o Promtail em 2026-10-19 —, Open WebUI <code>protegida</code>, job <code>glances</code> removido).</p>
 <p><strong>Fora das regras</strong> (para a reestruturação): a stack <code>apps</code> é um compose único, mas recebe cinco <code>.env</code> separados (hoje unidos à mão num <code>apps.env</code>, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.</p>
 
 
@@ -3967,7 +3968,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 01:06:15 -03">19 de outubro de 2026</span>
   </span>
 
     

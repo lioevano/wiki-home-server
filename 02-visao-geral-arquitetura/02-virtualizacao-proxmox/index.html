@@ -2108,7 +2108,7 @@
 <li><strong>RAM (48GB DDR4):</strong><ul>
 <li>O Proxmox host em si consome uma pequena quantidade de RAM (geralmente 1-2GB), mais o ARC do ZFS, que usa a memória livre como cache e a devolve sob pressão.</li>
 <li>O restante é dividido entre as VMs: 16GB para a <code>core-services-vm</code> e 16GB para a <code>ai-desktop-vm</code>, o que deixa margem para o ARC e para aumentar a VM de IA se modelos maiores pedirem.</li>
-<li>O KSM (Kernel Samepage Merging) pode ser habilitado no Proxmox para deduplicar páginas de memória idênticas entre VMs, economizando RAM, mas com um pequeno custo de CPU. (O Node Exporter no host está configurado para coletar métricas KSM).</li>
+<li>O KSM (Kernel Samepage Merging) pode ser habilitado no Proxmox para deduplicar páginas de memória idênticas entre VMs, economizando RAM, mas com um pequeno custo de CPU. (O Alloy do host coleta as métricas de memória; o coletor <code>ksmd</code> do <code>prometheus.exporter.unix</code> vem desligado e pode ser ligado no <code>config.alloy.j2</code>.)</li>
 </ul>
 </li>
 <li><strong>Armazenamento:</strong><ul>
@@ -2202,7 +2202,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:40:13 -03">18 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 01:06:15 -03">19 de outubro de 2026</span>
   </span>
 
     
