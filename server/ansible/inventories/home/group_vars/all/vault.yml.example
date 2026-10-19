@@ -45,6 +45,26 @@ authelia_storage_postgres_password: "SENHA_FORTE_PARA_O_USUARIO_AUTHELIA_NO_DB_P
 # Chave de criptografia do storage do Authelia (mín. 20 caracteres; gere com: openssl rand -hex 32).
 authelia_storage_encryption_key: "CHAVE_DE_CRIPTOGRAFIA_DO_STORAGE_DO_AUTHELIA"
 
+# --- Authelia como provedor OIDC (login do Immich e do Nextcloud; página 11) ---
+# hmac_secret: texto aleatório (openssl rand -hex 32).
+authelia_oidc_hmac_secret: "SEGREDO_HMAC_DO_OIDC_64_CARACTERES"
+# Chave privada RSA 2048 que assina os tokens: openssl genrsa 2048 (cole o PEM inteiro).
+authelia_oidc_jwks_key: |
+  -----BEGIN PRIVATE KEY-----
+  COLE_AQUI_A_CHAVE_PRIVADA_RSA_GERADA
+  -----END PRIVATE KEY-----
+# Um cliente por app. 'secret' (só letras e números: openssl rand -hex 32) vai para o app;
+# 'secret_digest' é o hash do mesmo segredo, que o Authelia guarda. Gere o digest com a imagem fixada:
+#   docker run --rm authelia/authelia:4.38.0 authelia crypto hash generate pbkdf2 --variant sha512 --password <secret>
+# e copie o valor depois de "Digest: ".
+oidc_clients:
+  immich:
+    secret: "SEGREDO_DO_CLIENTE_IMMICH"
+    secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_IMMICH"
+  nextcloud:
+    secret: "SEGREDO_DO_CLIENTE_NEXTCLOUD"
+    secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_NEXTCLOUD"
+
 # --- Configurações Gerais ---
 # Email para notificações do Let's Encrypt (renovação de certificados, problemas).
 letsencrypt_email: "seu_email_valido_para_lets_encrypt@example.com"

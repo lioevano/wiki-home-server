@@ -653,6 +653,15 @@ access_control:
       policy: bypass
     - domain: "pedidos.{{ base_domain }}"
       policy: bypass
+    # Fotos e arquivos (página 11): login próprio de cada app pelo OIDC deste Authelia (identity_providers
+    # abaixo, com two_factor), que funciona também nos apps de celular e desktop. O Collabora (office.) é
+    # aberto pelo navegador dentro do Nextcloud e protegido pelo token WOPI que o Nextcloud gera.
+    - domain: "fotos.{{ base_domain }}"
+      policy: bypass
+    - domain: "nextcloud.{{ base_domain }}"
+      policy: bypass
+    - domain: "office.{{ base_domain }}"
+      policy: bypass
 
     # Regra geral para todos os outros subdomínios do seu domínio base: requer dois fatores.
     - domain: "*.{{ base_domain }}"
@@ -687,6 +696,50 @@ notifier:
 #     #   minimum_version: "TLS1.2"
 #     # Para verificar a configuração do notificador ao iniciar Authelia:
 #     # startup_check_address: "email_de_teste_para_receber_notificacao@example.com"
+
+# Provedor OpenID Connect (SSO): Immich e Nextcloud entram com a conta e o 2FA deste Authelia (página 11).
+# Segredos no vault: hmac_secret, a chave RSA de assinatura (jwks) e, de cada cliente, só o digest
+# pbkdf2-sha512 do segredo (o segredo em claro fica com o app).
+identity_providers:
+  oidc:
+    hmac_secret: "{{ authelia_oidc_hmac_secret }}"
+    jwks:
+      - key_id: "principal"
+        algorithm: "RS256"
+        use: "sig"
+        key: |
+          {{ authelia_oidc_jwks_key | indent(10) }}
+    clients:
+      - client_id: "immich"
+        client_name: "Immich"
+        client_secret: "{{ oidc_clients.immich.secret_digest }}"
+        public: false
+        authorization_policy: "two_factor"
+        require_pkce: true
+        pkce_challenge_method: "S256"
+        redirect_uris:
+          - "https://fotos.{{ base_domain }}/auth/login"
+          - "https://fotos.{{ base_domain }}/user-settings"
+          - "app.immich:///oauth-callback" # app do celular
+        scopes: ["openid", "profile", "email"]
+        response_types: ["code"]
+        grant_types: ["authorization_code"]
+        userinfo_signed_response_alg: "none"
+        token_endpoint_auth_method: "client_secret_basic"
+      - client_id: "nextcloud"
+        client_name: "Nextcloud"
+        client_secret: "{{ oidc_clients.nextcloud.secret_digest }}"
+        public: false
+        authorization_policy: "two_factor"
+        require_pkce: true
+        pkce_challenge_method: "S256"
+        redirect_uris:
+          - "https://nextcloud.{{ base_domain }}/apps/user_oidc/code"
+        scopes: ["openid", "profile", "email", "groups"]
+        response_types: ["code"]
+        grant_types: ["authorization_code"]
+        userinfo_signed_response_alg: "none"
+        token_endpoint_auth_method: "client_secret_post"
 
 # Configuração TOTP (Time-based One-Time Password)
 totp:
