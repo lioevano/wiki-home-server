@@ -51,6 +51,14 @@ scrape_configs:
         labels: {app: 'homepage'}
       - targets: ['http://jellyfin:8096/health']
         labels: {app: 'jellyfin'}
+      - targets: ['http://lidarr:8686/ping']
+        labels: {app: 'lidarr'}
+      - targets: ['http://prowlarr:9696/ping']
+        labels: {app: 'prowlarr'}
+      - targets: ['http://bazarr:6767/']
+        labels: {app: 'bazarr'}
+      - targets: ['http://seerr:5055/api/v1/status']
+        labels: {app: 'seerr'}
       - targets: ['http://n8n:5678/healthz']
         labels: {app: 'n8n'}
       - targets: ['http://nextcloud_app/status.php']
@@ -59,8 +67,8 @@ scrape_configs:
         labels: {app: 'portainer', __param_module: 'http_2xx_inseguro'}
       - targets: ['http://prometheus:9090/-/healthy']
         labels: {app: 'prometheus'}
-      - targets: ['http://qbittorrent:8088/']
-        labels: {app: 'qbittorrent'}
+      - targets: ['http://gluetun:8088/']
+        labels: {app: 'qbittorrent'} # via gluetun: falha também quando a VPN cai (kill switch)
       - targets: ['http://radarr:7878/ping']
         labels: {app: 'radarr'}
       - targets: ['http://sonarr:8989/ping']

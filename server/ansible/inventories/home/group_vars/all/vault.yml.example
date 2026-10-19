@@ -99,9 +99,10 @@ protonvpn_wireguard_private_key: "CHAVE_PRIVADA_WIREGUARD_DA_PROTONVPN"
 # Geradas na interface de cada aplicação depois do primeiro acesso (página 09).
 # O widget do Grafana usa o admin e grafana_admin_initial_password.
 homepage_widget_keys:
+  # Sonarr, Radarr, Lidarr e Prowlarr usam arr_api_keys (acima).
   jellyfin: "CHAVE_DE_API_DO_JELLYFIN"
-  radarr: "CHAVE_DE_API_DO_RADARR"
-  sonarr: "CHAVE_DE_API_DO_SONARR"
+  bazarr: "CHAVE_DE_API_DO_BAZARR"
+  seerr: "CHAVE_DE_API_DO_SEERR"
   nextcloud: "NC_TOKEN_DO_NEXTCLOUD"
   homeassistant: "TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT"
   portainer: "CHAVE_DE_API_DO_PORTAINER"

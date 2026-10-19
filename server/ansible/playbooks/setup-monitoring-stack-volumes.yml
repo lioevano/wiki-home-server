@@ -211,8 +211,12 @@
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
           - { name: 'MONITORING_HOMEPAGE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/homepage/config" }
           - { name: 'HOMEPAGE_VAR_JELLYFIN_KEY', value: "{{ homepage_widget_keys.jellyfin }}" }
-          - { name: 'HOMEPAGE_VAR_RADARR_KEY', value: "{{ homepage_widget_keys.radarr }}" }
-          - { name: 'HOMEPAGE_VAR_SONARR_KEY', value: "{{ homepage_widget_keys.sonarr }}" }
+          - { name: 'HOMEPAGE_VAR_RADARR_KEY', value: "{{ arr_api_keys.radarr }}" }
+          - { name: 'HOMEPAGE_VAR_SONARR_KEY', value: "{{ arr_api_keys.sonarr }}" }
+          - { name: 'HOMEPAGE_VAR_LIDARR_KEY', value: "{{ arr_api_keys.lidarr }}" }
+          - { name: 'HOMEPAGE_VAR_PROWLARR_KEY', value: "{{ arr_api_keys.prowlarr }}" }
+          - { name: 'HOMEPAGE_VAR_BAZARR_KEY', value: "{{ homepage_widget_keys.bazarr }}" }
+          - { name: 'HOMEPAGE_VAR_SEERR_KEY', value: "{{ homepage_widget_keys.seerr }}" }
           - { name: 'HOMEPAGE_VAR_NEXTCLOUD_KEY', value: "{{ homepage_widget_keys.nextcloud }}" }
           - { name: 'HOMEPAGE_VAR_HOMEASSISTANT_KEY', value: "{{ homepage_widget_keys.homeassistant }}" }
           - { name: 'HOMEPAGE_VAR_PORTAINER_KEY', value: "{{ homepage_widget_keys.portainer }}" }

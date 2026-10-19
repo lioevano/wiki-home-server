@@ -117,3 +117,52 @@ def test_sem_dataset_downloads():
         if f.is_file():
             t = f.read_text(encoding="utf-8", errors="ignore")
             assert "zfs_downloads_dataset_name" not in t and "ZFS_DOWNLOADS" not in t, f
+
+
+# --- Painel, disponibilidade e alertas ---
+
+PROM_VARS = dict(proxmox_host_ip_var="192.168.15.66", core_services_vm_ip_var="192.168.15.67",
+                 ai_desktop_vm_ip_var="192.168.15.68")
+
+
+def test_blackbox_midia():
+    cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups={}, **PROM_VARS))
+    alvos = {c["labels"]["app"]: c["targets"][0] for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
+             for c in j["static_configs"]}
+    assert alvos["qbittorrent"] == "http://gluetun:8088/"
+    assert alvos["seerr"] == "http://seerr:5055/api/v1/status"
+    for app, url in (("lidarr", "http://lidarr:8686/ping"), ("prowlarr", "http://prowlarr:9696/ping"),
+                     ("bazarr", "http://bazarr:6767/")):
+        assert alvos[app] == url
+
+
+def test_alerta_vpn_separado():
+    regras = {r["uid"]: r for r in yaml.safe_load(render("templates/grafana/alerting/rules.yml.j2"))["groups"][0]["rules"]}
+    assert 'app!~"n8n|qbittorrent"' in regras["servico-fora-do-ar"]["data"][0]["model"]["expr"]
+    vpn = regras["qbittorrent-ou-vpn-fora"]
+    assert vpn["data"][0]["model"]["expr"] == '1 - probe_success{app="qbittorrent"}'
+    assert vpn["labels"]["severity"] == "critical"
+
+
+def test_homepage_midia():
+    import pathlib
+    src = (ROOT / "server/ansible/templates/homepage/services.yaml.j2").read_text(encoding="utf-8")
+    variaveis = set(re.findall(r"\{\{\s*([a-z_]+)", src)) - {"item"}
+    ctx = {"base_domain": "seudominio.com", "groups": {"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS}
+    ctx.update({v: "x" for v in variaveis if v not in ctx})
+    out = render("templates/homepage/services.yaml.j2", **ctx)
+    midia = next(g for g in yaml.safe_load(out) if "mídia" in g)["mídia"]
+    nomes = {list(e)[0] for e in midia}
+    assert {"jellyfin", "seerr", "sonarr", "radarr", "lidarr", "prowlarr", "bazarr", "qbittorrent"} <= nomes
+    assert "http://gluetun:8088" in out
+    for var in ("SEERR", "BAZARR", "LIDARR", "PROWLARR"):
+        assert "{{HOMEPAGE_VAR_%s_KEY}}" % var in out
+
+
+def test_chaves_homepage_das_arr_vem_de_arr_api_keys():
+    pb = (ROOT / "server/ansible/playbooks/setup-monitoring-stack-volumes.yml").read_text(encoding="utf-8")
+    for app in ("sonarr", "radarr", "lidarr", "prowlarr"):
+        assert re.search(r"HOMEPAGE_VAR_%s_KEY', value: \"\{\{ arr_api_keys\.%s \}\}\"" % (app.upper(), app), pb), app
+    for app in ("bazarr", "seerr"):
+        assert "homepage_widget_keys.%s" % app in pb
+    assert "homepage_widget_keys.sonarr" not in pb and "homepage_widget_keys.radarr" not in pb

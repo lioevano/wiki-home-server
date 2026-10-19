@@ -15,8 +15,9 @@
 {% set reinicios_max = 3 %}
 {% set fs = 'fstype!~"tmpfs|overlay|squashfs"' %}
 {% set regras = [
-  {'uid': 'servico-fora-do-ar', 'ds': 'prometheus', 'expr': '1 - probe_success{app!="n8n"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.app }} está fora do ar'},
+  {'uid': 'servico-fora-do-ar', 'ds': 'prometheus', 'expr': '1 - probe_success{app!~"n8n|qbittorrent"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.app }} está fora do ar'},
   {'uid': 'n8n-fora-do-ar', 'ds': 'prometheus', 'expr': '1 - probe_success{app="n8n"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': 'n8n fora do ar: as notificações estão paradas'},
+  {'uid': 'qbittorrent-ou-vpn-fora', 'ds': 'prometheus', 'expr': '1 - probe_success{app="qbittorrent"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': 'qBittorrent ou VPN (gluetun) fora: downloads parados'},
   {'uid': 'certificado-vencendo', 'ds': 'prometheus', 'expr': '(probe_ssl_earliest_cert_expiry{app="traefik"} - time()) / 86400', 'op': 'lt', 'v': certificado_dias, 'for': '1h', 'sev': 'warning', 'summary': 'Certificado Let’s Encrypt do Traefik vence em menos de ' ~ certificado_dias ~ ' dias'},
   {'uid': 'disco-cheio', 'ds': 'prometheus', 'expr': '100 * (1 - node_filesystem_avail_bytes{' ~ fs ~ '} / node_filesystem_size_bytes{' ~ fs ~ '})', 'op': 'gt', 'v': disco_pct, 'for': '5m', 'sev': 'warning', 'summary': 'Disco {{ $$labels.mountpoint }} em {{ $$labels.instance }} acima de ' ~ disco_pct ~ '%'},
   {'uid': 'ram-alta', 'ds': 'prometheus', 'expr': '100 * (1 - (node_memory_MemAvailable_bytes + (node_zfs_arc_size or node_memory_MemAvailable_bytes * 0)) / node_memory_MemTotal_bytes)', 'op': 'gt', 'v': ram_pct, 'for': ram_for, 'sev': 'warning', 'summary': 'RAM de {{ $$labels.instance }} acima de ' ~ ram_pct ~ '%'},
