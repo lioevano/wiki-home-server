@@ -138,3 +138,42 @@ def test_condicao_pve_usa_pveversion():
     tasks = yaml.safe_load(PVE_TASKS.read_text(encoding="utf-8"))
     assert tasks[0].get("ansible.builtin.stat", {}).get("path") == "/usr/bin/pveversion"
     assert tasks[0].get("register") == "pve_binary"
+
+
+# --- Prometheus: remote write, job alloy e alertas ---
+
+PROM_VARS = dict(proxmox_host_ip_var="192.168.15.66", core_services_vm_ip_var="192.168.15.67",
+                 ai_desktop_vm_ip_var="192.168.15.68")
+
+
+def _jobs(groups):
+    cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups=groups, **PROM_VARS))
+    return {j["job_name"]: j for j in cfg["scrape_configs"]}
+
+
+def test_prometheus_job_alloy():
+    jobs = _jobs({"ai_desktop": ["ai-desktop-vm"]})
+    assert not any(n.startswith("node_exporter") for n in jobs)
+    alvos = {c["targets"][0]: c["labels"]["instance"] for c in jobs["alloy"]["static_configs"]}
+    assert alvos == {"192.168.15.66:12345": "proxmox_main_host", "192.168.15.67:12345": "core-services-vm",
+                     "192.168.15.68:12345": "ai-desktop-vm"}
+
+
+def test_prometheus_sem_vm_ia():
+    alvos = [c["targets"][0] for c in _jobs({})["alloy"]["static_configs"]]
+    assert "192.168.15.68:12345" not in alvos
+
+
+def test_alertas_alloy_e_reinicios():
+    regras = {r["uid"]: r for r in yaml.safe_load(render("templates/grafana/alerting/rules.yml.j2"))["groups"][0]["rules"]}
+    assert 'job=~"alloy|blackbox_http"' in regras["host-sem-resposta"]["data"][0]["model"]["expr"]
+    r = regras["container-reiniciando"]
+    assert r["data"][0]["model"]["expr"] == 'changes(container_start_time_seconds{name!=""}[15m])'
+    assert r["data"][1]["model"]["conditions"][0]["evaluator"] == {"type": "gt", "params": [3]}
+    assert r["labels"]["severity"] == "warning"
+
+
+def test_prometheus_remote_write_na_lan():
+    svc = yaml.safe_load((ROOT / "server/docker/stacks/apps/docker-compose.yml").read_text(encoding="utf-8"))["services"]["prometheus"]
+    assert "--web.enable-remote-write-receiver" in svc["command"]
+    assert "${CORE_SERVICES_VM_IP_VAR}:9090:9090" in svc["ports"]

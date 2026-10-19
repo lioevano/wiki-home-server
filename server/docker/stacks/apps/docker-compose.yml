@@ -193,6 +193,9 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.enable-lifecycle'
       - '--web.listen-address=:9090'
+      - '--web.enable-remote-write-receiver' # Recebe as métricas enviadas pelos Alloys (remote_write)
+    ports:
+      - "${CORE_SERVICES_VM_IP_VAR}:9090:9090" # Remote write dos Alloys (host Proxmox e VMs); só na LAN, sem rota no Traefik
     labels:
       traefik.enable: "true"
       traefik.http.routers.prometheus.rule: "Host(`prometheus.${BASE_DOMAIN_FROM_VAULT}`)"

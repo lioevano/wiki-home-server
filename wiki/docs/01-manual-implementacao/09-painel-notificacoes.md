@@ -33,16 +33,16 @@ O `setup-monitoring-stack-volumes.yml` gera em `<NFS>/grafana/provisioning/alert
 
 | Arquivo | Conteúdo |
 |---|---|
-| `rules.yml` | 9 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta`, `zfs-degradado`, `authelia-logins-falhos` |
+| `rules.yml` | 10 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta` (o `up` do job `alloy` de cada host, ou de um alvo do blackbox), `zfs-degradado`, `container-reiniciando` (métricas do cAdvisor no Alloy), `authelia-logins-falhos` |
 | `contact-points.yml` | `n8n` (webhook interno com `Authorization: Bearer`) e `telegram-direto` (bot do Telegram) |
 | `policies.yml` | tudo vai para `n8n`, agrupado por `alertname` e `app`; só `n8n-fora-do-ar` vai para `telegram-direto` |
 
-**Limites** (disco 85%, RAM 90% por 10 min, CPU 90% por 15 min, fora do ar há 3 min, certificado com menos de 14 dias, mais de 5 logins falhos em 10 min) ficam no topo de `ansible/templates/grafana/alerting/rules.yml.j2`. Regras sem dados ficam em `OK` (não disparam).
+**Limites** (disco 85%, RAM 90% por 10 min, CPU 90% por 15 min, fora do ar há 3 min, certificado com menos de 14 dias, mais de 3 reinícios do mesmo container em 15 min, mais de 5 logins falhos em 10 min) ficam no topo de `ansible/templates/grafana/alerting/rules.yml.j2`. Regras sem dados ficam em `OK` (não disparam).
 
 Os segredos não ficam nos arquivos: o Grafana recebe `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` pelo `monitoring.env` e o provisioning os interpola. Por isso as anotações usam `$$labels` (escape de `$`).
 
 !!! warning "Pool ZFS"
-    A regra `zfs-degradado` usa a métrica `node_zfs_zpool_state` do node_exporter do host. Confira se ela existe: `curl -s http://<proxmox_host_ip_var>:9100/metrics | grep node_zfs_zpool_state`. Se não existir, a regra fica sem dados (não dispara); a alternativa é publicar o estado do pool pelo *textfile collector* do node_exporter.
+    A regra `zfs-degradado` usa a métrica `node_zfs_zpool_state`, enviada pelo Alloy do host Proxmox (coletor `zfs` do `prometheus.exporter.unix`). Confira no Prometheus se ela existe: `node_zfs_zpool_state{instance="proxmox_main_host"}`. Se não existir, a regra fica sem dados (não dispara); a alternativa é publicar o estado do pool por arquivo de texto (argumento `textfile` do `prometheus.exporter.unix`).
 
 ### Workflow `notificar` (n8n)
 

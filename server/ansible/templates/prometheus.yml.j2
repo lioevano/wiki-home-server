@@ -10,22 +10,18 @@ scrape_configs:
         labels:
           instance: 'prometheus'
 
-  - job_name: 'node_exporter_proxmox_host'
+  # Alloy (coletor de logs e métricas em cada host): as métricas chegam por remote_write;
+  # este job raspa só o /metrics do próprio Alloy, para saber se cada host está vivo (up).
+  - job_name: 'alloy'
     static_configs:
-      - targets: ['{{ proxmox_host_ip_var }}:9100']
+      - targets: ['{{ proxmox_host_ip_var }}:12345']
         labels:
           instance: 'proxmox_main_host'
-
-  - job_name: 'node_exporter_core_services_vm'
-    static_configs:
-      - targets: ['{{ core_services_vm_ip_var }}:9100']
+      - targets: ['{{ core_services_vm_ip_var }}:12345']
         labels:
           instance: 'core-services-vm'
-
 {% if 'ai_desktop' in groups %}
-  - job_name: 'node_exporter_ai_desktop_vm'
-    static_configs:
-      - targets: ['{{ ai_desktop_vm_ip_var }}:9100']
+      - targets: ['{{ ai_desktop_vm_ip_var }}:12345']
         labels:
           instance: 'ai-desktop-vm'
 {% endif %}
