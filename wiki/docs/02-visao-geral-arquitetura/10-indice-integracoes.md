@@ -136,25 +136,25 @@ Remover `prometheus.yml.j2` e as tarefas que o renderizam no `setup-monitoring-s
 
 | Campo | Valor |
 |---|---|
-| Provedor | `loki` (coleta pelo `promtail`) |
+| Provedor | `loki` (coleta pelo `alloy`) |
 | Aplica-se a | todas |
-| Arquivos | compose do consumidor; `ansible/templates/promtail-config.yml.j2` (renderizado por `setup-monitoring-stack-volumes.yml` e, na VM de IA, por `setup-ai-volumes.yml`) |
-| Páginas | `01-manual-implementacao/07-deploy-apps.md`; `01-manual-implementacao/08-stack-ia.md` (`promtail_ai`) |
+| Arquivos | compose do consumidor; `ansible/roles/infra/alloy/templates/config.alloy.j2` (role `infra/alloy`, aplicado por `setup-base-ubuntu.yml` e `setup-proxmox-host.yml`); `ansible/templates/loki-local-config.yaml.j2` |
+| Páginas | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` (seção 4.4); `01-manual-implementacao/07-deploy-apps.md` |
 | Manual | — |
 
 ### Regras
-- **LOG-1** — nenhum serviço da aplicação sobrescreve `logging:` (o Promtail lê os logs JSON padrão do Docker em `/var/lib/docker/containers`). *Evidência:* compose do serviço.
-- **LOG-2** — há um `promtail` rodando na **mesma VM** da aplicação (hoje na `core-services-vm`, serviço `promtail` da stack `apps`, e na `ai-desktop-vm`, serviço `promtail_ai` da stack `ai`, que envia ao Loki pela porta 3100 publicada no IP da `core-services-vm`). *Evidência:* catálogo (Stack/VM do `promtail`) × Stack/VM da aplicação.
+- **LOG-1** — nenhum serviço da aplicação sobrescreve `logging:` (o Alloy lê os logs pela API do Docker, que depende do driver padrão). *Evidência:* compose do serviço.
+- **LOG-2** — a VM da aplicação está num grupo do inventário que recebe o role `infra/alloy` (hoje `proxmox_hosts`, pelo `setup-proxmox-host.yml`, e `ubuntu_vms`, pelo `setup-base-ubuntu.yml`). *Evidência:* catálogo (Stack/VM da aplicação) × `hosts.ini` × playbooks.
 
 ### Ao adicionar (por consumidor)
 1. Não definir `logging:` no compose.
-2. Se a VM ainda não tem `promtail`: apontar a lacuna no plano (`LOG-2`) e propor ao usuário.
+2. Se a VM da aplicação não está em `ubuntu_vms`: apontar a lacuna no plano (`LOG-2`) e propor ao usuário incluí-la no grupo ou aplicar o role `infra/alloy` a ela.
 
 ### Ao remover (por consumidor)
 Nada a fazer.
 
 ### Ao remover o provedor
-Remover `loki`/`promtail` e `promtail-config.yml.j2`/`loki-local-config.yaml.j2` (via wiki); avisar que os logs deixam de ser centralizados; revisar datasources do `grafana`.
+Remover `loki` e `loki-local-config.yaml.j2` e os blocos `loki.*` do `config.alloy.j2` (via wiki); avisar que os logs deixam de ser centralizados; revisar datasources do `grafana` e a regra `authelia-logins-falhos`.
 
 ---
 

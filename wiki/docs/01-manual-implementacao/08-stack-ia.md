@@ -19,8 +19,8 @@ OpenClaude ─┤                           └──► APIs externas (Gemini, 
 - **Open WebUI**: Interface web para chat com LLMs. Usa o LiteLLM como API compatível com OpenAI (`OPENAI_API_BASE_URL=http://litellm:4000/v1`, chave `LITELLM_MASTER_KEY`) e o Ollama direto para gerenciar modelos locais. Acessível em `https://openwebui.seudominio.com` (Traefik da `core-services-vm` + Authelia, router `openwebui-dynamic` em `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2`) ou na LAN em `http://ai-desktop-ip:3000`.
 - **OpenClaw**: CLI agent para terminal. Conecta ao LiteLLM.
 - **OpenClaude**: Assistente AI com memória persistente e integração com ferramentas locais.
+- **Logs e métricas**: não há coletor na stack; o Grafana Alloy instalado na VM envia ao Loki e ao Prometheus da `core-services-vm` os logs dos containers e do sistema e as métricas do host e dos containers ([seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)).
 - **Diun (`diun_ai`)**: Avisa (via n8n → Telegram) quando sai imagem nova de algum container desta VM; chama `https://n8n.seudominio.com/webhook/notificar` com `NOTIFICACOES_WEBHOOK_TOKEN`. Veja [Painel e Notificações](09-painel-notificacoes.md).
-- **Promtail (`promtail_ai`)**: Envia os logs dos containers e do sistema desta VM ao Loki da `core-services-vm` (`http://<core_services_vm_ip_var>:3100`). A configuração é gerada de `ansible/templates/promtail-config.yml.j2` pelo `setup-ai-volumes.yml`.
 
 ## Deploy
 
@@ -49,7 +49,7 @@ O `ai.env` é gerado por `ansible/playbooks/setup-ai-volumes.yml` (via `ansible/
 | Variável | Origem |
 |---|---|
 | `DOCKER_PUID`, `DOCKER_PGID`, `SYSTEM_TIMEZONE` | comuns (vault) |
-| `AI_STACK_*_PATH` (inclui `AI_STACK_PROMTAIL_*`) | `vm_nfs_mount_base_path` + `zfs_docker_volumes_dataset_name` |
+| `AI_STACK_*_PATH` | `vm_nfs_mount_base_path` + `zfs_docker_volumes_dataset_name` |
 | `AI_DESKTOP_VM_IP` | `ai_desktop_vm_ip_var` do `hosts.ini` |
 | `LITELLM_MASTER_KEY` | vault `litellm_master_key` |
 | `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` | vault `llm_api_keys.openai`, `.anthropic`, `.google_gemini` |

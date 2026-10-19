@@ -177,3 +177,12 @@ def test_prometheus_remote_write_na_lan():
     svc = yaml.safe_load((ROOT / "server/docker/stacks/apps/docker-compose.yml").read_text(encoding="utf-8"))["services"]["prometheus"]
     assert "--web.enable-remote-write-receiver" in svc["command"]
     assert "${CORE_SERVICES_VM_IP_VAR}:9090:9090" in svc["ports"]
+
+
+# --- Sem coletores antigos ---
+
+def test_sem_coletores_antigos():
+    for f in (ROOT / "server").rglob("*"):
+        if f.is_file():
+            texto = f.read_text(encoding="utf-8", errors="ignore").lower()
+            assert "promtail" not in texto and not re.search(r"node[_ ]exporter", texto), f

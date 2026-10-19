@@ -55,18 +55,6 @@
         - config
         - data
 
-    # --- Promtail directories ---
-    - name: Create Promtail directories on NFS volume
-      ansible.builtin.file:
-        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/{{ item }}"
-        state: directory
-        owner: "{{ docker_puid }}"
-        group: "{{ docker_pgid }}"
-        mode: '0775'
-      loop:
-        - config
-        - positions
-
     # --- blackbox-exporter (disponibilidade das aplicações) ---
     - name: Create blackbox-exporter config directory on NFS volume
       ansible.builtin.file:
@@ -200,14 +188,6 @@
         group: "{{ docker_pgid }}"
         mode: '0644'
 
-    - name: Deploy Promtail configuration
-      ansible.builtin.template:
-        src: ../templates/promtail-config.yml.j2
-        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/config/config.yml"
-        owner: "{{ docker_puid }}"
-        group: "{{ docker_pgid }}"
-        mode: '0644'
-
     # --- .env file ---
     - name: Generate .env file for monitoring stack
       ansible.builtin.template:
@@ -226,7 +206,6 @@
           - { name: 'MONITORING_GRAFANA_PROVISIONING_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning" }
           - { name: 'MONITORING_LOKI_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/config" }
           - { name: 'MONITORING_LOKI_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/data" }
-          - { name: 'MONITORING_PROMTAIL_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/config" }
           - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
@@ -242,6 +221,5 @@
           - { name: 'HOMEPAGE_VAR_GRAFANA_PASSWORD', value: "{{ grafana_admin_initial_password }}" }
           - { name: 'MONITORING_DIUN_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun/data" }
           - { name: 'MONITORING_BLACKBOX_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/blackbox/config" }
-          - { name: 'MONITORING_PROMTAIL_POSITIONS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/promtail/positions" }
           - { name: 'GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_db_password }}" }
           - { name: 'GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_admin_initial_password }}" }

@@ -96,12 +96,12 @@ homeserver/                 # repositório lioevano/wiki-home-server
 │   │   │   ├── infra/          # docker, proxmox-host-config, proxmox-vm, traefik-config, authelia-config
 │   │   │   ├── apps/           # desktop-environment, ml-tools
 │   │   │   └── tools/          # ai-cli-tools
-│   │   └── templates/          # prometheus, loki, promtail, litellm, portainer_stack_env
+│   │   └── templates/          # prometheus, loki, grafana, homepage, litellm, portainer_stack_env
 │   ├── docker/stacks/
 │   │   ├── .env.template
 │   │   ├── core/               # Traefik, Cloudflared, Authelia
 │   │   ├── apps/               # Nextcloud, mídia, monitoramento, n8n, Home Assistant
-│   │   └── ai/                 # Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Promtail
+│   │   └── ai/                 # Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Diun
 │   └── scripts/
 │       ├── bootstrap.sh
 │       ├── restore.sh
@@ -216,7 +216,7 @@ MEDIA_STACK_TVSHOWS_PATH=
 MEDIA_STACK_MUSIC_PATH=
 ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH=
 
-# --- Stack apps: monitoramento (Prometheus, Grafana, Loki, Promtail, blackbox, Diun, Homepage) ---
+# --- Stack apps: monitoramento (Prometheus, Grafana, Loki, blackbox, Diun, Homepage) ---
 MONITORING_PROMETHEUS_CONFIG_PATH=
 MONITORING_PROMETHEUS_DATA_PATH=
 MONITORING_GRAFANA_DATA_PATH=
@@ -224,8 +224,6 @@ MONITORING_GRAFANA_DB_PATH=
 MONITORING_GRAFANA_PROVISIONING_PATH=
 MONITORING_LOKI_CONFIG_PATH=
 MONITORING_LOKI_DATA_PATH=
-MONITORING_PROMTAIL_CONFIG_PATH=
-MONITORING_PROMTAIL_POSITIONS_PATH=
 MONITORING_BLACKBOX_CONFIG_PATH=
 MONITORING_DIUN_DATA_PATH=
 MONITORING_HOMEPAGE_CONFIG_PATH=
@@ -253,7 +251,7 @@ N8N_SUBDOMAIN=n8n
 N8N_CONFIG_PATH=
 AUTO_STACK_HOMEASSISTANT_CONFIG_PATH=
 
-# --- Stack ai (Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Promtail, Diun) ---
+# --- Stack ai (Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Diun) ---
 AI_DESKTOP_VM_IP=
 AI_STACK_OLLAMA_MODELS_PATH=
 AI_STACK_LITELLM_CONFIG_PATH=
@@ -261,8 +259,6 @@ AI_STACK_OPENWEBUI_DATA_PATH=
 AI_STACK_OPENCLAW_CONFIG_PATH=
 AI_STACK_OPENCLAUDE_CONFIG_PATH=
 AI_STACK_OPENCLAUDE_MEMORY_PATH=
-AI_STACK_PROMTAIL_CONFIG_PATH=
-AI_STACK_PROMTAIL_POSITIONS_PATH=
 AI_STACK_DIUN_DATA_PATH=
 LITELLM_MASTER_KEY=
 OPENWEBUI_SECRET_KEY=

@@ -266,7 +266,7 @@ services:
     networks:
       - internal_services
     ports:
-      - "${CORE_SERVICES_VM_IP_VAR}:3100:3100" # Recebe logs do promtail_ai (ai-desktop-vm); só na LAN, sem rota no Traefik
+      - "${CORE_SERVICES_VM_IP_VAR}:3100:3100" # Recebe logs dos Alloys (host Proxmox e VMs); só na LAN, sem rota no Traefik
     volumes:
       - "${MONITORING_LOKI_CONFIG_PATH}/loki-local-config.yaml:/etc/loki/config.yaml:ro"
       - "${MONITORING_LOKI_DATA_PATH}:/loki"
@@ -348,19 +348,6 @@ services:
       traefik.http.routers.homepage.tls.certresolver: "letsencrypt"
       traefik.http.routers.homepage.middlewares: "authelia-forwardauth@docker"
       traefik.http.services.homepage-svc.loadbalancer.server.port: "3000"
-
-  promtail:
-    image: grafana/promtail:latest
-    container_name: promtail
-    restart: unless-stopped
-    networks:
-      - internal_services
-    volumes:
-      - "/var/log:/var/log:ro"
-      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
-      - "${MONITORING_PROMTAIL_CONFIG_PATH}/config.yml:/etc/promtail/config.yml:ro"
-      - "${MONITORING_PROMTAIL_POSITIONS_PATH}:/tmp/positions"
-    command: -config.file=/etc/promtail/config.yml
 
   # ===================== AUTOMAÇÃO =====================
 
