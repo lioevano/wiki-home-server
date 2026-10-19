@@ -1,0 +1,254 @@
+# docker/stacks/media/docker-compose.yml
+# Mídia: Jellyfin, Seerr (pedidos), Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, FlareSolverr, Recyclarr
+# e qBittorrent atrás do gluetun (ProtonVPN). Roda na core-services-vm; variáveis em media.env.
+# Dados: um único dataset montado como /data (torrents/ e media/), para importar por hardlink.
+version: '3.9'
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  internal_services:
+    name: internal_services
+    external: true
+
+services:
+  # ===================== REPRODUÇÃO E PEDIDOS =====================
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    container_name: jellyfin
+    restart: unless-stopped
+    networks:
+      - proxy
+    volumes:
+      - "${MEDIA_STACK_JELLYFIN_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_DATA_PATH}/media:/data/media:ro"
+      - "/dev/dri:/dev/dri"
+    environment:
+      PUID: ${DOCKER_PUID}
+      PGID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+    labels:
+      # Pública (login próprio): os apps de TV e celular do Jellyfin não passam pelo Authelia.
+      traefik.enable: "true"
+      traefik.http.routers.jellyfin.rule: "Host(`jellyfin.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.jellyfin.entrypoints: "websecure"
+      traefik.http.routers.jellyfin.tls.certresolver: "letsencrypt"
+      traefik.http.services.jellyfin-svc.loadbalancer.server.port: "8096"
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    container_name: seerr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_SEERR_CONFIG_PATH}:/app/config"
+    environment:
+      TZ: ${SYSTEM_TIMEZONE}
+    labels:
+      # Pública (login com a conta do Jellyfin).
+      traefik.enable: "true"
+      traefik.http.routers.seerr.rule: "Host(`pedidos.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.seerr.entrypoints: "websecure"
+      traefik.http.routers.seerr.tls.certresolver: "letsencrypt"
+      traefik.http.services.seerr-svc.loadbalancer.server.port: "5055"
+
+  # ===================== GERENCIADORES (*arr) =====================
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_SONARR_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_DATA_PATH}:/data"
+    environment:
+      PUID: ${DOCKER_PUID}
+      PGID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+      SONARR__AUTH__APIKEY: ${SONARR_API_KEY}
+      SONARR__AUTH__METHOD: External # a interface já fica atrás do Authelia
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.sonarr.rule: "Host(`sonarr.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.sonarr.entrypoints: "websecure"
+      traefik.http.routers.sonarr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.sonarr.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.sonarr-svc.loadbalancer.server.port: "8989"
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_RADARR_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_DATA_PATH}:/data"
+    environment:
+      PUID: ${DOCKER_PUID}
+      PGID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+      RADARR__AUTH__APIKEY: ${RADARR_API_KEY}
+      RADARR__AUTH__METHOD: External
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.radarr.rule: "Host(`radarr.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.radarr.entrypoints: "websecure"
+      traefik.http.routers.radarr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.radarr.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.radarr-svc.loadbalancer.server.port: "7878"
+
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_LIDARR_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_DATA_PATH}:/data"
+    environment:
+      PUID: ${DOCKER_PUID}
+      PGID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+      LIDARR__AUTH__APIKEY: ${LIDARR_API_KEY}
+      LIDARR__AUTH__METHOD: External
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.lidarr.rule: "Host(`lidarr.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.lidarr.entrypoints: "websecure"
+      traefik.http.routers.lidarr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.lidarr.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.lidarr-svc.loadbalancer.server.port: "8686"
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_PROWLARR_CONFIG_PATH}:/config"
+    environment:
+      PUID: ${DOCKER_PUID}
+      PGID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+      PROWLARR__AUTH__APIKEY: ${PROWLARR_API_KEY}
+      PROWLARR__AUTH__METHOD: External
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.prowlarr.rule: "Host(`prowlarr.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.prowlarr.entrypoints: "websecure"
+      traefik.http.routers.prowlarr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.prowlarr.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.prowlarr-svc.loadbalancer.server.port: "9696"
+
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_BAZARR_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_DATA_PATH}/media:/data/media"
+    environment:
+      PUID: ${DOCKER_PUID}
+      PGID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.bazarr.rule: "Host(`bazarr.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.bazarr.entrypoints: "websecure"
+      traefik.http.routers.bazarr.tls.certresolver: "letsencrypt"
+      traefik.http.routers.bazarr.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.bazarr-svc.loadbalancer.server.port: "6767"
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    networks:
+      - internal_services
+    environment:
+      TZ: ${SYSTEM_TIMEZONE}
+
+  recyclarr:
+    # Aplica os perfis do TRaSH Guides no Sonarr e no Radarr (config gerada pelo setup-media-stack-volumes.yml).
+    image: ghcr.io/recyclarr/recyclarr:latest
+    container_name: recyclarr
+    restart: unless-stopped
+    networks:
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_RECYCLARR_CONFIG_PATH}:/config"
+    environment:
+      TZ: ${SYSTEM_TIMEZONE}
+
+  # ===================== DOWNLOADS (atrás da VPN) =====================
+
+  gluetun:
+    # VPN (ProtonVPN, WireGuard) e kill switch: o qBittorrent só tem rede por aqui.
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    networks:
+      - proxy
+      - internal_services
+    volumes:
+      - "${MEDIA_STACK_GLUETUN_CONFIG_PATH}:/gluetun"
+    environment:
+      TZ: ${SYSTEM_TIMEZONE}
+      VPN_SERVICE_PROVIDER: protonvpn
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: ${PROTONVPN_WIREGUARD_PRIVATE_KEY}
+      PORT_FORWARD_ONLY: "on"
+      VPN_PORT_FORWARDING: "on"
+      # WebUI do qBittorrent (8088) aceita conexões das redes Docker (Traefik, *arr, Homepage, blackbox).
+      FIREWALL_INPUT_PORTS: "8088"
+      # Grava no qBittorrent a porta encaminhada pela Proton (exige "Bypass authentication for clients on localhost").
+      VPN_PORT_FORWARDING_UP_COMMAND: >-
+        /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}" http://127.0.0.1:8088/api/v2/app/setPreferences'
+      VPN_PORT_FORWARDING_DOWN_COMMAND: >-
+        /bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":0,\"current_network_interface\":\"lo\"}" http://127.0.0.1:8088/api/v2/app/setPreferences'
+    labels:
+      # Router do qBittorrent: ele usa a rede do gluetun, então as labels ficam aqui.
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      traefik.http.routers.qbittorrent.rule: "Host(`qbittorrent.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.qbittorrent.entrypoints: "websecure"
+      traefik.http.routers.qbittorrent.tls.certresolver: "letsencrypt"
+      traefik.http.routers.qbittorrent.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.qbittorrent-svc.loadbalancer.server.port: "8088"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    volumes:
+      - "${MEDIA_STACK_QBITTORRENT_CONFIG_PATH}:/config"
+      - "${MEDIA_STACK_DATA_PATH}/torrents:/data/torrents"
+    environment:
+      PUID: ${DOCKER_PUID}
+      PGID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+      WEBUI_PORT: "8088"

@@ -1,5 +1,5 @@
 # docker/stacks/apps/docker-compose.yml
-# Todas as aplicações: produtividade, mídia, monitoramento e automação
+# Aplicações: produtividade, monitoramento e automação (a mídia fica em docker/stacks/media)
 # Roda na core-services-vm
 version: '3.9'
 
@@ -80,101 +80,6 @@ services:
       traefik.http.routers.nextcloud.tls.certresolver: "letsencrypt"
       traefik.http.routers.nextcloud.middlewares: "authelia-forwardauth@docker,nextcloud-headers@file"
       traefik.http.services.nextcloud-svc.loadbalancer.server.port: "80"
-
-  # ===================== MÍDIA =====================
-
-  jellyfin:
-    image: jellyfin/jellyfin:latest
-    container_name: jellyfin
-    restart: unless-stopped
-    networks:
-      - proxy
-    volumes:
-      - "${MEDIA_STACK_JELLYFIN_CONFIG_PATH}:/config"
-      - "${MEDIA_STACK_MOVIES_PATH}:/data/movies:ro"
-      - "${MEDIA_STACK_TVSHOWS_PATH}:/data/tvshows:ro"
-      - "${MEDIA_STACK_MUSIC_PATH}:/data/music:ro"
-      - "/dev/dri:/dev/dri"
-    environment:
-      - PUID=${DOCKER_PUID}
-      - PGID=${DOCKER_PGID}
-      - TZ=${SYSTEM_TIMEZONE}
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.jellyfin.rule: "Host(`jellyfin.${BASE_DOMAIN_FROM_VAULT}`)"
-      traefik.http.routers.jellyfin.entrypoints: "websecure"
-      traefik.http.routers.jellyfin.tls.certresolver: "letsencrypt"
-      traefik.http.routers.jellyfin.middlewares: "authelia-forwardauth@docker"
-      traefik.http.services.jellyfin-svc.loadbalancer.server.port: "8096"
-
-  sonarr:
-    image: lscr.io/linuxserver/sonarr:latest
-    container_name: sonarr
-    restart: unless-stopped
-    networks:
-      - proxy
-      - internal_services
-    volumes:
-      - "${MEDIA_STACK_SONARR_CONFIG_PATH}:/config"
-      - "${MEDIA_STACK_TVSHOWS_PATH}:/tv"
-      - "${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads"
-    environment:
-      - PUID=${DOCKER_PUID}
-      - PGID=${DOCKER_PGID}
-      - TZ=${SYSTEM_TIMEZONE}
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.sonarr.rule: "Host(`sonarr.${BASE_DOMAIN_FROM_VAULT}`)"
-      traefik.http.routers.sonarr.entrypoints: "websecure"
-      traefik.http.routers.sonarr.tls.certresolver: "letsencrypt"
-      traefik.http.routers.sonarr.middlewares: "authelia-forwardauth@docker"
-      traefik.http.services.sonarr-svc.loadbalancer.server.port: "8989"
-
-  radarr:
-    image: lscr.io/linuxserver/radarr:latest
-    container_name: radarr
-    restart: unless-stopped
-    networks:
-      - proxy
-      - internal_services
-    volumes:
-      - "${MEDIA_STACK_RADARR_CONFIG_PATH}:/config"
-      - "${MEDIA_STACK_MOVIES_PATH}:/movies"
-      - "${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads"
-    environment:
-      - PUID=${DOCKER_PUID}
-      - PGID=${DOCKER_PGID}
-      - TZ=${SYSTEM_TIMEZONE}
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.radarr.rule: "Host(`radarr.${BASE_DOMAIN_FROM_VAULT}`)"
-      traefik.http.routers.radarr.entrypoints: "websecure"
-      traefik.http.routers.radarr.tls.certresolver: "letsencrypt"
-      traefik.http.routers.radarr.middlewares: "authelia-forwardauth@docker"
-      traefik.http.services.radarr-svc.loadbalancer.server.port: "7878"
-
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
-    restart: unless-stopped
-    networks:
-      - proxy
-      - internal_services
-    volumes:
-      - "${MEDIA_STACK_QBITTORRENT_CONFIG_PATH}:/config"
-      - "${ZFS_DOWNLOADS_DATASET_NAME_NFS_PATH}:/downloads"
-    environment:
-      - PUID=${DOCKER_PUID}
-      - PGID=${DOCKER_PGID}
-      - TZ=${SYSTEM_TIMEZONE}
-      - WEBUI_PORT=8088
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.qbittorrent.rule: "Host(`qbittorrent.${BASE_DOMAIN_FROM_VAULT}`)"
-      traefik.http.routers.qbittorrent.entrypoints: "websecure"
-      traefik.http.routers.qbittorrent.tls.certresolver: "letsencrypt"
-      traefik.http.routers.qbittorrent.middlewares: "authelia-forwardauth@docker"
-      traefik.http.services.qbittorrent-svc.loadbalancer.server.port: "8088"
 
   # ===================== MONITORAMENTO =====================
 
