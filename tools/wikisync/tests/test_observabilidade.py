@@ -90,3 +90,20 @@ def test_alloy_defaults_por_host():
                  core_services_vm_ip_var=ip) == "172.16.0.0/12"
     assert _expr(d, "alloy_scrape_allowed_from", inventory_hostname="ai-desktop-vm",
                  core_services_vm_ip_var=ip) == ip
+
+
+# --- VMs: Alloy no lugar do node_exporter ---
+
+def _roles(play) -> list[str]:
+    return [r["role"] if isinstance(r, dict) else r for r in play.get("roles", [])]
+
+
+def test_vms_recebem_alloy_depois_do_docker():
+    plays = yaml.safe_load((ROOT / "server/ansible/playbooks/setup-base-ubuntu.yml").read_text(encoding="utf-8"))
+    i_docker = next(i for i, p in enumerate(plays) if "infra/docker" in _roles(p))
+    i_alloy = next(i for i, p in enumerate(plays) if "infra/alloy" in _roles(p))
+    # O grupo docker precisa existir quando o role do Alloy adiciona o usuário alloy a ele.
+    assert i_alloy > i_docker
+    assert plays[i_alloy]["hosts"].split()[0] == "ubuntu_vms"
+    assert "node_exporter" not in (ROOT / "server/ansible/roles/common/tasks/main.yml").read_text(encoding="utf-8").lower()
+    assert not (ROOT / "server/ansible/roles/common/templates/node_exporter_vm.service.j2").exists()

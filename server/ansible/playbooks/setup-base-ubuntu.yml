@@ -8,7 +8,7 @@
   # Variáveis de group_vars/all/main.yml são carregadas automaticamente
 
   roles:
-    - role: common # Aplica configurações base, UFW, Node Exporter VM a todas as VMs Ubuntu
+    - role: common # Aplica configurações base, cliente NFS e UFW a todas as VMs Ubuntu
 
 - hosts: core-services-vm # Alvo específico para instalar Docker e o container Portainer
   become: yes
@@ -16,6 +16,12 @@
     - ../inventories/home/group_vars/all/vault.yml # Necessário para base_domain nas labels do Portainer
   roles:
     - role: infra/docker # Instala Docker Engine e o container Portainer
+
+# Coletor de logs e métricas (seção 4.4). Depois do Docker: o usuário alloy entra no grupo docker.
+- hosts: ubuntu_vms
+  become: yes
+  roles:
+    - role: infra/alloy
 
 # Opcional: Instalar ambiente gráfico em VMs específicas
 # A variável GUI_ENABLED deve ser definida no inventário para os hosts desejados.

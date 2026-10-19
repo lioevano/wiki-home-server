@@ -1,5 +1,5 @@
 ---
-description: "Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e Node Exporter."
+description: "Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e o coletor Grafana Alloy."
 ---
 
 # Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS)
@@ -10,14 +10,15 @@ Com as máquinas virtuais (`core-services-vm` e, opcionalmente, `ai-desktop-vm`)
 * Configuração do cliente NFS para montar os volumes de dados ZFS compartilhados pelo host Proxmox.
 * Criação de um usuário e grupo dedicados (`dockeruser`, `dockergroup`) para possuir os arquivos nos volumes NFS e para os containers Docker utilizarem (via PUID/PGID).
 * Configuração do firewall UFW (Uncomplicated Firewall).
-* Instalação do Node Exporter para monitoramento.
+* Instalação do Grafana Alloy, coletor de logs e métricas ([seção 4.4](#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)).
 * Instalação do Docker Engine e Docker Compose na `core-services-vm`.
 * Deploy do container Portainer na `core-services-vm` para gerenciamento gráfico do Docker.
 * (Opcional) Instalação de um ambiente desktop na `ai-desktop-vm` se `GUI_ENABLED=true`.
 
-Utilizaremos o playbook Ansible `setup-base-ubuntu.yml`. Este playbook orquestra a aplicação de dois roles principais:
+Utilizaremos o playbook Ansible `setup-base-ubuntu.yml`. Este playbook orquestra a aplicação de três roles principais:
 1. `common`: Aplicado a todas as VMs no grupo `ubuntu_vms`.
 2. `infra/docker`: Aplicado especificamente à `core-services-vm`.
+3. `infra/alloy`: Aplicado a todas as VMs, depois do Docker (o usuário `alloy` entra no grupo `docker`).
 E, condicionalmente, o role `apps/desktop-environment`.
 
 ## 4.1. Role Ansible `common` (`ansible/roles/common/`)
@@ -136,118 +137,12 @@ Este arquivo contém as tarefas principais do role `common`.
       - { rule: 'allow', name: 'ssh' } # Ou port: '22', proto: 'tcp'
       - { rule: 'allow', port: '80', proto: 'tcp', comment: 'Allow HTTP for Traefik redirect and local services' }
       - { rule: 'allow', port: '443', proto: 'tcp', comment: 'Allow HTTPS for Traefik' }
-      # Portas para Node Exporter (Prometheus scrape)
-      - { rule: 'allow', port: '9100', proto: 'tcp', comment: 'Allow Node Exporter' }
       # Para VNC na ai-desktop-vm se GUI_ENABLED=true
       # Esta regra só será efetiva se o UFW for aplicado na ai-desktop-vm.
       - { rule: 'allow', port: '5901', proto: 'tcp', comment: 'Allow VNC :1 (TCP port for display 1)' }
     default_outgoing_policy: allow # Permite todo tráfego de saída por padrão
   when: inventory_hostname == 'core-services-vm' or (inventory_hostname == 'ai-desktop-vm' and hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool)
 
-# --- Instalação do Node Exporter (para monitoramento da VM por Prometheus) ---
-- name: "Verificar se Node Exporter já está instalado na VM (binário)"
-  ansible.builtin.stat:
-    path: /usr/local/bin/node_exporter
-  register: node_exporter_vm_binary
-
-- name: "Instalar Node Exporter na VM (se não existir)"
-  when: not node_exporter_vm_binary.stat.exists
-  block: # Agrupa tarefas para instalação do Node Exporter
-    - name: "Checar última release do Node Exporter no GitHub (VM)"
-      ansible.builtin.uri:
-        url: "https://api.github.com/repos/prometheus/node_exporter/releases/latest"
-        return_content: yes
-      register: node_exporter_vm_latest_release
-      run_once: true # Evita múltiplas chamadas à API se o role for aplicado a várias VMs em paralelo
-
-    - name: "Definir URL de download do Node Exporter (VM)"
-      ansible.builtin.set_fact:
-        node_exporter_vm_version: "{{ node_exporter_vm_latest_release.json.tag_name | regex_replace('^v(.*)$', '\\1') }}"
-        node_exporter_vm_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_vm_version }}/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
-
-    - name: "Baixar Node Exporter (VM)"
-      ansible.builtin.get_url:
-        url: "{{ node_exporter_vm_download_url }}"
-        dest: "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
-        mode: '0644'
-
-    - name: "Descompactar Node Exporter (VM)"
-      ansible.builtin.unarchive:
-        src: "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
-        dest: "/tmp/"
-        remote_src: yes # Indica que o arquivo de origem está no host remoto (a VM)
-
-    - name: "Mover binário Node Exporter para /usr/local/bin (VM)"
-      ansible.builtin.copy:
-        src: "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64/node_exporter"
-        dest: "/usr/local/bin/node_exporter"
-        mode: '0755'
-        remote_src: yes # Indica que o arquivo de origem está no host remoto
-
-    - name: "Criar usuário de sistema 'node_exporter' (VM)"
-      ansible.builtin.user:
-        name: node_exporter
-        shell: /bin/false
-        system: yes
-        create_home: no
-
-    - name: "Criar arquivo de serviço systemd para Node Exporter (VM)"
-      ansible.builtin.template:
-        src: node_exporter_vm.service.j2 # Template específico para VM
-        dest: /etc/systemd/system/node_exporter.service
-        mode: '0644'
-      notify: Reload systemd and restart node_exporter_vm # Handler para recarregar systemd e reiniciar o serviço
-
-    - name: "Limpar arquivos temporários de instalação do Node Exporter (VM)"
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64.tar.gz"
-        - "/tmp/node_exporter-{{ node_exporter_vm_version }}.linux-amd64"
-  # Fim do block de instalação do Node Exporter
-
-- name: "Garantir que Node Exporter (VM) está habilitado e rodando"
-  ansible.builtin.systemd_service:
-    name: node_exporter
-    state: started
-    enabled: yes
-  # Esta task roda mesmo se o Node Exporter já existia, garantindo que o serviço está OK.
-```
-
-### `templates/node_exporter_vm.service.j2`
-
-Este template define o serviço systemd para o Node Exporter que roda dentro das VMs.
-
-```systemd title="ansible/roles/common/templates/node_exporter_vm.service.j2"
-# ansible/roles/common/templates/node_exporter_vm.service.j2
-[Unit]
-Description=Node Exporter for Prometheus (VM)
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-User=node_exporter
-Group=node_exporter
-Type=simple
-ExecStart=/usr/local/bin/node_exporter \
-    --collector.systemd \
-    --collector.filesystem \
-    --collector.network_dev \
-    --collector.vmstat \
-    --collector.meminfo \
-    --collector.diskstats \
-    --collector.processes \
-    --collector.cpu \
-    --collector.loadavg \
-    --collector.netstat \
-    --collector.stat \
-    --collector.time \
-    --collector.pressure
-    # Coletores relevantes para VMs. Evite coletores que tentem acessar hardware específico do host.
-
-[Install]
-WantedBy=multi-user.target
 ```
 
 ### `handlers/main.yml`
@@ -256,17 +151,6 @@ Handlers para o role `common`.
 
 ```yaml title="ansible/roles/common/handlers/main.yml"
 # ansible/roles/common/handlers/main.yml
-- name: Reload systemd and restart node_exporter_vm
-  ansible.builtin.systemd:
-    daemon_reload: yes
-  notify: Restart node_exporter_vm_service # Encadeia para o próximo handler
-
-- name: Restart node_exporter_vm_service
-  ansible.builtin.systemd_service:
-    name: node_exporter
-    state: restarted
-    enabled: yes
-
 - name: Configure unattended-upgrades
   ansible.builtin.copy:
     content: |
@@ -304,8 +188,7 @@ Handlers para o role `common`.
     * Criar o grupo `{{ docker_group_name_on_vm }}` com o GID `{{ docker_pgid }}`.
     * Criar o usuário `{{ docker_user_name_on_vm }}` com o UID `{{ docker_puid }}`, associado ao grupo acima, e com uma senha definida.
     * Adicionar o usuário Ansible da VM (`{{ vm_ansible_user_name }}`) também ao grupo `{{ docker_group_name_on_vm }}`.
-  * **Configurar Firewall UFW:** Habilitar UFW com política padrão `deny` e permitir portas essenciais (SSH, HTTP/S para Traefik, Node Exporter, VNC se GUI habilitada).
-  * **Instalar Node Exporter (VM):** Baixar, instalar e configurar o serviço systemd para o Node Exporter, usando o template `node_exporter_vm.service.j2`.
+  * **Configurar Firewall UFW:** Habilitar UFW com política padrão `deny` e permitir portas essenciais (SSH, HTTP/S para Traefik, VNC se GUI habilitada). A porta 12345 do Alloy é liberada pelo role `infra/alloy`.
 
 ## 4.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)
 
@@ -456,7 +339,7 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
   # Variáveis de group_vars/all/main.yml são carregadas automaticamente
 
   roles:
-    - role: common # Aplica configurações base, UFW, Node Exporter VM a todas as VMs Ubuntu
+    - role: common # Aplica configurações base, cliente NFS e UFW a todas as VMs Ubuntu
 
 - hosts: core-services-vm # Alvo específico para instalar Docker e o container Portainer
   become: yes
@@ -464,6 +347,12 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
     - ../inventories/home/group_vars/all/vault.yml # Necessário para base_domain nas labels do Portainer
   roles:
     - role: infra/docker # Instala Docker Engine e o container Portainer
+
+# Coletor de logs e métricas (seção 4.4). Depois do Docker: o usuário alloy entra no grupo docker.
+- hosts: ubuntu_vms
+  become: yes
+  roles:
+    - role: infra/alloy
 
 # Opcional: Instalar ambiente gráfico em VMs específicas
 # A variável GUI_ENABLED deve ser definida no inventário para os hosts desejados.
@@ -483,7 +372,7 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
 
 ### Executando o Playbook `setup-base-ubuntu.yml`
 
-1. **Verifique os Roles:** Certifique-se de que os roles `common`, `infra/docker`, e `apps/desktop-environment` (se for usar a funcionalidade de GUI) estão criados e preenchidos com o código correto nos seus respectivos diretórios dentro de `ansible/roles/`.
+1. **Verifique os Roles:** Certifique-se de que os roles `common`, `infra/docker`, `infra/alloy` (seção 4.4) e `apps/desktop-environment` (se for usar a funcionalidade de GUI) estão criados e preenchidos com o código correto nos seus respectivos diretórios dentro de `ansible/roles/`.
 2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 
@@ -498,7 +387,7 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
 
 Após a execução bem-sucedida deste playbook:
 
-* Todas as suas VMs Ubuntu terão as configurações base (NFS client, UFW, Node Exporter, etc.).
+* Todas as suas VMs Ubuntu terão as configurações base (NFS client, UFW, Alloy, etc.).
 * A `core-services-vm` terá o Docker Engine instalado e o container Portainer CE rodando.
 * A `ai-desktop-vm`, se `GUI_ENABLED=true` foi definido para ela no inventário, terá o ambiente XFCE e TightVNCServer instalados.
 
