@@ -20,22 +20,55 @@
     filename: grafana
     update_cache: true
 
-- name: "Instalar o Alloy (versão fixada em alloy_version)"
+# O pin vale também para 'apt upgrade' manual e para o upgrade geral do host Proxmox.
+- name: "Fixar a série do Alloy (alloy_version) no apt"
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/alloy
+    content: |
+      # Gerenciado pelo Ansible (role infra/alloy): instalação e upgrade ficam na série fixada.
+      Package: alloy
+      Pin: version {{ alloy_version }}
+      Pin-Priority: 1001
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Instalar o Alloy (a versão mais nova da série fixada)"
   ansible.builtin.apt:
-    name: "alloy={{ alloy_version }}"
-    state: present
+    name: alloy
+    state: latest
+    update_cache: true
+    cache_valid_time: 3600
   notify: Restart alloy
 
-- name: "Ler os grupos do sistema"
-  ansible.builtin.getent:
-    database: group
-
-# journal (systemd-journal), /var/log (adm) e, onde o Docker existe, o socket do Docker (docker).
-- name: "Dar ao usuário alloy acesso ao journal, ao /var/log e ao Docker"
+# journal (systemd-journal) e /var/log (adm). No host Proxmox o Alloy roda como o usuário alloy.
+- name: "Dar ao usuário alloy acesso ao journal e ao /var/log"
   ansible.builtin.user:
     name: alloy
-    groups: "{{ ['adm', 'systemd-journal'] + (['docker'] if (alloy_docker_enabled | bool and 'docker' in ansible_facts.getent_group) else []) }}"
+    groups: [adm, systemd-journal]
     append: true
+  notify: Restart alloy
+
+# Onde há Docker, o cAdvisor lê /var/lib/docker (0710 root:root) e o socket: o grupo docker não basta,
+# então o serviço roda como root (o grupo docker já equivaleria a root).
+- name: "Criar o diretório de drop-ins do serviço alloy"
+  ansible.builtin.file:
+    path: /etc/systemd/system/alloy.service.d
+    state: directory
+    mode: '0755'
+  when: alloy_docker_enabled | bool
+
+- name: "Rodar o Alloy como root onde há Docker (cAdvisor)"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/alloy.service.d/override.conf
+    content: |
+      # Gerenciado pelo Ansible (role infra/alloy)
+      [Service]
+      User=root
+    owner: root
+    group: root
+    mode: '0644'
+  when: alloy_docker_enabled | bool
   notify: Restart alloy
 
 - name: "Configurar /etc/default/alloy (arquivo de configuração e endereço de escuta)"

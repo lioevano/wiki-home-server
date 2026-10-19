@@ -33,7 +33,7 @@ O `setup-monitoring-stack-volumes.yml` gera em `<NFS>/grafana/provisioning/alert
 
 | Arquivo | Conteúdo |
 |---|---|
-| `rules.yml` | 10 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta` (o `up` do job `alloy` de cada host, ou de um alvo do blackbox), `zfs-degradado`, `container-reiniciando` (métricas do cAdvisor no Alloy), `authelia-logins-falhos` |
+| `rules.yml` | 10 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta` (o `up` do job `alloy` de cada host, ou de um alvo do blackbox), `zfs-degradado`, `container-reiniciando` (zeragens do contador de CPU do container no cAdvisor do Alloy; reinícios mais rápidos que 1 s escapam), `authelia-logins-falhos` |
 | `contact-points.yml` | `n8n` (webhook interno com `Authorization: Bearer`) e `telegram-direto` (bot do Telegram) |
 | `policies.yml` | tudo vai para `n8n`, agrupado por `alertname` e `app`; só `n8n-fora-do-ar` vai para `telegram-direto` |
 

@@ -23,7 +23,7 @@
   {'uid': 'cpu-alta', 'ds': 'prometheus', 'expr': '100 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100', 'op': 'gt', 'v': cpu_pct, 'for': cpu_for, 'sev': 'warning', 'summary': 'CPU de {{ $$labels.instance }} acima de ' ~ cpu_pct ~ '%'},
   {'uid': 'host-sem-resposta', 'ds': 'prometheus', 'expr': '1 - up{job=~"alloy|blackbox_http"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.instance }} não responde ({{ $$labels.job }})'},
   {'uid': 'zfs-degradado', 'ds': 'prometheus', 'expr': 'node_zfs_zpool_state{state!="online"}', 'op': 'gt', 'v': 0, 'for': '1m', 'sev': 'critical', 'summary': 'Pool ZFS {{ $$labels.zpool }} em estado {{ $$labels.state }}'},
-  {'uid': 'container-reiniciando', 'ds': 'prometheus', 'expr': 'changes(container_start_time_seconds{name!=""}[15m])', 'op': 'gt', 'v': reinicios_max, 'for': '0s', 'sev': 'warning', 'summary': '{{ $$labels.name }} reiniciou mais de ' ~ reinicios_max ~ ' vezes em 15 min ({{ $$labels.instance }})'},
+  {'uid': 'container-reiniciando', 'ds': 'prometheus', 'expr': 'resets(container_cpu_usage_seconds_total{name!=""}[15m])', 'op': 'gt', 'v': reinicios_max, 'for': '0s', 'sev': 'warning', 'summary': '{{ $$labels.name }} reiniciou mais de ' ~ reinicios_max ~ ' vezes em 15 min ({{ $$labels.instance }})'},
   {'uid': 'authelia-logins-falhos', 'ds': 'loki', 'expr': 'sum(count_over_time({job="docker_logs"} != "query=" |~ "Unsuccessful (1FA|TOTP|WebAuthn|Duo) authentication attempt" [10m]))', 'op': 'gt', 'v': logins_falhos, 'for': '0s', 'sev': 'warning', 'summary': 'Mais de ' ~ logins_falhos ~ ' logins falhos no Authelia em 10 min'},
 ] %}
 apiVersion: 1

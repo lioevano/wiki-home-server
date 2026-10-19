@@ -17,7 +17,7 @@
   roles:
     - role: infra/docker # Instala Docker Engine e o container Portainer
 
-# Coletor de logs e métricas (seção 4.4). Depois do Docker: o usuário alloy entra no grupo docker.
+# Coletor de logs e métricas (seção 4.4). Depois do Docker, cujos containers ele lê.
 - hosts: ubuntu_vms
   become: yes
   roles:

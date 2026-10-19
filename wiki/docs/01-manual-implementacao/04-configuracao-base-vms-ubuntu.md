@@ -18,7 +18,7 @@ Com as máquinas virtuais (`core-services-vm` e, opcionalmente, `ai-desktop-vm`)
 Utilizaremos o playbook Ansible `setup-base-ubuntu.yml`. Este playbook orquestra a aplicação de três roles principais:
 1. `common`: Aplicado a todas as VMs no grupo `ubuntu_vms`.
 2. `infra/docker`: Aplicado especificamente à `core-services-vm`.
-3. `infra/alloy`: Aplicado a todas as VMs, depois do Docker (o usuário `alloy` entra no grupo `docker`).
+3. `infra/alloy`: Aplicado a todas as VMs, depois do Docker (o Alloy lê os containers pelo socket e pelo `/var/lib/docker`).
 E, condicionalmente, o role `apps/desktop-environment`.
 
 ## 4.1. Role Ansible `common` (`ansible/roles/common/`)
@@ -224,6 +224,27 @@ Este role é específico para a `core-services-vm` (ou qualquer outra VM que voc
     filename: docker # Nome do arquivo .list em /etc/apt/sources.list.d/
     update_cache: yes # Atualiza o cache após adicionar o repo
 
+# Antes da instalação: o daemon já sobe assim, sem imagens a migrar. Com o image store do containerd
+# (padrão no Docker 29) o cAdvisor do Alloy não encontra os containers (seção 4.4).
+- name: "Garantir o diretório /etc/docker"
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+
+- name: "Configurar o daemon do Docker sem o image store do containerd"
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "features": {
+          "containerd-snapshotter": false
+        }
+      }
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: "Instalar Docker Engine, CLI, Containerd e plugins Compose/Buildx"
   ansible.builtin.apt:
     name:
@@ -348,7 +369,7 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
   roles:
     - role: infra/docker # Instala Docker Engine e o container Portainer
 
-# Coletor de logs e métricas (seção 4.4). Depois do Docker: o usuário alloy entra no grupo docker.
+# Coletor de logs e métricas (seção 4.4). Depois do Docker, cujos containers ele lê.
 - hosts: ubuntu_vms
   become: yes
   roles:
@@ -407,8 +428,8 @@ O **Grafana Alloy** é o coletor único da infraestrutura: roda instalado no sis
 
 O role é aplicado pelo `setup-base-ubuntu.yml` (VMs) e pelo `setup-proxmox-host.yml` (host). A versão fica fixada em `alloy_version` no `group_vars/all/main.yml`; para atualizar, troque o valor e rode os dois playbooks.
 
-!!! warning "Acesso do usuário `alloy`"
-    Para ler os logs e as métricas dos containers, o usuário `alloy` entra no grupo `docker` nas VMs, o que equivale a root na VM (é a recomendação da documentação do cAdvisor). A interface do Alloy (`http://<host>:12345`) não tem autenticação e mostra a configuração (sem segredos); o firewall libera a porta só para a `core-services-vm` (UFW nas VMs; PVE Firewall no host). Na `core-services-vm` a origem liberada é `172.16.0.0/12`, porque o Prometheus em container chega ao IP do próprio host vindo da rede Docker.
+!!! warning "Alloy como root nas VMs"
+    Para ler os logs e as métricas dos containers, o Alloy roda como **root** nas VMs (drop-in `/etc/systemd/system/alloy.service.d/override.conf`): o cAdvisor lê `/var/lib/docker`, que só o root acessa, e o grupo `docker` sozinho não basta (e já equivaleria a root). No host Proxmox, sem Docker, ele roda como o usuário `alloy` (grupos `adm` e `systemd-journal`). O Docker é instalado sem o *image store* do containerd (`/etc/docker/daemon.json`, seção 4.2): com ele, padrão no Docker 29, o cAdvisor não encontra os containers. A interface do Alloy (`http://<host>:12345`) não tem autenticação e mostra a configuração (sem segredos); o firewall libera a porta só para a `core-services-vm` (UFW nas VMs; PVE Firewall no host). Na `core-services-vm` a origem liberada é `172.16.0.0/12`, porque o Prometheus em container chega ao IP do próprio host vindo da rede Docker.
 
 ### `defaults/main.yml`
 
@@ -450,22 +471,55 @@ alloy_scrape_allowed_from: "{{ '172.16.0.0/12' if inventory_hostname == 'core-se
     filename: grafana
     update_cache: true
 
-- name: "Instalar o Alloy (versão fixada em alloy_version)"
+# O pin vale também para 'apt upgrade' manual e para o upgrade geral do host Proxmox.
+- name: "Fixar a série do Alloy (alloy_version) no apt"
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/alloy
+    content: |
+      # Gerenciado pelo Ansible (role infra/alloy): instalação e upgrade ficam na série fixada.
+      Package: alloy
+      Pin: version {{ alloy_version }}
+      Pin-Priority: 1001
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: "Instalar o Alloy (a versão mais nova da série fixada)"
   ansible.builtin.apt:
-    name: "alloy={{ alloy_version }}"
-    state: present
+    name: alloy
+    state: latest
+    update_cache: true
+    cache_valid_time: 3600
   notify: Restart alloy
 
-- name: "Ler os grupos do sistema"
-  ansible.builtin.getent:
-    database: group
-
-# journal (systemd-journal), /var/log (adm) e, onde o Docker existe, o socket do Docker (docker).
-- name: "Dar ao usuário alloy acesso ao journal, ao /var/log e ao Docker"
+# journal (systemd-journal) e /var/log (adm). No host Proxmox o Alloy roda como o usuário alloy.
+- name: "Dar ao usuário alloy acesso ao journal e ao /var/log"
   ansible.builtin.user:
     name: alloy
-    groups: "{{ ['adm', 'systemd-journal'] + (['docker'] if (alloy_docker_enabled | bool and 'docker' in ansible_facts.getent_group) else []) }}"
+    groups: [adm, systemd-journal]
     append: true
+  notify: Restart alloy
+
+# Onde há Docker, o cAdvisor lê /var/lib/docker (0710 root:root) e o socket: o grupo docker não basta,
+# então o serviço roda como root (o grupo docker já equivaleria a root).
+- name: "Criar o diretório de drop-ins do serviço alloy"
+  ansible.builtin.file:
+    path: /etc/systemd/system/alloy.service.d
+    state: directory
+    mode: '0755'
+  when: alloy_docker_enabled | bool
+
+- name: "Rodar o Alloy como root onde há Docker (cAdvisor)"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/alloy.service.d/override.conf
+    content: |
+      # Gerenciado pelo Ansible (role infra/alloy)
+      [Service]
+      User=root
+    owner: root
+    group: root
+    mode: '0644'
+  when: alloy_docker_enabled | bool
   notify: Restart alloy
 
 - name: "Configurar /etc/default/alloy (arquivo de configuração e endereço de escuta)"
@@ -520,6 +574,7 @@ alloy_scrape_allowed_from: "{{ '172.16.0.0/12' if inventory_hostname == 'core-se
   ansible.builtin.systemd_service:
     name: alloy
     state: restarted
+    daemon_reload: true # aplica o drop-in de /etc/systemd/system/alloy.service.d
 ```
 
 ### `templates/config.alloy.j2`

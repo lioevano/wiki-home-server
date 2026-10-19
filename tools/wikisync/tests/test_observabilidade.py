@@ -168,7 +168,8 @@ def test_alertas_alloy_e_reinicios():
     regras = {r["uid"]: r for r in yaml.safe_load(render("templates/grafana/alerting/rules.yml.j2"))["groups"][0]["rules"]}
     assert 'job=~"alloy|blackbox_http"' in regras["host-sem-resposta"]["data"][0]["model"]["expr"]
     r = regras["container-reiniciando"]
-    assert r["data"][0]["model"]["expr"] == 'changes(container_start_time_seconds{name!=""}[15m])'
+    # container_start_time_seconds é a criação do container (não muda ao reiniciar); o contador de CPU zera a cada reinício.
+    assert r["data"][0]["model"]["expr"] == 'resets(container_cpu_usage_seconds_total{name!=""}[15m])'
     assert r["data"][1]["model"]["conditions"][0]["evaluator"] == {"type": "gt", "params": [3]}
     assert r["labels"]["severity"] == "warning"
 
@@ -186,3 +187,49 @@ def test_sem_coletores_antigos():
         if f.is_file():
             texto = f.read_text(encoding="utf-8", errors="ignore").lower()
             assert "promtail" not in texto and not re.search(r"node[_ ]exporter", texto), f
+
+
+# --- Correções da revisão final ---
+
+ALLOY_TASKS = ROOT / "server/ansible/roles/infra/alloy/tasks/main.yml"
+
+
+def _task_por_dest(tasks, dest):
+    return next(t for t in tasks if any(isinstance(v, dict) and v.get("dest") == dest for v in t.values()))
+
+
+def test_alloy_roda_como_root_onde_ha_docker():
+    # cAdvisor lê /var/lib/docker (0710 root:root); o grupo docker só dá acesso ao socket.
+    tasks = yaml.safe_load(ALLOY_TASKS.read_text(encoding="utf-8"))
+    t = _task_por_dest(tasks, "/etc/systemd/system/alloy.service.d/override.conf")
+    modulo = next(v for v in t.values() if isinstance(v, dict) and "dest" in v)
+    assert "User=root" in modulo["content"]
+    assert "alloy_docker_enabled" in str(t.get("when"))
+    assert "Restart alloy" in str(t.get("notify"))
+    handlers = yaml.safe_load((ROOT / "server/ansible/roles/infra/alloy/handlers/main.yml").read_text(encoding="utf-8"))
+    restart = next(h for h in handlers if h["name"] == "Restart alloy")
+    assert restart["ansible.builtin.systemd_service"].get("daemon_reload") is True
+
+
+def test_alloy_versao_fixada_por_preferencia_apt():
+    tasks = yaml.safe_load(ALLOY_TASKS.read_text(encoding="utf-8"))
+    pref = _task_por_dest(tasks, "/etc/apt/preferences.d/alloy")
+    conteudo = next(v for v in pref.values() if isinstance(v, dict) and "dest" in v)["content"]
+    assert "Package: alloy" in conteudo and "Pin: version {{ alloy_version }}" in conteudo and "Pin-Priority: 1001" in conteudo
+    apt = next(t for t in tasks if "ansible.builtin.apt" in t)["ansible.builtin.apt"]
+    assert apt["name"] == "alloy" and apt["state"] == "latest" and apt.get("update_cache") is True
+    i_pref = tasks.index(pref)
+    i_apt = next(i for i, t in enumerate(tasks) if "ansible.builtin.apt" in t)
+    assert i_pref < i_apt
+
+
+def test_docker_sem_containerd_snapshotter():
+    # Com o image store do containerd (padrão no Docker 29) o cAdvisor não acha os containers.
+    import json
+    tasks = yaml.safe_load((ROOT / "server/ansible/roles/infra/docker/tasks/main.yml").read_text(encoding="utf-8"))
+    t = _task_por_dest(tasks, "/etc/docker/daemon.json")
+    modulo = next(v for v in t.values() if isinstance(v, dict) and "dest" in v)
+    assert json.loads(modulo["content"])["features"]["containerd-snapshotter"] is False
+    i_cfg = tasks.index(t)
+    i_pkg = next(i for i, x in enumerate(tasks) if "docker-ce" in str(x.get("ansible.builtin.apt", {})))
+    assert i_cfg < i_pkg  # antes da instalação: o daemon já sobe sem o snapshotter e sem imagens a migrar

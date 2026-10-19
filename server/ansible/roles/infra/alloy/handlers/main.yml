@@ -8,3 +8,4 @@
   ansible.builtin.systemd_service:
     name: alloy
     state: restarted
+    daemon_reload: true # aplica o drop-in de /etc/systemd/system/alloy.service.d

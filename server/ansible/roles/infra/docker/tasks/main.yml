@@ -15,6 +15,27 @@
     filename: docker # Nome do arquivo .list em /etc/apt/sources.list.d/
     update_cache: yes # Atualiza o cache após adicionar o repo
 
+# Antes da instalação: o daemon já sobe assim, sem imagens a migrar. Com o image store do containerd
+# (padrão no Docker 29) o cAdvisor do Alloy não encontra os containers (seção 4.4).
+- name: "Garantir o diretório /etc/docker"
+  ansible.builtin.file:
+    path: /etc/docker
+    state: directory
+    mode: '0755'
+
+- name: "Configurar o daemon do Docker sem o image store do containerd"
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    content: |
+      {
+        "features": {
+          "containerd-snapshotter": false
+        }
+      }
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: "Instalar Docker Engine, CLI, Containerd e plugins Compose/Buildx"
   ansible.builtin.apt:
     name:
