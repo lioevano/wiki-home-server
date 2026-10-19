@@ -436,6 +436,10 @@ portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
 # --- Subdomínios de serviços ---
 # Subdomínio do n8n (resulta em n8n.<base_domain>).
 n8n_subdomain: "n8n"
+
+# --- Grafana Alloy (coletor de logs e métricas; role infra/alloy) ---
+# Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.
+alloy_version: "1.20.*"
 ```
 
 Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).

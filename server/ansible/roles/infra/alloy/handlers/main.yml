@@ -1,0 +1,10 @@
+# ansible/roles/infra/alloy/handlers/main.yml
+- name: Reload alloy
+  ansible.builtin.systemd_service:
+    name: alloy
+    state: reloaded
+
+- name: Restart alloy
+  ansible.builtin.systemd_service:
+    name: alloy
+    state: restarted

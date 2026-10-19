@@ -35,3 +35,58 @@ def test_loki_schema_v13_tsdb():
     assert periodo["object_store"] == "filesystem" and periodo["index"]["period"] == "24h"
     assert "tsdb_shipper" in cfg["storage_config"]
     assert "alertmanager_url" not in str(cfg.get("ruler", {}))
+
+
+# --- Alloy (role infra/alloy) ---
+
+ALLOY_VARS = dict(alloy_loki_push_url="http://192.168.15.67:3100/loki/api/v1/push",
+                  alloy_remote_write_url="http://192.168.15.67:9090/api/v1/write")
+ALLOY_TPL = "roles/infra/alloy/templates/config.alloy.j2"
+
+
+def test_alloy_vm_com_docker():
+    out = render(ALLOY_TPL, inventory_hostname="core-services-vm", alloy_docker_enabled=True, **ALLOY_VARS)
+    for trecho in ('loki.source.docker', 'prometheus.exporter.cadvisor', 'loki.source.journal',
+                   'prometheus.exporter.unix', '"docker_logs"', '"system_journal"', '"var_log"',
+                   '"cadvisor"', '"node"', 'regex = "/(.*)"', '"container_name"', '"core-services-vm"',
+                   ALLOY_VARS["alloy_loki_push_url"], ALLOY_VARS["alloy_remote_write_url"]):
+        assert trecho in out, trecho
+    assert "{{" not in out and "{%" not in out
+
+
+def test_alloy_host_sem_docker():
+    out = render(ALLOY_TPL, inventory_hostname="proxmox_main_host", alloy_docker_enabled=False, **ALLOY_VARS)
+    assert "loki.source.docker" not in out and "cadvisor" not in out
+    assert "prometheus.exporter.unix" in out and '"proxmox_main_host"' in out
+
+
+def test_alloy_docker_desligado_como_texto():
+    # O Ansible entrega o padrão de alloy_docker_enabled como a string "False".
+    out = render(ALLOY_TPL, inventory_hostname="proxmox_main_host", alloy_docker_enabled="False", **ALLOY_VARS)
+    assert "loki.source.docker" not in out
+
+
+@pytest.mark.skipif(shutil.which("alloy") is None, reason="binário alloy ausente")
+@pytest.mark.parametrize("docker", [True, False])
+def test_alloy_validate(tmp_path, docker):
+    # Mesmo comando que o 'validate:' do template no role (confere componentes e argumentos).
+    f = tmp_path / "config.alloy"
+    f.write_text(render(ALLOY_TPL, inventory_hostname="h", alloy_docker_enabled=docker, **ALLOY_VARS))
+    r = subprocess.run(["alloy", "validate", str(f)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+
+
+def _expr(defaults: dict, chave: str, **ctx) -> str:
+    return jinja2.Environment().from_string(defaults[chave]).render(**ctx)
+
+
+def test_alloy_defaults_por_host():
+    d = yaml.safe_load((ROOT / "server/ansible/roles/infra/alloy/defaults/main.yml").read_text(encoding="utf-8"))
+    grupos = {"ubuntu_vms": ["core-services-vm", "ai-desktop-vm"]}
+    assert _expr(d, "alloy_docker_enabled", inventory_hostname="proxmox_main_host", groups=grupos) == "False"
+    assert _expr(d, "alloy_docker_enabled", inventory_hostname="ai-desktop-vm", groups=grupos) == "True"
+    ip = "192.168.15.67"
+    assert _expr(d, "alloy_scrape_allowed_from", inventory_hostname="core-services-vm",
+                 core_services_vm_ip_var=ip) == "172.16.0.0/12"
+    assert _expr(d, "alloy_scrape_allowed_from", inventory_hostname="ai-desktop-vm",
+                 core_services_vm_ip_var=ip) == ip

@@ -1,0 +1,116 @@
+// ansible/roles/infra/alloy/templates/config.alloy.j2
+// Gerado pelo Ansible (role infra/alloy) para {{ inventory_hostname }}.
+
+// ---------- Destinos ----------
+loki.write "default" {
+  endpoint {
+    url = "{{ alloy_loki_push_url }}"
+  }
+}
+
+prometheus.remote_write "default" {
+  endpoint {
+    url = "{{ alloy_remote_write_url }}"
+  }
+}
+
+// ---------- Logs: journal do systemd ----------
+loki.relabel "journal" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label = "unit"
+  }
+}
+
+loki.source.journal "system" {
+  max_age = "12h"
+  relabel_rules = loki.relabel.journal.rules
+  labels = { job = "system_journal", host = "{{ inventory_hostname }}" }
+  forward_to = [loki.write.default.receiver]
+}
+
+// ---------- Logs: /var/log ----------
+local.file_match "var_log" {
+  path_targets = [{ "__path__" = "/var/log/{messages,syslog,auth.log,kern.log}", job = "var_log", host = "{{ inventory_hostname }}" }]
+}
+
+loki.source.file "var_log" {
+  targets = local.file_match.var_log.targets
+  forward_to = [loki.write.default.receiver]
+}
+
+// ---------- Métricas do host ----------
+prometheus.exporter.unix "host" { }
+
+discovery.relabel "host" {
+  targets = prometheus.exporter.unix.host.targets
+
+  rule {
+    target_label = "job"
+    replacement = "node"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "host" {
+  targets = discovery.relabel.host.output
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+{% if alloy_docker_enabled | bool %}
+
+// ---------- Logs dos containers (API do Docker) ----------
+discovery.docker "local" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// O Docker entrega o nome como "/traefik"; a etiqueta fica sem a barra.
+discovery.relabel "docker_logs" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.*)"
+    target_label = "container_name"
+  }
+}
+
+loki.source.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+  targets = discovery.docker.local.targets
+  relabel_rules = discovery.relabel.docker_logs.rules
+  labels = { job = "docker_logs", host = "{{ inventory_hostname }}" }
+  forward_to = [loki.write.default.receiver]
+}
+
+// ---------- Métricas por container (cAdvisor embutido) ----------
+prometheus.exporter.cadvisor "containers" {
+  docker_host = "unix:///var/run/docker.sock"
+  docker_only = true
+  store_container_labels = false
+}
+
+discovery.relabel "cadvisor" {
+  targets = prometheus.exporter.cadvisor.containers.targets
+
+  rule {
+    target_label = "job"
+    replacement = "cadvisor"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "cadvisor" {
+  targets = discovery.relabel.cadvisor.output
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+{% endif %}

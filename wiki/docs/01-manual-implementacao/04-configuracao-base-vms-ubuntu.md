@@ -502,4 +502,266 @@ Após a execução bem-sucedida deste playbook:
 * A `core-services-vm` terá o Docker Engine instalado e o container Portainer CE rodando.
 * A `ai-desktop-vm`, se `GUI_ENABLED=true` foi definido para ela no inventário, terá o ambiente XFCE e TightVNCServer instalados.
 
+## 4.4. Coleta com Grafana Alloy (`ansible/roles/infra/alloy/`)
+
+O **Grafana Alloy** é o coletor único da infraestrutura: roda instalado no sistema (pacote `alloy` do repositório apt da Grafana, serviço systemd) no host Proxmox e nas duas VMs. Ele substitui o Promtail (fim da vida em 2026-03-02) e o node_exporter, e acrescenta métricas por container:
+
+| Bloco | O que coleta | Para onde | Etiquetas |
+|---|---|---|---|
+| Journal | journal do systemd | Loki | `job="system_journal"`, `unit`, `host` |
+| `/var/log` | `messages`, `syslog`, `auth.log`, `kern.log` | Loki | `job="var_log"`, `host` |
+| Docker (só VMs) | logs de todos os containers, pela API do Docker | Loki | `job="docker_logs"`, `container_name`, `host` |
+| Host | métricas do sistema (`node_*`, inclusive `node_zfs_*` no host Proxmox) | Prometheus (`remote_write`) | `job="node"`, `instance` |
+| Containers (só VMs) | cAdvisor embutido (`container_*`, etiqueta `name`) | Prometheus (`remote_write`) | `job="cadvisor"`, `instance` |
+
+`host` e `instance` são o nome do host no inventário (`proxmox_main_host`, `core-services-vm`, `ai-desktop-vm`). O Prometheus também raspa o `/metrics` do próprio Alloy em cada host (job `alloy`, porta 12345): é desse `up` que sai o alerta `host-sem-resposta`.
+
+O role é aplicado pelo `setup-base-ubuntu.yml` (VMs) e pelo `setup-proxmox-host.yml` (host). A versão fica fixada em `alloy_version` no `group_vars/all/main.yml`; para atualizar, troque o valor e rode os dois playbooks.
+
+!!! warning "Acesso do usuário `alloy`"
+    Para ler os logs e as métricas dos containers, o usuário `alloy` entra no grupo `docker` nas VMs, o que equivale a root na VM (é a recomendação da documentação do cAdvisor). A interface do Alloy (`http://<host>:12345`) não tem autenticação e mostra a configuração (sem segredos); o firewall libera a porta só para a `core-services-vm` (UFW nas VMs; PVE Firewall no host). Na `core-services-vm` a origem liberada é `172.16.0.0/12`, porque o Prometheus em container chega ao IP do próprio host vindo da rede Docker.
+
+### `defaults/main.yml`
+
+```yaml title="ansible/roles/infra/alloy/defaults/main.yml"
+# ansible/roles/infra/alloy/defaults/main.yml
+# Endereço da interface/API do Alloy (o Prometheus raspa o /metrics daqui).
+alloy_listen_addr: "0.0.0.0:12345"
+# Destinos na core-services-vm (portas publicadas só na LAN).
+alloy_loki_push_url: "http://{{ core_services_vm_ip_var }}:3100/loki/api/v1/push"
+alloy_remote_write_url: "http://{{ core_services_vm_ip_var }}:9090/api/v1/write"
+# Logs e métricas de containers só onde há Docker (as VMs Ubuntu).
+alloy_docker_enabled: "{{ inventory_hostname in groups['ubuntu_vms'] }}"
+# Origem liberada no UFW para a porta do Alloy: na core, a rede Docker do Prometheus; nas demais, o IP da core.
+alloy_scrape_allowed_from: "{{ '172.16.0.0/12' if inventory_hostname == 'core-services-vm' else core_services_vm_ip_var }}"
+```
+
+### `tasks/main.yml`
+
+```yaml title="ansible/roles/infra/alloy/tasks/main.yml"
+# ansible/roles/infra/alloy/tasks/main.yml
+# Instala o Grafana Alloy (repositório apt da Grafana) e gera /etc/alloy/config.alloy.
+
+- name: "Garantir o diretório de chaves do apt"
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: "Adicionar a chave do repositório da Grafana"
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /etc/apt/keyrings/grafana.asc
+    mode: '0644'
+
+- name: "Adicionar o repositório apt da Grafana"
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+    state: present
+    filename: grafana
+    update_cache: true
+
+- name: "Instalar o Alloy (versão fixada em alloy_version)"
+  ansible.builtin.apt:
+    name: "alloy={{ alloy_version }}"
+    state: present
+  notify: Restart alloy
+
+- name: "Ler os grupos do sistema"
+  ansible.builtin.getent:
+    database: group
+
+# journal (systemd-journal), /var/log (adm) e, onde o Docker existe, o socket do Docker (docker).
+- name: "Dar ao usuário alloy acesso ao journal, ao /var/log e ao Docker"
+  ansible.builtin.user:
+    name: alloy
+    groups: "{{ ['adm', 'systemd-journal'] + (['docker'] if (alloy_docker_enabled | bool and 'docker' in ansible_facts.getent_group) else []) }}"
+    append: true
+  notify: Restart alloy
+
+- name: "Configurar /etc/default/alloy (arquivo de configuração e endereço de escuta)"
+  ansible.builtin.copy:
+    dest: /etc/default/alloy
+    content: |
+      # Gerenciado pelo Ansible (role infra/alloy)
+      CONFIG_FILE="/etc/alloy/config.alloy"
+      CUSTOM_ARGS="--server.http.listen-addr={{ alloy_listen_addr }}"
+      RESTART_ON_UPGRADE=true
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart alloy
+
+- name: "Gerar /etc/alloy/config.alloy (só grava se a configuração for válida)"
+  ansible.builtin.template:
+    src: config.alloy.j2
+    dest: /etc/alloy/config.alloy
+    owner: root
+    group: alloy
+    mode: '0640'
+    validate: alloy validate %s
+  notify: Reload alloy
+
+- name: "Garantir que o Alloy está habilitado e rodando"
+  ansible.builtin.systemd_service:
+    name: alloy
+    state: started
+    enabled: true
+
+- name: "UFW: liberar a porta do Alloy só para o Prometheus da core-services-vm"
+  community.general.ufw:
+    rule: allow
+    port: '12345'
+    proto: tcp
+    from_ip: "{{ alloy_scrape_allowed_from }}"
+    comment: "Alloy: Prometheus da core-services-vm"
+  when: inventory_hostname in groups['ubuntu_vms']
+```
+
+### `handlers/main.yml`
+
+```yaml title="ansible/roles/infra/alloy/handlers/main.yml"
+# ansible/roles/infra/alloy/handlers/main.yml
+- name: Reload alloy
+  ansible.builtin.systemd_service:
+    name: alloy
+    state: reloaded
+
+- name: Restart alloy
+  ansible.builtin.systemd_service:
+    name: alloy
+    state: restarted
+```
+
+### `templates/config.alloy.j2`
+
+```text title="ansible/roles/infra/alloy/templates/config.alloy.j2"
+// ansible/roles/infra/alloy/templates/config.alloy.j2
+// Gerado pelo Ansible (role infra/alloy) para {{ inventory_hostname }}.
+
+// ---------- Destinos ----------
+loki.write "default" {
+  endpoint {
+    url = "{{ alloy_loki_push_url }}"
+  }
+}
+
+prometheus.remote_write "default" {
+  endpoint {
+    url = "{{ alloy_remote_write_url }}"
+  }
+}
+
+// ---------- Logs: journal do systemd ----------
+loki.relabel "journal" {
+  forward_to = []
+
+  rule {
+    source_labels = ["__journal__systemd_unit"]
+    target_label = "unit"
+  }
+}
+
+loki.source.journal "system" {
+  max_age = "12h"
+  relabel_rules = loki.relabel.journal.rules
+  labels = { job = "system_journal", host = "{{ inventory_hostname }}" }
+  forward_to = [loki.write.default.receiver]
+}
+
+// ---------- Logs: /var/log ----------
+local.file_match "var_log" {
+  path_targets = [{ "__path__" = "/var/log/{messages,syslog,auth.log,kern.log}", job = "var_log", host = "{{ inventory_hostname }}" }]
+}
+
+loki.source.file "var_log" {
+  targets = local.file_match.var_log.targets
+  forward_to = [loki.write.default.receiver]
+}
+
+// ---------- Métricas do host ----------
+prometheus.exporter.unix "host" { }
+
+discovery.relabel "host" {
+  targets = prometheus.exporter.unix.host.targets
+
+  rule {
+    target_label = "job"
+    replacement = "node"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "host" {
+  targets = discovery.relabel.host.output
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+{% if alloy_docker_enabled | bool %}
+
+// ---------- Logs dos containers (API do Docker) ----------
+discovery.docker "local" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// O Docker entrega o nome como "/traefik"; a etiqueta fica sem a barra.
+discovery.relabel "docker_logs" {
+  targets = []
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex = "/(.*)"
+    target_label = "container_name"
+  }
+}
+
+loki.source.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+  targets = discovery.docker.local.targets
+  relabel_rules = discovery.relabel.docker_logs.rules
+  labels = { job = "docker_logs", host = "{{ inventory_hostname }}" }
+  forward_to = [loki.write.default.receiver]
+}
+
+// ---------- Métricas por container (cAdvisor embutido) ----------
+prometheus.exporter.cadvisor "containers" {
+  docker_host = "unix:///var/run/docker.sock"
+  docker_only = true
+  store_container_labels = false
+}
+
+discovery.relabel "cadvisor" {
+  targets = prometheus.exporter.cadvisor.containers.targets
+
+  rule {
+    target_label = "job"
+    replacement = "cadvisor"
+  }
+
+  rule {
+    target_label = "instance"
+    replacement = "{{ inventory_hostname }}"
+  }
+}
+
+prometheus.scrape "cadvisor" {
+  targets = discovery.relabel.cadvisor.output
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+{% endif %}
+```
+
+### Verificação depois do deploy
+
+1. Nos três hosts: `systemctl status alloy`; a interface `http://<host>:12345` mostra os componentes saudáveis.
+2. No Prometheus: `up{job="alloy"}` vale 1 nos três hosts; `node_zfs_zpool_state` chega do `proxmox_main_host`; `container_last_seen{name="traefik"}` chega da `core-services-vm`.
+3. No Grafana (Explore → Loki): `{job="docker_logs", host="ai-desktop-vm"}` e `{job="system_journal", host="proxmox_main_host"}` trazem linhas; o alerta `authelia-logins-falhos` tem dados.
+4. Com o PVE Firewall ligado, as montagens NFS das VMs continuam funcionando (`df -h | grep /mnt`).
+
+!!! tip "Dashboards"
+    Nenhum dashboard é provisionado. No Grafana, **Dashboards → New → Import** aceita os dashboards da comunidade para node exporter e cAdvisor (busque por "Node Exporter Full" e "cAdvisor" em grafana.com/grafana/dashboards); escolha o datasource Prometheus ao importar.
+
 Com esta base sólida, suas VMs estão prontas para o próximo passo crucial: a [Implementação da Rede Segura](05-rede-segura.md), que configurará Traefik, Cloudflare Tunnel e Authelia.

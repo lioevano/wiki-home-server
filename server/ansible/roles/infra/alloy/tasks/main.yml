@@ -1,0 +1,77 @@
+# ansible/roles/infra/alloy/tasks/main.yml
+# Instala o Grafana Alloy (repositório apt da Grafana) e gera /etc/alloy/config.alloy.
+
+- name: "Garantir o diretório de chaves do apt"
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: "Adicionar a chave do repositório da Grafana"
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /etc/apt/keyrings/grafana.asc
+    mode: '0644'
+
+- name: "Adicionar o repositório apt da Grafana"
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+    state: present
+    filename: grafana
+    update_cache: true
+
+- name: "Instalar o Alloy (versão fixada em alloy_version)"
+  ansible.builtin.apt:
+    name: "alloy={{ alloy_version }}"
+    state: present
+  notify: Restart alloy
+
+- name: "Ler os grupos do sistema"
+  ansible.builtin.getent:
+    database: group
+
+# journal (systemd-journal), /var/log (adm) e, onde o Docker existe, o socket do Docker (docker).
+- name: "Dar ao usuário alloy acesso ao journal, ao /var/log e ao Docker"
+  ansible.builtin.user:
+    name: alloy
+    groups: "{{ ['adm', 'systemd-journal'] + (['docker'] if (alloy_docker_enabled | bool and 'docker' in ansible_facts.getent_group) else []) }}"
+    append: true
+  notify: Restart alloy
+
+- name: "Configurar /etc/default/alloy (arquivo de configuração e endereço de escuta)"
+  ansible.builtin.copy:
+    dest: /etc/default/alloy
+    content: |
+      # Gerenciado pelo Ansible (role infra/alloy)
+      CONFIG_FILE="/etc/alloy/config.alloy"
+      CUSTOM_ARGS="--server.http.listen-addr={{ alloy_listen_addr }}"
+      RESTART_ON_UPGRADE=true
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart alloy
+
+- name: "Gerar /etc/alloy/config.alloy (só grava se a configuração for válida)"
+  ansible.builtin.template:
+    src: config.alloy.j2
+    dest: /etc/alloy/config.alloy
+    owner: root
+    group: alloy
+    mode: '0640'
+    validate: alloy validate %s
+  notify: Reload alloy
+
+- name: "Garantir que o Alloy está habilitado e rodando"
+  ansible.builtin.systemd_service:
+    name: alloy
+    state: started
+    enabled: true
+
+- name: "UFW: liberar a porta do Alloy só para o Prometheus da core-services-vm"
+  community.general.ufw:
+    rule: allow
+    port: '12345'
+    proto: tcp
+    from_ip: "{{ alloy_scrape_allowed_from }}"
+    comment: "Alloy: Prometheus da core-services-vm"
+  when: inventory_hostname in groups['ubuntu_vms']

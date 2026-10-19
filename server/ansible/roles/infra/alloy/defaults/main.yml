@@ -1,0 +1,10 @@
+# ansible/roles/infra/alloy/defaults/main.yml
+# Endereço da interface/API do Alloy (o Prometheus raspa o /metrics daqui).
+alloy_listen_addr: "0.0.0.0:12345"
+# Destinos na core-services-vm (portas publicadas só na LAN).
+alloy_loki_push_url: "http://{{ core_services_vm_ip_var }}:3100/loki/api/v1/push"
+alloy_remote_write_url: "http://{{ core_services_vm_ip_var }}:9090/api/v1/write"
+# Logs e métricas de containers só onde há Docker (as VMs Ubuntu).
+alloy_docker_enabled: "{{ inventory_hostname in groups['ubuntu_vms'] }}"
+# Origem liberada no UFW para a porta do Alloy: na core, a rede Docker do Prometheus; nas demais, o IP da core.
+alloy_scrape_allowed_from: "{{ '172.16.0.0/12' if inventory_hostname == 'core-services-vm' else core_services_vm_ip_var }}"
