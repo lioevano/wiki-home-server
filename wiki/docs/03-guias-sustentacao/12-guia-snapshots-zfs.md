@@ -176,23 +176,23 @@ Esta é a maneira **mais segura e comum** de recuperar arquivos ou diretórios e
 
 *   **Como Funciona:** Para cada dataset ZFS que tem snapshots, o ZFS automaticamente torna os snapshots acessíveis através de um diretório oculto especial chamado `.zfs/snapshot/` localizado no ponto de montagem do dataset. Dentro deste diretório `.zfs/snapshot/`, cada snapshot aparece como um subdiretório somente leitura, contendo os arquivos como eles estavam no momento da criação daquele snapshot.
 *   **Exemplo Prático:**
-    Suponha que você deletou acidentalmente o arquivo `/data/docker-volumes/nextcloud/config/config.php` no seu dataset ativo.
+    Suponha que você deletou acidentalmente o arquivo `/data/docker-volumes/homeassistant/config/configuration.yaml` no seu dataset ativo.
     Felizmente, você tem um snapshot recente chamado `data/docker-volumes@backup_diario_20230815_0300`.
 
     1.  **Navegue até o diretório do snapshot dentro do ponto de montagem do dataset:**
         O dataset `data/docker-volumes` está montado em `/data/docker-volumes`.
         ```bash
         # No shell do host Proxmox
-        cd /data/docker-volumes/.zfs/snapshot/backup_diario_20230815_0300/nextcloud/config/
+        cd /data/docker-volumes/.zfs/snapshot/backup_diario_20230815_0300/homeassistant/config/
         ```
     2.  **Liste os arquivos:**
         ```bash
         ls -l
         ```
-        Você deve ver o arquivo `config.php` como ele existia no momento em que o snapshot `backup_diario_20230815_0300` foi tirado.
+        Você deve ver o arquivo `configuration.yaml` como ele existia no momento em que o snapshot `backup_diario_20230815_0300` foi tirado.
     3.  **Copie o arquivo de volta para o dataset ativo (o local original):**
         ```bash
-        sudo cp config.php /data/docker-volumes/nextcloud/config/config.php
+        sudo cp configuration.yaml /data/docker-volumes/homeassistant/config/configuration.yaml
         ```
         Verifique as permissões do arquivo copiado e ajuste se necessário.
 *   Este método é **não destrutivo** para o estado atual do seu dataset ativo; você está apenas copiando arquivos de uma versão "congelada" do passado.

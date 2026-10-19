@@ -246,6 +246,8 @@ def test_cron_igual_ao_app():
     assert s["nextcloud_cron"]["image"] == s["nextcloud_app"]["image"] == "nextcloud:${NEXTCLOUD_MAJOR}-apache"
     assert s["nextcloud_cron"]["entrypoint"] == "/cron.sh"
     assert s["nextcloud_cron"]["volumes"] == s["nextcloud_app"]["volumes"]
+    # Sem o mesmo ambiente, o cron usa trava no banco (sem REDIS_HOST) e o app usa Redis: não se excluem.
+    assert _env(s["nextcloud_cron"]) == _env(s["nextcloud_app"])
 
 
 def test_nextcloud_publico_com_dav():
@@ -319,7 +321,8 @@ def test_dump_diario_do_nextcloud():
     assert any(k.endswith(".service") for k in copias)
     sd = next(t for t in tarefas if "ansible.builtin.systemd" in t)["ansible.builtin.systemd"]
     assert sd["name"].endswith(".timer") and sd["enabled"] is True and sd.get("daemon_reload") is True
-    out = render(DUMP_TPL, vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes")
+    out = render(DUMP_TPL, vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes",
+                 vm_local_data_path="/opt/local-data")
     assert "pg_dump" in out and "/mnt/pve_data_zfs/docker-volumes/nextcloud/db-dumps" in out
     assert "-mtime +14" in out and "-delete" in out
 
@@ -378,3 +381,41 @@ def test_catalogo_fotos_arquivos():
     assert "`nextcloud_cron`" in cat["nextcloud"][3]
     assert (ROOT / "wiki/docs/01-manual-implementacao/11-fotos-arquivos.md").exists()
     assert "11-fotos-arquivos.md" in (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
+
+
+# --- Correções da revisão final ---
+
+def test_nextcloud_html_e_config_no_disco_local():
+    # occ e cron.php exigem que o usuário seja o dono do config.php, e o entrypoint faz chown: nada disso
+    # funciona no NFS com all_squash. html e config ficam no disco local; os dados, no dataset files em /data.
+    app = _svc(CLOUD)["nextcloud_app"]
+    assert _volume(app, "/var/www/html").startswith("${CLOUD_STACK_NEXTCLOUD_HTML_PATH}")
+    assert _volume(app, "/var/www/html/config").startswith("${CLOUD_STACK_NEXTCLOUD_CONFIG_PATH}")
+    assert _volume(app, "/data").startswith("${CLOUD_STACK_NEXTCLOUD_DATA_PATH}")
+    assert _env(app)["NEXTCLOUD_DATA_DIR"] == "/data"
+    cfg = _configs(PB_CLOUD, "cloud.env")
+    for v in ("CLOUD_STACK_NEXTCLOUD_HTML_PATH", "CLOUD_STACK_NEXTCLOUD_CONFIG_PATH"):
+        assert cfg[v].startswith("{{ vm_local_data_path }}/"), v
+    raiz = next(t["ansible.builtin.file"] for t in _pb_tasks(PB_CLOUD) if "ansible.builtin.file" in t
+                and t["ansible.builtin.file"]["path"] == "{{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}")
+    assert raiz["mode"] == "0770"  # o Nextcloud recusa diretório de dados com outra permissão
+
+
+def test_dump_guarda_o_config_do_nextcloud():
+    out = render(DUMP_TPL, vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes",
+                 vm_local_data_path="/opt/local-data")
+    assert "tar" in out and "/opt/local-data/nextcloud/config" in out  # instanceid, secret e passwordsalt
+    assert "nextcloud-config-*.tar.gz" in out and "*.tmp" in out
+
+
+def test_raiz_dos_datasets_do_dockeruser():
+    pagina = (ROOT / "wiki/docs/01-manual-implementacao/02-proxmox-ve-host.md").read_text(encoding="utf-8")
+    linha = next(l for l in pagina.splitlines() if "chown" in l and "/data/photos" in l)
+    for ds in ("/data/docker-volumes", "/data/media", "/data/photos", "/data/files"):
+        assert ds in linha, ds
+
+
+def test_login_direto_no_authelia():
+    out = render(HOOK_TPL, base_domain=DOM, oidc_clients=OIDC)
+    assert "occ config:app:set --type=string --value=0 user_oidc allow_multiple_user_backends" in out
+    assert "config:system:set user_oidc allow_multiple_user_backends" not in out

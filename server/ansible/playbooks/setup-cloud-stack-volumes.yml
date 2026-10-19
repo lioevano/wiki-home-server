@@ -26,17 +26,34 @@
         group: "{{ docker_pgid }}"
         mode: '0775'
       loop:
-        - html
-        - config
         - hooks
         - db-dumps
 
-    # Disco local: banco fora do NFS; o backup dele é o dump diário em nextcloud/db-dumps.
+    # O Nextcloud recusa um diretório de dados com permissão diferente de 0770.
+    - name: Preparar a raiz do dataset files (diretório de dados do Nextcloud)
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0770'
+
+    # Disco local: banco, html e config fora do NFS (o occ exige ser dono do config.php, e o NFS com
+    # all_squash não deixa o www-data ser dono de nada). Backup: dump diário do banco + cópia do config.
     - name: Criar diretório local do banco do Nextcloud
       ansible.builtin.file:
         path: "{{ vm_local_data_path }}/nextcloud-db"
         state: directory
         mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório
+
+    - name: Criar diretórios locais de html e config do Nextcloud
+      ansible.builtin.file:
+        path: "{{ vm_local_data_path }}/nextcloud/{{ item }}"
+        state: directory
+        mode: '0750' # sem owner: o entrypoint do Nextcloud entrega ao www-data
+      loop:
+        - html
+        - config
 
     - name: Gerar o hook de configuração do Nextcloud (sem segredos; roda a cada início do container)
       ansible.builtin.template:
@@ -104,8 +121,8 @@
         stack_name: cloud
         stack_configs:
           - { name: 'NEXTCLOUD_MAJOR', value: "{{ nextcloud_major }}" }
-          - { name: 'CLOUD_STACK_NEXTCLOUD_HTML_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/html" }
-          - { name: 'CLOUD_STACK_NEXTCLOUD_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/config" }
+          - { name: 'CLOUD_STACK_NEXTCLOUD_HTML_PATH', value: "{{ vm_local_data_path }}/nextcloud/html" }
+          - { name: 'CLOUD_STACK_NEXTCLOUD_CONFIG_PATH', value: "{{ vm_local_data_path }}/nextcloud/config" }
           - { name: 'CLOUD_STACK_NEXTCLOUD_HOOKS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/hooks" }
           - { name: 'CLOUD_STACK_NEXTCLOUD_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}" }
           - { name: 'CLOUD_STACK_NEXTCLOUD_DB_PATH', value: "{{ vm_local_data_path }}/nextcloud-db" }

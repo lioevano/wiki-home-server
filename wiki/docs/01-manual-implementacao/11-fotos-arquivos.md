@@ -32,15 +32,15 @@ Os três endereços públicos ficam fora do forward-auth do Authelia (regras `by
 | O quê | Onde | Backup |
 |---|---|---|
 | Fotos, vídeos, miniaturas e dumps do banco do Immich | dataset `photos` (NFS), em `/data` do `immich_server` | snapshots ZFS e Borg |
-| Arquivos do Nextcloud | dataset `files` (NFS), em `/var/www/html/data` | snapshots ZFS e Borg |
-| html, config e hook do Nextcloud; `immich.json` | `docker-volumes` (NFS) | snapshots ZFS e Borg |
-| Bancos (`immich_db`, `nextcloud_db`) e cache de modelos | disco local da VM, em `/opt/local-data` | **só os dumps** (abaixo) |
+| Arquivos do Nextcloud | dataset `files` (NFS), em `/data` do `nextcloud_app` | snapshots ZFS e Borg |
+| Hook do Nextcloud; `immich.json` | `docker-volumes` (NFS) | snapshots ZFS e Borg |
+| Bancos (`immich_db`, `nextcloud_db`), html e config do Nextcloud, cache de modelos | disco local da VM, em `/opt/local-data` | **só os dumps** (abaixo); o html sai da imagem e o cache é baixado de novo |
 
 !!! warning "Bancos fora dos snapshots ZFS"
-    O Immich exige o banco em disco local ("never a network share"), e o do Nextcloud foi junto. Esses diretórios ficam fora dos snapshots ZFS: o backup deles são os **dumps diários** no NFS:
+    O Immich exige o banco em disco local ("never a network share"), e o do Nextcloud foi junto. O html e o config do Nextcloud também ficam no disco local: o `occ` e o cron só rodam como o dono do `config.php`, e o entrypoint entrega os arquivos ao `www-data` com `chown`, o que o NFS com `all_squash` não permite. Esses diretórios ficam fora dos snapshots ZFS: o backup deles são os **dumps diários** no NFS:
 
     * **Immich:** o próprio Immich grava um dump por dia às 02:00 em `photos/backups/` e guarda os 14 últimos.
-    * **Nextcloud:** o timer `backup-nextcloud-db.timer` roda `/usr/local/sbin/backup-nextcloud-db.sh` às 03:30 e grava `nextcloud-<data>.dump` em `docker-volumes/nextcloud/db-dumps/`, guardando duas semanas.
+    * **Nextcloud:** o timer `backup-nextcloud-db.timer` roda `/usr/local/sbin/backup-nextcloud-db.sh` às 03:30 e grava `nextcloud-<data>.dump` (banco) e `nextcloud-config-<data>.tar.gz` (o `config/`, com `instanceid`, `secret` e `passwordsalt`) em `docker-volumes/nextcloud/db-dumps/`, guardando duas semanas.
 
     Os dois estão na [estratégia de backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md).
 
@@ -61,7 +61,7 @@ Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-v
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-cloud-stack-volumes.yml --ask-vault-pass
    ```
     * `ansible/playbooks/setup-photos-stack-volumes.yml` cria os diretórios, gera o `immich.json` a partir de `ansible/templates/immich/immich.json.j2` (`0600`, contém o segredo do cliente OIDC) e o `/opt/portainer_stack_envs/photos.env` (`0600`).
-    * `ansible/playbooks/setup-cloud-stack-volumes.yml` cria os diretórios, grava o hook `ansible/templates/nextcloud/10-homeserver.sh.j2`, instala o dump diário (`ansible/templates/nextcloud/backup-nextcloud-db.sh.j2` e o timer systemd) e gera o `/opt/portainer_stack_envs/cloud.env` (`0600`).
+    * `ansible/playbooks/setup-cloud-stack-volumes.yml` cria os diretórios (banco, html e config no disco local), deixa a raiz do dataset `files` em `0770`, grava o hook `ansible/templates/nextcloud/10-homeserver.sh.j2`, instala o dump diário (`ansible/templates/nextcloud/backup-nextcloud-db.sh.j2` e o timer systemd) e gera o `/opt/portainer_stack_envs/cloud.env` (`0600`).
 4. **Portainer → Stacks → Add Stack**, uma de cada vez: `photos` com `docker/stacks/photos/docker-compose.yml` e o `photos.env`; `cloud` com `docker/stacks/cloud/docker-compose.yml` e o `cloud.env` → **Deploy the stack**. Se a stack `apps` ainda tiver o Nextcloud antigo, atualize-a antes (**Update the stack** com o compose atual).
 
 ### Variáveis das stacks
@@ -74,8 +74,9 @@ Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-v
 | `PHOTOS_STACK_DB_PATH`, `PHOTOS_STACK_MODEL_CACHE_PATH` | `vm_local_data_path` + `immich-db` / `immich-model-cache` |
 | `IMMICH_DB_PASSWORD` | vault `immich_db_password` |
 | `NEXTCLOUD_MAJOR` | `nextcloud_major` (`group_vars/all/main.yml`) |
-| `CLOUD_STACK_NEXTCLOUD_{HTML,CONFIG,HOOKS}_PATH` | NFS + `docker-volumes/nextcloud/{html,config,hooks}` |
-| `CLOUD_STACK_NEXTCLOUD_DATA_PATH` | NFS + `zfs_files_dataset_name` |
+| `CLOUD_STACK_NEXTCLOUD_HTML_PATH`, `CLOUD_STACK_NEXTCLOUD_CONFIG_PATH` | `vm_local_data_path` + `nextcloud/html` / `nextcloud/config` |
+| `CLOUD_STACK_NEXTCLOUD_HOOKS_PATH` | NFS + `docker-volumes/nextcloud/hooks` |
+| `CLOUD_STACK_NEXTCLOUD_DATA_PATH` | NFS + `zfs_files_dataset_name` (montado em `/data`, `NEXTCLOUD_DATA_DIR`; o playbook deixa a raiz em `0770`, que o Nextcloud exige) |
 | `CLOUD_STACK_NEXTCLOUD_DB_PATH` | `vm_local_data_path` + `nextcloud-db` |
 | `NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV`, `NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV` | vault `nextcloud_db_password`, `nextcloud_admin_initial_password` |
 | `NEXTCLOUD_OIDC_CLIENT_SECRET` | vault `oidc_clients.nextcloud.secret` (lido pelo hook, nunca gravado em arquivo) |
@@ -138,7 +139,7 @@ Depois: `setup-photos-stack-volumes.yml` e `docker restart immich_server` (o Imm
 | Cota cheia | Uploads falham; alerta `disco-cheio` | `zfs set quota=<maior> data/photos` (ou `data/files`) ou mova o dataset para os discos novos ([seção 2](02-proxmox-ve-host.md)) |
 | Disco local da VM perdido | Bancos perdidos; fotos e arquivos intactos no NFS | Immich: [restauração do backup](https://docs.immich.app/administration/backup-and-restore) a partir de `photos/backups/` (container `immich_db`, usuário `immich`). Nextcloud: abaixo |
 
-**Restaurar o banco do Nextcloud** (a partir do dump mais recente em `docker-volumes/nextcloud/db-dumps/`): pare `nextcloud_app` e `nextcloud_cron`, suba só o `nextcloud_db` (vazio) e rode `docker exec -i nextcloud_db pg_restore -U nextcloud -d nextcloud --clean --if-exists < nextcloud-<data>.dump`; depois suba o resto e rode `docker exec -u www-data nextcloud_app php occ maintenance:data-fingerprint`.
+**Restaurar o Nextcloud** (a partir dos arquivos mais recentes em `docker-volumes/nextcloud/db-dumps/`): pare `nextcloud_app` e `nextcloud_cron`; devolva o config com `sudo tar -xzf nextcloud-config-<data>.tar.gz -C /opt/local-data/nextcloud/config`; suba só o `nextcloud_db` (vazio) e rode `docker exec -i nextcloud_db pg_restore -U nextcloud -d nextcloud --clean --if-exists < nextcloud-<data>.dump`; depois suba o resto e rode `docker exec -u www-data nextcloud_app php occ maintenance:data-fingerprint`.
 
 ## Teste de ponta a ponta
 
@@ -148,5 +149,5 @@ Depois: `setup-photos-stack-volumes.yml` e `docker restart immich_server` (o Imm
 4. **Vídeo grande:** um vídeo acima de 100 MB sobe em casa (URL local) e fica pendente nos dados móveis.
 5. **Arquivo grande:** um arquivo de 200 MB sincroniza pelo cliente desktop fora de casa (pedaços de 50 MB). Confira também um envio de mais de 100 MB pelo app Android do Nextcloud fora de casa; se falhar, envie em casa.
 6. **Documento:** um `.docx` abre e salva no Collabora.
-7. **Backups:** `sudo systemctl start backup-nextcloud-db.service` cria um `nextcloud-<data>.dump` em `docker-volumes/nextcloud/db-dumps/`; no dia seguinte, há um dump do Immich em `photos/backups/`.
+7. **Backups:** `sudo systemctl start backup-nextcloud-db.service` cria um `nextcloud-<data>.dump` e um `nextcloud-config-<data>.tar.gz` em `docker-volumes/nextcloud/db-dumps/`; no dia seguinte, há um dump do Immich em `photos/backups/`.
 8. **Painel:** o widget do Immich mostra fotos e vídeos na Homepage, e as sondas `immich`, `nextcloud` e `collabora` aparecem como `up` no Prometheus.

@@ -24,7 +24,7 @@ Muitas aplicações modernas são compostas por múltiplos serviços interdepend
     *   **Serviços:** Os containers que compõem a aplicação (e.g., `nextcloud_app`, `nextcloud_db`).
     *   **Imagem:** A imagem Docker a ser usada para cada serviço.
     *   **Volumes:** Como os dados persistentes são mapeados do host (neste caso, dos montados NFS na VM) para dentro do container. Isso garante que os dados sobrevivam a reinícios ou recriações do container.
-        *   Exemplo: `- "${PROD_STACK_NEXTCLOUD_DATA_PATH}:/var/www/html/data"`
+        *   Exemplo: `- "${CLOUD_STACK_NEXTCLOUD_DATA_PATH}:/data"`
     *   **Redes:** As redes Docker às quais os containers se conectarão. Permite comunicação isolada ou controlada entre serviços.
         *   `proxy`: Para serviços que precisam ser expostos externamente via Traefik.
         *   `internal_services`: Para comunicação backend entre containers que não precisam de acesso direto da rede `proxy`.

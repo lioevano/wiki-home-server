@@ -28,7 +28,7 @@ occ user_oidc:provider Authelia \
 occ config:system:set user_oidc default_token_endpoint_auth_method --value=client_secret_post || aviso "user_oidc auth method"
 occ config:system:set user_oidc enrich_login_id_token_with_userinfo --value=true --type=boolean || aviso "user_oidc userinfo"
 # Login direto no Authelia; a conta local de emergência (ncadmin) entra por /login?direct=1.
-occ config:system:set user_oidc allow_multiple_user_backends --value=0 --type=integer || aviso "user_oidc backends"
+occ config:app:set --type=string --value=0 user_oidc allow_multiple_user_backends || aviso "user_oidc backends"
 
 # Collabora: o Nextcloud fala com ele pela rede Docker; o navegador, por office.; só aceita chamadas das redes Docker.
 occ config:app:set richdocuments wopi_url --value=http://collabora:9980 || aviso "richdocuments wopi_url"

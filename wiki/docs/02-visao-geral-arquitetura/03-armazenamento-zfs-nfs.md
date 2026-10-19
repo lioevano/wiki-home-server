@@ -66,9 +66,9 @@ graph TD
         VM_Mount_Point --> Docker_Engine
     end
 
-    subgraph "Container Docker (e.g., Nextcloud)"
-        Container_Volume[Volume Docker: -v /mnt/pve_data_zfs/docker-volumes/nextcloud/config:/config] --> App_Config[/config dentro do container]
-        App_Config <--> Nextcloud_App[Aplicação Nextcloud]
+    subgraph "Container Docker (e.g., Home Assistant)"
+        Container_Volume[Volume Docker: -v /mnt/pve_data_zfs/docker-volumes/homeassistant/config:/config] --> App_Config[/config dentro do container]
+        App_Config <--> HA_App[Aplicação Home Assistant]
     end
 
     NFS_Server <-->|Rede Local| NFS_Client
@@ -77,9 +77,9 @@ graph TD
     style VM_Mount_Point fill:#2496ed,color:#fff
 ```
 
-1.  O container Docker (e.g., Nextcloud) é configurado para usar um volume mapeado para um caminho na VM (e.g., `/mnt/pve_data_zfs/docker-volumes/nextcloud/config`).
-2.  Este caminho na VM é um ponto de montagem NFS que aponta para o dataset ZFS `/data/docker-volumes/nextcloud/config` (ou um subdiretório dele) no host Proxmox.
-3.  Quando o container Nextcloud escreve em `/config`, os dados são enviados via NFS para o host Proxmox e escritos no pool ZFS.
+1.  O container Docker (e.g., Home Assistant) é configurado para usar um volume mapeado para um caminho na VM (e.g., `/mnt/pve_data_zfs/docker-volumes/homeassistant/config`).
+2.  Este caminho na VM é um ponto de montagem NFS que aponta para o dataset ZFS `/data/docker-volumes/homeassistant/config` (ou um subdiretório dele) no host Proxmox.
+3.  Quando o container do Home Assistant escreve em `/config`, os dados são enviados via NFS para o host Proxmox e escritos no pool ZFS.
 
 ## Considerações de Performance e Alternativas
 

@@ -4,11 +4,35 @@
 # Configuração do Nextcloud no hook ansible/templates/nextcloud/10-homeserver.sh.j2 (apps, OIDC, Collabora).
 # Página: 01-manual-implementacao/11-fotos-arquivos.md
 
+# html e config no disco local da VM: o occ e o cron.php exigem que quem roda seja o dono do config.php, e o
+# entrypoint faz chown dos arquivos — nada disso funciona no NFS com all_squash. Os dados ficam no dataset
+# files (NFS, com cota) em /data, fora da árvore que o entrypoint sincroniza.
 x-nextcloud-volumes: &nextcloud-volumes
   - "${CLOUD_STACK_NEXTCLOUD_HTML_PATH}:/var/www/html"
-  - "${CLOUD_STACK_NEXTCLOUD_DATA_PATH}:/var/www/html/data" # dataset files (NFS, com cota)
   - "${CLOUD_STACK_NEXTCLOUD_CONFIG_PATH}:/var/www/html/config"
+  - "${CLOUD_STACK_NEXTCLOUD_DATA_PATH}:/data"
   - "${CLOUD_STACK_NEXTCLOUD_HOOKS_PATH}:/docker-entrypoint-hooks.d/before-starting:ro"
+
+# Mesmo ambiente no app e no cron: a imagem lê REDIS_HOST e OVERWRITE* a cada execução (sem eles, o cron
+# usaria trava no banco enquanto o app usa Redis, e as URLs geradas em segundo plano sairiam erradas).
+x-nextcloud-env: &nextcloud-env
+  - POSTGRES_HOST=nextcloud_db
+  - POSTGRES_DB=nextcloud
+  - POSTGRES_USER=nextcloud
+  - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
+  - NEXTCLOUD_ADMIN_USER=ncadmin
+  - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV}
+  - NEXTCLOUD_DATA_DIR=/data
+  - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${BASE_DOMAIN_FROM_VAULT} localhost ${CORE_SERVICES_VM_IP_VAR} nextcloud_app
+  - NEXTCLOUD_OIDC_CLIENT_SECRET=${NEXTCLOUD_OIDC_CLIENT_SECRET} # lido pelo hook (sem gravar em arquivo)
+  - TRUSTED_PROXIES=172.16.0.0/12 # Traefik e cloudflared (redes Docker)
+  - APACHE_DISABLE_REWRITE_IP=1
+  - OVERWRITEPROTOCOL=https
+  - OVERWRITECLIURL=https://nextcloud.${BASE_DOMAIN_FROM_VAULT}
+  - PHP_MEMORY_LIMIT=512M
+  - PHP_UPLOAD_LIMIT=4G
+  - TZ=${SYSTEM_TIMEZONE}
+  - REDIS_HOST=nextcloud_redis
 
 services:
   nextcloud_db:
@@ -50,23 +74,7 @@ services:
       - proxy
       - internal_services
     volumes: *nextcloud-volumes
-    environment:
-      - POSTGRES_HOST=nextcloud_db
-      - POSTGRES_DB=nextcloud
-      - POSTGRES_USER=nextcloud
-      - POSTGRES_PASSWORD=${NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV}
-      - NEXTCLOUD_ADMIN_USER=ncadmin
-      - NEXTCLOUD_ADMIN_PASSWORD=${NEXTCLOUD_ADMIN_PASSWORD_FROM_PORTAINER_ENV}
-      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${BASE_DOMAIN_FROM_VAULT} localhost ${CORE_SERVICES_VM_IP_VAR} nextcloud_app
-      - NEXTCLOUD_OIDC_CLIENT_SECRET=${NEXTCLOUD_OIDC_CLIENT_SECRET} # lido pelo hook (sem gravar em arquivo)
-      - TRUSTED_PROXIES=172.16.0.0/12 # Traefik e cloudflared (redes Docker)
-      - APACHE_DISABLE_REWRITE_IP=1
-      - OVERWRITEPROTOCOL=https
-      - OVERWRITECLIURL=https://nextcloud.${BASE_DOMAIN_FROM_VAULT}
-      - PHP_MEMORY_LIMIT=512M
-      - PHP_UPLOAD_LIMIT=4G
-      - TZ=${SYSTEM_TIMEZONE}
-      - REDIS_HOST=nextcloud_redis
+    environment: *nextcloud-env
     depends_on:
       nextcloud_db:
         condition: service_healthy
@@ -90,6 +98,7 @@ services:
     networks:
       - internal_services
     volumes: *nextcloud-volumes
+    environment: *nextcloud-env
     depends_on:
       nextcloud_db:
         condition: service_healthy

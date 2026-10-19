@@ -178,7 +178,7 @@ Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/do
     Os bancos do Immich (`immich_db`) e do Nextcloud (`nextcloud_db`) ficam em `/opt/local-data` na `core-services-vm`, **fora dos snapshots ZFS**. O backup deles são os dumps diários, já automatizados ([Fotos e Arquivos](../01-manual-implementacao/11-fotos-arquivos.md)):
 
     * **Immich:** o próprio Immich grava um dump por dia em `/data/photos/backups/` (14 últimos);
-    * **Nextcloud:** o timer `backup-nextcloud-db.timer` grava `nextcloud-<data>.dump` em `/data/docker-volumes/nextcloud/db-dumps/` (duas semanas).
+    * **Nextcloud:** o timer `backup-nextcloud-db.timer` grava `nextcloud-<data>.dump` e `nextcloud-config-<data>.tar.gz` (o `config/` do Nextcloud, que também fica no disco local) em `/data/docker-volumes/nextcloud/db-dumps/` (duas semanas).
 
     Os dois ficam em datasets ZFS (snapshots, Borg e cópia off-site). A restauração de cada um está na página 11. O script de exemplo abaixo vale para os bancos que ainda não têm dump automático (Authelia e Grafana).
 
