@@ -1,6 +1,7 @@
 """Testes dos templates e arquivos de observabilidade do server (Loki, Alloy, Prometheus, alertas)."""
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -17,6 +18,22 @@ def _bool(v) -> bool:
     return str(v).lower() in ("true", "1", "yes", "on")
 
 
+def _combine(*dicts, recursive=False) -> dict:
+    """Como o filtro combine do Ansible: dicionários à direita vencem; recursive mescla subdicionários."""
+    out: dict = {}
+    for d in dicts:
+        for k, v in d.items():
+            if recursive and isinstance(v, dict) and isinstance(out.get(k), dict):
+                out[k] = _combine(out[k], v, recursive=True)
+            else:
+                out[k] = v
+    return out
+
+
+def _to_nice_json(v) -> str:
+    return json.dumps(v, indent=4, sort_keys=True, separators=(",", ": "))
+
+
 def render(rel: str, **vars) -> str:
     """Renderiza server/ansible/<rel> como o Ansible faria (StrictUndefined, filtro bool)."""
     env = jinja2.Environment(
@@ -25,6 +42,8 @@ def render(rel: str, **vars) -> str:
         keep_trailing_newline=True,
     )
     env.filters["bool"] = _bool
+    env.filters["combine"] = _combine
+    env.filters["to_nice_json"] = _to_nice_json
     return env.get_template(rel).render(**vars)
 
 

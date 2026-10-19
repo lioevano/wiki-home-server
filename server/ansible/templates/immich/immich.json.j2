@@ -1,0 +1,24 @@
+{#- ansible/templates/immich/immich.json.j2
+    Configuração do Immich (IMMICH_CONFIG_FILE), gerada pelo setup-photos-stack-volumes.yml (página 11).
+    Com este arquivo, Administração > Configurações fica só leitura: ajustes vão em immich_config_overrides
+    (group_vars), mesclados por cima desta base; depois, playbook + docker restart immich_server. -#}
+{%- set base = {
+  "oauth": {
+    "enabled": true,
+    "issuerUrl": "https://auth." ~ base_domain,
+    "clientId": "immich",
+    "clientSecret": oidc_clients.immich.secret,
+    "scope": "openid email profile",
+    "tokenEndpointAuthMethod": "client_secret_basic",
+    "signingAlgorithm": "RS256",
+    "buttonText": "Entrar com Authelia",
+    "autoLaunch": true,
+    "autoRegister": false
+  },
+  "passwordLogin": {"enabled": immich_password_login | bool},
+  "server": {"externalDomain": "https://fotos." ~ base_domain},
+  "storageTemplate": {"enabled": true, "template": "{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}"},
+  "machineLearning": {"urls": ["http://immich_ml:3003"]},
+  "backup": {"database": {"enabled": true, "cronExpression": "0 02 * * *", "keepLastAmount": 14}}
+} -%}
+{{ base | combine(immich_config_overrides, recursive=True) | to_nice_json }}

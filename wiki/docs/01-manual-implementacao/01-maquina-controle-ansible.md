@@ -273,6 +273,8 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     nextcloud_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_NEXTCLOUD"
     # Senha para o usuário administrador inicial do Nextcloud (criado na primeira execução).
     nextcloud_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_NEXTCLOUD"
+    # Senha do Postgres do Immich (stack photos; página 11). Só letras e números.
+    immich_db_password: "SENHA_FORTE_PARA_O_DB_DO_IMMICH"
 
     grafana_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"
     grafana_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"

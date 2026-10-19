@@ -1,6 +1,8 @@
 """Testes de fotos e arquivos: datasets, OIDC do Authelia, stacks photos (Immich) e cloud (Nextcloud)."""
 from __future__ import annotations
 
+import json
+import re
 import shutil
 import subprocess
 
@@ -114,3 +116,111 @@ def test_authelia_validate_config(tmp_path):
                    .replace("/config/notification.txt", str(tmp_path / "n.txt")))
     r = subprocess.run(["authelia", "validate-config", "--config", str(cfg)], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+# --- Stack photos (Immich) ---
+
+PHOTOS = ROOT / "server/docker/stacks/photos/docker-compose.yml"
+PB_PHOTOS = ROOT / "server/ansible/playbooks/setup-photos-stack-volumes.yml"
+IMMICH_TPL = "templates/immich/immich.json.j2"
+COMUNS = {"DOCKER_PUID", "DOCKER_PGID", "SYSTEM_TIMEZONE", "BASE_DOMAIN_FROM_VAULT",
+          "VM_NFS_MOUNT_BASE_PATH", "ZFS_DOCKER_VOLUMES_DATASET_NAME"}
+
+
+def _pb_tasks(pb) -> list[dict]:
+    return yaml.safe_load(pb.read_text(encoding="utf-8"))[0]["tasks"]
+
+
+def _env_task(pb, arquivo) -> dict:
+    return next(t for t in _pb_tasks(pb)
+                if str(t.get("ansible.builtin.template", {}).get("dest", "")).endswith("/" + arquivo))
+
+
+def _configs(pb, arquivo) -> dict:
+    return {c["name"]: c["value"] for c in _env_task(pb, arquivo)["vars"]["stack_configs"]}
+
+
+def _vars_compose(path) -> set:
+    return set(re.findall(r"\$\{([A-Z0-9_]+)", path.read_text(encoding="utf-8")))
+
+
+def _volume(servico, destino) -> str:
+    return next(v for v in servico["volumes"] if v.split(":")[1] == destino)
+
+
+def test_photos_servicos():
+    s = _svc(PHOTOS)
+    assert set(s) == {"immich_server", "immich_ml", "immich_redis", "immich_db"}
+    assert s["immich_server"]["image"] == "ghcr.io/immich-app/immich-server:${IMMICH_VERSION}"
+    assert s["immich_ml"]["image"] == "ghcr.io/immich-app/immich-machine-learning:${IMMICH_VERSION}"
+    for n in ("immich_redis", "immich_db"):
+        assert "@sha256:" in s[n]["image"], n
+    assert s["immich_ml"]["networks"] == ["internal_services"]
+
+
+def test_banco_e_cache_no_disco_local():
+    s = _svc(PHOTOS)
+    assert _volume(s["immich_db"], "/var/lib/postgresql/data").startswith("${PHOTOS_STACK_DB_PATH}")
+    assert _volume(s["immich_ml"], "/cache").startswith("${PHOTOS_STACK_MODEL_CACHE_PATH}")
+    cfg = _configs(PB_PHOTOS, "photos.env")
+    for v in ("PHOTOS_STACK_DB_PATH", "PHOTOS_STACK_MODEL_CACHE_PATH"):
+        assert cfg[v].startswith("{{ vm_local_data_path }}/"), v
+    criados = {str(p) for t in _pb_tasks(PB_PHOTOS) if "ansible.builtin.file" in t
+               for p in ([t["ansible.builtin.file"]["path"]] + list(t.get("loop", [])))}
+    assert any("immich-db" in c for c in criados) and any("immich-model-cache" in c for c in criados)
+    assert cfg["PHOTOS_STACK_UPLOAD_PATH"] == "{{ vm_nfs_mount_base_path }}/{{ zfs_photos_dataset_name }}"
+
+
+def test_immich_rede_e_porta():
+    srv = _svc(PHOTOS)["immich_server"]
+    assert srv["ports"] == ["${CORE_SERVICES_VM_IP_VAR}:2283:2283"]
+    assert "Host(`fotos.${BASE_DOMAIN_FROM_VAULT}`)" in str(srv["labels"])
+    assert "authelia" not in str(srv["labels"])
+    env = _env(srv)
+    assert env["DB_HOSTNAME"] == "immich_db" and env["REDIS_HOSTNAME"] == "immich_redis"
+    assert env["IMMICH_CONFIG_FILE"] == "/config/immich.json"
+    assert _volume(srv, "/data").startswith("${PHOTOS_STACK_UPLOAD_PATH}")
+    assert _volume(srv, "/config") == "${PHOTOS_STACK_CONFIG_PATH}:/config:ro"
+
+
+def test_variaveis_photos_no_env():
+    assert _vars_compose(PHOTOS) <= set(_configs(PB_PHOTOS, "photos.env")) | COMUNS
+    assert _env_task(PB_PHOTOS, "photos.env")["ansible.builtin.template"]["mode"] == "0600"
+
+
+IMMICH_CTX = dict(base_domain=DOM, oidc_clients=OIDC, immich_password_login=True, immich_config_overrides={})
+
+
+def _immich(**kw) -> dict:
+    return json.loads(render(IMMICH_TPL, **{**IMMICH_CTX, **kw}))
+
+
+def test_immich_json():
+    c = _immich()
+    o = c["oauth"]
+    assert o["enabled"] is True and o["autoLaunch"] is True and o["autoRegister"] is False
+    assert o["issuerUrl"] == f"https://auth.{DOM}" and o["clientId"] == "immich"
+    assert o["clientSecret"] == OIDC["immich"]["secret"]
+    assert o["tokenEndpointAuthMethod"] == "client_secret_basic"
+    assert c["server"]["externalDomain"] == f"https://fotos.{DOM}"
+    assert c["machineLearning"]["urls"] == ["http://immich_ml:3003"]
+    assert c["storageTemplate"] == {"enabled": True, "template": "{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}"}
+    assert c["backup"]["database"]["keepLastAmount"] == 14
+    assert c["passwordLogin"]["enabled"] is True
+    assert _immich(immich_password_login="False")["passwordLogin"]["enabled"] is False
+
+
+def test_immich_overrides_mesclam():
+    c = _immich(immich_config_overrides={"oauth": {"buttonText": "X"},
+                                         "machineLearning": {"ocr": {"enabled": False}}})
+    assert c["oauth"]["buttonText"] == "X"
+    assert c["oauth"]["enabled"] is True and c["oauth"]["clientId"] == "immich"
+    assert c["machineLearning"]["urls"] == ["http://immich_ml:3003"]
+    assert c["machineLearning"]["ocr"] == {"enabled": False}
+
+
+def test_immich_json_0600():
+    t = next(t for t in _pb_tasks(PB_PHOTOS)
+             if str(t.get("ansible.builtin.template", {}).get("dest", "")).endswith("/immich.json"))
+    assert t["ansible.builtin.template"]["src"].endswith("immich/immich.json.j2")
+    assert t["ansible.builtin.template"]["mode"] == "0600"
