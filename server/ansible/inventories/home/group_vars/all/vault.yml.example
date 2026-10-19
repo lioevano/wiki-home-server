@@ -85,6 +85,16 @@ telegram_chat_id: "ID_DO_CHAT_DO_TELEGRAM"
 # Token que autentica quem chama o webhook do n8n (gere com: openssl rand -hex 32).
 notificacoes_webhook_token: "TOKEN_DO_WEBHOOK_DE_NOTIFICACOES"
 
+# --- Mídia (stack media, página 10) ---
+# Chaves de API das *arr, fixadas por variável de ambiente (gere cada uma com: openssl rand -hex 16).
+arr_api_keys:
+  sonarr: "CHAVE_DE_API_DO_SONARR_32_HEX"
+  radarr: "CHAVE_DE_API_DO_RADARR_32_HEX"
+  lidarr: "CHAVE_DE_API_DO_LIDARR_32_HEX"
+  prowlarr: "CHAVE_DE_API_DO_PROWLARR_32_HEX"
+# PrivateKey da configuração WireGuard da ProtonVPN gerada com NAT-PMP (Port Forwarding) ligado.
+protonvpn_wireguard_private_key: "CHAVE_PRIVADA_WIREGUARD_DA_PROTONVPN"
+
 # --- Painel (Homepage): credenciais dos widgets ---
 # Geradas na interface de cada aplicação depois do primeiro acesso (página 09).
 # O widget do Grafana usa o admin e grafana_admin_initial_password.
