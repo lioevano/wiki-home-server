@@ -82,17 +82,20 @@ Este arquivo contém as tarefas principais do role `common`.
     fstype: nfs
     # Opções de montagem NFS otimizadas. vers=4.2 é recomendado se suportado pelo host Proxmox.
     # rsize e wsize maiores podem melhorar a performance em redes gigabit.
-    opts: "rw,sync,hard,intr,bg,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2"
+    # Um item pode trocar as opções (ex.: 'files' só leitura na VM de IA).
+    opts: "{{ item.opts | default('rw,sync,hard,intr,bg,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2') }}"
     state: mounted # Garante que está montado e adiciona a entrada correspondente ao /etc/fstab
   loop: # Itera sobre os datasets ZFS definidos em group_vars/all/main.yml
     - { dataset_name: "{{ zfs_docker_volumes_dataset_name }}" }
     - { dataset_name: "{{ zfs_media_dataset_name }}" }
-    # Fotos (Immich) e arquivos (Nextcloud) só na core-services-vm, onde rodam as stacks photos e cloud.
+    # Arquivos do Nextcloud também na VM de IA, só leitura: origem do conversor de documentos (página 12).
+    - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'ai_desktop' in group_names", opts: "ro,hard,intr,bg,noatime,nodiratime,rsize=1048576,vers=4.2" }
+    # Fotos (Immich) e arquivos (Nextcloud) na core-services-vm, onde rodam as stacks photos e cloud.
     - { dataset_name: "{{ zfs_photos_dataset_name }}", when_condition: "'core_services' in group_names" }
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'core_services' in group_names" }
-    # Monta o dataset de RAG Sources apenas se a VM atual estiver no grupo 'ai_desktop_vm'
-    # e se zfs_rag_sources_dataset_name estiver definido.
-    - { dataset_name: "{{ zfs_rag_sources_dataset_name }}", when_condition: "'ai-desktop-vm' in group_names and zfs_rag_sources_dataset_name is defined" }
+    # Vaults do Obsidian (segundo cérebro, página 12) e fontes RAG: só na VM de IA (grupo 'ai_desktop' do inventário).
+    - { dataset_name: "{{ zfs_notes_dataset_name }}", when_condition: "'ai_desktop' in group_names" }
+    - { dataset_name: "{{ zfs_rag_sources_dataset_name }}", when_condition: "'ai_desktop' in group_names and zfs_rag_sources_dataset_name is defined" }
   when: item.when_condition is not defined or item.when_condition # Permite loop condicional
   # NOTA: O dataset de backups (zfs_backups_dataset_name) geralmente não precisa ser montado nas VMs.
 

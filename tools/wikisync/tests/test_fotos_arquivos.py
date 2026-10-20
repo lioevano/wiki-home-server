@@ -23,7 +23,8 @@ def _main() -> dict:
 # --- Datasets e disco local ---
 
 def test_datasets_exportados_e_montados_na_core():
-    ctx = {**_main(), "docker_puid": 1001, "docker_pgid": 1001, "groups": {"virtual_machines": []}}
+    ctx = {**_main(), "docker_puid": 1001, "docker_pgid": 1001, "ai_desktop_vm_ip_var": "192.168.15.68",
+           "groups": {"virtual_machines": []}}
     out = render("roles/infra/proxmox-host-config/templates/etc_exports.j2", **ctx)
     for ds in ("photos", "files"):
         linha = next(l for l in out.splitlines() if l.startswith(f"/data/{ds} "))

@@ -14,9 +14,13 @@
 # Compartilhamento para mídia e torrents (mesmo dataset: a importação das *arr é por hardlink)
 {{ zfs_base_pool_path }}/{{ zfs_media_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
-# Compartilhamentos de fotos (Immich) e arquivos (Nextcloud), montados só na core-services-vm
+# Compartilhamentos de fotos (Immich) e arquivos (Nextcloud), montados na core-services-vm; 'files' também na VM de IA,
+# só leitura na montagem, para o conversor de documentos do segundo cérebro (página 12)
 {{ zfs_base_pool_path }}/{{ zfs_photos_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 {{ zfs_base_pool_path }}/{{ zfs_files_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+
+# Vaults do Obsidian (segundo cérebro, página 12): exportado só para a VM de IA, onde rodam o Syncthing e a busca
+{{ zfs_base_pool_path }}/{{ zfs_notes_dataset_name }} {{ ai_desktop_vm_ip_var }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)
 {% if zfs_rag_sources_dataset_name is defined and 'ai-desktop-vm' in groups['virtual_machines'] %}

@@ -143,6 +143,29 @@
     - { regexp: '^#?UsePAM', line: 'UsePAM yes' } # Manter PAM para `su` e outras funcionalidades
   notify: Restart sshd
 
+# --- Snapshots automáticos só nos vaults (segundo cérebro, página 12) ---
+# O zfs-auto-snapshot tira snapshots de todo dataset cuja propriedade com.sun:auto-snapshot não seja 'false'.
+# Desligada no pool (os filhos herdam) e ligada só em notes: a mídia não acumula snapshots de arquivos apagados.
+# Retenção padrão do pacote: 15 min ×4, hora ×24, dia ×31, semana ×8, mês ×12.
+- name: "Instalar o zfs-auto-snapshot"
+  ansible.builtin.apt:
+    name: zfs-auto-snapshot
+    state: present
+
+- name: "Desligar snapshots automáticos no pool (herdado pelos datasets)"
+  community.general.zfs:
+    name: data
+    state: present
+    extra_zfs_properties:
+      "com.sun:auto-snapshot": "false"
+
+- name: "Ligar snapshots automáticos no dataset dos vaults"
+  community.general.zfs:
+    name: "data/{{ zfs_notes_dataset_name }}"
+    state: present
+    extra_zfs_properties:
+      "com.sun:auto-snapshot": "true"
+
 # --- Configuração do Servidor NFS ---
 - name: "Garantir que nfs-kernel-server está instalado"
   ansible.builtin.apt:

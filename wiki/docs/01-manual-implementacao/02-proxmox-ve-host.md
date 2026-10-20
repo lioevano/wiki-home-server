@@ -123,6 +123,7 @@ Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando se
     # zfs_backups_dataset_name: "backups"
     # zfs_photos_dataset_name: "photos"
     # zfs_files_dataset_name: "files"
+    # zfs_notes_dataset_name: "notes"
 
     root@pve:~# zfs create data/docker-volumes
     root@pve:~# zfs create data/media
@@ -131,9 +132,11 @@ Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando se
     # Fotos e arquivos com cota (ajuste os tamanhos ao seu acervo; ver a página 11):
     root@pve:~# zfs create -o quota=150G data/photos
     root@pve:~# zfs create -o quota=75G data/files
+    # Vaults do Obsidian (segundo cérebro, página 12):
+    root@pve:~# zfs create -o quota=20G data/notes
     # A raiz de cada dataset nasce root:root 0755; com all_squash, toda escrita das VMs chega como o dockeruser
     # e seria recusada. Entregue as raízes a ele (use os valores de docker_puid e docker_pgid do vault):
-    root@pve:~# chown <docker_puid>:<docker_pgid> /data/docker-volumes /data/media /data/rag_sources /data/photos /data/files
+    root@pve:~# chown <docker_puid>:<docker_pgid> /data/docker-volumes /data/media /data/rag_sources /data/photos /data/files /data/notes
     ```
 
     A cota limita o quanto fotos e arquivos podem crescer no pool compartilhado com a mídia. Para mudar depois: `zfs set quota=200G data/photos`. Um dataset com cota aparece para o `df` (e para o alerta `disco-cheio`) com o tamanho da cota, então o aviso de espaço chega antes de o pool encher.
@@ -359,6 +362,29 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     - { regexp: '^#?UsePAM', line: 'UsePAM yes' } # Manter PAM para `su` e outras funcionalidades
   notify: Restart sshd
 
+# --- Snapshots automáticos só nos vaults (segundo cérebro, página 12) ---
+# O zfs-auto-snapshot tira snapshots de todo dataset cuja propriedade com.sun:auto-snapshot não seja 'false'.
+# Desligada no pool (os filhos herdam) e ligada só em notes: a mídia não acumula snapshots de arquivos apagados.
+# Retenção padrão do pacote: 15 min ×4, hora ×24, dia ×31, semana ×8, mês ×12.
+- name: "Instalar o zfs-auto-snapshot"
+  ansible.builtin.apt:
+    name: zfs-auto-snapshot
+    state: present
+
+- name: "Desligar snapshots automáticos no pool (herdado pelos datasets)"
+  community.general.zfs:
+    name: data
+    state: present
+    extra_zfs_properties:
+      "com.sun:auto-snapshot": "false"
+
+- name: "Ligar snapshots automáticos no dataset dos vaults"
+  community.general.zfs:
+    name: "data/{{ zfs_notes_dataset_name }}"
+    state: present
+    extra_zfs_properties:
+      "com.sun:auto-snapshot": "true"
+
 # --- Configuração do Servidor NFS ---
 - name: "Garantir que nfs-kernel-server está instalado"
   ansible.builtin.apt:
@@ -402,9 +428,13 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 # Compartilhamento para mídia e torrents (mesmo dataset: a importação das *arr é por hardlink)
 {{ zfs_base_pool_path }}/{{ zfs_media_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
-# Compartilhamentos de fotos (Immich) e arquivos (Nextcloud), montados só na core-services-vm
+# Compartilhamentos de fotos (Immich) e arquivos (Nextcloud), montados na core-services-vm; 'files' também na VM de IA,
+# só leitura na montagem, para o conversor de documentos do segundo cérebro (página 12)
 {{ zfs_base_pool_path }}/{{ zfs_photos_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 {{ zfs_base_pool_path }}/{{ zfs_files_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
+
+# Vaults do Obsidian (segundo cérebro, página 12): exportado só para a VM de IA, onde rodam o Syncthing e a busca
+{{ zfs_base_pool_path }}/{{ zfs_notes_dataset_name }} {{ ai_desktop_vm_ip_var }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)
 {% if zfs_rag_sources_dataset_name is defined and 'ai-desktop-vm' in groups['virtual_machines'] %}

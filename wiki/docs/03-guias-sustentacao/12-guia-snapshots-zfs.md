@@ -220,6 +220,9 @@ Um clone ZFS cria um novo dataset **gravável** que inicialmente compartilha tod
 
 Manter snapshots manualmente é funcional para ações pontuais, mas para uma proteção contínua, a automação é essencial. O pacote `zfs-auto-snapshot` (geralmente incluído com `zfsutils-linux` no Debian/Ubuntu, ou disponível como um pacote separado) é uma forma simples de automatizar a criação e a poda (deleção) de snapshots.
 
+!!! info "Política deste homeserver: automático só em `notes`"
+    O `setup-proxmox-host.yml` instala o `zfs-auto-snapshot` e define a propriedade `com.sun:auto-snapshot=false` no pool `data` (herdada por todos os datasets) e `true` só em `data/notes`, os vaults do Obsidian ([página 12](../01-manual-implementacao/12-segundo-cerebro.md)). Assim, uma edição da IA nas notas pode ser desfeita (snapshots a cada 15 min ×4, de hora ×24, diários ×31, semanais ×8, mensais ×12), sem que a mídia acumule snapshots de arquivos apagados. Para ligar em outro dataset: `zfs set com.sun:auto-snapshot=true data/<dataset>`.
+
 *   **Como Funciona:**
     *   O pacote `zfs-auto-snapshot` instala scripts `cron` que rodam em intervalos predefinidos (e.g., a cada 15 minutos, hora, dia, semana, mês).
     *   Esses scripts automaticamente tiram snapshots de todos os seus datasets ZFS (a menos que um dataset seja explicitamente excluído) com nomes padronizados que incluem o intervalo e o timestamp (e.g., `...@zfs-auto-snap_hourly-2023-08-15-1400`).

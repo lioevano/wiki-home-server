@@ -466,6 +466,7 @@ zfs_rag_sources_dataset_name: "rag_sources"       # Para a VM de IA, se usada.
 zfs_backups_dataset_name: "backups"
 zfs_photos_dataset_name: "photos"           # Fotos do Immich (uploads, miniaturas e dumps do banco). Criado com cota.
 zfs_files_dataset_name: "files"             # Diretório de dados do Nextcloud. Criado com cota.
+zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo cérebro, página 12). Só na VM de IA; snapshots automáticos.
 
 # --- Disco local das VMs ---
 # Bancos que não podem ficar em NFS (o Immich exige disco local) ficam aqui, fora dos snapshots ZFS;
@@ -539,6 +540,25 @@ litellm_key_budgets:
 ollama_version: "0.40.6"
 # Formulário de login local do Open WebUI: ligado só até vincular o admin pelo OIDC do Authelia; depois, false.
 openwebui_login_form: true
+
+# --- Segundo cérebro (página 12) ---
+# Versões fixadas: imagens públicas e as locais construídas pelo setup-notes-volumes.yml.
+syncthing_version: "2.1.6"
+qmd_version: "2.8.3"                 # localhost/homeserver/qmd:<versão> (busca local, Vulkan)
+mcp_filesystem_version: "2.0.0"      # localhost/homeserver/notes-escrita:<versão> (server-filesystem + supergateway)
+supergateway_version: "4.2.0"
+markitdown_version: "0.1.8"          # localhost/homeserver/notes-conversor:<versão>
+mcp_auth_proxy_version: "v2.10.2"
+# Usuário do painel do Syncthing (a senha fica no vault).
+syncthing_gui_user: "admin"
+# Id do seu usuário no Nextcloud (docker exec -u www-data nextcloud_app php occ user:list). Os arquivos dele
+# (<files>/<id>/files) são convertidos para Markdown e indexados.
+notes_nextcloud_usuario: "TROQUE-PELO-ID"
+# Extensões convertidas (imagem, vídeo e áudio ficam de fora) e tamanho máximo por arquivo (MB).
+notes_documentos_extensoes: [pdf, docx, pptx, xlsx, html, htm, csv, txt, md]
+notes_documentos_max_mb: 50
+# Modelos do qmd ({} = padrões do qmd). Ex.: {embed: "hf:Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-Q8_0.gguf"}
+qmd_modelos: {}
 ```
 
 Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).
