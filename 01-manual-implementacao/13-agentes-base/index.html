@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html class="no-js" lang="pt"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle na LAN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas." name="description"/>
+<meta content="Léo Ivan" name="author"/>
+<link href="https://wiki.lioevano.com/01-manual-implementacao/13-agentes-base/" rel="canonical"/>
+<link href="../12-segundo-cerebro/" rel="prev"/>
+<link href="../../02-visao-geral-arquitetura/" rel="next"/>
+<link href="../../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.1" name="generator"/>
+<title>Agentes: Base - Wiki do Servidor do Léo Ivan</title>
+<link href="../../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+<body data-md-color-accent="indigo" data-md-color-primary="blue" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#seção-13-agentes--base-hub-de-mcps-operações-e-rastreio">
+          Ir para o conteúdo
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Cabeçalho" class="md-header__inner md-grid">
+<a aria-label="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" data-md-component="logo" href="../.." title="Wiki do Servidor do Léo Ivan">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Wiki do Servidor do Léo Ivan
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Agentes: Base
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-primary="blue" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: light)" data-md-color-primary="blue" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Buscar" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Buscar" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Pesquisar" class="md-search__options">
+<button aria-label="Limpar" class="md-search__icon md-icon" tabindex="-1" title="Limpar" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Inicializando a pesquisa
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    lioevano/wiki-home-server
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<nav aria-label="Abas" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../..">
+        
+  
+  
+    
+  
+  Introdução
+
+      </a>
+</li>
+<li class="md-tabs__item md-tabs__item--active">
+<a class="md-tabs__link" href="../">
+          
+  
+  
+  🚀 Implementação
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../02-visao-geral-arquitetura/">
+          
+  
+  
+  💡 Arquitetura
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../03-guias-sustentacao/">
+          
+  
+  
+  🛠️ Sustentação
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../04-manutencao-recuperacao/">
+          
+  
+  
+  ⚙️ Manutenção
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../05-referencia-rapida/">
+        
+  
+  
+    
+  
+  📎 Referência
+
+      </a>
+</li>
+</ul>
+</div>
+</nav>
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navegação" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" data-md-component="logo" href="../.." title="Wiki do Servidor do Léo Ivan">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Wiki do Servidor do Léo Ivan
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    lioevano/wiki-home-server
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../..">
+<span class="md-ellipsis">
+    
+  
+    Introdução
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    🚀 Implementação
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    🚀 Implementação
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../00-preparacao-planejamento/">
+<span class="md-ellipsis">
+    
+  
+    Preparação e Planejamento
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../01-maquina-controle-ansible/">
+<span class="md-ellipsis">
+    
+  
+    Máquina de Controle Ansible
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../02-proxmox-ve-host/">
+<span class="md-ellipsis">
+    
+  
+    Proxmox VE Host
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../03-provisionamento-vms/">
+<span class="md-ellipsis">
+    
+  
+    Provisionamento de VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../04-configuracao-base-vms-ubuntu/">
+<span class="md-ellipsis">
+    
+  
+    Configuração Base das VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../05-rede-segura/">
+<span class="md-ellipsis">
+    
+  
+    Rede Segura
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../06-deploy-core/">
+<span class="md-ellipsis">
+    
+  
+    Deploy Core
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../07-deploy-apps/">
+<span class="md-ellipsis">
+    
+  
+    Deploy de Apps
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../08-stack-ia/">
+<span class="md-ellipsis">
+    
+  
+    Stack de IA
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../09-painel-notificacoes/">
+<span class="md-ellipsis">
+    
+  
+    Painel e Notificações
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../10-midia/">
+<span class="md-ellipsis">
+    
+  
+    Mídia
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../11-fotos-arquivos/">
+<span class="md-ellipsis">
+    
+  
+    Fotos e Arquivos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../12-segundo-cerebro/">
+<span class="md-ellipsis">
+    
+  
+    Segundo Cérebro
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Agentes: Base
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Agentes: Base
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Índice" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#arquitetura">
+<span class="md-ellipsis">
+      
+        Arquitetura
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#arquivos">
+<span class="md-ellipsis">
+      
+        Arquivos
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#hub-de-mcps-agentgateway">
+<span class="md-ellipsis">
+      
+        Hub de MCPs (agentgateway)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rastreio-langfuse">
+<span class="md-ellipsis">
+      
+        Rastreio (Langfuse)
+      
+    </span>
+</a>
+<nav aria-label="Rastreio (Langfuse)" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#limpeza-dos-traces">
+<span class="md-ellipsis">
+      
+        Limpeza dos traces
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tokens-e-chaves">
+<span class="md-ellipsis">
+      
+        Tokens e chaves
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#deploy">
+<span class="md-ellipsis">
+      
+        Deploy
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#conectar-o-claude">
+<span class="md-ellipsis">
+      
+        Conectar o Claude
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ações-e-aprovação">
+<span class="md-ellipsis">
+      
+        Ações e aprovação
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#falhas">
+<span class="md-ellipsis">
+      
+        Falhas
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#teste-de-ponta-a-ponta">
+<span class="md-ellipsis">
+      
+        Teste de ponta a ponta
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    💡 Arquitetura
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    💡 Arquitetura
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/">
+<span class="md-ellipsis">
+    
+  
+    Fluxo de Rede
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/02-virtualizacao-proxmox/">
+<span class="md-ellipsis">
+    
+  
+    Virtualização
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/03-armazenamento-zfs-nfs/">
+<span class="md-ellipsis">
+    
+  
+    Armazenamento
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/04-automacao-ansible/">
+<span class="md-ellipsis">
+    
+  
+    Automação
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/05-gerenciamento-containers/">
+<span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/06-principios-seguranca/">
+<span class="md-ellipsis">
+    
+  
+    Segurança
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/">
+<span class="md-ellipsis">
+    
+  
+    Estratégia LLM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/">
+<span class="md-ellipsis">
+    
+  
+    Catálogo de Aplicações
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/10-indice-integracoes/">
+<span class="md-ellipsis">
+    
+  
+    Índice de Integrações
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    🛠️ Sustentação
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    🛠️ Sustentação
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/01-adicionando-novo-servico-docker/">
+<span class="md-ellipsis">
+    
+  
+    Novo Serviço Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/02-modificando-configuracoes-existentes/">
+<span class="md-ellipsis">
+    
+  
+    Modificando Configurações
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/03-troubleshooting-comum/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/04-gerenciando-redes-docker/">
+<span class="md-ellipsis">
+    
+  
+    Redes Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/05-passthrough-hardware-adicional/">
+<span class="md-ellipsis">
+    
+  
+    Passthrough de Hardware
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/">
+<span class="md-ellipsis">
+    
+  
+    Recursos de VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/">
+<span class="md-ellipsis">
+    
+  
+    Cenários de VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/">
+<span class="md-ellipsis">
+    
+  
+    Recursos entre VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/">
+<span class="md-ellipsis">
+    
+  
+    Integrando Serviços
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/">
+<span class="md-ellipsis">
+    
+  
+    Atualização Segura
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/">
+<span class="md-ellipsis">
+    
+  
+    App no Domínio Raiz
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/12-guia-snapshots-zfs/">
+<span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/13-usando-geminicli/">
+<span class="md-ellipsis">
+    
+  
+    Gemini CLI
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    ⚙️ Manutenção
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    ⚙️ Manutenção
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/01-rotinas-manutencao/">
+<span class="md-ellipsis">
+    
+  
+    Rotinas
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/">
+<span class="md-ellipsis">
+    
+  
+    Backup e Restore
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/03-cicd-basico-ansible/">
+<span class="md-ellipsis">
+    
+  
+    CI/CD Ansible
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/04-reconstruindo-infraestrutura/">
+<span class="md-ellipsis">
+    
+  
+    Reconstruindo
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/05-migrando-hardware-rede/">
+<span class="md-ellipsis">
+    
+  
+    Migrando Hardware/Rede
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-referencia-rapida/">
+<span class="md-ellipsis">
+    
+  
+    📎 Referência
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Índice" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#arquitetura">
+<span class="md-ellipsis">
+      
+        Arquitetura
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#arquivos">
+<span class="md-ellipsis">
+      
+        Arquivos
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#hub-de-mcps-agentgateway">
+<span class="md-ellipsis">
+      
+        Hub de MCPs (agentgateway)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rastreio-langfuse">
+<span class="md-ellipsis">
+      
+        Rastreio (Langfuse)
+      
+    </span>
+</a>
+<nav aria-label="Rastreio (Langfuse)" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#limpeza-dos-traces">
+<span class="md-ellipsis">
+      
+        Limpeza dos traces
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#tokens-e-chaves">
+<span class="md-ellipsis">
+      
+        Tokens e chaves
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#deploy">
+<span class="md-ellipsis">
+      
+        Deploy
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#conectar-o-claude">
+<span class="md-ellipsis">
+      
+        Conectar o Claude
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ações-e-aprovação">
+<span class="md-ellipsis">
+      
+        Ações e aprovação
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#falhas">
+<span class="md-ellipsis">
+      
+        Falhas
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#teste-de-ponta-a-ponta">
+<span class="md-ellipsis">
+      
+        Teste de ponta a ponta
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="seção-13-agentes--base-hub-de-mcps-operações-e-rastreio">Seção 13: Agentes — base (hub de MCPs, operações e rastreio)<a class="headerlink" href="#seção-13-agentes--base-hub-de-mcps-operações-e-rastreio" title="Permanent link">¶</a></h1>
+<p>A IA (Claude Code, app Claude, agentes) alcança o homeserver por um <strong>hub de MCPs</strong> na <code>core-services-vm</code>: <strong>leitura de qualquer lugar</strong> (métricas, logs, alertas, containers, a casa e as automações, pelo conector <strong>Servidor</strong>) e <strong>ações só na LAN</strong> (reiniciar containers, redeployar stacks, rodar playbooks Ansible, comandar a casa, executar workflows). Toda chamada de LLM e de ferramenta fica rastreada no <strong>Langfuse</strong>.</p>
+<h2 id="arquitetura">Arquitetura<a class="headerlink" href="#arquitetura" title="Permanent link">¶</a></h2>
+<pre class="mermaid"><code>flowchart LR
+    claude[claude.ai / celular] -- OAuth + Authelia 2FA --&gt; proxy[mcp_auth_servidor&lt;br/&gt;servidor.]
+    code[Claude Code / agentes&lt;br/&gt;na LAN] -- chave Bearer --&gt; controle[agentgateway :4100&lt;br/&gt;rota controle]
+    proxy --&gt; leitura[agentgateway :4000&lt;br/&gt;rota leitura]
+    leitura --&gt; gl[mcp_grafana_leitura]
+    leitura --&gt; ol[ops_leitura]
+    leitura --&gt; ha[Home Assistant /api/mcp&lt;br/&gt;só GetLiveContext]
+    leitura --&gt; n8[n8n /mcp-server/http&lt;br/&gt;só search_workflows]
+    controle --&gt; gc[mcp_grafana_controle]
+    controle --&gt; oc[ops_controle&lt;br/&gt;Portainer + Ansible]
+    controle --&gt; ha
+    controle --&gt; n8
+    leitura -. traces .-&gt; lf[Langfuse]
+    controle -. traces .-&gt; lf</code></pre>
+<table>
+<thead>
+<tr>
+<th>Rota</th>
+<th>Onde</th>
+<th>Quem usa</th>
+<th>Alcança</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>leitura</code></td>
+<td><code>https://servidor.&lt;domínio&gt;/mcp</code> (túnel → Traefik → <code>mcp_auth_servidor</code>)</td>
+<td>claude.ai, app do celular</td>
+<td>Grafana (Prometheus, Loki, alertas, painéis) só leitura; containers, logs, stacks e playbooks (listar); estado da casa; lista de workflows</td>
+</tr>
+<tr>
+<td><code>controle</code></td>
+<td><code>http://&lt;IP da core-services-vm&gt;:4100/mcp</code> (só LAN; VPN quando existir)</td>
+<td>Claude Code em casa, agentes (4c3)</td>
+<td>tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (<code>ansible_check</code> → <code>ansible_aplicar</code>), comandar a casa, executar e editar workflows liberados</td>
+</tr>
+</tbody>
+</table>
+<p>Por que duas rotas: a internet só alcança <strong>código que não sabe escrever</strong> (as instâncias <code>*_leitura</code> nem registram ferramentas de escrita) <strong>e</strong> uma lista fechada de ferramentas (<code>agents_leitura</code>); as ações ficam num endereço que só existe na rede de casa, com uma chave por cliente.</p>
+<div class="admonition warning">
+<p class="admonition-title">Fora dos snapshots ZFS</p>
+<p>O config do hub, os segredos do runner, o clone do repositório e o estado OAuth do <code>mcp_auth_servidor</code> ficam no disco local da <code>core-services-vm</code> (<code>/opt/local-data/agentgateway</code>, <code>/opt/local-data/ops</code>, <code>/opt/local-data/mcp-auth-servidor</code>), e os dados do Langfuse no disco local da <code>ai-desktop-vm</code> (<code>/opt/local-data/langfuse</code>): <strong>fora dos snapshots ZFS e sem backup</strong>. Tudo é regerável pelos playbooks a partir do vault; os traces do Langfuse são descartáveis.</p>
+</div>
+<h2 id="arquivos">Arquivos<a class="headerlink" href="#arquivos" title="Permanent link">¶</a></h2>
+<p>Stack e preparação:</p>
+<ul>
+<li><code>docker/stacks/agents/docker-compose.yml</code> — stack <code>agents</code> na <code>core-services-vm</code> (Portainer, endpoint <code>local</code>, variáveis em <code>/opt/portainer_stack_envs/agents.env</code>): <code>mcp_grafana_leitura</code>/<code>mcp_grafana_controle</code>, <code>ops_leitura</code>/<code>ops_controle</code> e o hub.</li>
+<li><code>ansible/playbooks/setup-agents-volumes.yml</code> — diretórios em <code>/opt/local-data/ops</code>, chave SSH e senha do vault do runner (<code>0400</code>), clone do repositório, imagem <code>localhost/homeserver/ops</code> e <code>agents.env</code>.</li>
+<li><code>docker/stacks/langfuse/docker-compose.yml</code> — stack <code>langfuse</code> na <code>ai-desktop-vm</code> (Portainer, endpoint <code>ai-desktop-vm</code>, variáveis em <code>/opt/portainer_stack_envs/langfuse.env</code>): web, worker, Postgres, ClickHouse, Redis e MinIO.</li>
+<li><code>ansible/playbooks/setup-langfuse-volumes.yml</code> — diretórios em <code>/opt/local-data/langfuse</code> (com o dono que cada imagem usa) e <code>langfuse.env</code>.</li>
+</ul>
+<p>MCP de operações (<code>ops</code>), código Python próprio, testado em <code>tools/wikisync/tests/test_ops.py</code> (sem rede):</p>
+<ul>
+<li><code>docker/images/ops/ops/__init__.py</code> — descrição do pacote.</li>
+<li><code>docker/images/ops/ops/config.py</code> — configuração lida das variáveis de ambiente (<code>OPS_MODO</code>, <code>PORTAINER_URL</code>, listas de protegidos e de playbooks).</li>
+<li><code>docker/images/ops/ops/politica.py</code> — o que é recusado (containers e stacks protegidos) e a limpeza das saídas (segredos mascarados, texto longo truncado).</li>
+<li><code>docker/images/ops/ops/portainer.py</code> — cliente da API do Portainer: containers das duas VMs, logs, reinício, stacks e redeploy.</li>
+<li><code>docker/images/ops/ops/autenticacao.py</code> — exige o token interno do hub (<code>OPS_TOKEN</code>) em toda requisição: as redes Docker são compartilhadas com outras aplicações.</li>
+<li><code>docker/images/ops/ops/auditoria.py</code> — registro de cada ação (JSON no log, coletado para o Loki) e aviso no Telegram pelo webhook do n8n.</li>
+<li><code>docker/images/ops/ops/ferramentas.py</code> — as ferramentas MCP; no modo <code>leitura</code>, as que mudam algo nem existem.</li>
+<li><code>docker/images/ops/ops/runner.py</code> — runner Ansible: <code>git pull</code>, <code>ansible-playbook --check --diff</code> com <code>plano_id</code>, aplicação só do plano simulado no mesmo commit, uma execução por vez.</li>
+<li><code>docker/images/ops/ops/server.py</code> — registra as ferramentas do modo no FastMCP (com as anotações <code>readOnlyHint</code>/<code>destructiveHint</code>) e serve em <code>:8000/mcp</code>.</li>
+<li><code>docker/images/ops/Dockerfile</code> — imagem <code>localhost/homeserver/ops</code> (Python 3.13, git, cliente SSH, coleções do <code>ansible/requirements.yml</code>), sem root.</li>
+</ul>
+<p>As versões do FastMCP e do ansible-core vêm do <code>group_vars</code> por este template, gravado no diretório de build da imagem:</p>
+<div class="language-jinja highlight"><span class="filename">ansible/templates/agents/ops-requirements.txt.j2</span><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="x"># Dependências do MCP ops (página 13). Versões em group_vars/all/main.yml.</span>
+</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="x">fastmcp==</span><span class="cp">{{</span> <span class="nv">ops_fastmcp_version</span> <span class="cp">}}</span>
+</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="x">ansible-core==</span><span class="cp">{{</span> <span class="nv">ops_ansible_core_version</span> <span class="cp">}}</span>
+</span></code></pre></div>
+<h2 id="hub-de-mcps-agentgateway">Hub de MCPs (agentgateway)<a class="headerlink" href="#hub-de-mcps-agentgateway" title="Permanent link">¶</a></h2>
+<p>O hub junta os MCPs em dois endereços. A <strong>rota <code>leitura</code></strong> (porta 4000, só na rede interna, com o token interno que só o <code>mcp_auth_servidor</code> tem) recebe o conector <strong>Servidor</strong> e só alcança instâncias que não sabem escrever (<code>mcp_grafana_leitura</code>, <code>ops_leitura</code>), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (<code>agents_leitura</code>). A <strong>rota <code>controle</code></strong> (porta 4100, publicada só no IP da <code>core-services-vm</code> na LAN) alcança tudo e exige a chave de um cliente (<code>agents_api_keys</code>); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o <code>ops</code> e o <code>mcp-grafana</code> exigem (<code>agents_tokens_internos.backends</code>: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos <code>0400</code> montados no container, e a autenticação do rastreio no Langfuse vem da variável <code>OTEL_EXPORTER_OTLP_TRACES_HEADERS</code> — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (<code>failOpen</code>).</p>
+<div class="language-jinja highlight"><span class="filename">ansible/templates/agents/agentgateway.yaml.j2</span><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="x"># Hub de MCPs da base dos agentes (página 13). Gerado pelo setup-agents-volumes.yml em</span>
+</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="x"># </span><span class="cp">{{</span> <span class="s1">'{{'</span> <span class="cp">}}</span><span class="x"> vm_local_data_path </span><span class="cp">{{</span> <span class="s1">'}}'</span> <span class="cp">}}</span><span class="x">/agentgateway/config.yaml. Sem segredos: chaves dos clientes só como hash;</span>
+</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="x"># tokens dos alvos em arquivos (/segredos); autenticação do rastreio por variável de ambiente.</span>
+</span><span id="__span-1-4"><a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a><span class="x"># yaml-language-server: $schema=https://agentgateway.dev/schema/config</span>
+</span><span id="__span-1-5"><a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="cp">{%</span> <span class="k">set</span> <span class="nv">alvos_fixos</span> <span class="o">=</span> <span class="o">{</span>
+</span><span id="__span-1-6"><a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>  <span class="s1">'homeassistant'</span><span class="o">:</span> <span class="o">{</span><span class="s1">'host'</span><span class="o">:</span> <span class="s1">'http://homeassistant:8123/api/mcp'</span><span class="o">,</span> <span class="s1">'token'</span><span class="o">:</span> <span class="s1">'/segredos/homeassistant_token'</span><span class="o">},</span>
+</span><span id="__span-1-7"><a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>  <span class="s1">'n8n'</span><span class="o">:</span> <span class="o">{</span><span class="s1">'host'</span><span class="o">:</span> <span class="s1">'http://n8n:5678/mcp-server/http'</span><span class="o">,</span> <span class="s1">'token'</span><span class="o">:</span> <span class="s1">'/segredos/n8n_token'</span><span class="o">},</span>
+</span><span id="__span-1-8"><a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a><span class="o">}</span> <span class="cp">%}</span>
+</span><span id="__span-1-9"><a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="cp">{%</span> <span class="k">macro</span> <span class="nv">alvos</span><span class="o">(</span><span class="nv">sufixo</span><span class="o">)</span> <span class="cp">%}</span>
+</span><span id="__span-1-10"><a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="x">          targets:</span>
+</span><span id="__span-1-11"><a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="x">          # ops e mcp-grafana só aceitam o token interno do hub (as redes Docker são compartilhadas).</span>
+</span><span id="__span-1-12"><a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a><span class="x">          - name: grafana</span>
+</span><span id="__span-1-13"><a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a><span class="x">            mcp:</span>
+</span><span id="__span-1-14"><a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a><span class="x">              host: http://mcp_grafana_</span><span class="cp">{{</span> <span class="nv">sufixo</span> <span class="cp">}}</span><span class="x">:8000/mcp</span>
+</span><span id="__span-1-15"><a href="#__codelineno-1-15" id="__codelineno-1-15" name="__codelineno-1-15"></a><span class="x">            policies:</span>
+</span><span id="__span-1-16"><a href="#__codelineno-1-16" id="__codelineno-1-16" name="__codelineno-1-16"></a><span class="x">              backendAuth:</span>
+</span><span id="__span-1-17"><a href="#__codelineno-1-17" id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="x">                key:</span>
+</span><span id="__span-1-18"><a href="#__codelineno-1-18" id="__codelineno-1-18" name="__codelineno-1-18"></a><span class="x">                  file: /segredos/backends_token</span>
+</span><span id="__span-1-19"><a href="#__codelineno-1-19" id="__codelineno-1-19" name="__codelineno-1-19"></a><span class="x">          - name: ops</span>
+</span><span id="__span-1-20"><a href="#__codelineno-1-20" id="__codelineno-1-20" name="__codelineno-1-20"></a><span class="x">            mcp:</span>
+</span><span id="__span-1-21"><a href="#__codelineno-1-21" id="__codelineno-1-21" name="__codelineno-1-21"></a><span class="x">              host: http://ops_</span><span class="cp">{{</span> <span class="nv">sufixo</span> <span class="cp">}}</span><span class="x">:8000/mcp</span>
+</span><span id="__span-1-22"><a href="#__codelineno-1-22" id="__codelineno-1-22" name="__codelineno-1-22"></a><span class="x">            policies:</span>
+</span><span id="__span-1-23"><a href="#__codelineno-1-23" id="__codelineno-1-23" name="__codelineno-1-23"></a><span class="x">              backendAuth:</span>
+</span><span id="__span-1-24"><a href="#__codelineno-1-24" id="__codelineno-1-24" name="__codelineno-1-24"></a><span class="x">                key:</span>
+</span><span id="__span-1-25"><a href="#__codelineno-1-25" id="__codelineno-1-25" name="__codelineno-1-25"></a><span class="x">                  file: /segredos/backends_token</span>
+</span><span id="__span-1-26"><a href="#__codelineno-1-26" id="__codelineno-1-26" name="__codelineno-1-26"></a><span class="cp">{%</span> <span class="k">for</span> <span class="nv">nome</span><span class="o">,</span> <span class="nv">alvo</span> <span class="k">in</span> <span class="nv">alvos_fixos.items</span><span class="o">()</span> <span class="cp">%}</span>
+</span><span id="__span-1-27"><a href="#__codelineno-1-27" id="__codelineno-1-27" name="__codelineno-1-27"></a><span class="x">          - name: </span><span class="cp">{{</span> <span class="nv">nome</span> <span class="cp">}}</span>
+</span><span id="__span-1-28"><a href="#__codelineno-1-28" id="__codelineno-1-28" name="__codelineno-1-28"></a><span class="x">            mcp:</span>
+</span><span id="__span-1-29"><a href="#__codelineno-1-29" id="__codelineno-1-29" name="__codelineno-1-29"></a><span class="x">              host: </span><span class="cp">{{</span> <span class="nv">alvo.host</span> <span class="cp">}}</span>
+</span><span id="__span-1-30"><a href="#__codelineno-1-30" id="__codelineno-1-30" name="__codelineno-1-30"></a><span class="x">            policies:</span>
+</span><span id="__span-1-31"><a href="#__codelineno-1-31" id="__codelineno-1-31" name="__codelineno-1-31"></a><span class="x">              backendAuth:</span>
+</span><span id="__span-1-32"><a href="#__codelineno-1-32" id="__codelineno-1-32" name="__codelineno-1-32"></a><span class="x">                key:</span>
+</span><span id="__span-1-33"><a href="#__codelineno-1-33" id="__codelineno-1-33" name="__codelineno-1-33"></a><span class="x">                  file: </span><span class="cp">{{</span> <span class="nv">alvo.token</span> <span class="cp">}}</span>
+</span><span id="__span-1-34"><a href="#__codelineno-1-34" id="__codelineno-1-34" name="__codelineno-1-34"></a><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</span><span id="__span-1-35"><a href="#__codelineno-1-35" id="__codelineno-1-35" name="__codelineno-1-35"></a><span class="cp">{%</span> <span class="k">endmacro</span> <span class="cp">%}</span>
+</span><span id="__span-1-36"><a href="#__codelineno-1-36" id="__codelineno-1-36" name="__codelineno-1-36"></a><span class="x">config:</span>
+</span><span id="__span-1-37"><a href="#__codelineno-1-37" id="__codelineno-1-37" name="__codelineno-1-37"></a><span class="x">  statsAddr: 0.0.0.0:15020</span>
+</span><span id="__span-1-38"><a href="#__codelineno-1-38" id="__codelineno-1-38" name="__codelineno-1-38"></a><span class="x">  logging:</span>
+</span><span id="__span-1-39"><a href="#__codelineno-1-39" id="__codelineno-1-39" name="__codelineno-1-39"></a><span class="x">    format: json</span>
+</span><span id="__span-1-40"><a href="#__codelineno-1-40" id="__codelineno-1-40" name="__codelineno-1-40"></a><span class="x">  tracing:</span>
+</span><span id="__span-1-41"><a href="#__codelineno-1-41" id="__codelineno-1-41" name="__codelineno-1-41"></a><span class="x">    otlpEndpoint: http://</span><span class="cp">{{</span> <span class="nv">ai_desktop_vm_ip_var</span> <span class="cp">}}</span><span class="x">:3100/api/public/otel</span>
+</span><span id="__span-1-42"><a href="#__codelineno-1-42" id="__codelineno-1-42" name="__codelineno-1-42"></a><span class="x">    otlpProtocol: http</span>
+</span><span id="__span-1-43"><a href="#__codelineno-1-43" id="__codelineno-1-43" name="__codelineno-1-43"></a><span class="x">    randomSampling: "true"</span>
+</span><span id="__span-1-44"><a href="#__codelineno-1-44" id="__codelineno-1-44" name="__codelineno-1-44"></a>
+</span><span id="__span-1-45"><a href="#__codelineno-1-45" id="__codelineno-1-45" name="__codelineno-1-45"></a><span class="x">binds:</span>
+</span><span id="__span-1-46"><a href="#__codelineno-1-46" id="__codelineno-1-46" name="__codelineno-1-46"></a><span class="x"># Rota de leitura: atrás do mcp_auth_servidor (OAuth + Authelia, grupo admins), que repassa o token interno</span>
+</span><span id="__span-1-47"><a href="#__codelineno-1-47" id="__codelineno-1-47" name="__codelineno-1-47"></a><span class="x"># 'proxy' — sem ele, outro container das redes compartilhadas não lê nada.</span>
+</span><span id="__span-1-48"><a href="#__codelineno-1-48" id="__codelineno-1-48" name="__codelineno-1-48"></a><span class="x">- port: 4000</span>
+</span><span id="__span-1-49"><a href="#__codelineno-1-49" id="__codelineno-1-49" name="__codelineno-1-49"></a><span class="x">  listeners:</span>
+</span><span id="__span-1-50"><a href="#__codelineno-1-50" id="__codelineno-1-50" name="__codelineno-1-50"></a><span class="x">  - name: leitura</span>
+</span><span id="__span-1-51"><a href="#__codelineno-1-51" id="__codelineno-1-51" name="__codelineno-1-51"></a><span class="x">    routes:</span>
+</span><span id="__span-1-52"><a href="#__codelineno-1-52" id="__codelineno-1-52" name="__codelineno-1-52"></a><span class="x">    - name: leitura</span>
+</span><span id="__span-1-53"><a href="#__codelineno-1-53" id="__codelineno-1-53" name="__codelineno-1-53"></a><span class="x">      policies:</span>
+</span><span id="__span-1-54"><a href="#__codelineno-1-54" id="__codelineno-1-54" name="__codelineno-1-54"></a><span class="x">        apiKey:</span>
+</span><span id="__span-1-55"><a href="#__codelineno-1-55" id="__codelineno-1-55" name="__codelineno-1-55"></a><span class="x">          mode: strict</span>
+</span><span id="__span-1-56"><a href="#__codelineno-1-56" id="__codelineno-1-56" name="__codelineno-1-56"></a><span class="x">          location:</span>
+</span><span id="__span-1-57"><a href="#__codelineno-1-57" id="__codelineno-1-57" name="__codelineno-1-57"></a><span class="x">            header:</span>
+</span><span id="__span-1-58"><a href="#__codelineno-1-58" id="__codelineno-1-58" name="__codelineno-1-58"></a><span class="x">              name: Authorization</span>
+</span><span id="__span-1-59"><a href="#__codelineno-1-59" id="__codelineno-1-59" name="__codelineno-1-59"></a><span class="x">              prefix: "Bearer "</span>
+</span><span id="__span-1-60"><a href="#__codelineno-1-60" id="__codelineno-1-60" name="__codelineno-1-60"></a><span class="x">          keys:</span>
+</span><span id="__span-1-61"><a href="#__codelineno-1-61" id="__codelineno-1-61" name="__codelineno-1-61"></a><span class="x">          - keyHash: "sha256:</span><span class="cp">{{</span> <span class="nv">agents_tokens_internos.proxy</span> <span class="o">|</span> <span class="nf">hash</span><span class="o">(</span><span class="s1">'sha256'</span><span class="o">)</span> <span class="cp">}}</span><span class="x">"</span>
+</span><span id="__span-1-62"><a href="#__codelineno-1-62" id="__codelineno-1-62" name="__codelineno-1-62"></a><span class="x">            metadata:</span>
+</span><span id="__span-1-63"><a href="#__codelineno-1-63" id="__codelineno-1-63" name="__codelineno-1-63"></a><span class="x">              cliente: mcp_auth_servidor</span>
+</span><span id="__span-1-64"><a href="#__codelineno-1-64" id="__codelineno-1-64" name="__codelineno-1-64"></a><span class="x">        mcpAuthorization:</span>
+</span><span id="__span-1-65"><a href="#__codelineno-1-65" id="__codelineno-1-65" name="__codelineno-1-65"></a><span class="x">          rules:</span>
+</span><span id="__span-1-66"><a href="#__codelineno-1-66" id="__codelineno-1-66" name="__codelineno-1-66"></a><span class="cp">{%</span> <span class="k">for</span> <span class="nv">alvo</span><span class="o">,</span> <span class="nv">ferramentas</span> <span class="k">in</span> <span class="nv">agents_leitura.items</span><span class="o">()</span> <span class="cp">%}</span>
+</span><span id="__span-1-67"><a href="#__codelineno-1-67" id="__codelineno-1-67" name="__codelineno-1-67"></a><span class="cp">{%</span> <span class="k">if</span> <span class="nv">ferramentas</span> <span class="o">==</span> <span class="s1">'*'</span> <span class="cp">%}</span>
+</span><span id="__span-1-68"><a href="#__codelineno-1-68" id="__codelineno-1-68" name="__codelineno-1-68"></a><span class="x">          - allow: 'mcp.tool.target == "</span><span class="cp">{{</span> <span class="nv">alvo</span> <span class="cp">}}</span><span class="x">"'</span>
+</span><span id="__span-1-69"><a href="#__codelineno-1-69" id="__codelineno-1-69" name="__codelineno-1-69"></a><span class="cp">{%</span> <span class="k">else</span> <span class="cp">%}</span>
+</span><span id="__span-1-70"><a href="#__codelineno-1-70" id="__codelineno-1-70" name="__codelineno-1-70"></a><span class="x">          - allow: 'mcp.tool.target == "</span><span class="cp">{{</span> <span class="nv">alvo</span> <span class="cp">}}</span><span class="x">" &amp;&amp; mcp.tool.name in </span><span class="cp">{{</span> <span class="nv">ferramentas</span> <span class="o">|</span> <span class="nf">to_json</span> <span class="cp">}}</span><span class="x">'</span>
+</span><span id="__span-1-71"><a href="#__codelineno-1-71" id="__codelineno-1-71" name="__codelineno-1-71"></a><span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</span><span id="__span-1-72"><a href="#__codelineno-1-72" id="__codelineno-1-72" name="__codelineno-1-72"></a><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</span><span id="__span-1-73"><a href="#__codelineno-1-73" id="__codelineno-1-73" name="__codelineno-1-73"></a><span class="x">      backends:</span>
+</span><span id="__span-1-74"><a href="#__codelineno-1-74" id="__codelineno-1-74" name="__codelineno-1-74"></a><span class="x">      - mcp:</span>
+</span><span id="__span-1-75"><a href="#__codelineno-1-75" id="__codelineno-1-75" name="__codelineno-1-75"></a><span class="x">          prefixMode: always</span>
+</span><span id="__span-1-76"><a href="#__codelineno-1-76" id="__codelineno-1-76" name="__codelineno-1-76"></a><span class="x">          failureMode: failOpen</span>
+</span><span id="__span-1-77"><a href="#__codelineno-1-77" id="__codelineno-1-77" name="__codelineno-1-77"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'leitura'</span><span class="o">)</span> <span class="cp">}}</span>
+</span><span id="__span-1-78"><a href="#__codelineno-1-78" id="__codelineno-1-78" name="__codelineno-1-78"></a><span class="x"># Rota de controle: só na LAN (porta publicada no IP da core-services-vm), com a chave de cada cliente.</span>
+</span><span id="__span-1-79"><a href="#__codelineno-1-79" id="__codelineno-1-79" name="__codelineno-1-79"></a><span class="x">- port: 4100</span>
+</span><span id="__span-1-80"><a href="#__codelineno-1-80" id="__codelineno-1-80" name="__codelineno-1-80"></a><span class="x">  listeners:</span>
+</span><span id="__span-1-81"><a href="#__codelineno-1-81" id="__codelineno-1-81" name="__codelineno-1-81"></a><span class="x">  - name: controle</span>
+</span><span id="__span-1-82"><a href="#__codelineno-1-82" id="__codelineno-1-82" name="__codelineno-1-82"></a><span class="x">    routes:</span>
+</span><span id="__span-1-83"><a href="#__codelineno-1-83" id="__codelineno-1-83" name="__codelineno-1-83"></a><span class="x">    - name: controle</span>
+</span><span id="__span-1-84"><a href="#__codelineno-1-84" id="__codelineno-1-84" name="__codelineno-1-84"></a><span class="x">      policies:</span>
+</span><span id="__span-1-85"><a href="#__codelineno-1-85" id="__codelineno-1-85" name="__codelineno-1-85"></a><span class="x">        apiKey:</span>
+</span><span id="__span-1-86"><a href="#__codelineno-1-86" id="__codelineno-1-86" name="__codelineno-1-86"></a><span class="x">          mode: strict</span>
+</span><span id="__span-1-87"><a href="#__codelineno-1-87" id="__codelineno-1-87" name="__codelineno-1-87"></a><span class="x">          location:</span>
+</span><span id="__span-1-88"><a href="#__codelineno-1-88" id="__codelineno-1-88" name="__codelineno-1-88"></a><span class="x">            header:</span>
+</span><span id="__span-1-89"><a href="#__codelineno-1-89" id="__codelineno-1-89" name="__codelineno-1-89"></a><span class="x">              name: Authorization</span>
+</span><span id="__span-1-90"><a href="#__codelineno-1-90" id="__codelineno-1-90" name="__codelineno-1-90"></a><span class="x">              prefix: "Bearer "</span>
+</span><span id="__span-1-91"><a href="#__codelineno-1-91" id="__codelineno-1-91" name="__codelineno-1-91"></a><span class="x">          keys:</span>
+</span><span id="__span-1-92"><a href="#__codelineno-1-92" id="__codelineno-1-92" name="__codelineno-1-92"></a><span class="cp">{%</span> <span class="k">for</span> <span class="nv">cliente</span><span class="o">,</span> <span class="nv">chave</span> <span class="k">in</span> <span class="nv">agents_api_keys.items</span><span class="o">()</span> <span class="cp">%}</span>
+</span><span id="__span-1-93"><a href="#__codelineno-1-93" id="__codelineno-1-93" name="__codelineno-1-93"></a><span class="x">          - keyHash: "sha256:</span><span class="cp">{{</span> <span class="nv">chave</span> <span class="o">|</span> <span class="nf">hash</span><span class="o">(</span><span class="s1">'sha256'</span><span class="o">)</span> <span class="cp">}}</span><span class="x">"</span>
+</span><span id="__span-1-94"><a href="#__codelineno-1-94" id="__codelineno-1-94" name="__codelineno-1-94"></a><span class="x">            metadata:</span>
+</span><span id="__span-1-95"><a href="#__codelineno-1-95" id="__codelineno-1-95" name="__codelineno-1-95"></a><span class="x">              cliente: </span><span class="cp">{{</span> <span class="nv">cliente</span> <span class="cp">}}</span>
+</span><span id="__span-1-96"><a href="#__codelineno-1-96" id="__codelineno-1-96" name="__codelineno-1-96"></a><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</span><span id="__span-1-97"><a href="#__codelineno-1-97" id="__codelineno-1-97" name="__codelineno-1-97"></a><span class="x">      backends:</span>
+</span><span id="__span-1-98"><a href="#__codelineno-1-98" id="__codelineno-1-98" name="__codelineno-1-98"></a><span class="x">      - mcp:</span>
+</span><span id="__span-1-99"><a href="#__codelineno-1-99" id="__codelineno-1-99" name="__codelineno-1-99"></a><span class="x">          prefixMode: always</span>
+</span><span id="__span-1-100"><a href="#__codelineno-1-100" id="__codelineno-1-100" name="__codelineno-1-100"></a><span class="x">          failureMode: failOpen</span>
+</span><span id="__span-1-101"><a href="#__codelineno-1-101" id="__codelineno-1-101" name="__codelineno-1-101"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'controle'</span><span class="o">)</span> <span class="cp">}}</span>
+</span></code></pre></div>
+<h2 id="rastreio-langfuse">Rastreio (Langfuse)<a class="headerlink" href="#rastreio-langfuse" title="Permanent link">¶</a></h2>
+<p>O <strong>Langfuse</strong> guarda cada chamada de LLM (o LiteLLM manda pelo callback <code>langfuse_otel</code>) e cada chamada de ferramenta pelo hub (traces OTLP), com custo, latência, entrada e saída. A tela fica em <code>https://langfuse.&lt;domínio&gt;</code>, atrás do Authelia; o login do próprio Langfuse é só pelo SSO (cliente OIDC <code>langfuse</code>): quem entra cai na organização <strong>Homeserver</strong> como admin. A organização, o projeto e as chaves (<code>langfuse_secrets.public_key</code>/<code>secret_key</code>) são criados na primeira subida pelas variáveis <code>LANGFUSE_INIT_*</code> — não há passos na tela.</p>
+<p>Os dados (Postgres, ClickHouse, MinIO, Redis) ficam no disco local da <code>ai-desktop-vm</code> e <strong>não têm backup</strong>: traces são descartáveis. O alerta <strong>disco-cheio</strong> avisa se o disco local encher.</p>
+<h3 id="limpeza-dos-traces">Limpeza dos traces<a class="headerlink" href="#limpeza-dos-traces" title="Permanent link">¶</a></h3>
+<p>A retenção automática por projeto do Langfuse é um recurso pago (entitlement <code>data-retention</code>, só nos planos Enterprise e da nuvem); na versão aberta os traces ficam até alguém apagar. Para limpar:</p>
+<ul>
+<li><strong>Pela tela:</strong> em <strong>Tracing</strong>, filtre por data (ex.: mais antigos que 30 dias), selecione e apague.</li>
+<li><strong>Tudo de uma vez:</strong> pare a stack <code>langfuse</code> no Portainer, apague <code>/opt/local-data/langfuse/clickhouse/data</code> e <code>/opt/local-data/langfuse/minio</code> e suba de novo — a organização, o projeto e as chaves voltam pelas variáveis <code>LANGFUSE_INIT_*</code>.</li>
+</ul>
+<h2 id="tokens-e-chaves">Tokens e chaves<a class="headerlink" href="#tokens-e-chaves" title="Permanent link">¶</a></h2>
+<p>Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):</p>
+<ol>
+<li><strong>Grafana:</strong> <em>Administration → Users and access → Service accounts</em> → duas contas, <code>mcp-leitura</code> (papel <strong>Viewer</strong>) e <code>mcp-controle</code> (papel <strong>Editor</strong>); um token em cada → <code>grafana_sa_tokens.leitura</code> e <code>grafana_sa_tokens.controle</code>.</li>
+<li><strong>Home Assistant:</strong> <em>Configurações → Dispositivos e serviços → Adicionar integração → Model Context Protocol Server</em> (escolha a API <strong>Assist</strong>, que expõe as entidades marcadas para o assistente); depois <em>Perfil → Segurança → Tokens de acesso de longa duração</em> → <code>homeassistant_mcp_token</code>.</li>
+<li><strong>n8n:</strong> <em>Settings → Instance-level MCP</em> → <strong>Enable MCP access</strong> → aba <strong>API key</strong> → <code>n8n_mcp_token</code>. Libere os workflows que a IA pode ver e executar (<em>Available in MCP</em> em cada workflow, ou <strong>Workflows enabled</strong>); nenhum fica liberado sem você marcar.</li>
+<li><strong>Portainer:</strong> <em>My account → Access tokens → Add access token</em> → <code>portainer_api_key</code>. Confira os nomes dos ambientes em <em>Environments</em> (<code>local</code> para a core e o agente da VM de IA) e ajuste <code>ops_endpoints</code> se forem outros.</li>
+<li><strong>Runner do Ansible:</strong> <code>ssh-keygen -t ed25519 -C ops-runner -f ops-runner</code> na máquina de controle → a privada vai para <code>ops_ssh_private_key</code>; a pública (<code>ops-runner.pub</code>) entra no <code>~/.ssh/authorized_keys</code> do usuário Ansible das VMs (<code>vm_ansible_user_name</code>) e do host Proxmox (<code>proxmox_ansible_user_on_host</code>). <code>ops_vault_password</code> é a senha do <code>ansible-vault</code> deste repositório. O runner só funciona depois que o <code>vault.yml</code> criptografado existir no repositório (ele clona do GitHub).</li>
+<li><strong>Clientes do hub:</strong> <code>agents_api_keys.claude_code</code> e <code>agents_api_keys.agentes</code> (<code>ag-</code> + <code>openssl rand -hex 24</code>), e os tokens internos <code>agents_tokens_internos.backends</code> (hub → <code>ops</code>/<code>mcp-grafana</code>) e <code>agents_tokens_internos.proxy</code> (<code>mcp_auth_servidor</code> → rota de leitura), com <code>openssl rand -hex 32</code>.</li>
+<li><strong>Langfuse:</strong> <code>langfuse_secrets</code> (salt e segredos com <code>openssl rand -base64 32</code>, <code>encryption_key</code> com <code>openssl rand -hex 32</code>, chaves do projeto <code>pk-lf-…</code>/<code>sk-lf-…</code>) e o cliente OIDC <code>langfuse</code> (<code>oidc_clients.langfuse</code>, digest como nos outros clientes, página 05).</li>
+</ol>
+<h2 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">¶</a></h2>
+<ol>
+<li>Na máquina de controle: <code>ansible-playbook -i inventories/home/hosts.ini playbooks/setup-agents-volumes.yml</code> (core: diretórios, segredos, clone, imagem <code>localhost/homeserver/ops</code>, config do hub, <code>agents.env</code>) e <code>playbooks/setup-langfuse-volumes.yml</code> (ai: diretórios e <code>langfuse.env</code>). Rode também <code>setup-ai-volumes.yml</code> (o <code>ai.env</code> ganha as chaves do Langfuse) e <code>setup-monitoring-stack-volumes.yml</code> (job do hub, sondas, alerta e painel).</li>
+<li><strong>Portainer → Stacks → Add Stack</strong> no endpoint da <code>ai-desktop-vm</code>: <code>langfuse</code> com <code>docker/stacks/langfuse/docker-compose.yml</code> e <code>/opt/portainer_stack_envs/langfuse.env</code>. A primeira subida cria a organização, o projeto e as chaves. Depois, <strong>Update the stack</strong> da <code>ai</code> (o LiteLLM passa a mandar as chamadas ao Langfuse).</li>
+<li><strong>Portainer → Stacks → Add Stack</strong> no endpoint <code>local</code> (core): <code>agents</code> com <code>docker/stacks/agents/docker-compose.yml</code> e <code>/opt/portainer_stack_envs/agents.env</code>.</li>
+<li>Atualize a Authelia (página 05: cliente <code>langfuse</code>, redirect <code>servidor</code> no cliente <code>mcp</code>, regra <code>bypass</code> de <code>servidor.</code>) e o Traefik (router <code>langfuse.</code>). O hostname curinga do túnel já leva <code>servidor.</code> e <code>langfuse.</code> ao Traefik.</li>
+</ol>
+<h2 id="conectar-o-claude">Conectar o Claude<a class="headerlink" href="#conectar-o-claude" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Cliente</th>
+<th>Como</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>claude.ai (navegador e celular)</td>
+<td><strong>Configurações → Conectores → Adicionar conector personalizado</strong> com <code>https://servidor.&lt;domínio&gt;/mcp</code> (nome <code>Servidor</code>). <strong>Conectar</strong> abre o login do Authelia (2FA, só o grupo <code>admins</code>). Só leitura.</td>
+</tr>
+<tr>
+<td>Claude Code (PC, na LAN)</td>
+<td><code>claude mcp add --transport http servidor http://&lt;IP da core-services-vm&gt;:4100/mcp --header "Authorization: Bearer &lt;agents_api_keys.claude_code&gt;"</code>. A chave fica no <code>~/.claude.json</code> do seu usuário, nunca em repositório. Fora de casa, use a rota de leitura (<code>https://servidor.&lt;domínio&gt;/mcp</code>) até a VPN existir.</td>
+</tr>
+<tr>
+<td>Agentes (4c3)</td>
+<td>Mesma rota de controle, com a chave <code>agents_api_keys.agentes</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>As ferramentas aparecem com o prefixo do alvo: <code>grafana_…</code>, <code>ops_…</code>, <code>homeassistant_…</code>, <code>n8n_…</code>.</p>
+<h2 id="ações-e-aprovação">Ações e aprovação<a class="headerlink" href="#ações-e-aprovação" title="Permanent link">¶</a></h2>
+<ul>
+<li>As ferramentas que mudam algo (<code>ops_container_reiniciar</code>, <code>ops_stack_redeploy</code>, <code>ops_ansible_aplicar</code> e as de escrita do Grafana, da casa e do n8n) vêm marcadas como destrutivas: o Claude Code pede sua aprovação a cada uso. Não marque "sempre permitir" para elas.</li>
+<li><strong>Containers e stacks protegidos:</strong> <code>ops_containers_protegidos</code> (Traefik, Authelia, cloudflared, Portainer, o hub e o próprio <code>ops</code>) e <code>ops_stacks_protegidas</code> (<code>core</code>, <code>agents</code>) são recusados — o caminho de controle da IA não é mexido por ela.</li>
+<li><strong>Fora da lista de playbooks:</strong> <code>setup-base-ubuntu.yml</code> (mexe no Docker, nas montagens e no Alloy de todas as VMs, inclusive a core, onde rodam o hub e o próprio <code>ops</code>), <code>setup-core-networking.yml</code>, <code>setup-proxmox-host.yml</code>, <code>vm-deploy.yml</code> e <code>full-deploy.yml</code>: esses continuam na máquina de controle.</li>
+<li><strong>Ansible em dois passos:</strong> <code>ops_ansible_check(playbook, limite?)</code> faz <code>git pull</code>, roda <code>--check --diff</code> e devolve o diff e um <code>plano_id</code>; <code>ops_ansible_aplicar(plano_id)</code> aplica <strong>o mesmo</strong> playbook e limite, só se o repositório não mudou e o plano tem menos de <code>ops_plano_validade_min</code> (30) minutos. Só playbooks de <code>ops_playbooks_permitidos</code>; uma execução por vez. Para liberar outro playbook, acrescente-o à lista (página 01) e rode o <code>setup-agents-volumes.yml</code>.</li>
+<li><strong>Registro:</strong> cada ação (feita, recusada ou com erro) vira uma linha JSON <code>"evento": "ops_acao"</code> no log do <code>ops</code> (Loki) e um aviso no Telegram; ação com erro dispara o alerta <strong>ops-acao-falhou</strong> (página 09). Cada chamada de ferramenta também aparece no Langfuse.</li>
+<li><strong>Injeção de prompt:</strong> logs, notas e páginas lidos pela IA podem trazer instruções; a aprovação a cada ação, as listas de protegidos e de playbooks e a simulação obrigatória limitam o dano.</li>
+</ul>
+<h2 id="falhas">Falhas<a class="headerlink" href="#falhas" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Falha</th>
+<th>Comportamento</th>
+<th>O que fazer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Home Assistant, n8n ou Grafana fora</td>
+<td>As ferramentas dele somem; o resto funciona (<code>failOpen</code>)</td>
+<td>Ver a sonda e o log do hub (<code>docker logs agentgateway</code>)</td>
+</tr>
+<tr>
+<td>Hub fora</td>
+<td>Conector Servidor e Claude Code sem ferramentas do servidor; alerta <strong>servico-fora-do-ar</strong> (<code>agentgateway</code>, sonda nas métricas do próprio hub)</td>
+<td>Portainer → stack <code>agents</code></td>
+</tr>
+<tr>
+<td>Portainer fora</td>
+<td><code>ops</code> responde erro claro nas ferramentas de containers e stacks</td>
+<td>Restaurar o Portainer</td>
+</tr>
+<tr>
+<td><code>ops_ansible_aplicar</code> recusado</td>
+<td>Plano vencido, já usado ou repositório mudou</td>
+<td>Rodar <code>ops_ansible_check</code> de novo</td>
+</tr>
+<tr>
+<td>Playbook falha no meio</td>
+<td>Erro devolvido com o fim da saída, aviso no Telegram, alerta</td>
+<td>Ver o log; corrigir e simular de novo</td>
+</tr>
+<tr>
+<td>Langfuse fora</td>
+<td>LiteLLM e hub seguem (envio assíncrono); rastreio perdido no período</td>
+<td>Portainer → stack <code>langfuse</code></td>
+</tr>
+<tr>
+<td>Authelia fora</td>
+<td>Login novo no Servidor falha; a rota de controle (chave) segue</td>
+<td>Restaurar o Authelia</td>
+</tr>
+</tbody>
+</table>
+<h2 id="teste-de-ponta-a-ponta">Teste de ponta a ponta<a class="headerlink" href="#teste-de-ponta-a-ponta" title="Permanent link">¶</a></h2>
+<ol>
+<li><code>curl -s http://&lt;IP da core&gt;:4100/mcp</code> sem cabeçalho → <code>401</code>; com <code>-H "Authorization: Bearer &lt;chave&gt;"</code> e um <code>initialize</code> MCP → resposta do hub.</li>
+<li>No Claude Code: "liste os containers da VM de IA" (<code>ops_containers_listar</code>) e "quais alertas estão disparando?" (<code>grafana_…</code>).</li>
+<li>"Simule o playbook setup-media-stack-volumes.yml" → diff e <code>plano_id</code>; "aplique" → aprovação pedida, execução, aviso no Telegram.</li>
+<li>"Reinicie o traefik" → recusado (protegido), aviso no Telegram.</li>
+<li>No claude.ai, conector Servidor: "o que o Home Assistant diz da sala?" funciona; "desligue a luz da sala" → a ferramenta não existe na rota de leitura.</li>
+<li>No Langfuse (<code>https://langfuse.&lt;domínio&gt;</code>): as chamadas do LiteLLM e as do hub aparecem em <strong>Tracing</strong>.</li>
+</ol>
+<aside class="md-source-file">
+<span class="md-source-file__fact">
+<span class="md-icon" title="Última atualização">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 15:57:35 -03">20 de outubro de 2026</span>
+</span>
+</aside>
+</article>
+</div>
+<script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Voltar ao topo
+</button>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/lioevano" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/lioevano" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+<script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>

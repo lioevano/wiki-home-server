@@ -810,6 +810,90 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/11-fotos-arquivos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fotos e Arquivos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/12-segundo-cerebro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Segundo Cérebro
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/13-agentes-base/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentes: Base
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2353,8 +2437,22 @@
 </li>
 </ul>
 <h3 id="3-dados-persistentes-dos-containers-docker-volumes-nfs">3. Dados Persistentes dos Containers Docker (Volumes NFS)<a class="headerlink" href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" title="Permanent link">¶</a></h3>
-<p>Estes são os dados críticos que residem nos seus datasets ZFS (e.g., <code>/data/docker-volumes</code>, <code>/data/media</code>, <code>/data/rag_sources</code>) e são montados nas VMs via NFS para os containers Docker.</p>
+<p>Estes são os dados críticos que residem nos seus datasets ZFS (e.g., <code>/data/docker-volumes</code>, <code>/data/media</code>, <code>/data/photos</code>, <code>/data/files</code>, <code>/data/rag_sources</code>) e são montados nas VMs via NFS para os containers Docker.</p>
 <h4 id="a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana">A. Bancos de Dados das Aplicações (PostgreSQL para Authelia, Nextcloud, Grafana)<a class="headerlink" href="#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana" title="Permanent link">¶</a></h4>
+<div class="admonition warning">
+<p class="admonition-title">Immich e Nextcloud: bancos no disco local da VM</p>
+<p>Os bancos do Immich (<code>immich_db</code>) e do Nextcloud (<code>nextcloud_db</code>) ficam em <code>/opt/local-data</code> na <code>core-services-vm</code>, <strong>fora dos snapshots ZFS</strong>. O backup deles são os dumps diários, já automatizados (<a href="../../01-manual-implementacao/11-fotos-arquivos/">Fotos e Arquivos</a>):</p>
+<ul>
+<li><strong>Immich:</strong> o próprio Immich grava um dump por dia em <code>/data/photos/backups/</code> (14 últimos);</li>
+<li>
+<p><strong>Nextcloud:</strong> o timer <code>backup-nextcloud-db.timer</code> grava <code>nextcloud-&lt;data&gt;.dump</code> e <code>nextcloud-config-&lt;data&gt;.tar.gz</code> (o <code>config/</code> do Nextcloud, que também fica no disco local) em <code>/data/docker-volumes/nextcloud/db-dumps/</code> (duas semanas).</p>
+</li>
+<li>
+<p><strong>LiteLLM</strong> (na <code>ai-desktop-vm</code>): o timer <code>backup-litellm-db.timer</code> grava <code>litellm-&lt;data&gt;.dump</code> (chaves, orçamentos e histórico de uso) em <code>/data/docker-volumes/litellm/db-dumps/</code> (duas semanas); as chaves também podem ser recriadas pelo <code>setup-ai-keys.yml</code> a partir do vault (<a href="../../01-manual-implementacao/08-stack-ia/">seção 8</a>).</p>
+</li>
+</ul>
+<p>Todos ficam em datasets ZFS (snapshots, Borg e cópia off-site). A restauração de cada um está na página 11. O script de exemplo abaixo vale para os bancos que ainda não têm dump automático (Authelia e Grafana).</p>
+</div>
 <p>É <strong>altamente recomendado</strong> fazer dumps lógicos dos seus bancos de dados, além do backup do volume ZFS onde os arquivos do banco de dados residem. Dumps lógicos são mais portáteis e podem ser mais fáceis de restaurar para diferentes versões do PostgreSQL.</p>
 <ul>
 <li><strong>Como Fazer Backup (Scripts Agendados na <code>core-services-vm</code>):</strong><ul>
@@ -2441,35 +2539,37 @@
 </span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span>::<span class="s2">"</span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 </span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/docker-volumes<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/media<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/rag_sources<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span>--exclude<span class="w"> </span><span class="s1">'{{ zfs_base_pool_path }}/backups'</span><span class="w"> </span><span class="c1"># NÃO FAÇA BACKUP DO DIRETÓRIO DE BACKUPS EM SI!</span>
-</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="c1"># Adicione outros --exclude para caches, arquivos temporários grandes, etc.</span>
-</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span><span class="c1"># Ex: --exclude '**/node_modules' --exclude '**/*.pyc' --exclude '**/cache'</span>
-</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>
-</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="nv">BACKUP_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/photos<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/files<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/rag_sources<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span>--exclude<span class="w"> </span><span class="s1">'{{ zfs_base_pool_path }}/backups'</span><span class="w"> </span><span class="c1"># NÃO FAÇA BACKUP DO DIRETÓRIO DE BACKUPS EM SI!</span>
+</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="c1"># Adicione outros --exclude para caches, arquivos temporários grandes, etc.</span>
+</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="c1"># Ex: --exclude '**/node_modules' --exclude '**/*.pyc' --exclude '**/cache'</span>
 </span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>
-</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="c1"># Poda de backups antigos (exemplo: manter 7 diários, 4 semanais, 3 mensais)</span>
-</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Podando backups antigos do repositório </span><span class="si">${</span><span class="nv">BORG_REPO</span><span class="si">}</span><span class="s2">..."</span>
-</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>borg<span class="w"> </span>prune<span class="w"> </span>-v<span class="w"> </span>--list<span class="w"> </span>--show-rc<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">    </span>--keep-daily<span class="o">=</span><span class="m">7</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a><span class="w">    </span>--keep-weekly<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span>--keep-monthly<span class="o">=</span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">    </span>--keep-yearly<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="c1"># Opcional: manter 1 anual</span>
-</span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a>
-</span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="nv">PRUNE_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
+</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="nv">BACKUP_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
+</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>
+</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="c1"># Poda de backups antigos (exemplo: manter 7 diários, 4 semanais, 3 mensais)</span>
+</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Podando backups antigos do repositório </span><span class="si">${</span><span class="nv">BORG_REPO</span><span class="si">}</span><span class="s2">..."</span>
+</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>borg<span class="w"> </span>prune<span class="w"> </span>-v<span class="w"> </span>--list<span class="w"> </span>--show-rc<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span>--keep-daily<span class="o">=</span><span class="m">7</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">    </span>--keep-weekly<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">    </span>--keep-monthly<span class="o">=</span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">    </span>--keep-yearly<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="c1"># Opcional: manter 1 anual</span>
 </span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>
-</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="c1"># Verificar integridade do repositório (opcional, mas bom de vez em quando)</span>
-</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a><span class="c1"># borg check -v --show-rc</span>
-</span><span id="__span-5-37"><a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a>
-</span><span id="__span-5-38"><a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a><span class="nb">unset</span><span class="w"> </span>BORG_PASSPHRASE
+</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="nv">PRUNE_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
+</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>
+</span><span id="__span-5-37"><a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="c1"># Verificar integridade do repositório (opcional, mas bom de vez em quando)</span>
+</span><span id="__span-5-38"><a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a><span class="c1"># borg check -v --show-rc</span>
 </span><span id="__span-5-39"><a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>
-</span><span id="__span-5-40"><a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-5-41"><a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup Borg e poda concluídos com sucesso."</span>
-</span><span id="__span-5-42"><a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>ok<span class="w"> </span><span class="s2">"Backup Borg concluído"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>borg
-</span><span id="__span-5-43"><a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="k">else</span>
-</span><span id="__span-5-44"><a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup Borg ou poda falhou. Código de saída do Backup: </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="s2">, Poda: </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-5-45"><a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>critical<span class="w"> </span><span class="s2">"Backup Borg falhou"</span><span class="w"> </span><span class="s2">"backup=</span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="s2"> poda=</span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>borg
-</span><span id="__span-5-46"><a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="k">fi</span>
+</span><span id="__span-5-40"><a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="nb">unset</span><span class="w"> </span>BORG_PASSPHRASE
+</span><span id="__span-5-41"><a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>
+</span><span id="__span-5-42"><a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-5-43"><a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup Borg e poda concluídos com sucesso."</span>
+</span><span id="__span-5-44"><a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>ok<span class="w"> </span><span class="s2">"Backup Borg concluído"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>borg
+</span><span id="__span-5-45"><a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a><span class="k">else</span>
+</span><span id="__span-5-46"><a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup Borg ou poda falhou. Código de saída do Backup: </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="s2">, Poda: </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-5-47"><a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>critical<span class="w"> </span><span class="s2">"Backup Borg falhou"</span><span class="w"> </span><span class="s2">"backup=</span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="s2"> poda=</span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>borg
+</span><span id="__span-5-48"><a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a><span class="k">fi</span>
 </span></code></pre></div></li>
 <li>Torne o script executável e agende-o com <code>cron</code>. O aviso no Telegram vem do <code>scripts/notify.sh</code> (copie-o para <code>/opt/homeserver/scripts/</code> no host e configure <code>/etc/default/homeserver-notify</code>, ver <a href="../../01-manual-implementacao/09-painel-notificacoes/">Painel e Notificações</a>).</li>
 </ol>
@@ -2526,7 +2626,7 @@
 <ul>
 <li><strong>Como Fazer Snapshots:</strong><ul>
 <li><strong>Manual (para ações pontuais):</strong> <code>sudo zfs snapshot data/docker-volumes@antes_de_uma_mudanca_arriscada</code></li>
-<li><strong>Automatizado com <code>zfs-auto-snapshot</code> (ou <code>sanoid</code>):</strong><ul>
+<li><strong>Automatizado com <code>zfs-auto-snapshot</code> (ou <code>sanoid</code>):</strong> neste homeserver ele é instalado pelo <code>setup-proxmox-host.yml</code> e vale <strong>só para <code>data/notes</code></strong> (vaults do Obsidian; propriedade <code>com.sun:auto-snapshot</code>), para desfazer edições da IA — veja <a href="../../01-manual-implementacao/12-segundo-cerebro/#desfazer-uma-edição">Segundo cérebro</a>. Os vaults também têm cópia completa no PC e no celular (Syncthing). O índice do qmd, os documentos convertidos, o banco do Syncthing e o estado dos mcp-auth-proxy ficam no disco local da <code>ai-desktop-vm</code>, fora dos snapshots e sem backup: todos são regeráveis. A base dos agentes (<a href="../../01-manual-implementacao/13-agentes-base/">seção 13</a>) também fica no disco local e sem backup: na <code>core-services-vm</code>, o config do hub <code>agentgateway</code> (regerado pelo <code>setup-agents-volumes.yml</code>), o clone do repositório e os segredos do runner do <code>ops</code> (vêm do vault) e o estado OAuth do <code>mcp_auth_servidor</code>; na <code>ai-desktop-vm</code>, os dados do <strong>Langfuse</strong> (traces descartáveis; organização, projeto e chaves voltam pelas variáveis <code>LANGFUSE_INIT_*</code>).<ul>
 <li>O pacote <code>zfs-auto-snapshot</code> (geralmente instalado com <code>zfsutils-linux</code> no Debian/Ubuntu) configura scripts cron para tirar e podar snapshots automaticamente (e.g., horários, diários, semanais, mensais).</li>
 <li>Verifique a configuração em <code>/etc/cron.*/zfs-auto-snapshot</code> e, se existir, <code>/etc/default/zfs-auto-snapshot</code>.</li>
 <li>Para controle mais avançado e integração com replicação, considere <a href="https://github.com/jimsalterjrs/sanoid">Sanoid/Syncoid</a>.</li>
@@ -2636,7 +2736,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 03:52:11 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 15:44:41 -03">20 de outubro de 2026</span>
   </span>
 
     

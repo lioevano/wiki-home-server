@@ -383,6 +383,42 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../01-manual-implementacao/11-fotos-arquivos/">
+<span class="md-ellipsis">
+    
+  
+    Fotos e Arquivos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../01-manual-implementacao/12-segundo-cerebro/">
+<span class="md-ellipsis">
+    
+  
+    Segundo Cérebro
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../01-manual-implementacao/13-agentes-base/">
+<span class="md-ellipsis">
+    
+  
+    Agentes: Base
+  
+
+    
+  </span>
+</a>
+</li>
 </ul>
 </nav>
 </li>
@@ -539,37 +575,6 @@
       
     </span>
 </a>
-<nav aria-label="Estratégias de Roteamento e Casos de Uso" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#1-roteamento-por-custo-e-simplicidade-padrão-recomendado">
-<span class="md-ellipsis">
-      
-        1. Roteamento por Custo e Simplicidade (Padrão Recomendado)
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#2-roteamento-por-performance-modelo-específico">
-<span class="md-ellipsis">
-      
-        2. Roteamento por Performance (Modelo Específico)
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#3-roteamento-por-qualidade-de-serviço-qos">
-<span class="md-ellipsis">
-      
-        3. Roteamento por Qualidade de Serviço (QoS)
-      
-    </span>
-</a>
-</li>
-</ul>
-</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#gerenciamento-de-custos-e-orçamentos">
@@ -945,37 +950,6 @@
       
     </span>
 </a>
-<nav aria-label="Estratégias de Roteamento e Casos de Uso" class="md-nav">
-<ul class="md-nav__list">
-<li class="md-nav__item">
-<a class="md-nav__link" href="#1-roteamento-por-custo-e-simplicidade-padrão-recomendado">
-<span class="md-ellipsis">
-      
-        1. Roteamento por Custo e Simplicidade (Padrão Recomendado)
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#2-roteamento-por-performance-modelo-específico">
-<span class="md-ellipsis">
-      
-        2. Roteamento por Performance (Modelo Específico)
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#3-roteamento-por-qualidade-de-serviço-qos">
-<span class="md-ellipsis">
-      
-        3. Roteamento por Qualidade de Serviço (QoS)
-      
-    </span>
-</a>
-</li>
-</ul>
-</nav>
 </li>
 <li class="md-nav__item">
 <a class="md-nav__link" href="#gerenciamento-de-custos-e-orçamentos">
@@ -1067,60 +1041,60 @@
 
     B -- Resposta Unificada --&gt; A;</code></pre>
 <h2 id="estratégias-de-roteamento-e-casos-de-uso">Estratégias de Roteamento e Casos de Uso<a class="headerlink" href="#estratégias-de-roteamento-e-casos-de-uso" title="Permanent link">¶</a></h2>
-<p>O coração da nossa arquitetura híbrida é a capacidade do LiteLLM de rotear requisições de forma inteligente. Aqui estão algumas estratégias que podem ser configuradas no <code>config.yaml</code> do LiteLLM:</p>
-<h3 id="1-roteamento-por-custo-e-simplicidade-padrão-recomendado">1. Roteamento por Custo e Simplicidade (Padrão Recomendado)<a class="headerlink" href="#1-roteamento-por-custo-e-simplicidade-padrão-recomendado" title="Permanent link">¶</a></h3>
-<p>Esta é a estratégia mais comum e eficaz para um ambiente de home server.</p>
+<p>O roteamento do homeserver é feito por <strong>apelidos</strong> declarados em <code>llm_models</code> (<code>group_vars/all/main.yml</code>) e renderizados no <code>config.yaml</code> do LiteLLM (<a href="../../01-manual-implementacao/08-stack-ia/#modelos-e-apelidos">Stack de IA</a>). O cliente escolhe a intenção; o código decide o modelo.</p>
+<table>
+<thead>
+<tr>
+<th>Apelido</th>
+<th>Estratégia</th>
+<th>Exemplos de uso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rapido</code></td>
+<td>custo baixo e latência baixa</td>
+<td>resumir, classificar, responder notificações, automações do n8n</td>
+</tr>
+<tr>
+<td><code>principal</code></td>
+<td>qualidade</td>
+<td>análise de documentos, geração de código, textos técnicos</td>
+</tr>
+<tr>
+<td><code>local</code></td>
+<td>privacidade e custo zero</td>
+<td>dados que não devem sair de casa; tarefas leves</td>
+</tr>
+<tr>
+<td><code>decisao</code></td>
+<td>decisão tipada (Jev)</td>
+<td>triagem, roteamento, "aprovar ou não" dentro de automações e agentes</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li><strong>Configuração:</strong> Definir uma lista de modelos em ordem crescente de custo e capacidade.
-    <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="c1"># Em router_settings no config.yaml do LiteLLM</span>
-</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simple</span>
-</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"ollama/phi3"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"ollama/llama3"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"gemini-1.5-pro"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"claude-3-opus"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"gpt-4o"</span><span class="p p-Indicator">]</span>
-</span></code></pre></div></li>
-<li><strong>Como Funciona:</strong> As aplicações são configuradas para usar um nome de modelo genérico (ex: <code>"chat-geral"</code>). O LiteLLM recebe a requisição e tenta primeiro o modelo mais barato e rápido (<code>ollama/phi3</code>). Se o serviço do Ollama estiver offline ou falhar, ele automaticamente tenta o próximo da lista (<code>ollama/llama3</code>), subindo na cadeia até encontrar um que funcione. </li>
-<li><strong>Caso de Uso:</strong> Ideal para chatbots de uso geral, automações no n8n ou Home Assistant, onde a maioria das tarefas é simples (resumir um texto curto, classificar um email, gerar uma resposta de notificação) e pode ser perfeitamente atendida por um modelo local. As APIs externas atuam como um <em>fallback</em> robusto, garantindo que o serviço nunca fique indisponível.</li>
-</ul>
-<h3 id="2-roteamento-por-performance-modelo-específico">2. Roteamento por Performance (Modelo Específico)<a class="headerlink" href="#2-roteamento-por-performance-modelo-específico" title="Permanent link">¶</a></h3>
-<p>Para tarefas que você sabe que exigem o poder de um modelo de ponta.</p>
-<ul>
-<li><strong>Configuração:</strong> A aplicação cliente solicita diretamente o modelo desejado.
-    <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="c1"># Exemplo em um script Python</span>
-</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">chat</span><span class="o">.</span><span class="n">completions</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
-</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"gpt-4o"</span><span class="p">,</span> <span class="c1"># Solicita o melhor modelo diretamente</span>
-</span><span id="__span-1-4"><a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>    <span class="n">messages</span><span class="o">=</span><span class="p">[</span><span class="o">...</span><span class="p">]</span>
-</span><span id="__span-1-5"><a href="#__codelineno-1-5" id="__codelineno-1-5" name="__codelineno-1-5"></a><span class="p">)</span>
-</span></code></pre></div></li>
-<li><strong>Como Funciona:</strong> O LiteLLM vê que um modelo específico foi solicitado e ignora a lógica de roteamento simples. Ele envia a requisição diretamente para a API correspondente (neste caso, OpenAI), conforme definido na <code>model_list</code> do <code>config.yaml</code>. Ele ainda pode aplicar a lógica de <em>fallback</em> se configurada para aquele modelo específico (ex: se <code>gpt-4o</code> falhar, tentar <code>claude-3-opus</code>).</li>
-<li><strong>Caso de Uso:</strong> Análise de documentos complexos, geração de código, tradução de textos técnicos, ou qualquer tarefa onde a qualidade da resposta é mais importante que o custo da inferência.</li>
-</ul>
-<h3 id="3-roteamento-por-qualidade-de-serviço-qos">3. Roteamento por Qualidade de Serviço (QoS)<a class="headerlink" href="#3-roteamento-por-qualidade-de-serviço-qos" title="Permanent link">¶</a></h3>
-<p>Uma estratégia mais avançada para garantir que tarefas de alta prioridade sempre tenham a melhor performance.</p>
-<ul>
-<li><strong>Configuração:</strong> Criar diferentes rotas (deployments) no LiteLLM, cada uma com uma estratégia diferente.
-    <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a><span class="c1"># Em router_settings no config.yaml do LiteLLM</span>
-</span><span id="__span-2-2"><a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">deployment_name</span><span class="p">:</span><span class="w"> </span><span class="s">"rota-rapida-e-barata"</span>
-</span><span id="__span-2-3"><a href="#__codelineno-2-3" id="__codelineno-2-3" name="__codelineno-2-3"></a><span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simple</span>
-</span><span id="__span-2-4"><a href="#__codelineno-2-4" id="__codelineno-2-4" name="__codelineno-2-4"></a><span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"ollama/phi3"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"ollama/llama3"</span><span class="p p-Indicator">]</span>
-</span><span id="__span-2-5"><a href="#__codelineno-2-5" id="__codelineno-2-5" name="__codelineno-2-5"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">deployment_name</span><span class="p">:</span><span class="w"> </span><span class="s">"rota-alta-qualidade"</span>
-</span><span id="__span-2-6"><a href="#__codelineno-2-6" id="__codelineno-2-6" name="__codelineno-2-6"></a><span class="w">  </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">simple</span>
-</span><span id="__span-2-7"><a href="#__codelineno-2-7" id="__codelineno-2-7" name="__codelineno-2-7"></a><span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"gpt-4o"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"claude-3-opus"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"gemini-1.5-pro"</span><span class="p p-Indicator">]</span>
-</span></code></pre></div></li>
-<li><strong>Como Funciona:</strong> A aplicação cliente pode escolher qual "rota" usar ao fazer a requisição, passando o nome do <code>deployment</code> como o nome do modelo. Isso permite um controle granular sobre a relação custo/performance por requisição.</li>
-<li><strong>Caso de Uso:</strong> Uma aplicação de RAG (Retrieval-Augmented Generation) poderia usar a <code>rota-rapida-e-barata</code> para sumarizar documentos e extrair palavras-chave para sua base de vetores, mas usar a <code>rota-alta-qualidade</code> para gerar a resposta final para o usuário, que precisa ser coesa e precisa.</li>
+<li><strong>Fallback:</strong> <code>principal</code> e <code>rapido</code> têm um modelo de outro provedor como reserva (<code>llm_fallbacks</code>): se a Anthropic cair, a chamada vai para a OpenAI sem o cliente perceber.</li>
+<li><strong>Modelo específico:</strong> quando a tarefa exige um modelo exato, o cliente pede pelo nome próprio (ex.: <code>claude-opus-5-5</code>), que também está no <code>llm_models</code>. O Claude Code usa sempre nomes de modelos Claude.</li>
+<li><strong>Trocar de LLM:</strong> muda-se o <code>model</code> do apelido e roda-se o <code>setup-ai-volumes.yml</code>; nenhum cliente é alterado.</li>
+<li><strong>Contexto pessoal (segundo cérebro):</strong> as notas e os documentos não passam pelo gateway: a busca e os embeddings rodam localmente no qmd, e o Claude (app, claude.ai, Claude Code) ou o Open WebUI só leem o trecho que consultam pelos MCPs <code>notas</code> e <code>escrita</code> (<a href="../../01-manual-implementacao/12-segundo-cerebro/">Segundo cérebro</a>). O modelo que responde continua sendo escolhido pelo cliente.</li>
+<li><strong>Ferramentas e rastreio (base dos agentes):</strong> o acesso da IA ao servidor (métricas, logs, containers, Ansible, casa, automações) passa por um hub de MCPs com leitura pela internet e ações só na LAN, e cada chamada de LLM do LiteLLM e de ferramenta do hub fica registrada no <strong>Langfuse</strong> (<a href="../../01-manual-implementacao/13-agentes-base/">Agentes: base</a>).</li>
 </ul>
 <h2 id="gerenciamento-de-custos-e-orçamentos">Gerenciamento de Custos e Orçamentos<a class="headerlink" href="#gerenciamento-de-custos-e-orçamentos" title="Permanent link">¶</a></h2>
-<p>O maior risco de uma arquitetura híbrida é o custo inesperado com APIs externas. O LiteLLM oferece ferramentas robustas para mitigar isso:</p>
+<p>O maior risco de uma arquitetura híbrida é o custo inesperado com APIs externas. No homeserver:</p>
 <ul>
-<li><strong>Orçamentos (Budgets):</strong> Como configurado na seção de implementação, você pode definir orçamentos totais, por chave de API ou por usuário. Se um orçamento for atingido, o LiteLLM bloqueará novas requisições para modelos pagos, evitando gastos excessivos.</li>
-<li><strong>Cache:</strong> O cache integrado (local ou em Redis) armazena respostas para requisições idênticas. Se a mesma pergunta for feita várias vezes, apenas a primeira incorrerá em custo de API; as subsequentes serão servidas diretamente do cache, economizando dinheiro e melhorando a latência.</li>
-<li><strong>UI de Observabilidade:</strong> A interface de usuário do LiteLLM (acessível em <code>https://llm.seudominio.com</code>) fornece um dashboard para visualizar o uso, os custos por modelo e os logs de requisição, permitindo que você entenda seus padrões de uso e otimize suas estratégias de roteamento.</li>
+<li><strong>Orçamento por cliente:</strong> cada cliente tem uma chave virtual própria (<code>litellm_client_keys</code>) com orçamento mensal (<code>litellm_key_budgets</code>), aplicado pelo <code>setup-ai-keys.yml</code>. Estourou, aquele cliente recebe erro; os outros seguem.</li>
+<li><strong>Alerta de gasto:</strong> o Prometheus raspa as métricas do LiteLLM e o alerta <code>llm-gasto-alto</code> avisa no Telegram quando o gasto das últimas 24 h passa de <code>llm_gasto_diario_alerta</code>.</li>
+<li><strong>Observabilidade:</strong> a tela do LiteLLM em <code>https://llm.seudominio.com</code> (atrás do Authelia) mostra gasto, tokens e chamadas por chave e por modelo. O rastreamento passo a passo de agentes (Langfuse) entra com os agentes.</li>
+<li><strong>Cache:</strong> o cache de respostas do LiteLLM não está ligado; pode ser acrescentado em <code>litellm_settings</code> se houver muitas perguntas repetidas.</li>
 </ul>
-<p>Ao adotar esta arquitetura de IA híbrida, seu home server se torna uma plataforma de IA verdadeiramente resiliente, flexível e inteligente, capaz de lidar com uma vasta gama de tarefas de forma eficiente e econômica.</p>
+<p>Ao adotar esta arquitetura de IA híbrida, seu home server se torna uma plataforma de IA resiliente e flexível, com um único lugar para trocar modelos, controlar custos e ver o uso.</p>
 <aside class="md-source-file">
 <span class="md-source-file__fact">
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="7 de outubro de 2026 17:09:40 -03">7 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 15:44:41 -03">20 de outubro de 2026</span>
 </span>
 </aside>
 </article>

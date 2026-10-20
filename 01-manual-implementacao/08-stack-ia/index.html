@@ -3,7 +3,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Stack de IA na ai-desktop-vm: Ollama, LiteLLM, Open WebUI, OpenClaw e OpenClaude, com volumes e configuração do LiteLLM.">
+        <meta name="description" content="Stack de IA na ai-desktop-vm: gateway LiteLLM com apelidos de modelo, chaves por cliente e uso, Jev, Open WebUI com OIDC, Ollama com Vulkan e o Claude Code.">
       
       
         <meta name="author" content="Léo Ivan">
@@ -87,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#seção-8-stack-de-ia-ollama--litellm--open-webui--openclaw--openclaude" class="md-skip">
+        <a href="#seção-8-stack-de-ia-gateway-litellm-open-webui-ollama-e-claude-code" class="md-skip">
           Ir para o conteúdo
         </a>
       
@@ -796,13 +796,30 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#arquitetura" class="md-nav__link">
+  <a href="#modelos-e-apelidos" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Arquitetura
+        Modelos e apelidos
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Modelos e apelidos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuração-do-litellm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuração do LiteLLM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -829,11 +846,39 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#passos-manuais-ao-mudar-variáveis-ou-segredos" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chaves-orçamentos-e-uso" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Passos manuais ao mudar variáveis ou segredos
+        Chaves, orçamentos e uso
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-webui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open WebUI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Open WebUI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ferramentas-notas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ferramentas: notas
       
     </span>
   </a>
@@ -846,10 +891,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuração-do-litellm" class="md-nav__link">
+  <a href="#claude-code-no-seu-pc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuração do LiteLLM
+        Claude Code no seu PC
       
     </span>
   </a>
@@ -857,10 +902,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#baixando-modelos-no-ollama" class="md-nav__link">
+  <a href="#ollama-e-a-gpu-vulkan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Baixando Modelos no Ollama
+        Ollama e a GPU (Vulkan)
       
     </span>
   </a>
@@ -868,10 +913,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#acessando-os-serviços" class="md-nav__link">
+  <a href="#falhas" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Acessando os Serviços
+        Falhas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#teste-de-ponta-a-ponta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Teste de ponta a ponta
       
     </span>
   </a>
@@ -930,6 +986,90 @@
     
   
     Mídia
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../11-fotos-arquivos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fotos e Arquivos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../12-segundo-cerebro/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Segundo Cérebro
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../13-agentes-base/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agentes: Base
   
 
     
@@ -2027,13 +2167,30 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#arquitetura" class="md-nav__link">
+  <a href="#modelos-e-apelidos" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Arquitetura
+        Modelos e apelidos
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Modelos e apelidos">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuração-do-litellm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuração do LiteLLM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2060,11 +2217,39 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#passos-manuais-ao-mudar-variáveis-ou-segredos" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chaves-orçamentos-e-uso" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Passos manuais ao mudar variáveis ou segredos
+        Chaves, orçamentos e uso
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-webui" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open WebUI
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Open WebUI">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ferramentas-notas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ferramentas: notas
       
     </span>
   </a>
@@ -2077,10 +2262,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuração-do-litellm" class="md-nav__link">
+  <a href="#claude-code-no-seu-pc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuração do LiteLLM
+        Claude Code no seu PC
       
     </span>
   </a>
@@ -2088,10 +2273,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#baixando-modelos-no-ollama" class="md-nav__link">
+  <a href="#ollama-e-a-gpu-vulkan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Baixando Modelos no Ollama
+        Ollama e a GPU (Vulkan)
       
     </span>
   </a>
@@ -2099,10 +2284,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#acessando-os-serviços" class="md-nav__link">
+  <a href="#falhas" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Acessando os Serviços
+        Falhas
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#teste-de-ponta-a-ponta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Teste de ponta a ponta
       
     </span>
   </a>
@@ -2129,48 +2325,142 @@
   
 
 
-<h1 id="seção-8-stack-de-ia-ollama--litellm--open-webui--openclaw--openclaude">Seção 8: Stack de IA (Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude)<a class="headerlink" href="#seção-8-stack-de-ia-ollama--litellm--open-webui--openclaw--openclaude" title="Permanent link">¶</a></h1>
-<p>A stack de IA roda na <code>ai-desktop-vm</code>. Todos os serviços estão em <code>docker/stacks/ai/docker-compose.yml</code>.</p>
-<h2 id="arquitetura">Arquitetura<a class="headerlink" href="#arquitetura" title="Permanent link">¶</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Open WebUI ─┐
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>OpenClaw ───┤──► LiteLLM (proxy:4000) ──► Ollama (local, porta 11434)
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>OpenClaude ─┤                           └──► APIs externas (Gemini, OpenAI, Anthropic)
+<h1 id="seção-8-stack-de-ia-gateway-litellm-open-webui-ollama-e-claude-code">Seção 8: Stack de IA (gateway LiteLLM, Open WebUI, Ollama e Claude Code)<a class="headerlink" href="#seção-8-stack-de-ia-gateway-litellm-open-webui-ollama-e-claude-code" title="Permanent link">¶</a></h1>
+<p>A stack de IA roda na <code>ai-desktop-vm</code> (<code>docker/stacks/ai/docker-compose.yml</code>), gerenciada pelo Portainer da <code>core-services-vm</code> pelo Portainer Agent (<a href="../04-configuracao-base-vms-ubuntu/#42-role-ansible-docker-ansiblerolesinfradocker">seção 4.2</a>). O centro é o <strong>LiteLLM</strong>: um gateway único para todos os modelos, que guarda as chaves dos provedores, dá a cada cliente uma chave própria com orçamento e registra cada chamada (tokens, custo, latência).</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Open WebUI ────────────┐                          ┌──► Anthropic (Claude) · OpenAI · Gemini
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>Claude Code (claude-gw)┼──► LiteLLM :4000 (LAN) ──┼──► TypeSafe (Jev, decisões)
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>n8n / agentes (4c) ────┘     │ Postgres (uso, chaves)└──► Ollama (local, Vulkan na RX 5600 XT)
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                             └► métricas :4001 → Prometheus · tela de uso em llm. (Authelia)
 </span></code></pre></div>
-<ul>
-<li><strong>Ollama</strong>: Executa modelos LLM locais. Baixe modelos com <code>ollama pull llama3.2</code>, <code>ollama pull phi3</code>, etc.</li>
-<li><strong>LiteLLM</strong>: Proxy OpenAI-compatible. Roteia requisições entre Ollama e APIs externas com fallback automático.</li>
-<li><strong>Open WebUI</strong>: Interface web para chat com LLMs. Usa o LiteLLM como API compatível com OpenAI (<code>OPENAI_API_BASE_URL=http://litellm:4000/v1</code>, chave <code>LITELLM_MASTER_KEY</code>) e o Ollama direto para gerenciar modelos locais. Acessível em <code>https://openwebui.seudominio.com</code> (Traefik da <code>core-services-vm</code> + Authelia, router <code>openwebui-dynamic</code> em <code>ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2</code>) ou na LAN em <code>http://ai-desktop-ip:3000</code>.</li>
-<li><strong>OpenClaw</strong>: CLI agent para terminal. Conecta ao LiteLLM.</li>
-<li><strong>OpenClaude</strong>: Assistente AI com memória persistente e integração com ferramentas locais.</li>
-<li><strong>Logs e métricas</strong>: não há coletor na stack; o Grafana Alloy instalado na VM envia ao Loki e ao Prometheus da <code>core-services-vm</code> os logs dos containers e do sistema e as métricas do host e dos containers (<a href="../04-configuracao-base-vms-ubuntu/#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy">seção 4.4</a>).</li>
-<li><strong>Diun (<code>diun_ai</code>)</strong>: Avisa (via n8n → Telegram) quando sai imagem nova de algum container desta VM; chama <code>https://n8n.seudominio.com/webhook/notificar</code> com <code>NOTIFICACOES_WEBHOOK_TOKEN</code>. Veja <a href="../09-painel-notificacoes/">Painel e Notificações</a>.</li>
-</ul>
+<table>
+<thead>
+<tr>
+<th>Serviço</th>
+<th>Papel</th>
+<th>Acesso</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>litellm</code> (container <code>litellm_proxy</code>)</td>
+<td>Gateway: API OpenAI, API Anthropic (<code>/v1/messages</code>) e passagem do Jev (<code>/typesafe/...</code>)</td>
+<td>API em <code>http://&lt;ai_desktop_vm_ip_var&gt;:4000</code>, só na LAN; tela em <code>https://llm.seudominio.com</code> (Authelia)</td>
+</tr>
+<tr>
+<td><code>litellm_db</code></td>
+<td>Postgres: chaves virtuais, orçamentos e registro de uso</td>
+<td>interno; disco local da VM</td>
+</tr>
+<tr>
+<td><code>ollama</code></td>
+<td>Modelos locais pequenos (Vulkan; CPU se a GPU não pegar)</td>
+<td>interno (sem porta publicada)</td>
+</tr>
+<tr>
+<td><code>open-webui</code></td>
+<td>Chat no navegador e no celular (PWA)</td>
+<td><code>https://openwebui.seudominio.com</code> (Authelia + OIDC)</td>
+</tr>
+<tr>
+<td><code>diun_ai</code></td>
+<td>Avisa de imagens novas (n8n → Telegram)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>Logs e métricas do host e dos containers vão pelo Grafana Alloy da VM (<a href="../04-configuracao-base-vms-ubuntu/#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy">seção 4.4</a>); as métricas do LiteLLM saem na porta 4001 para o job <code>litellm</code> do Prometheus.</p>
+<h2 id="modelos-e-apelidos">Modelos e apelidos<a class="headerlink" href="#modelos-e-apelidos" title="Permanent link">¶</a></h2>
+<p>Os clientes não citam o modelo do provedor, e sim um <strong>apelido</strong>. Para trocar de LLM a qualquer momento, mude o <code>model</code> do apelido em <code>llm_models</code> (<code>group_vars/all/main.yml</code>, <a href="../01-maquina-controle-ansible/">seção 1</a>), rode o <code>setup-ai-volumes.yml</code> e <code>docker restart litellm_proxy</code>; nenhum cliente muda.</p>
+<table>
+<thead>
+<tr>
+<th>Apelido</th>
+<th>Para quê</th>
+<th>Modelo inicial</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>principal</code></td>
+<td>qualidade</td>
+<td><code>anthropic/claude-sonnet-5-5</code> (fallback: <code>gpt-6.1-sol</code>)</td>
+</tr>
+<tr>
+<td><code>rapido</code></td>
+<td>barato e ágil</td>
+<td><code>anthropic/claude-haiku-5-5</code> (fallback: <code>gpt-6-luna</code>)</td>
+</tr>
+<tr>
+<td><code>local</code></td>
+<td>privado, sem sair de casa</td>
+<td><code>ollama_chat/llama3.2:3b</code></td>
+</tr>
+<tr>
+<td><code>decisao</code></td>
+<td>decisões rápidas e tipadas (Jev)</td>
+<td><code>typesafe/jev-latest</code></td>
+</tr>
+</tbody>
+</table>
+<p>Os modelos também ficam disponíveis pelo nome próprio (<code>claude-opus-5-5</code>, <code>claude-sonnet-5-5</code>, <code>claude-haiku-5-5</code>, <code>gpt-6.1-sol</code>, <code>gpt-6-luna</code>, <code>gemini-3.8-flash</code>). A fonte da verdade é o código: o LiteLLM roda com <code>store_model_in_db: false</code>, então modelos criados pela tela não sobrevivem a um restart.</p>
+<p><strong>Jev (<code>decisao</code>).</strong> O Jev, da TypeSafe AI, não conversa: recebe um estado e uma pergunta e devolve uma decisão tipada (sim/não com probabilidade, uma escolha entre opções ou uma nota), com confiança. É barato e rápido, bom para triagem, roteamento e "aprovar ou não" dentro de automações e agentes (4c). Os clientes o chamam pela rota unificada <code>POST http://&lt;ai_desktop_vm_ip_var&gt;:4000/v1/systemone</code> com <code>"model": "decisao"</code> no corpo e a chave virtual do cliente no <code>Authorization: Bearer</code>; o LiteLLM resolve o apelido, troca pela <code>TYPESAFE_API_KEY</code> e registra o custo. A rota <code>/typesafe/...</code> também existe, mas é passagem crua para a API da TypeSafe (não consulta os apelidos; use o nome do modelo deles). Não há streaming.</p>
+<h3 id="configuração-do-litellm">Configuração do LiteLLM<a class="headerlink" href="#configuração-do-litellm" title="Permanent link">¶</a></h3>
+<p>O <code>config.yaml</code> é gerado pelo <code>ansible/playbooks/setup-ai-volumes.yml</code> a partir do template abaixo e de <code>llm_models</code>/<code>llm_fallbacks</code>. Ele <strong>não tem segredos</strong>: as chaves dos provedores, a chave mestra e o endereço do banco entram pelo ambiente do container (<code>os.environ/...</code>), que só o <code>litellm</code> recebe.</p>
+<div class="language-yaml highlight"><span class="filename">ansible/templates/litellm_config.yaml.j2</span><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># ansible/templates/litellm_config.yaml.j2</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># Gerado pelo setup-ai-volumes.yml em &lt;NFS&gt;/litellm/config/config.yaml, a partir de llm_models e</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># llm_fallbacks (group_vars/all/main.yml). Sem segredos: chaves, chave mestra e banco vêm do ambiente</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># do container (os.environ/...), que só o litellm recebe.</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">model_list</span><span class="p">:</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">for m in llm_models %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">m.name</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">m.model</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">if m.chave is defined %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"os.environ/{{</span><span class="nv"> </span><span class="s">m.chave</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">endif %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">if m.api_base is defined %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">      </span><span class="nt">api_base</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">m.api_base</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">endif %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">endfor %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="nt">router_settings</span><span class="p">:</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">  </span><span class="nt">fallbacks</span><span class="p">:</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">for f in llm_fallbacks %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">for apelido</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">destinos in f.items() %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">apelido</span><span class="w"> </span><span class="p p-Indicator">}}:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">destinos | to_json</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">endfor %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="p p-Indicator">{</span><span class="err">%</span><span class="w"> </span><span class="nv">endfor %</span><span class="p p-Indicator">}</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="nt">litellm_settings</span><span class="p">:</span>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">  </span><span class="c1"># prometheus: métricas no servidor separado da porta 4001 (--prometheus_metrics_port);</span>
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">  </span><span class="c1"># langfuse_otel: cada chamada vai para o Langfuse (página 13; LANGFUSE_PUBLIC_KEY/SECRET_KEY/OTEL_HOST no ambiente).</span>
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">  </span><span class="nt">callbacks</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">"prometheus"</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">"langfuse_otel"</span><span class="p p-Indicator">]</span>
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="nt">general_settings</span><span class="p">:</span>
+</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">  </span><span class="nt">master_key</span><span class="p">:</span><span class="w"> </span><span class="s">"os.environ/LITELLM_MASTER_KEY"</span>
+</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">  </span><span class="nt">database_url</span><span class="p">:</span><span class="w"> </span><span class="s">"os.environ/DATABASE_URL"</span>
+</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">  </span><span class="nt">store_model_in_db</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w"> </span><span class="c1"># a fonte da verdade dos modelos é este arquivo (llm_models)</span>
+</span></code></pre></div>
 <h2 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">¶</a></h2>
 <ol>
-<li>
-<p>Execute o playbook de volumes:
-   </p><div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-ai-volumes.yml
-</span></code></pre></div><p></p>
-</li>
-<li>
-<p><strong>Se Portainer está gerenciando a ai-desktop-vm:</strong></p>
-</li>
-<li>Adicione o endpoint da ai-desktop-vm no Portainer (via Portainer Agent ou TCP)</li>
-<li><strong>Stacks</strong> &gt; <strong>Add Stack</strong> &gt; Nome: <code>ai</code></li>
-<li>Cole o conteúdo de <code>docker/stacks/ai/docker-compose.yml</code></li>
-<li>Carregue <code>/opt/portainer_stack_envs/ai.env</code> (já traz todos os segredos; nada a adicionar à mão)</li>
-<li>
-<p><strong>Deploy</strong></p>
-</li>
-<li>
-<p><strong>Se deploy manual via CLI (na ai-desktop-vm):</strong>
-   </p><div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">cd</span><span class="w"> </span>/path/to/docker/stacks/ai
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>sudo<span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>--env-file<span class="w"> </span>/opt/portainer_stack_envs/ai.env<span class="w"> </span>up<span class="w"> </span>-d
-</span></code></pre></div><p></p>
-</li>
+<li><strong>Vault</strong> (<code>ansible-vault edit inventories/home/group_vars/all/vault.yml</code>; modelo na <a href="../01-maquina-controle-ansible/">seção 1</a>): <code>litellm_master_key</code>, <code>litellm_db_password</code>, <code>llm_api_keys.{anthropic,openai,google_gemini,typesafe}</code>, <code>litellm_client_keys.{openwebui,claude_code,n8n}</code> (<code>echo sk-$(openssl rand -hex 24)</code>), <code>openwebui_secret_key</code> e <code>oidc_clients.openwebui</code> (<code>secret</code> e <code>secret_digest</code>, gerados como os do Immich e do Nextcloud na <a href="../11-fotos-arquivos/#deploy">seção 11</a>).</li>
+<li><strong>Authelia:</strong> rode o <code>setup-core-networking.yml</code> (cliente OIDC <code>openwebui</code> e router <code>llm.</code>) e <code>docker restart authelia traefik</code>.</li>
+<li><strong>Volumes, imagem do Ollama e <code>ai.env</code></strong> (primeiro com <code>--check</code>):
+   <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-ai-volumes.yml<span class="w"> </span>--ask-vault-pass<span class="w"> </span>--check
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-ai-volumes.yml<span class="w"> </span>--ask-vault-pass
+</span></code></pre></div>
+   O playbook aplica o role <code>ansible/roles/apps/ml-tools/</code> (constrói <code>localhost/homeserver/ollama-vulkan:&lt;ollama_version&gt;</code> a partir de <code>ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2</code>: a imagem oficial mais o driver Vulkan da AMD), gera o <code>config.yaml</code>, cria o banco local do LiteLLM em <code>/opt/local-data/litellm-db</code>, instala o dump diário (<code>ansible/templates/backup-postgres.sh.j2</code>, timer <code>backup-litellm-db.timer</code>) e grava o <code>/opt/portainer_stack_envs/ai.env</code> (<code>0600</code>).</li>
+<li><strong>Portainer:</strong> adicione o ambiente da ai-desktop-vm (<strong>Environments → Add environment → Docker Standalone → Agent</strong>, endereço <code>&lt;ai_desktop_vm_ip_var&gt;:9001</code>; o <code>AGENT_SECRET</code> vem de <code>portainer_agent_secret</code>), depois <strong>Stacks → Add Stack</strong> <code>ai</code> com <code>docker/stacks/ai/docker-compose.yml</code> e o <code>ai.env</code> → <strong>Deploy the stack</strong>.</li>
+<li><strong>Chaves dos clientes:</strong> com o LiteLLM no ar, crie as chaves virtuais e seus orçamentos:
+   <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-ai-keys.yml<span class="w"> </span>--ask-vault-pass
+</span></code></pre></div></li>
+<li><strong>Modelo local:</strong> <code>docker exec -it ollama ollama pull llama3.2:3b</code>.</li>
 </ol>
+<div class="admonition warning">
+<p class="admonition-title">Banco do LiteLLM fora dos snapshots ZFS</p>
+<p>O Postgres do LiteLLM fica no disco local da VM (<code>/opt/local-data/litellm-db</code>), fora dos snapshots ZFS, como os do Immich e do Nextcloud (regra DAD-5). O backup dele é o dump diário do timer <code>backup-litellm-db.timer</code> em <code>docker-volumes/litellm/db-dumps/</code> (duas semanas), listado na <a href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/">estratégia de backup</a>. As chaves dos clientes também podem ser recriadas a qualquer momento pelo <code>setup-ai-keys.yml</code>.</p>
+</div>
 <h3 id="variáveis-da-stack">Variáveis da stack<a class="headerlink" href="#variáveis-da-stack" title="Permanent link">¶</a></h3>
-<p>O <code>ai.env</code> é gerado por <code>ansible/playbooks/setup-ai-volumes.yml</code> (via <code>ansible/templates/portainer_stack_env.j2</code>) com <code>mode: '0600'</code>, porque contém segredos.</p>
 <table>
 <thead>
 <tr>
@@ -2180,120 +2470,144 @@
 </thead>
 <tbody>
 <tr>
-<td><code>DOCKER_PUID</code>, <code>DOCKER_PGID</code>, <code>SYSTEM_TIMEZONE</code></td>
-<td>comuns (vault)</td>
+<td><code>AI_STACK_LITELLM_CONFIG_PATH</code>, <code>AI_STACK_OLLAMA_MODELS_PATH</code>, <code>AI_STACK_OPENWEBUI_DATA_PATH</code>, <code>AI_STACK_DIUN_DATA_PATH</code></td>
+<td>NFS + <code>docker-volumes</code></td>
 </tr>
 <tr>
-<td><code>AI_STACK_*_PATH</code></td>
-<td><code>vm_nfs_mount_base_path</code> + <code>zfs_docker_volumes_dataset_name</code></td>
+<td><code>AI_STACK_LITELLM_DB_PATH</code></td>
+<td><code>vm_local_data_path</code> + <code>litellm-db</code> (disco local)</td>
 </tr>
 <tr>
 <td><code>AI_DESKTOP_VM_IP</code></td>
 <td><code>ai_desktop_vm_ip_var</code> do <code>hosts.ini</code></td>
 </tr>
 <tr>
-<td><code>LITELLM_MASTER_KEY</code></td>
-<td>vault <code>litellm_master_key</code></td>
+<td><code>AI_RENDER_GID</code></td>
+<td>GID do grupo <code>render</code> da VM (lido pelo playbook)</td>
 </tr>
 <tr>
-<td><code>OPENAI_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>GEMINI_API_KEY</code></td>
-<td>vault <code>llm_api_keys.openai</code>, <code>.anthropic</code>, <code>.google_gemini</code></td>
+<td><code>OLLAMA_IMAGE</code></td>
+<td><code>localhost/homeserver/ollama-vulkan:{{ ollama_version }}</code></td>
 </tr>
 <tr>
-<td><code>OPENWEBUI_SECRET_KEY</code></td>
-<td>vault <code>openwebui_secret_key</code></td>
+<td><code>LITELLM_MASTER_KEY</code>, <code>LITELLM_DB_PASSWORD</code></td>
+<td>vault <code>litellm_master_key</code>, <code>litellm_db_password</code></td>
+</tr>
+<tr>
+<td><code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>, <code>GEMINI_API_KEY</code>, <code>TYPESAFE_API_KEY</code></td>
+<td>vault <code>llm_api_keys.*</code> (só o <code>litellm</code> recebe)</td>
+</tr>
+<tr>
+<td><code>LITELLM_KEY_OPENWEBUI</code></td>
+<td>vault <code>litellm_client_keys.openwebui</code></td>
+</tr>
+<tr>
+<td><code>OPENWEBUI_SECRET_KEY</code>, <code>OPENWEBUI_OAUTH_CLIENT_SECRET</code></td>
+<td>vault <code>openwebui_secret_key</code>, <code>oidc_clients.openwebui.secret</code></td>
+</tr>
+<tr>
+<td><code>OPENWEBUI_LOGIN_FORM</code></td>
+<td><code>openwebui_login_form</code> (<code>group_vars</code>)</td>
 </tr>
 <tr>
 <td><code>NOTIFICACOES_WEBHOOK_TOKEN</code></td>
-<td>vault <code>notificacoes_webhook_token</code> (Diun)</td>
+<td>vault (Diun)</td>
 </tr>
 </tbody>
 </table>
-<h3 id="passos-manuais-ao-mudar-variáveis-ou-segredos">Passos manuais ao mudar variáveis ou segredos<a class="headerlink" href="#passos-manuais-ao-mudar-variáveis-ou-segredos" title="Permanent link">¶</a></h3>
+<p>Para mudar variáveis ou segredos: edite o vault ou o <code>group_vars</code> pela wiki, rode o <code>setup-ai-volumes.yml</code> (sem <code>--diff</code>, que imprimiria os segredos), recarregue o <code>ai.env</code> em <strong>Env</strong> e <strong>Update the stack</strong>.</p>
+<h2 id="chaves-orçamentos-e-uso">Chaves, orçamentos e uso<a class="headerlink" href="#chaves-orçamentos-e-uso" title="Permanent link">¶</a></h2>
+<p>Cada cliente tem uma <strong>chave virtual</strong> própria (<code>litellm_client_keys</code>), nunca a chave mestra: <code>openwebui</code>, <code>claude_code</code> e <code>n8n</code> (os agentes da próxima etapa ganham as suas). O <code>ansible/playbooks/setup-ai-keys.yml</code> cria no LiteLLM as que faltam (inclusive as apagadas pela tela), troca a chave de um cliente quando o valor no vault muda (apaga a antiga pelo alias e cria a nova) e ajusta o orçamento das que mudaram (<code>litellm_key_budgets</code>, US$ por mês, renovado a cada 30 dias); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.</p>
+<p><strong>Ver o uso:</strong> <code>https://llm.seudominio.com</code> (atrás do Authelia; entre com a <code>litellm_master_key</code>) mostra gasto, tokens e chamadas por chave e por modelo. O Prometheus raspa as métricas do LiteLLM (job <code>litellm</code>, porta 4001), e o alerta <code>llm-gasto-alto</code> avisa no Telegram quando o gasto das últimas 24 h passa de <code>llm_gasto_diario_alerta</code> (US$ 5 por padrão).</p>
+<h2 id="open-webui">Open WebUI<a class="headerlink" href="#open-webui" title="Permanent link">¶</a></h2>
+<p>O Open WebUI fala só com o LiteLLM (com a chave <code>openwebui</code>) — o acesso direto ao Ollama fica desligado, então todo uso aparece na tela do LiteLLM. Ele roda com <code>ENABLE_PERSISTENT_CONFIG=false</code>: a configuração vem sempre do compose (chave, conexões, formulário de login), e mudanças feitas em <em>Admin → Settings</em> nessas áreas não sobrevivem a um restart. Os modelos que aparecem nele são os do <code>llm_models</code>, inclusive os apelidos.</p>
+<p>O login é o <strong>OIDC do Authelia</strong> (cliente <code>openwebui</code>), além do forward-auth na frente: só entra quem está no grupo <code>admins</code> do Authelia, que vira administrador. No primeiro acesso:</p>
 <ol>
-<li>Confira no vault real (<code>ansible-vault edit inventories/home/group_vars/all/vault.yml</code>) que <code>litellm_master_key</code>, <code>llm_api_keys.*</code> e <code>openwebui_secret_key</code> estão preenchidos; gere chaves novas com <code>openssl rand -hex 32</code> (evite <code>$</code>, <code>#</code>, aspas e espaços: o <code>.env</code> não usa aspas).</li>
-<li>Simule e depois aplique o playbook (sem <code>--diff</code>, que imprimiria os segredos do <code>.env</code> no terminal):
-   <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-ai-volumes.yml<span class="w"> </span>--ask-vault-pass<span class="w"> </span>--check
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-ai-volumes.yml<span class="w"> </span>--ask-vault-pass
-</span></code></pre></div></li>
-<li>No Portainer, abra a stack <code>ai</code>, recarregue <code>/opt/portainer_stack_envs/ai.env</code> em <strong>Env</strong> e clique em <strong>Update the stack</strong>.</li>
+<li>Abra <code>https://openwebui.seudominio.com</code> e entre por <strong>Authelia</strong>; se já existia uma conta local com o mesmo e-mail, as duas se juntam.</li>
+<li>Desligue o formulário local: <code>openwebui_login_form: false</code> no <code>group_vars</code> (pela wiki), rode o <code>setup-ai-volumes.yml</code>, recarregue o <code>ai.env</code> e <strong>Update the stack</strong>. Se o Authelia cair, volte para <code>true</code> do mesmo jeito.</li>
 </ol>
-<p>O <code>setup-ai-volumes.yml</code> também aplica o role <code>ansible/roles/apps/ml-tools/</code> na <code>ai-desktop-vm</code>: ele instala o driver AMD/ROCm da GPU (RX 5600 XT) e desativa uma eventual instalação nativa antiga do Ollama. O Ollama roda <strong>só em container</strong> (<code>ollama/ollama:rocm</code>, com <code>/dev/kfd</code> e <code>/dev/dri</code>).</p>
-<div class="admonition warning">
-<p class="admonition-title">Suporte da RX 5600 XT</p>
-<p>A RX 5600 XT (RDNA1, <code>gfx1010</code>) não está na lista oficial de GPUs AMD do Ollama; se ela não for reconhecida, o Ollama roda em CPU (veja <code>docker logs ollama</code>). O resto da stack funciona igual.</p>
-</div>
-<h2 id="configuração-do-litellm">Configuração do LiteLLM<a class="headerlink" href="#configuração-do-litellm" title="Permanent link">¶</a></h2>
-<p>O arquivo <code>config.yaml</code> é gerado pelo Ansible a partir do template abaixo (segredos vêm do vault). Para trocar ou acrescentar modelos, edite este bloco e siga o fluxo wiki-first; modelos locais precisam ser baixados no Ollama (próxima seção).</p>
-<div class="language-yaml highlight"><span class="filename">ansible/templates/litellm_config.yaml.j2</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># ansible/templates/litellm_config.yaml.j2</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Gerado pelo setup-ai-volumes.yml em &lt;NFS&gt;/litellm/config/config.yaml.</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">general_settings</span><span class="p">:</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">master_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">litellm_master_key</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nt">model_list</span><span class="p">:</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt-4o</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gpt-4o</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">llm_api_keys.openai</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">claude-3-opus</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">claude-3-opus-20240229</span>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">llm_api_keys.anthropic</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
-</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gemini-1.5-pro</span>
-</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gemini/gemini-1.5-pro-latest</span>
-</span><span id="__span-4-20"><a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a><span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">llm_api_keys.google_gemini</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-4-21"><a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>
-</span><span id="__span-4-22"><a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/llama3.2</span>
-</span><span id="__span-4-23"><a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a><span class="w">    </span><span class="nt">litellm_params</span><span class="p">:</span>
-</span><span id="__span-4-24"><a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a><span class="w">      </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ollama/llama3.2</span>
-</span><span id="__span-4-25"><a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a><span class="w">      </span><span class="nt">api_base</span><span class="p">:</span><span class="w"> </span><span class="s">"http://ollama:11434"</span><span class="w"> </span><span class="c1"># Ollama na mesma rede Docker (ai_network); ele não escuta no IP da VM</span>
+<h3 id="ferramentas-notas">Ferramentas: notas<a class="headerlink" href="#ferramentas-notas" title="Permanent link">¶</a></h3>
+<p>O compose declara, em <code>TOOL_SERVER_CONNECTIONS</code>, os dois MCPs do <a href="../12-segundo-cerebro/">segundo cérebro</a>: <strong>Notas (busca)</strong> (<code>http://qmd:8181/mcp</code>) e <strong>Notas (escrita)</strong> (<code>http://notes_escrita:8000/mcp</code>). O <code>open-webui</code> entra na rede <code>notes_mcp</code>, criada pela stack <code>notes</code>, então a stack <code>notes</code> precisa subir <strong>antes</strong> de um novo deploy da stack <code>ai</code>. Sem <code>access_grants</code>, só administradores usam as ferramentas. Na conversa, ligue-as pelo ícone de ferramentas (ou em <em>Workspace → Models</em>, por modelo).</p>
+<h2 id="claude-code-no-seu-pc">Claude Code no seu PC<a class="headerlink" href="#claude-code-no-seu-pc" title="Permanent link">¶</a></h2>
+<p>O Claude Code roda no seu PC Linux e tem dois modos:</p>
+<ul>
+<li><strong><code>claude</code></strong> — o login da sua assinatura Claude, direto na Anthropic. É o uso do dia a dia; não passa pelo gateway.</li>
+<li><strong><code>claude-gw</code></strong> — pelo gateway, com a chave <code>claude_code</code>: aparece na tela de uso, respeita o orçamento e serve para automações. Funciona na LAN (de fora, pela VPN quando ela existir). A Anthropic só suporta o Claude Code com modelos Claude, então este perfil usa os nomes reais (<code>claude-opus-5-5</code>, <code>claude-sonnet-5-5</code>, <code>claude-haiku-5-5</code>), não os apelidos.</li>
+</ul>
+<p>Crie o alias no <code>~/.bashrc</code> (a chave fica só no seu PC; nunca num <code>.claude/settings.json</code> de repositório):</p>
+<div class="language-bash highlight"><span class="filename">Exemplo: alias claude-gw no ~/.bashrc</span><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">alias</span><span class="w"> </span>claude-gw<span class="o">=</span><span class="s1">'ANTHROPIC_BASE_URL=http://&lt;ai_desktop_vm_ip_var&gt;:4000 \</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="s1">  ANTHROPIC_AUTH_TOKEN=&lt;litellm_client_keys.claude_code&gt; \</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s1">  ANTHROPIC_DEFAULT_OPUS_MODEL=claude-opus-5-5 \</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s1">  ANTHROPIC_DEFAULT_SONNET_MODEL=claude-sonnet-5-5 \</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s1">  ANTHROPIC_DEFAULT_HAIKU_MODEL=claude-haiku-5-5 \</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s1">  claude'</span>
 </span></code></pre></div>
-<h2 id="baixando-modelos-no-ollama">Baixando Modelos no Ollama<a class="headerlink" href="#baixando-modelos-no-ollama" title="Permanent link">¶</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Na ai-desktop-vm, ou via docker exec</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>llama3.2
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>ollama<span class="w"> </span>ollama<span class="w"> </span>pull<span class="w"> </span>phi3
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>ollama<span class="w"> </span>ollama<span class="w"> </span>list
+<p>Com o <code>ANTHROPIC_AUTH_TOKEN</code> definido, o Claude Code usa a chave do gateway em vez da assinatura (o login continua salvo e volta quando você usa <code>claude</code>). Para conferir: teste o gateway com <code>curl</code> e, dentro do Claude Code, <code>/status</code> mostra <code>Anthropic base URL</code> e <code>Auth token</code>:</p>
+<div class="language-bash highlight"><span class="filename">Exemplo: teste do gateway no formato do Claude Code</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>curl<span class="w"> </span>-sS<span class="w"> </span>-w<span class="w"> </span><span class="s1">'\n%{http_code}\n'</span><span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">"http://&lt;ai_desktop_vm_ip_var&gt;:4000/v1/messages"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer &lt;litellm_client_keys.claude_code&gt;"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"anthropic-version: 2023-06-01"</span><span class="w"> </span>-H<span class="w"> </span><span class="s2">"content-type: application/json"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{"model": "claude-haiku-5-5", "max_tokens": 1, "messages": [{"role": "user", "content": "."}]}'</span>
 </span></code></pre></div>
-<h2 id="acessando-os-serviços">Acessando os Serviços<a class="headerlink" href="#acessando-os-serviços" title="Permanent link">¶</a></h2>
+<p>Se um recurso novo do Claude Code der erro <code>400</code> pelo gateway (campos que o LiteLLM ainda não repassa), use <code>CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS=1</code> no alias até atualizar o LiteLLM. Mais detalhes na <a href="https://code.claude.com/docs/en/llm-gateway-connect">documentação do Claude Code sobre gateways</a>.</p>
+<h2 id="ollama-e-a-gpu-vulkan">Ollama e a GPU (Vulkan)<a class="headerlink" href="#ollama-e-a-gpu-vulkan" title="Permanent link">¶</a></h2>
+<p>A RX 5600 XT (RDNA1, <code>gfx1010</code>) não tem suporte oficial no ROCm; o Ollama usa a GPU por <strong>Vulkan</strong>, com o driver RADV do Mesa que a imagem local <code>localhost/homeserver/ollama-vulkan</code> acrescenta à oficial. O prefixo <code>localhost/</code> e o <code>pull_policy: never</code> garantem que ela nunca venha de um registro (no Portainer, não use <em>Re-pull image</em> nela), e o Diun a ignora. O container recebe só <code>/dev/dri</code> e o grupo <code>render</code>.</p>
+<ul>
+<li><strong>Conferir:</strong> <code>docker logs ollama | grep -i -E "vulkan|gpu"</code> deve listar a placa; com um modelo carregado, <code>docker exec ollama ollama ps</code> mostra <code>GPU</code> na coluna de processador.</li>
+<li><strong>Se não pegar:</strong> o Ollama roda em CPU sozinho — mais lento, mas funciona. Para forçar CPU (por exemplo, para liberar a GPU), acrescente <code>OLLAMA_VULKAN=0</code> ao <code>environment</code> do <code>ollama</code>.</li>
+<li><strong>Atualizar o Ollama:</strong> troque <code>ollama_version</code>, rode o <code>setup-ai-volumes.yml</code> (constrói a imagem nova) e <strong>Update the stack</strong>.</li>
+<li><strong>Baixar modelos:</strong> <code>docker exec -it ollama ollama pull &lt;modelo&gt;</code>; os 6 GB de VRAM comportam modelos de até uns 7–8B quantizados. Para usá-lo pelos clientes, aponte o apelido <code>local</code> (ou um item novo de <code>llm_models</code>) para <code>ollama_chat/&lt;modelo&gt;</code>.</li>
+</ul>
+<h2 id="falhas">Falhas<a class="headerlink" href="#falhas" title="Permanent link">¶</a></h2>
 <table>
 <thead>
 <tr>
-<th>Serviço</th>
-<th>URL</th>
-<th>Porta</th>
+<th>Situação</th>
+<th>Comportamento</th>
+<th>O que fazer</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Open WebUI</td>
-<td><code>https://openwebui.seudominio.com</code> (Authelia) ou <code>http://ai-desktop-ip:3000</code></td>
-<td>3000</td>
+<td>Provedor fora do ar</td>
+<td>O LiteLLM tenta o fallback do apelido</td>
+<td>Nada; a tela de uso mostra o desvio</td>
 </tr>
 <tr>
-<td>LiteLLM API</td>
-<td><code>http://ai-desktop-ip:4000</code> (chave: <code>LITELLM_MASTER_KEY</code>)</td>
-<td>4000</td>
+<td>Orçamento de uma chave esgotado</td>
+<td>Aquele cliente recebe erro de orçamento</td>
+<td>Aumente <code>litellm_key_budgets</code> e rode o <code>setup-ai-keys.yml</code></td>
 </tr>
 <tr>
-<td>Ollama API</td>
-<td>só dentro da VM: <code>http://127.0.0.1:11434</code> (ou <code>docker exec -it ollama ...</code>); os demais serviços usam <code>http://ollama:11434</code></td>
-<td>11434</td>
+<td>Gateway fora</td>
+<td>Open WebUI e <code>claude-gw</code> param</td>
+<td><code>claude</code> (assinatura) continua; <code>docker logs litellm_proxy</code></td>
 </tr>
 <tr>
-<td>OpenClaw</td>
-<td>Terminal (via <code>docker exec -it openclaw sh</code>)</td>
-<td>N/A</td>
+<td>GPU não reconhecida</td>
+<td>Ollama em CPU</td>
+<td>Ver a seção do Vulkan acima</td>
 </tr>
 <tr>
-<td>OpenClaude</td>
-<td>Terminal (via <code>docker exec -it openclaude sh</code>)</td>
-<td>N/A</td>
+<td>Banco do LiteLLM perdido</td>
+<td>Histórico de uso perdido</td>
+<td>Restaure o dump de <code>docker-volumes/litellm/db-dumps/</code> (<code>pg_restore</code>) ou recrie as chaves com o <code>setup-ai-keys.yml</code></td>
+</tr>
+<tr>
+<td>Authelia fora</td>
+<td>Login novo no Open WebUI falha</td>
+<td><code>openwebui_login_form: true</code> e o fluxo acima</td>
 </tr>
 </tbody>
 </table>
+<h2 id="teste-de-ponta-a-ponta">Teste de ponta a ponta<a class="headerlink" href="#teste-de-ponta-a-ponta" title="Permanent link">¶</a></h2>
+<ol>
+<li><code>curl -s http://&lt;ai_desktop_vm_ip_var&gt;:4000/health/liveliness</code> responde; <code>curl -s http://&lt;ai_desktop_vm_ip_var&gt;:4001/metrics | head</code> mostra métricas <code>litellm_</code>.</li>
+<li>No Open WebUI (entrando pelo Authelia), converse com <code>principal</code>, <code>rapido</code> e <code>local</code>; na tela <code>llm.</code>, as três chamadas aparecem na chave <code>openwebui</code>.</li>
+<li><code>claude-gw</code> responde e <code>/status</code> mostra o gateway; a chamada aparece na chave <code>claude_code</code>.</li>
+<li>Uma chamada a <code>/v1/systemone</code> com <code>"model": "decisao"</code> volta uma decisão com confiança.</li>
+<li><code>docker exec ollama ollama ps</code> mostra o modelo local na GPU (ou CPU, se o Vulkan não pegou).</li>
+<li><code>sudo systemctl start backup-litellm-db.service</code> cria um <code>litellm-&lt;data&gt;.dump</code> em <code>docker-volumes/litellm/db-dumps/</code>.</li>
+</ol>
 
 
 
@@ -2314,7 +2628,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 00:57:27 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 15:38:30 -03">20 de outubro de 2026</span>
   </span>
 
     
