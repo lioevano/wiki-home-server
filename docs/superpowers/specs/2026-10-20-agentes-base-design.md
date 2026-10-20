@@ -165,3 +165,11 @@ Código em `server/docker/images/ops/` (Python 3.13, FastMCP; imagem construída
 - **Runner com a chave dos servidores** é alvo valioso: fica só na rota de controle, na LAN, com playbooks em lista e simulação obrigatória.
 - **Langfuse pesado** (~3–4 GB de RAM): na `ai-desktop-vm`; se faltar memória, limitar ClickHouse e worker.
 - **Portainer 2.19.4 antigo:** a API usada (stacks, proxy Docker por endpoint) é estável; atualizar o Portainer fica para depois.
+
+## 14. Ajustes do plano
+
+- **Sem regra de UFW para a porta 4100:** portas publicadas pelo Docker não passam pelo UFW (já registrado no role `docker`, para o Portainer Agent). A proteção da rota `controle` é o bind no IP da LAN da `core-services-vm` mais a chave por cliente. A linha "UFW" da seção 7 fica sem efeito.
+- **`mcp-grafana`:** imagem `grafana/mcp-grafana:2.1.1` (sem `v`), `streamable-http` em `0.0.0.0:8000`, com `--allowed-hosts` igual ao nome do serviço (`mcp_grafana_leitura:8000`/`mcp_grafana_controle:8000`) — sem isso o servidor recusa o `Host` vindo do hub.
+- **Home Assistant e n8n:** o hub usa token Bearer (`backendAuth`): o MCP do Home Assistant aceita o token de longa duração; o do n8n, o token da tela "Instance-level MCP".
+- **Langfuse:** porta `3100` da `ai-desktop-vm`; o LiteLLM usa o callback `langfuse_otel` (`LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, `LANGFUSE_OTEL_HOST`).
+- **Runner:** a chave SSH vai por `-e ansible_ssh_private_key_file=…`, porque a variável do inventário (`hosts.ini`) vence a opção `--private-key`. O runner só funciona depois que o `vault.yml` criptografado existir no repositório (o Léo cria ao consolidar).
