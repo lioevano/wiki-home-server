@@ -30,7 +30,7 @@ AMBIENTE = {
     "NOTIFICACOES_WEBHOOK_TOKEN": "tok",
     "OPS_REPO_DIR": "/repo",
     "OPS_REPO_URL": "https://github.com/x/y.git",
-    "OPS_INVENTARIO": "server/ansible/inventories/home/hosts.ini",
+    "OPS_INVENTARIO": "inventories/home/hosts.ini",
     "OPS_CHAVE_SSH": "/segredos/id_ed25519",
     "OPS_PLANO_VALIDADE_MIN": "30",
 }
@@ -178,3 +178,157 @@ def test_registro_com_aviso():
     reg = auditoria.registrar("container_reiniciar", "jellyfin", "erro", 1.234, "falhou", avisos.append)
     assert reg["duracao_s"] == 1.23 and reg["aviso"] == "enviado"
     assert avisos[0]["gravidade"] == "warning" and avisos[0]["app"] == "ops"
+
+
+# --- Task 3: runner Ansible, servidor e imagem ---
+
+from ops.runner import Runner  # noqa: E402
+
+COMMIT_A, COMMIT_B = "a" * 40, "b" * 40
+
+
+class Comandos:
+    """executar falso: devolve o commit programado no rev-parse e saídas programadas no ansible-playbook."""
+
+    def __init__(self, saida="PLAY RECAP ok=3 changed=1"):
+        self.argvs: list[tuple[list[str], str, int]] = []
+        self.commit = COMMIT_A
+        self.saida = saida
+
+    def __call__(self, argv, cwd, timeout):
+        self.argvs.append((argv, cwd, timeout))
+        if argv[:1] == ["git"] and "rev-parse" in argv:
+            return 0, self.commit + "\n"
+        if argv[:1] == ["git"]:
+            return 0, "Already up to date.\n"
+        return 0, self.saida
+
+    def ansible(self):
+        return [a for a in self.argvs if a[0][0] == "ansible-playbook"]
+
+
+class Relogio:
+    def __init__(self):
+        self.t = 1000.0
+
+    def __call__(self):
+        return self.t
+
+
+def _runner(cmd=None, relogio=None):
+    return Runner(_cfg(), cmd or Comandos(), relogio or Relogio())
+
+
+def test_check_gera_plano():
+    cmd = Comandos()
+    r = _runner(cmd).check("setup-media-stack-volumes.yml", None)
+    assert r["plano_id"] and r["commit"] == COMMIT_A and r["rc"] == 0
+    git = [a for a in cmd.argvs if a[0][0] == "git"]
+    assert any("pull" in a[0] and "--ff-only" in a[0] for a in git)
+    assert cmd.argvs.index(git[0]) < cmd.argvs.index(cmd.ansible()[0])
+    argv, cwd, timeout = cmd.ansible()[0]
+    assert cwd == "/repo/server/ansible" and timeout == 900
+    assert argv[:3] == ["ansible-playbook", "-i", "inventories/home/hosts.ini"]
+    assert "playbooks/setup-media-stack-volumes.yml" in argv
+    assert "--check" in argv and "--diff" in argv
+    assert argv[argv.index("-e") + 1] == "ansible_ssh_private_key_file=/segredos/id_ed25519"
+
+
+def test_check_com_limite():
+    cmd = Comandos()
+    _runner(cmd).check("setup-media-stack-volumes.yml", "core-services-vm")
+    argv = cmd.ansible()[0][0]
+    assert argv[argv.index("-l") + 1] == "core-services-vm"
+
+
+def test_aplicar_exige_plano_valido():
+    cmd, relogio = Comandos(), Relogio()
+    runner = _runner(cmd, relogio)
+    with pytest.raises(Recusado):
+        runner.aplicar("inexistente")
+    # vencido
+    plano = runner.check("setup-media-stack-volumes.yml", "core-services-vm")["plano_id"]
+    relogio.t += 31 * 60
+    with pytest.raises(Recusado):
+        runner.aplicar(plano)
+    # repositório mudou entre o check e o aplicar
+    relogio.t += 1
+    plano = runner.check("setup-media-stack-volumes.yml", "core-services-vm")["plano_id"]
+    cmd.commit = COMMIT_B
+    with pytest.raises(Recusado):
+        runner.aplicar(plano)
+    # válido: mesmo playbook e limite, sem --check/--diff; o plano só vale uma vez
+    plano = runner.check("setup-media-stack-volumes.yml", "core-services-vm")["plano_id"]
+    r = runner.aplicar(plano)
+    argv, _, timeout = cmd.ansible()[-1]
+    assert "--check" not in argv and "--diff" not in argv and timeout == 3600
+    assert "playbooks/setup-media-stack-volumes.yml" in argv and argv[argv.index("-l") + 1] == "core-services-vm"
+    assert r["playbook"] == "setup-media-stack-volumes.yml" and r["commit"] == COMMIT_B
+    with pytest.raises(Recusado):
+        runner.aplicar(plano)
+
+
+def test_check_que_falha_nao_gera_plano():
+    class Falha(Comandos):
+        def __call__(self, argv, cwd, timeout):
+            rc, out = super().__call__(argv, cwd, timeout)
+            return (2, "fatal: UNREACHABLE") if argv[0] == "ansible-playbook" else (rc, out)
+    r = _runner(Falha()).check("setup-media-stack-volumes.yml", None)
+    assert r["rc"] == 2 and r["plano_id"] == ""
+
+
+def test_playbook_fora_da_lista():
+    cmd = Comandos()
+    with pytest.raises(Recusado):
+        _runner(cmd).check("vm-deploy.yml", None)
+    assert cmd.argvs == []
+
+
+def test_uma_execucao_por_vez():
+    runner = _runner()
+    assert runner._trava.acquire(blocking=False)
+    try:
+        with pytest.raises(Recusado, match="outra execução em andamento"):
+            runner.check("setup-media-stack-volumes.yml", None)
+    finally:
+        runner._trava.release()
+
+
+def test_saida_do_ansible_limpa():
+    saida = "TASK [x]\nvault_password: segredo\n" + "y" * 50_000 + "\nPLAY RECAP"
+    r = _runner(Comandos(saida)).check("setup-media-stack-volumes.yml", None)
+    assert "segredo" not in r["saida"] and r["saida"].endswith("PLAY RECAP")
+    assert len(r["saida"]) <= 20000 + 60
+
+
+def test_ferramentas_ansible_pelo_runner(capsys):
+    cfg = _cfg()
+    avisos = []
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), _runner(), avisos.append)
+    texto = fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml")
+    plano = texto.splitlines()[0].split(": ", 1)[1]
+    assert "PLAY RECAP" in fs["ansible_aplicar"].funcao(plano_id=plano)
+    assert [a["titulo"] for a in avisos][-1].startswith("IA: ansible_aplicar")
+
+
+IMG = ROOT / "server/docker/images/ops"
+
+
+def test_imagem_ops():
+    import yaml
+    from test_observabilidade import render
+    d = (IMG / "Dockerfile").read_text(encoding="utf-8")
+    assert [l for l in d.splitlines() if l and not l.startswith("#")][0] == "FROM python:3.13-slim"
+    assert "git" in d and "openssh-client" in d and "ansible-galaxy collection install -r" in d
+    assert "\nUSER " in d and "USER root" not in d.split("\nUSER ")[-1]
+    m = yaml.safe_load((ROOT / "server/ansible/inventories/home/group_vars/all/main.yml").read_text(encoding="utf-8"))
+    req = render("templates/agents/ops-requirements.txt.j2", ops_fastmcp_version=m["ops_fastmcp_version"],
+                 ops_ansible_core_version=m["ops_ansible_core_version"])
+    assert "fastmcp==4.1.2" in req and "ansible-core==2.21.5" in req
+
+
+def test_servidor_registra_com_anotacoes():
+    srv = (IMG / "ops/server.py").read_text(encoding="utf-8")
+    for trecho in ('transport="http"', 'host="0.0.0.0"', "port=8000", 'path="/mcp"', "destructiveHint",
+                   "readOnlyHint", "Config.do_ambiente(os.environ)", "enviar_webhook"):
+        assert trecho in srv, trecho

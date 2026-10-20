@@ -16,3 +16,14 @@ MCP de operações (`ops`), código Python próprio, testado em `tools/wikisync/
 - `docker/images/ops/ops/portainer.py` — cliente da API do Portainer: containers das duas VMs, logs, reinício, stacks e redeploy.
 - `docker/images/ops/ops/auditoria.py` — registro de cada ação (JSON no log, coletado para o Loki) e aviso no Telegram pelo webhook do n8n.
 - `docker/images/ops/ops/ferramentas.py` — as ferramentas MCP; no modo `leitura`, as que mudam algo nem existem.
+- `docker/images/ops/ops/runner.py` — runner Ansible: `git pull`, `ansible-playbook --check --diff` com `plano_id`, aplicação só do plano simulado no mesmo commit, uma execução por vez.
+- `docker/images/ops/ops/server.py` — registra as ferramentas do modo no FastMCP (com as anotações `readOnlyHint`/`destructiveHint`) e serve em `:8000/mcp`.
+- `docker/images/ops/Dockerfile` — imagem `localhost/homeserver/ops` (Python 3.13, git, cliente SSH, coleções do `ansible/requirements.yml`), sem root.
+
+As versões do FastMCP e do ansible-core vêm do `group_vars` por este template, gravado no diretório de build da imagem:
+
+```jinja title="ansible/templates/agents/ops-requirements.txt.j2"
+# Dependências do MCP ops (página 13). Versões em group_vars/all/main.yml.
+fastmcp=={{ ops_fastmcp_version }}
+ansible-core=={{ ops_ansible_core_version }}
+```

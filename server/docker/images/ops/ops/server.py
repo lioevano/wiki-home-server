@@ -1,0 +1,30 @@
+"""Ponto de entrada do MCP ops: registra no FastMCP as ferramentas do modo (OPS_MODO) e serve em HTTP."""
+from __future__ import annotations
+
+import os
+
+from fastmcp import FastMCP
+
+from .auditoria import enviar_webhook
+from .config import Config
+from .ferramentas import ferramentas
+from .portainer import Portainer, http_real
+from .runner import Runner
+
+
+def main() -> None:
+    cfg = Config.do_ambiente(os.environ)
+    runner = Runner(cfg) if cfg.modo == "controle" else None
+    mcp = FastMCP(name=f"ops-{cfg.modo}",
+                  instructions="Operações do homeserver: containers e stacks (Portainer) e playbooks Ansible "
+                               "(simule com ansible_check antes de ansible_aplicar).")
+    for f in ferramentas(cfg, Portainer(cfg, http_real(cfg)), runner,
+                         enviar_webhook(cfg.webhook_url, cfg.webhook_token)).values():
+        so_le = not f.destrutiva and f.nome != "ansible_check"
+        mcp.tool(f.funcao, name=f.nome, description=f.descricao,
+                 annotations={"readOnlyHint": so_le, "destructiveHint": f.destrutiva, "openWorldHint": False})
+    mcp.run(transport="http", host="0.0.0.0", port=8000, path="/mcp")
+
+
+if __name__ == "__main__":
+    main()
