@@ -130,6 +130,10 @@ O login é o **OIDC do Authelia** (cliente `openwebui`), além do forward-auth n
 1. Abra `https://openwebui.seudominio.com` e entre por **Authelia**; se já existia uma conta local com o mesmo e-mail, as duas se juntam.
 2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, recarregue o `ai.env` e **Update the stack**. Se o Authelia cair, volte para `true` do mesmo jeito.
 
+### Ferramentas: notas
+
+O compose declara, em `TOOL_SERVER_CONNECTIONS`, os dois MCPs do [segundo cérebro](12-segundo-cerebro.md): **Notas (busca)** (`http://qmd:8181/mcp`) e **Notas (escrita)** (`http://notes_escrita:8000/mcp`). O `open-webui` entra na rede `notes_mcp`, criada pela stack `notes`, então a stack `notes` precisa subir **antes** de um novo deploy da stack `ai`. Sem `access_grants`, só administradores usam as ferramentas. Na conversa, ligue-as pelo ícone de ferramentas (ou em *Workspace → Models*, por modelo).
+
 ## Claude Code no seu PC
 
 O Claude Code roda no seu PC Linux e tem dois modos:

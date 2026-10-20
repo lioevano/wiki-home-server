@@ -426,3 +426,22 @@ def test_coletor_systemd_e_alerta():
     assert r["data"][0]["model"]["expr"] == 'node_systemd_unit_state{name=~"notes-.*", state="failed"}'
     assert r["data"][1]["model"]["conditions"][0]["evaluator"] == {"type": "gt", "params": [0]}
     assert r["labels"]["severity"] == "warning"
+
+
+# --- Task 8: Open WebUI com os dois MCPs ---
+
+import json  # noqa: E402
+
+AI = ROOT / "server/docker/stacks/ai/docker-compose.yml"
+
+
+def test_openwebui_usa_os_mcps():
+    ow = _svc(AI)["open-webui"]
+    assert "notes_mcp" in ow["networks"]
+    redes = yaml.safe_load(AI.read_text(encoding="utf-8"))["networks"]
+    assert redes["notes_mcp"] == {"external": True}
+    conns = json.loads(_env(ow)["TOOL_SERVER_CONNECTIONS"])
+    assert [(c["type"], c["url"], c["auth_type"], c["config"], c["info"]["id"], c["info"]["name"]) for c in conns] == [
+        ("mcp", "http://qmd:8181/mcp", "none", {"enable": True}, "notas", "Notas (busca)"),
+        ("mcp", "http://notes_escrita:8000/mcp", "none", {"enable": True}, "escrita", "Notas (escrita)"),
+    ]

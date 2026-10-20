@@ -253,7 +253,7 @@ Os dois MCPs são publicados pelo túnel em `https://notas.<domínio>/mcp` (busc
 |---|---|
 | claude.ai (navegador e app) | **Configurações → Conectores → Adicionar conector personalizado**, um para cada URL acima (`Notas` e `Notas – escrita`). O botão **Conectar** abre o login do Authelia. Os conectores criados no navegador aparecem no app do celular. |
 | Claude Code (PC) | `claude mcp add --transport http notas https://notas.<domínio>/mcp` e `claude mcp add --transport http escrita https://escrita.<domínio>/mcp`; depois `/mcp` → **Authenticate** abre o login no navegador. |
-| Open WebUI | Já vem configurado (página 8): ferramentas **Notas (busca)** e **Notas (escrita)**, pela rede interna, só para administradores. |
+| Open WebUI | Já vem configurado ([seção 8](08-stack-ia.md#ferramentas-notas)): ferramentas **Notas (busca)** e **Notas (escrita)**, pela rede interna, só para administradores. |
 
 Dica: deixe só o conector de busca ligado na conversa e ligue o de escrita quando quiser que o Claude crie ou edite notas.
 
