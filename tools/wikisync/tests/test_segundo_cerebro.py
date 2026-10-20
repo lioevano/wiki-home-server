@@ -246,3 +246,36 @@ def test_variaveis_notes_no_env():
         assert any(v.startswith(f"localhost/homeserver/{img}:") for v in cfg.values()), img
     for s in _svc(NOTES).values():
         assert not str(s.get("image", "")).endswith(":latest")
+
+
+# --- Task 4: escrita com escopo ---
+
+def test_escrita_so_trabalho_e_estudos():
+    e = _svc(NOTES)["notes_escrita"]
+    assert _vols(e) == ["${NOTES_STACK_DATA_PATH}/trabalho:/notes/trabalho",
+                        "${NOTES_STACK_DATA_PATH}/estudos:/notes/estudos"]
+    assert "ports" not in e
+    assert e["user"] == "${DOCKER_PUID}:${DOCKER_PGID}"
+    assert e["networks"] == ["notes_mcp"]
+    assert e["image"] == "${NOTES_ESCRITA_IMAGE}" and e["pull_policy"] == "never"
+    assert e["command"] == ["supergateway", "--stdio", "mcp-server-filesystem /notes/trabalho /notes/estudos",
+                            "--outputTransport", "streamableHttp", "--stateful", "--sessionTimeout", "600000",
+                            "--port", "8000", "--healthEndpoint", "/healthz"]
+    img = _tarefa(PB_NOTES, "community.docker.docker_image", name="localhost/homeserver/notes-escrita")
+    a = img["community.docker.docker_image"]
+    assert a["tag"] == "{{ mcp_filesystem_version }}"
+    tpl = _tarefa(PB_NOTES, "ansible.builtin.template", src="Dockerfile.escrita.j2")
+    assert a["force_source"] == "{{ " + tpl["register"] + ".changed }}"
+    d = render("templates/notes/Dockerfile.escrita.j2", supergateway_version="4.2.0", mcp_filesystem_version="2.0.0")
+    assert "node:24-bookworm-slim" in d and "supergateway@4.2.0" in d
+    assert "@modelcontextprotocol/server-filesystem@2.0.0" in d and "USER node" in d
+
+
+def test_ninguem_mais_escreve_em_pessoal():
+    for nome, s in _svc(NOTES).items():
+        for v in _vols(s):
+            if "/pessoal" in v:
+                assert v.endswith(":ro"), (nome, v)
+            if v.startswith("${NOTES_STACK_DATA_PATH}:"):
+                assert nome == "syncthing", (nome, v)
+            assert "files" not in v.split(":")[0].lower(), (nome, v)

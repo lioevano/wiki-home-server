@@ -1,0 +1,4 @@
+# Imagem do MCP de escrita do segundo cérebro (página 12): server-filesystem exposto em HTTP pelo supergateway.
+FROM node:24-bookworm-slim
+RUN npm install -g supergateway@{{ supergateway_version }} @modelcontextprotocol/server-filesystem@{{ mcp_filesystem_version }}
+USER node

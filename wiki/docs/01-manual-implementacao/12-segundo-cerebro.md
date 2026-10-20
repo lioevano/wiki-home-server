@@ -211,3 +211,13 @@ collections:
       "/": "{{ descricao }}"
 {% endfor %}
 ```
+
+## Escrita (Trabalho e Estudos)
+
+O MCP oficial de arquivos (`@modelcontextprotocol/server-filesystem`) roda dentro do **supergateway**, que o expõe em `http://notes_escrita:8000/mcp` (Streamable HTTP), também só na rede `notes_mcp`. O container monta **apenas** `trabalho/` e `estudos/`: o vault Pessoal e os arquivos do Nextcloud não existem para ele, então nenhuma instrução (nem uma nota maliciosa) consegue alterá-los. Ferramentas: ler, listar, buscar por nome, criar, sobrescrever (`write_file`), editar trechos (`edit_file`, com prévia), criar pastas e mover — **não há ferramenta de apagar**, e mover não sobrescreve um destino existente.
+
+```jinja title="ansible/templates/notes/Dockerfile.escrita.j2"
+# Imagem do MCP de escrita do segundo cérebro (página 12): server-filesystem exposto em HTTP pelo supergateway.
+FROM node:24-bookworm-slim
+RUN npm install -g supergateway@{{ supergateway_version }} @modelcontextprotocol/server-filesystem@{{ mcp_filesystem_version }}
+USER node

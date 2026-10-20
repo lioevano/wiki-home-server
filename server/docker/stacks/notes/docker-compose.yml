@@ -47,3 +47,27 @@ services:
       - XDG_CACHE_HOME=/cache
       # Host aceitos: o nome interno (Open WebUI, agentes) e o público, que o mcp-auth-proxy repassa.
       - QMD_ALLOWED_HOSTS=qmd,qmd:8181,notas.${BASE_DOMAIN_FROM_VAULT}
+
+  # MCP de escrita: server-filesystem (stdio) servido em Streamable HTTP pelo supergateway. Só Trabalho e Estudos.
+  notes_escrita:
+    image: ${NOTES_ESCRITA_IMAGE}
+    pull_policy: never
+    container_name: notes_escrita
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    labels:
+      diun.enable: "false"
+    networks:
+      - notes_mcp
+    command: ["supergateway", "--stdio", "mcp-server-filesystem /notes/trabalho /notes/estudos",
+              "--outputTransport", "streamableHttp", "--stateful", "--sessionTimeout", "600000",
+              "--port", "8000", "--healthEndpoint", "/healthz"]
+    volumes:
+      - "${NOTES_STACK_DATA_PATH}/trabalho:/notes/trabalho"
+      - "${NOTES_STACK_DATA_PATH}/estudos:/notes/estudos"
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 1m
+      timeout: 10s

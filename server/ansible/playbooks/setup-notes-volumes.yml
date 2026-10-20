@@ -59,7 +59,7 @@
         owner: root
         group: root
         mode: '0755'
-      loop: [qmd, conversor]
+      loop: [qmd, conversor, escrita]
 
     - name: Gerar o Dockerfile do qmd
       ansible.builtin.template:
@@ -102,6 +102,23 @@
           path: "{{ notes_imagens }}/conversor"
           pull: true
         force_source: "{{ dockerfile_conversor.changed or script_conversor.changed }}"
+
+    - name: Gerar o Dockerfile do MCP de escrita
+      ansible.builtin.template:
+        src: ../templates/notes/Dockerfile.escrita.j2
+        dest: "{{ notes_imagens }}/escrita/Dockerfile"
+        mode: '0644'
+      register: dockerfile_escrita
+
+    - name: Construir a imagem local do MCP de escrita
+      community.docker.docker_image:
+        name: localhost/homeserver/notes-escrita
+        tag: "{{ mcp_filesystem_version }}"
+        source: build
+        build:
+          path: "{{ notes_imagens }}/escrita"
+          pull: true
+        force_source: "{{ dockerfile_escrita.changed }}"
 
     # GID do grupo render da VM, que o qmd precisa para abrir /dev/dri/renderD*.
     - name: Ler o GID do grupo render
