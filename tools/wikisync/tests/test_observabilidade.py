@@ -44,6 +44,7 @@ def render(rel: str, **vars) -> str:
     env.filters["bool"] = _bool
     env.filters["combine"] = _combine
     env.filters["to_nice_json"] = _to_nice_json
+    env.filters["to_json"] = json.dumps
     return env.get_template(rel).render(**vars)
 
 

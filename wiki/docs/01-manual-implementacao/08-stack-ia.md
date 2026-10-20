@@ -77,30 +77,37 @@ O arquivo `config.yaml` é gerado pelo Ansible a partir do template abaixo (segr
 
 ```yaml title="ansible/templates/litellm_config.yaml.j2"
 # ansible/templates/litellm_config.yaml.j2
-# Gerado pelo setup-ai-volumes.yml em <NFS>/litellm/config/config.yaml.
-general_settings:
-  master_key: "{{ litellm_master_key }}"
-
+# Gerado pelo setup-ai-volumes.yml em <NFS>/litellm/config/config.yaml, a partir de llm_models e
+# llm_fallbacks (group_vars/all/main.yml). Sem segredos: chaves, chave mestra e banco vêm do ambiente
+# do container (os.environ/...), que só o litellm recebe.
 model_list:
-  - model_name: gpt-4o
+{% for m in llm_models %}
+  - model_name: "{{ m.name }}"
     litellm_params:
-      model: gpt-4o
-      api_key: "{{ llm_api_keys.openai }}"
+      model: "{{ m.model }}"
+{% if m.chave is defined %}
+      api_key: "os.environ/{{ m.chave }}"
+{% endif %}
+{% if m.api_base is defined %}
+      api_base: "{{ m.api_base }}"
+{% endif %}
+{% endfor %}
 
-  - model_name: claude-3-opus
-    litellm_params:
-      model: claude-3-opus-20240229
-      api_key: "{{ llm_api_keys.anthropic }}"
+router_settings:
+  fallbacks:
+{% for f in llm_fallbacks %}
+{% for apelido, destinos in f.items() %}
+    - {{ apelido }}: {{ destinos | to_json }}
+{% endfor %}
+{% endfor %}
 
-  - model_name: gemini-1.5-pro
-    litellm_params:
-      model: gemini/gemini-1.5-pro-latest
-      api_key: "{{ llm_api_keys.google_gemini }}"
+litellm_settings:
+  callbacks: ["prometheus"] # métricas no servidor separado da porta 4001 (--prometheus_metrics_port)
 
-  - model_name: ollama/llama3.2
-    litellm_params:
-      model: ollama/llama3.2
-      api_base: "http://ollama:11434" # Ollama na mesma rede Docker (ai_network); ele não escuta no IP da VM
+general_settings:
+  master_key: "os.environ/LITELLM_MASTER_KEY"
+  database_url: "os.environ/DATABASE_URL"
+  store_model_in_db: false # a fonte da verdade dos modelos é este arquivo (llm_models)
 ```
 
 ## Baixando Modelos no Ollama

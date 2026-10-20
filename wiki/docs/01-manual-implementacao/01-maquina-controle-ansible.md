@@ -286,6 +286,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       openai: "SUA_CHAVE_OPENAI"
       anthropic: "SUA_CHAVE_ANTHROPIC"
       google_gemini: "SUA_CHAVE_GEMINI"
+      typesafe: "SUA_CHAVE_TYPESAFE" # Jev (modelo de decisão); console da TypeSafe AI
     # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
     openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -494,6 +495,30 @@ nextcloud_major: "34"
 immich_password_login: true
 # Ajustes da configuração do Immich, mesclados por cima da base do immich.json (chaves da documentação do Immich).
 immich_config_overrides: {}
+
+# --- IA: gateway LiteLLM (página 08) ---
+# Modelos servidos pelo LiteLLM. 'chave' é o nome da variável de ambiente do provedor (o valor vem do vault
+# e só o container do LiteLLM o recebe). Os apelidos (principal, rapido, local, decisao) são o que os clientes
+# usam: para trocar de LLM, mude o 'model' do apelido e rode o setup-ai-volumes.yml + docker restart litellm_proxy.
+llm_models:
+  # Por nome próprio
+  - { name: "claude-opus-5-5", model: "anthropic/claude-opus-5-5", chave: "ANTHROPIC_API_KEY" }
+  - { name: "claude-sonnet-5-5", model: "anthropic/claude-sonnet-5-5", chave: "ANTHROPIC_API_KEY" }
+  - { name: "claude-haiku-5-5", model: "anthropic/claude-haiku-5-5", chave: "ANTHROPIC_API_KEY" }
+  - { name: "gpt-6.1-sol", model: "openai/gpt-6.1-sol", chave: "OPENAI_API_KEY" }
+  - { name: "gpt-6-luna", model: "openai/gpt-6-luna", chave: "OPENAI_API_KEY" }
+  - { name: "gemini-3.8-flash", model: "gemini/gemini-3.8-flash", chave: "GEMINI_API_KEY" }
+  # Apelidos
+  - { name: "principal", model: "anthropic/claude-sonnet-5-5", chave: "ANTHROPIC_API_KEY" } # qualidade
+  - { name: "rapido", model: "anthropic/claude-haiku-5-5", chave: "ANTHROPIC_API_KEY" }     # barato e ágil
+  - { name: "local", model: "ollama_chat/llama3.2:3b", api_base: "http://ollama:11434" }  # privado (Ollama)
+  - { name: "decisao", model: "typesafe/jev-latest", chave: "TYPESAFE_API_KEY" }          # Jev: decisões tipadas
+# Se um modelo do apelido falhar, o LiteLLM tenta estes, em ordem.
+llm_fallbacks:
+  - { principal: ["gpt-6.1-sol"] }
+  - { rapido: ["gpt-6-luna"] }
+# Alerta do Grafana quando o gasto com LLM em 24 h passa deste valor (US$).
+llm_gasto_diario_alerta: 5
 ```
 
 Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).
