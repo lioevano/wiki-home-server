@@ -28,6 +28,7 @@
   {'uid': 'container-reiniciando', 'ds': 'prometheus', 'expr': 'resets(container_cpu_usage_seconds_total{name!=""}[15m])', 'op': 'gt', 'v': reinicios_max, 'for': '0s', 'sev': 'warning', 'summary': '{{ $$labels.name }} reiniciou mais de ' ~ reinicios_max ~ ' vezes em 15 min ({{ $$labels.instance }})'},
   {'uid': 'authelia-logins-falhos', 'ds': 'loki', 'expr': 'sum(count_over_time({job="docker_logs"} != "query=" |~ "Unsuccessful (1FA|TOTP|WebAuthn|Duo) authentication attempt" [10m]))', 'op': 'gt', 'v': logins_falhos, 'for': '0s', 'sev': 'warning', 'summary': 'Mais de ' ~ logins_falhos ~ ' logins falhos no Authelia em 10 min'},
   {'uid': 'llm-gasto-alto', 'ds': 'prometheus', 'expr': 'sum(increase(litellm_spend_metric_total[1d]))', 'op': 'gt', 'v': gasto_llm_dia, 'for': '0s', 'sev': 'warning', 'summary': 'Gasto com LLM nas últimas 24 h passou de US$ ' ~ gasto_llm_dia ~ ' (veja llm.)'},
+  {'uid': 'ops-acao-falhou', 'ds': 'loki', 'expr': 'sum(count_over_time({job="docker_logs"} |= "\\"evento\\": \\"ops_acao\\"" |= "\\"resultado\\": \\"erro\\"" [10m]))', 'op': 'gt', 'v': 0, 'for': '0s', 'sev': 'warning', 'summary': 'Uma ação da IA no servidor (ops: container, stack ou Ansible) falhou — veja o log do ops_controle'},
   {'uid': 'notes-timer-falhou', 'ds': 'prometheus', 'expr': 'node_systemd_unit_state{name=~"notes-.*", state="failed"}', 'op': 'gt', 'v': 0, 'for': '0s', 'sev': 'warning', 'summary': 'Segundo cérebro: {{ $$labels.name }} falhou em {{ $$labels.instance }} (journalctl -u {{ $$labels.name }})'},
 ] %}
 apiVersion: 1

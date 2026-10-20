@@ -83,6 +83,9 @@ scrape_configs:
         labels: {app: 'traefik', __param_module: 'tls_traefik'}
       - targets: ['http://loki:3100/ready']
         labels: {app: 'loki'}
+      # Hub de MCPs (base dos agentes, página 13): o mcp_auth_servidor responde à metadata OAuth sem login.
+      - targets: ['http://mcp_auth_servidor:80/.well-known/oauth-protected-resource']
+        labels: {app: 'agentgateway'}
 {% if 'ai_desktop' in groups %}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:3000/health']
         labels: {app: 'open-webui'}
@@ -95,6 +98,9 @@ scrape_configs:
         labels: {app: 'notas-escrita'}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:8384/rest/noauth/health']
         labels: {app: 'syncthing'}
+      # Rastreio (base dos agentes, página 13).
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:3100/api/public/health']
+        labels: {app: 'langfuse'}
 {% endif %}
     relabel_configs:
       - source_labels: [__address__]
@@ -103,6 +109,12 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115
+
+  # Hub de MCPs (página 13): chamadas por rota, alvo e ferramenta (stack agents, rede proxy).
+  - job_name: 'agentgateway'
+    static_configs:
+      - targets: ['agentgateway:15020']
+        labels: {app: 'agentgateway'}
 {% if 'ai_desktop' in groups %}
 
   # Gateway LiteLLM: tokens, custo e latência por chave e modelo (servidor de métricas na porta 4001, só LAN).

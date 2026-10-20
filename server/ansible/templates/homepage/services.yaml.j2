@@ -182,3 +182,13 @@
         icon: obsidian.png
         href: https://escrita.{{ base_domain }}
         siteMonitor: http://{{ ai_desktop_vm_ip_var }}:8482/.well-known/oauth-protected-resource
+    - servidor:
+        icon: mdi-server-network
+        description: MCP do servidor (leitura)
+        href: https://servidor.{{ base_domain }}
+        siteMonitor: http://mcp_auth_servidor:80/.well-known/oauth-protected-resource
+    - langfuse:
+        icon: langfuse.png
+        description: Rastreio de LLM e ferramentas
+        href: https://langfuse.{{ base_domain }}
+        siteMonitor: http://{{ ai_desktop_vm_ip_var }}:3100/api/public/health

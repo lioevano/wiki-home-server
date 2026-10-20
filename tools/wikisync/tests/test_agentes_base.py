@@ -411,3 +411,30 @@ def test_retencao_langfuse():
     """A retenção por projeto do Langfuse é Enterprise (entitlement data-retention): a página documenta a limpeza."""
     pag = PAG13.read_text(encoding="utf-8")
     assert "### Limpeza dos traces" in pag and "data-retention" in pag
+
+
+# --- Task 8: métricas, sondas, alerta e painel ---
+
+from test_midia import PROM_VARS  # noqa: E402
+
+
+def test_observabilidade_agentes():
+    import re as _re
+    ai_ip = PROM_VARS.get("ai_desktop_vm_ip_var", "192.168.15.68")
+    cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups={"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS))
+    jobs = {j["job_name"]: j for j in cfg["scrape_configs"]}
+    assert jobs["agentgateway"]["static_configs"][0]["targets"] == ["agentgateway:15020"]
+    alvos = {c["labels"]["app"]: c["targets"][0] for c in jobs["blackbox_http"]["static_configs"]}
+    assert alvos["agentgateway"] == "http://mcp_auth_servidor:80/.well-known/oauth-protected-resource"
+    assert alvos["langfuse"] == f"http://{ai_ip}:3100/api/public/health"
+    regras = (ROOT / "server/ansible/templates/grafana/alerting/rules.yml.j2").read_text(encoding="utf-8")
+    linha = next(l for l in regras.splitlines() if "'ops-acao-falhou'" in l)
+    assert "'ds': 'loki'" in linha and "ops_acao" in linha and "erro" in linha and "'sev': 'warning'" in linha
+    src = (ROOT / "server/ansible/templates/homepage/services.yaml.j2").read_text(encoding="utf-8")
+    ctx = {"base_domain": DOM, "groups": {"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS}
+    ctx.update({v: "x" for v in set(_re.findall(r"\{\{\s*([a-z_]+)", src)) - {"item"} if v not in ctx})
+    grupos = {list(g)[0]: {list(x)[0]: list(x.values())[0] for x in list(g.values())[0]}
+              for g in yaml.safe_load(render("templates/homepage/services.yaml.j2", **ctx))}
+    assert grupos["ia"]["servidor"]["href"] == f"https://servidor.{DOM}"
+    assert grupos["ia"]["langfuse"]["href"] == f"https://langfuse.{DOM}"
+    assert grupos["ia"]["langfuse"]["siteMonitor"] == alvos["langfuse"]
