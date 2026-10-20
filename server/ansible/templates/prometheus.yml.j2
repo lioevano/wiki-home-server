@@ -88,6 +88,13 @@ scrape_configs:
         labels: {app: 'open-webui'}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:4000/health/liveliness']
         labels: {app: 'litellm'}
+      # Segundo cérebro (página 12): os mcp-auth-proxy respondem a metadata OAuth sem login; o Syncthing, a saúde.
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:8481/.well-known/oauth-protected-resource']
+        labels: {app: 'notas'}
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:8482/.well-known/oauth-protected-resource']
+        labels: {app: 'notas-escrita'}
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:8384/rest/noauth/health']
+        labels: {app: 'syncthing'}
 {% endif %}
     relabel_configs:
       - source_labels: [__address__]

@@ -70,6 +70,7 @@ O roteamento do homeserver é feito por **apelidos** declarados em `llm_models` 
 * **Fallback:** `principal` e `rapido` têm um modelo de outro provedor como reserva (`llm_fallbacks`): se a Anthropic cair, a chamada vai para a OpenAI sem o cliente perceber.
 * **Modelo específico:** quando a tarefa exige um modelo exato, o cliente pede pelo nome próprio (ex.: `claude-opus-5-5`), que também está no `llm_models`. O Claude Code usa sempre nomes de modelos Claude.
 * **Trocar de LLM:** muda-se o `model` do apelido e roda-se o `setup-ai-volumes.yml`; nenhum cliente é alterado.
+* **Contexto pessoal (segundo cérebro):** as notas e os documentos não passam pelo gateway: a busca e os embeddings rodam localmente no qmd, e o Claude (app, claude.ai, Claude Code) ou o Open WebUI só leem o trecho que consultam pelos MCPs `notas` e `escrita` ([Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md)). O modelo que responde continua sendo escolhido pelo cliente.
 
 ## Gerenciamento de Custos e Orçamentos
 

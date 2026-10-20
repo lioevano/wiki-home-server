@@ -348,7 +348,7 @@ Como detalhado no [Guia Prático de Snapshots ZFS](../03-guias-sustentacao/12-gu
 
 *   **Como Fazer Snapshots:**
     *   **Manual (para ações pontuais):** `sudo zfs snapshot data/docker-volumes@antes_de_uma_mudanca_arriscada`
-    *   **Automatizado com `zfs-auto-snapshot` (ou `sanoid`):**
+    *   **Automatizado com `zfs-auto-snapshot` (ou `sanoid`):** neste homeserver ele é instalado pelo `setup-proxmox-host.yml` e vale **só para `data/notes`** (vaults do Obsidian; propriedade `com.sun:auto-snapshot`), para desfazer edições da IA — veja [Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md#desfazer-uma-edição). Os vaults também têm cópia completa no PC e no celular (Syncthing). O índice do qmd, os documentos convertidos, o banco do Syncthing e o estado dos mcp-auth-proxy ficam no disco local da `ai-desktop-vm`, fora dos snapshots e sem backup: todos são regeráveis.
         *   O pacote `zfs-auto-snapshot` (geralmente instalado com `zfsutils-linux` no Debian/Ubuntu) configura scripts cron para tirar e podar snapshots automaticamente (e.g., horários, diários, semanais, mensais).
         *   Verifique a configuração em `/etc/cron.*/zfs-auto-snapshot` e, se existir, `/etc/default/zfs-auto-snapshot`.
         *   Para controle mais avançado e integração com replicação, considere [Sanoid/Syncoid](https://github.com/jimsalterjrs/sanoid).

@@ -44,6 +44,8 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `loki` | apps / core-services-vm | dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/07-deploy-apps.md` |
 | `n8n` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, painel | `01-manual-implementacao/07-deploy-apps.md` |
 | `nextcloud` | cloud / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
+| `notas` | notes / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, mcp, documentacao, notificacoes, painel | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `notas-escrita` | notes / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, mcp, documentacao, notificacoes, painel | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ollama` | ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/08-stack-ia.md` |
 | `open-webui` | ai / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, llm, documentacao, notificacoes, painel | `01-manual-implementacao/08-stack-ia.md` |
 | `portainer` | ansible:infra/docker / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, documentacao, notificacoes, painel | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
@@ -54,6 +56,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `recyclarr` | media / core-services-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/10-midia.md` |
 | `seerr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `sonarr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
+| `syncthing` | notes / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `traefik` | core / core-services-vm | autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/05-rede-segura.md` |
 
 ## Integrações
@@ -66,6 +69,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `documentacao` | wiki | todas | [documentacao](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#documentacao) |
 | `llm` | `litellm` | `+llm` | [llm](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#llm) |
 | `logs` | `loki` (coleta pelo `alloy`) | todas | [logs](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#logs) |
+| `mcp` | `authelia` | `+mcp` | [mcp](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#mcp) |
 | `metricas` | `prometheus` | Métricas = sim | [metricas](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#metricas) |
 | `notificacoes` | `n8n` (coletores: Grafana Alerting, `blackbox-exporter`, `diun`) | todas | [notificacoes](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#notificacoes) |
 | `painel` | `homepage` | Exposição ≠ interna | [painel](wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md#painel) |
@@ -88,6 +92,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/09-painel-notificacoes.md` | Seção 9: Painel e Notificações | Painel Homepage e notificações no Telegram via n8n: Grafana Alerting, blackbox-exporter, Diun, workflow notificar, passos manuais e teste de ponta a ponta. |
 | `01-manual-implementacao/10-midia.md` | Seção 10: Mídia (Jellyfin, *arr, Seerr e VPN) | Stack media: Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Recyclarr e qBittorrent atrás da ProtonVPN (gluetun), com /data único e importação por hardlink. |
 | `01-manual-implementacao/11-fotos-arquivos.md` | Seção 11: Fotos e Arquivos (Immich, Nextcloud e Collabora) | Stacks photos (Immich) e cloud (Nextcloud, cron e Collabora), públicas pelo túnel com login OIDC do Authelia, datasets com cota e bancos no disco local. |
+| `01-manual-implementacao/12-segundo-cerebro.md` | Seção 12: Segundo cérebro (Obsidian, Syncthing, busca local e MCP) | Stack notes na VM de IA: vaults do Obsidian sincronizados pelo Syncthing, busca local com qmd sobre as notas e os documentos do Nextcloud, e MCP para o Claude com escopo por vault. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -140,6 +145,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/playbooks/setup-media-stack-volumes.yml` | playbook | `01-manual-implementacao/10-midia.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
 | `ansible/playbooks/setup-monitoring-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/playbooks/setup-n8n-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
+| `ansible/playbooks/setup-notes-volumes.yml` | playbook | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/playbooks/setup-photos-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/playbooks/setup-productivity-automation-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/setup-proxmox-host.yml` | playbook | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
@@ -188,6 +194,15 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/litellm_config.yaml.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/nextcloud/10-homeserver.sh.j2` | template | `01-manual-implementacao/11-fotos-arquivos.md` |
+| `ansible/templates/notes/Dockerfile.conversor.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/Dockerfile.escrita.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/Dockerfile.qmd.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/conversor.py` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/index.yml.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/notes-documentos.service.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/notes-documentos.timer.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/notes-indice.service.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `ansible/templates/notes/notes-indice.timer.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/recyclarr.yml.j2` | template | `01-manual-implementacao/10-midia.md` |
@@ -197,6 +212,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `docker/stacks/cloud/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `docker/stacks/core/docker-compose.yml` | stack | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md` |
 | `docker/stacks/media/docker-compose.yml` | stack | `01-manual-implementacao/10-midia.md` |
+| `docker/stacks/notes/docker-compose.yml` | stack | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `docker/stacks/photos/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `scripts/bootstrap.sh` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` |
 | `scripts/notify.sh` | script | `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |

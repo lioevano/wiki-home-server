@@ -445,3 +445,64 @@ def test_openwebui_usa_os_mcps():
         ("mcp", "http://qmd:8181/mcp", "none", {"enable": True}, "notas", "Notas (busca)"),
         ("mcp", "http://notes_escrita:8000/mcp", "none", {"enable": True}, "escrita", "Notas (escrita)"),
     ]
+
+
+# --- Task 9: sondas, painel, catálogo, índice e páginas ---
+
+from test_midia import PROM_VARS  # noqa: E402
+
+PAGINA12 = ROOT / "wiki/docs/01-manual-implementacao/12-segundo-cerebro.md"
+
+
+def test_sondas_e_painel_notes():
+    import re as _re
+    cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups={"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS))
+    alvos = {c["labels"]["app"]: c["targets"][0] for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
+             for c in j["static_configs"]}
+    assert alvos["notas"] == f"http://{AI_IP}:8481/.well-known/oauth-protected-resource"
+    assert alvos["notas-escrita"] == f"http://{AI_IP}:8482/.well-known/oauth-protected-resource"
+    assert alvos["syncthing"] == f"http://{AI_IP}:8384/rest/noauth/health"
+    src = (ROOT / "server/ansible/templates/homepage/services.yaml.j2").read_text(encoding="utf-8")
+    ctx = {"base_domain": DOM, "groups": {"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS}
+    ctx.update({v: "x" for v in set(_re.findall(r"\{\{\s*([a-z_]+)", src)) - {"item"} if v not in ctx})
+    grupos = {list(g)[0]: {list(x)[0]: list(x.values())[0] for x in list(g.values())[0]}
+              for g in yaml.safe_load(render("templates/homepage/services.yaml.j2", **ctx))}
+    for grupo, app, sub, monitor in (("produtividade", "syncthing", "sync", f"http://{AI_IP}:8384/rest/noauth/health"),
+                                     ("ia", "notas", "notas", alvos["notas"]),
+                                     ("ia", "notas-escrita", "escrita", alvos["notas-escrita"])):
+        e = grupos[grupo][app]
+        assert e["href"] == f"https://{sub}.{DOM}" and e["siteMonitor"] == monitor, app
+
+
+def test_catalogo_e_indice_notes():
+    from test_fotos_arquivos import _catalogo
+    cat = _catalogo()
+    esperado = {
+        "syncthing": ["produtividade", "notes / ai-desktop-vm", "`syncthing`", "protegida", "`sync`", "nfs", "não", "—", "—"],
+        "notas": ["ia", "notes / ai-desktop-vm", "`mcp_auth_busca`, `qmd`", "publica", "`notas`", "nfs", "não", "—", "`+mcp`"],
+        "notas-escrita": ["ia", "notes / ai-desktop-vm", "`mcp_auth_escrita`, `notes_escrita`", "publica", "`escrita`",
+                          "nfs", "não", "—", "`+mcp`"],
+    }
+    for app, cols in esperado.items():
+        assert cat[app][1:10] == cols, app
+        assert "12-segundo-cerebro.md" in cat[app][10]
+    assert "`mcp`" in cat["authelia"][8]
+    indice = (ROOT / "wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md").read_text(encoding="utf-8")
+    assert "\n## mcp\n" in indice
+    for regra in ("**MCP-1**", "**MCP-2**", "**MCP-3 (sobra)**"):
+        assert regra in indice, regra
+    index_md = (ROOT / "INDEX.md").read_text(encoding="utf-8")
+    for trecho in ("| `notas` |", "| `notas-escrita` |", "| `syncthing` |", "| `mcp` |",
+                   "| `docker/stacks/notes/docker-compose.yml` |", "| `ansible/playbooks/setup-notes-volumes.yml` |",
+                   "`01-manual-implementacao/12-segundo-cerebro.md`"):
+        assert trecho in index_md, trecho
+
+
+def test_pagina_segundo_cerebro():
+    texto = PAGINA12.read_text(encoding="utf-8")
+    for trecho in ("setup-notes-volumes.yml", "systemctl start notes-documentos.timer notes-indice.timer",
+                   ".zfs/snapshot", "claude mcp add --transport http", "Syncthing-Fork", "notes_nextcloud_usuario",
+                   "fora dos snapshots", "## Falhas", "## Teste de ponta a ponta"):
+        assert trecho in texto, trecho
+    backup = (ROOT / "wiki/docs/04-manutencao-recuperacao/02-backup-restore-estrategia.md").read_text(encoding="utf-8")
+    assert "notes" in backup and "12-segundo-cerebro.md" in backup

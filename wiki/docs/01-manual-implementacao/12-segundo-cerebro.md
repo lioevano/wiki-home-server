@@ -23,6 +23,28 @@ Os vaults do Obsidian **Pessoal**, **Trabalho** e **Estudos**, editados no PC e 
 
 O dataset `data/notes` (cota de 20G, [seção 2](02-proxmox-ve-host.md)) é exportado só para a `ai-desktop-vm` e tem snapshots automáticos a cada 15 minutos ([guia de snapshots](../03-guias-sustentacao/12-guia-snapshots-zfs.md)): é por eles que se desfaz uma edição da IA. O dataset `files` do Nextcloud é montado **só leitura** na mesma VM.
 
+
+| Dado | Onde | Proteção |
+|---|---|---|
+| Vaults (`pessoal/`, `trabalho/`, `estudos/`) | `data/notes` (NFS) | snapshots automáticos + cópias completas no PC e no celular |
+| Configuração e chaves do Syncthing; coleções do qmd | `docker-volumes/syncthing/config`, `docker-volumes/qmd/config` (NFS) | como o resto de `docker-volumes` |
+| Banco do Syncthing, índice e modelos do qmd, documentos convertidos, estado OAuth dos proxies | `/opt/local-data/{syncthing,qmd,notes-documentos,mcp-auth-busca,mcp-auth-escrita}` | **fora dos snapshots ZFS e sem backup**: tudo é regerável (varredura do Syncthing, `qmd update`/`embed`, conversor; perder o estado OAuth = fazer login de novo nos conectores) |
+
+## Deploy
+
+1. **Host Proxmox:** crie o dataset (`zfs create -o quota=20G data/notes` e o `chown`, [seção 2](02-proxmox-ve-host.md)) e rode o `setup-proxmox-host.yml` (export do `notes` para a VM de IA, `zfs-auto-snapshot` e a propriedade por dataset). Depois, `setup-base-ubuntu.yml` para montar `notes` e `files` (só leitura) na `ai-desktop-vm`.
+2. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`): `syncthing_gui_password`, `syncthing_api_key` (`openssl rand -hex 24`), `mcp_auth_hmac_secret` (`openssl rand -base64 32`) e `oidc_clients.mcp` — `secret` (`openssl rand -hex 32`) e `secret_digest` gerado como os outros clientes ([seção 11](11-fotos-arquivos.md#deploy)). No `group_vars`, `notes_nextcloud_usuario` = o seu id no Nextcloud (`docker exec -u www-data nextcloud_app php occ user:list`).
+3. **Authelia e Traefik:** rode o `setup-core-networking.yml` (cliente `mcp`, regras `bypass` de `notas.` e `escrita.`, routers `notas.`, `escrita.` e `sync.`) e `docker restart authelia`.
+4. **Volumes, imagens e `.env`** (primeiro com `--check`; o build das três imagens leva alguns minutos):
+   ```bash
+   ansible-playbook -i inventories/home/hosts.ini playbooks/setup-notes-volumes.yml --ask-vault-pass --check
+   ansible-playbook -i inventories/home/hosts.ini playbooks/setup-notes-volumes.yml --ask-vault-pass
+   ```
+5. **Portainer → Stacks → Add Stack** no endpoint da `ai-desktop-vm`: `notes` com `docker/stacks/notes/docker-compose.yml` e o `/opt/portainer_stack_envs/notes.env` → **Deploy the stack**. Só depois, **Update the stack** da `ai` (o Open WebUI entra na rede `notes_mcp`, que a stack `notes` cria).
+6. **Timers**, na `ai-desktop-vm`: `sudo systemctl start notes-documentos.timer notes-indice.timer`. A primeira conversão e o primeiro `embed` podem levar horas; acompanhe com `journalctl -fu notes-documentos -u notes-indice`.
+7. **Monitoramento:** `setup-monitoring-stack-volumes.yml` (sondas, painel e o alerta) e `setup-base-ubuntu.yml` na `ai-desktop-vm` (coletor `systemd` do Alloy).
+8. Pareie os aparelhos ([Sincronização](#sincronização-syncthing)) e conecte o Claude ([Conectores](#conectores-para-o-claude)).
+
 ## Documentos do Nextcloud
 
 Todos os seus arquivos do Nextcloud (`<files>/<notes_nextcloud_usuario>/files`), exceto imagem, vídeo e áudio, são convertidos para Markdown pelo **markitdown** e indexados como a coleção `documentos`. A conversão roda a cada 10 minutos (timer `notes-documentos`) e é incremental: só converte o que mudou (tamanho ou data) e remove a cópia do que você apagou ou moveu. O resultado fica no disco local da VM (`/opt/local-data/notes-documentos`), porque pode ser regerado a qualquer momento. Arquivos ocultos, links simbólicos e arquivos acima de `notes_documentos_max_mb` ficam de fora; um arquivo que o markitdown não consegue ler aparece no log (`journalctl -u notes-documentos`) e é tentado de novo na próxima rodada.
@@ -308,3 +330,38 @@ Persistent=false
 [Install]
 WantedBy=timers.target
 ```
+
+## Desfazer uma edição
+
+Toda escrita da IA cai em `trabalho/` ou `estudos/`. Para voltar uma nota, no host Proxmox:
+
+```bash
+zfs list -t snapshot -o name,creation data/notes | tail       # snapshots: a cada 15 min, de hora em hora, diários...
+ls /data/notes/.zfs/snapshot/                                  # cada snapshot é uma pasta só de leitura
+cp "/data/notes/.zfs/snapshot/<snapshot>/trabalho/<nota>.md" "/data/notes/trabalho/<nota>.md"
+```
+
+O Syncthing propaga a versão restaurada para o PC e o celular. Nos aparelhos, o versionamento "Staggered" (em `.stversions/`) também guarda a versão anterior de cada nota que a IA alterou. `zfs rollback data/notes@<snapshot>` volta o dataset inteiro e apaga o que veio depois — só em último caso.
+
+## Falhas
+
+| Falha | O que acontece | O que fazer |
+|---|---|---|
+| Servidor fora | O Obsidian segue funcionando; o PC e o celular sincronizam direto entre si quando os dois estão ligados | Nada: o servidor recebe tudo ao voltar |
+| Conflito (você e a IA na mesma nota) | Syncthing cria `*.sync-conflict-*` | Juntar à mão e apagar a cópia |
+| Busca desatualizada ou estranha | Índice parado ou corrompido | `docker exec qmd sh -c 'qmd update && qmd embed'`; em último caso, pare o `qmd`, apague `/opt/local-data/qmd/qmd` e rode de novo |
+| Alerta `notes-timer-falhou` | Conversão ou indexação falhou | `journalctl -u notes-documentos` / `-u notes-indice`; código 2 no conversor = origem vazia (NFS do `files` não montou) |
+| Vulkan não pega | O qmd usa a CPU (indexação mais lenta) | Nada; `docker logs qmd` mostra o backend |
+| Conector pede login de novo | Estado OAuth perdido ou `mcp_auth_hmac_secret` trocado | Conectar de novo no claude.ai / `/mcp` no Claude Code |
+| Login no conector recusado | Usuário fora do grupo `admins` do Authelia, ou redirect errado no cliente `mcp` | Conferir o grupo e o `configuration.yml` |
+| Authelia fora | Login novo nos conectores falha; os já conectados seguem até o token expirar | Restaurar o Authelia |
+
+## Teste de ponta a ponta
+
+1. `docker ps` na `ai-desktop-vm`: `syncthing`, `qmd`, `notes_escrita`, `mcp_auth_busca` e `mcp_auth_escrita` em `Up` (o `syncthing` e o `notes_escrita` `healthy`).
+2. Crie `teste-ia.md` em Trabalho no PC; em até 1 minuto ela aparece em `/data/notes/trabalho/` no host.
+3. Depois de uma rodada do `notes-indice`: no claude.ai, com o conector **Notas**, peça "procure a nota teste-ia nas minhas notas" — o resultado vem da coleção `trabalho`.
+4. Com o conector **Notas – escrita**, peça para acrescentar uma linha em `teste-ia.md`; a mudança chega ao PC. Peça para editar uma nota do Pessoal: não existe ferramenta para isso (o caminho `/notes/pessoal` não existe no container de escrita).
+5. Ponha um PDF numa pasta do Nextcloud; depois da conversão, ele aparece em `/opt/local-data/notes-documentos/` e na busca (coleção `documentos`).
+6. Desfaça a linha do passo 4 com um snapshot ([Desfazer uma edição](#desfazer-uma-edição)).
+7. No Prometheus, `probe_success{app=~"notas|notas-escrita|syncthing"}` = 1; na Homepage, os três em verde.

@@ -175,7 +175,7 @@ Remover `loki` e `loki-local-config.yaml.j2` e os blocos `loki.*` do `config.all
 - **DAD-2** — Dados = `local`: a página da aplicação tem aviso de que os dados ficam fora dos snapshots ZFS **e** a página de backup lista a aplicação. *Evidência:* as duas páginas.
 - **DAD-3** — o playbook `setup-<stack>-volumes.yml` cria os diretórios usados pela aplicação. *Evidência:* tasks `ansible.builtin.file` do playbook.
 - **DAD-4** — aplicação de Categoria `mídia` que acessa arquivos de mídia monta `/data` (ou uma subpasta) sempre a partir de `${MEDIA_STACK_DATA_PATH}`, nunca de duas variáveis diferentes: o hardlink da importação exige o mesmo sistema de arquivos. *Evidência:* `volumes:` do compose da stack `media`.
-- **DAD-5** — Dados = `nfs` com banco de dados no disco local (hoje `immich` e `nextcloud`): o volume do banco vem de uma variável `*_DB_PATH` que o playbook da stack aponta para `{{ vm_local_data_path }}` (um cache descartável, como o de modelos do Immich em `*_MODEL_CACHE_PATH`, pode ficar no mesmo lugar, sem backup; o html e o config do Nextcloud também, porque o `occ` exige ser dono do `config.php` e o NFS com `all_squash` não permite — o config entra no dump), a página da aplicação avisa que o banco fica fora dos snapshots ZFS e documenta o dump diário para o NFS, e a página de backup lista esse dump. *Evidência:* `volumes:` do compose, playbook, página da aplicação e página de backup.
+- **DAD-5** — Dados = `nfs` com banco de dados no disco local (hoje `immich` e `nextcloud`): o volume do banco vem de uma variável `*_DB_PATH` que o playbook da stack aponta para `{{ vm_local_data_path }}` (um cache descartável, como o de modelos do Immich em `*_MODEL_CACHE_PATH`, pode ficar no mesmo lugar, sem backup; o html e o config do Nextcloud também, porque o `occ` exige ser dono do `config.php` e o NFS com `all_squash` não permite — o config entra no dump), a página da aplicação avisa que o banco fica fora dos snapshots ZFS e documenta o dump diário para o NFS, e a página de backup lista esse dump. Banco **regerável** (o do `syncthing`, reconstruído por uma varredura das pastas) dispensa o dump: a página da aplicação e a de backup dizem que ele fica fora dos snapshots e por que não tem backup. *Evidência:* `volumes:` do compose, playbook, página da aplicação e página de backup.
 
 ### Ao adicionar (por consumidor)
 1. `nfs`: diretórios no playbook de volumes e variável `*_PATH` (ver `variaveis`).
@@ -257,6 +257,34 @@ Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no 
 
 ### Ao remover o provedor
 Consumidores ficam sem LLM: remover `+llm` de todos e decidir com o usuário se eles saem ou passam a usar APIs diretas.
+
+---
+
+## mcp
+
+| Campo | Valor |
+|---|---|
+| Provedor | `authelia` (OIDC; o OAuth exigido pelos clientes MCP é feito pelo `mcp-auth-proxy` de cada consumidor) |
+| Aplica-se a | `+mcp` |
+| Arquivos | compose do consumidor (serviço principal `mcp-auth-proxy` e o servidor MCP); `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` (cliente `mcp`); `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` |
+| Páginas | `01-manual-implementacao/12-segundo-cerebro.md`; `01-manual-implementacao/05-rede-segura.md` |
+| Manual | conectar o cliente (claude.ai: Conectores; Claude Code: `claude mcp add --transport http`) — página da aplicação |
+
+### Regras
+- **MCP-1** — o serviço principal é um `ghcr.io/sigbit/mcp-auth-proxy` com `OIDC_CONFIGURATION_URL` do Authelia, `OIDC_CLIENT_ID=mcp`, `OIDC_ALLOWED_ATTRIBUTES` restringindo o grupo (`/groups=admins`) e `EXTERNAL_URL` `https://<Subdomínio>.${BASE_DOMAIN_FROM_VAULT}`; o cliente `mcp` do Authelia tem o redirect `https://<Subdomínio>.{{ base_domain }}/.auth/oidc/callback`. *Evidência:* `environment:` do serviço principal e `configuration.yml.j2`.
+- **MCP-2** — o servidor MCP (os demais serviços da aplicação) não publica `ports:` e só está em rede Docker interna (`notes_mcp`); o que ele pode alterar é decidido pelas montagens: todo volume de dados do usuário (notas, documentos) sem `:ro` está listado na página da aplicação como escopo de escrita — nunca só por instrução ao modelo; configuração e cache próprios do servidor não contam. *Evidência:* `ports:`, `networks:` e `volumes:` do compose; página da aplicação.
+- **MCP-3 (sobra)** — nenhum serviço com imagem `mcp-auth-proxy` pertence a aplicação sem `+mcp`, e nenhum redirect do cliente `mcp` aponta para subdomínio fora das aplicações `+mcp`. *Evidência:* composes e `configuration.yml.j2`.
+
+### Ao adicionar (por consumidor)
+1. Serviço `mcp-auth-proxy` como principal (variáveis de MCP-1, porta publicada no IP da VM para o Traefik), servidor MCP só na rede interna, com as montagens mínimas.
+2. Redirect `https://<Subdomínio>.{{ base_domain }}/.auth/oidc/callback` no cliente `mcp` do `configuration.yml.j2` (página 05), regra `bypass` (AUT-3) e router sem middleware no *file provider*.
+3. Página da aplicação: escopo de leitura e escrita, e como conectar o cliente.
+
+### Ao remover (por consumidor)
+1. Retirar o redirect do cliente `mcp`, a regra `bypass` e o router; tirar `+mcp` de Ajustes.
+
+### Ao remover o provedor
+Sem o Authelia não há login para os conectores: remover `+mcp` de todos e desligar as aplicações, ou trocar o provedor OIDC de todos os `mcp-auth-proxy` antes.
 
 ---
 

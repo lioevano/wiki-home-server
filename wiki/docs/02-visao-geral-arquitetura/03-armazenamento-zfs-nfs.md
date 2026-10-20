@@ -27,6 +27,7 @@ No host Proxmox, criamos um pool ZFS chamado `data` usando os dois HDDs de 500GB
 *   `data/docker-volumes`: Armazena os dados persistentes de configuração e aplicação dos containers Docker. É o mais crítico para as operações dos serviços.
 *   `data/media`: Mídia e torrents no **mesmo** dataset, montado como `/data` na stack `media`: `torrents/{movies,tv,music}` recebe os downloads do qBittorrent e `media/{movies,tv,music}` é a biblioteca do Jellyfin. Como os dois estão no mesmo sistema de arquivos, o Sonarr, o Radarr e o Lidarr importam por **hardlink**: o arquivo não é copiado e não ocupa espaço dobrado enquanto o torrent semeia (layout do TRaSH Guides; ver [Mídia](../01-manual-implementacao/10-midia.md#dados-data-único)).
 *   `data/rag_sources`: (Se a `ai-desktop-vm` for usada) Para armazenar os modelos LLM do Ollama e as fontes de dados para aplicações RAG.
+*   `data/notes`: Vaults do Obsidian (segundo cérebro), exportado só para a `ai-desktop-vm` e o **único** dataset com snapshots automáticos (`zfs-auto-snapshot`, a cada 15 min), para desfazer edições da IA ([Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md)). O `data/files` do Nextcloud também é montado nessa VM, só leitura, para o conversor de documentos.
 *   `data/backups`: Destino para backups de VMs do Proxmox e, potencialmente, dumps de bancos de dados das aplicações.
 
 Estes datasets são montados automaticamente pelo ZFS no host Proxmox sob o diretório `/data` (e.g., `/data/docker-volumes`, `/data/media`).

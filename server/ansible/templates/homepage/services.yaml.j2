@@ -52,6 +52,10 @@
         href: https://office.{{ base_domain }}
         server: core
         container: collabora
+    - syncthing:
+        icon: syncthing.png
+        href: https://sync.{{ base_domain }}
+        siteMonitor: http://{{ ai_desktop_vm_ip_var }}:8384/rest/noauth/health
 - mídia:
     - bazarr:
         icon: bazarr.png
@@ -170,3 +174,11 @@
         icon: litellm.png
         href: https://llm.{{ base_domain }}
         siteMonitor: http://{{ ai_desktop_vm_ip_var }}:4000/health/liveliness
+    - notas:
+        icon: obsidian.png
+        href: https://notas.{{ base_domain }}
+        siteMonitor: http://{{ ai_desktop_vm_ip_var }}:8481/.well-known/oauth-protected-resource
+    - notas-escrita:
+        icon: obsidian.png
+        href: https://escrita.{{ base_domain }}
+        siteMonitor: http://{{ ai_desktop_vm_ip_var }}:8482/.well-known/oauth-protected-resource
