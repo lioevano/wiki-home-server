@@ -245,8 +245,9 @@ Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no 
 
 ### Regras
 - **LLM-1** — o consumidor aponta para o LiteLLM (variável com `http://litellm:4000`) e depende do serviço `litellm`. *Evidência:* `environment:` e `depends_on:`.
-- **LLM-2** — o consumidor não recebe chaves de provedores externos (os valores `${OPENAI_API_KEY}`, `${ANTHROPIC_API_KEY}`, `${GEMINI_API_KEY}`); só o `litellm` as recebe. Uma variável do consumidor com nome de provedor que recebe `${LITELLM_MASTER_KEY}` (ex.: `OPENAI_API_KEY=${LITELLM_MASTER_KEY}` no Open WebUI) é a chave do proxy e é válida. *Evidência:* `environment:`.
+- **LLM-2** — o consumidor não recebe chaves de provedores externos (os valores `${OPENAI_API_KEY}`, `${ANTHROPIC_API_KEY}`, `${GEMINI_API_KEY}`, `${TYPESAFE_API_KEY}`); só o `litellm` as recebe. Uma variável do consumidor com nome de provedor que recebe uma chave virtual do LiteLLM (ex.: `OPENAI_API_KEY=${LITELLM_KEY_OPENWEBUI}` no Open WebUI) é a chave do gateway e é válida. *Evidência:* `environment:`.
 - **LLM-3** — consumidor e `litellm` compartilham uma rede (`ai_network`). *Evidência:* `networks:`.
+- **LLM-4** — cada consumidor usa uma chave virtual própria do LiteLLM (`${LITELLM_KEY_<CLIENTE>}`, vinda de `litellm_client_keys.<cliente>` do vault e criada pelo `setup-ai-keys.yml` com orçamento em `litellm_key_budgets`), nunca `${LITELLM_MASTER_KEY}`. *Evidência:* `environment:` do consumidor, `vault.yml.example`, `group_vars` e `setup-ai-keys.yml`.
 
 ### Ao adicionar (por consumidor)
 1. Variável de base URL do LiteLLM, `depends_on: [litellm]`, rede `ai_network`; modelos novos em `litellm_config.yaml.j2`, se necessário.

@@ -50,14 +50,12 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `immich` | produtividade | photos / core-services-vm | `immich_server`, `immich_ml`, `immich_redis`, `immich_db` | publica | `fotos` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `jellyfin` | mídia | media / core-services-vm | `jellyfin` | publica | `jellyfin` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `lidarr` | mídia | media / core-services-vm | `lidarr` | protegida | `lidarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
-| `litellm` | ia | ai / ai-desktop-vm | `litellm` | interna | — | nfs | não | `llm` | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
+| `litellm` | ia | ai / ai-desktop-vm | `litellm`, `litellm_db` | protegida | `llm` | nfs | sim | `llm` | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `loki` | monitoramento | apps / core-services-vm | `loki` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `n8n` | automação | apps / core-services-vm | `n8n` | protegida | `n8n` | nfs | não | `notificacoes` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `nextcloud` | produtividade | cloud / core-services-vm | `nextcloud_app`, `nextcloud_cron`, `nextcloud_db`, `nextcloud_redis` | publica | `nextcloud` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `ollama` | ia | ai / ai-desktop-vm | `ollama` | interna | — | nfs | não | — | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | protegida | `openwebui` | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
-| `openclaude` | ia | ai / ai-desktop-vm | `openclaude` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
-| `openclaw` | ia | ai / ai-desktop-vm | `openclaw` | interna | — | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | protegida | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |
 | `prometheus` | monitoramento | apps / core-services-vm | `prometheus` | protegida | `prometheus` | nfs | sim | `metricas` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `prowlarr` | mídia | media / core-services-vm | `prowlarr` | protegida | `prowlarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |

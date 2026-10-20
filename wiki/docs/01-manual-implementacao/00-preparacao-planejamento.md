@@ -101,7 +101,7 @@ homeserver/                 # repositório lioevano/wiki-home-server
 │   │   ├── .env.template
 │   │   ├── core/               # Traefik, Cloudflared, Authelia
 │   │   ├── apps/               # Nextcloud, mídia, monitoramento, n8n, Home Assistant
-│   │   └── ai/                 # Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Diun
+│   │   └── ai/                 # LiteLLM (+ Postgres), Ollama, Open WebUI, Diun
 │   └── scripts/
 │       ├── bootstrap.sh
 │       ├── restore.sh

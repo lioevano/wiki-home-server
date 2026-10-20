@@ -24,10 +24,10 @@ Conceitos essenciais, links úteis e alternativas para o servidor doméstico.
 | Serviço | Função |
 |---|---|
 | **Ollama** | Executa modelos LLM locais (Llama 3, Phi 3, etc.) via GPU/CPU |
-| **LiteLLM** | Proxy OpenAI-compatible. Roteia entre Ollama e APIs externas com fallback automático |
+| **LiteLLM** | Gateway único (APIs OpenAI e Anthropic): apelidos de modelo, chaves por cliente com orçamento, registro de uso e fallback entre provedores |
 | **Open WebUI** | Interface de chat. Conecta ao LiteLLM para acesso unificado a todos os modelos |
-| **OpenClaw** | CLI agent para interagir com LLMs via terminal |
-| **OpenClaude** | Assistente AI com integração a ferramentas e contextos locais |
+| **Claude Code** | Agente de programação no PC; usa a assinatura ou o gateway LiteLLM (alias `claude-gw`) |
+| **Jev** | Modelo de decisão (TypeSafe AI) para escolhas rápidas e tipadas, pelo LiteLLM |
 
 ## Alternativas por Camada
 

@@ -16,7 +16,7 @@ Guia passo a passo para implementar o servidor doméstico. Siga na ordem.
 6.  **[Rede Segura](05-rede-segura.md):** Configuração de Traefik, Cloudflare Tunnel e Authelia.
 7.  **[Deploy Core](06-deploy-core.md):** Subida da stack `core` (Traefik, Cloudflared e Authelia).
 8.  **[Deploy de Apps](07-deploy-apps.md):** Prometheus, Grafana, Loki, n8n, Home Assistant.
-9.  **[Stack de IA](08-stack-ia.md):** Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude.
+9.  **[Stack de IA](08-stack-ia.md):** gateway LiteLLM (apelidos de modelo, chaves por cliente, uso e Jev), Open WebUI, Ollama com Vulkan e o Claude Code.
 10. **[Painel e Notificações](09-painel-notificacoes.md):** Homepage, alertas do Grafana, Diun e notificações no Telegram via n8n.
 11. **[Mídia](10-midia.md):** Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Prowlarr, Bazarr e qBittorrent atrás da ProtonVPN, com importação por hardlink.
 12. **[Fotos e Arquivos](11-fotos-arquivos.md):** Immich, Nextcloud e Collabora, com login OIDC do Authelia.

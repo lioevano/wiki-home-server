@@ -58,59 +58,26 @@ graph TD
 
 ## Estratégias de Roteamento e Casos de Uso
 
-O coração da nossa arquitetura híbrida é a capacidade do LiteLLM de rotear requisições de forma inteligente. Aqui estão algumas estratégias que podem ser configuradas no `config.yaml` do LiteLLM:
+O roteamento do homeserver é feito por **apelidos** declarados em `llm_models` (`group_vars/all/main.yml`) e renderizados no `config.yaml` do LiteLLM ([Stack de IA](../01-manual-implementacao/08-stack-ia.md#modelos-e-apelidos)). O cliente escolhe a intenção; o código decide o modelo.
 
-### 1. Roteamento por Custo e Simplicidade (Padrão Recomendado)
+| Apelido | Estratégia | Exemplos de uso |
+|---|---|---|
+| `rapido` | custo baixo e latência baixa | resumir, classificar, responder notificações, automações do n8n |
+| `principal` | qualidade | análise de documentos, geração de código, textos técnicos |
+| `local` | privacidade e custo zero | dados que não devem sair de casa; tarefas leves |
+| `decisao` | decisão tipada (Jev) | triagem, roteamento, "aprovar ou não" dentro de automações e agentes |
 
-Esta é a estratégia mais comum e eficaz para um ambiente de home server.
-
-*   **Configuração:** Definir uma lista de modelos em ordem crescente de custo e capacidade.
-    ```yaml
-    # Em router_settings no config.yaml do LiteLLM
-    - mode: simple
-      models: ["ollama/phi3", "ollama/llama3", "gemini-1.5-pro", "claude-3-opus", "gpt-4o"]
-    ```
-*   **Como Funciona:** As aplicações são configuradas para usar um nome de modelo genérico (ex: `"chat-geral"`). O LiteLLM recebe a requisição e tenta primeiro o modelo mais barato e rápido (`ollama/phi3`). Se o serviço do Ollama estiver offline ou falhar, ele automaticamente tenta o próximo da lista (`ollama/llama3`), subindo na cadeia até encontrar um que funcione. 
-*   **Caso de Uso:** Ideal para chatbots de uso geral, automações no n8n ou Home Assistant, onde a maioria das tarefas é simples (resumir um texto curto, classificar um email, gerar uma resposta de notificação) e pode ser perfeitamente atendida por um modelo local. As APIs externas atuam como um *fallback* robusto, garantindo que o serviço nunca fique indisponível.
-
-### 2. Roteamento por Performance (Modelo Específico)
-
-Para tarefas que você sabe que exigem o poder de um modelo de ponta.
-
-*   **Configuração:** A aplicação cliente solicita diretamente o modelo desejado.
-    ```python
-    # Exemplo em um script Python
-    response = client.chat.completions.create(
-        model="gpt-4o", # Solicita o melhor modelo diretamente
-        messages=[...]
-    )
-    ```
-*   **Como Funciona:** O LiteLLM vê que um modelo específico foi solicitado e ignora a lógica de roteamento simples. Ele envia a requisição diretamente para a API correspondente (neste caso, OpenAI), conforme definido na `model_list` do `config.yaml`. Ele ainda pode aplicar a lógica de *fallback* se configurada para aquele modelo específico (ex: se `gpt-4o` falhar, tentar `claude-3-opus`).
-*   **Caso de Uso:** Análise de documentos complexos, geração de código, tradução de textos técnicos, ou qualquer tarefa onde a qualidade da resposta é mais importante que o custo da inferência.
-
-### 3. Roteamento por Qualidade de Serviço (QoS)
-
-Uma estratégia mais avançada para garantir que tarefas de alta prioridade sempre tenham a melhor performance.
-
-*   **Configuração:** Criar diferentes rotas (deployments) no LiteLLM, cada uma com uma estratégia diferente.
-    ```yaml
-    # Em router_settings no config.yaml do LiteLLM
-    - deployment_name: "rota-rapida-e-barata"
-      mode: simple
-      models: ["ollama/phi3", "ollama/llama3"]
-    - deployment_name: "rota-alta-qualidade"
-      mode: simple
-      models: ["gpt-4o", "claude-3-opus", "gemini-1.5-pro"]
-    ```
-*   **Como Funciona:** A aplicação cliente pode escolher qual "rota" usar ao fazer a requisição, passando o nome do `deployment` como o nome do modelo. Isso permite um controle granular sobre a relação custo/performance por requisição.
-*   **Caso de Uso:** Uma aplicação de RAG (Retrieval-Augmented Generation) poderia usar a `rota-rapida-e-barata` para sumarizar documentos e extrair palavras-chave para sua base de vetores, mas usar a `rota-alta-qualidade` para gerar a resposta final para o usuário, que precisa ser coesa e precisa.
+* **Fallback:** `principal` e `rapido` têm um modelo de outro provedor como reserva (`llm_fallbacks`): se a Anthropic cair, a chamada vai para a OpenAI sem o cliente perceber.
+* **Modelo específico:** quando a tarefa exige um modelo exato, o cliente pede pelo nome próprio (ex.: `claude-opus-5-5`), que também está no `llm_models`. O Claude Code usa sempre nomes de modelos Claude.
+* **Trocar de LLM:** muda-se o `model` do apelido e roda-se o `setup-ai-volumes.yml`; nenhum cliente é alterado.
 
 ## Gerenciamento de Custos e Orçamentos
 
-O maior risco de uma arquitetura híbrida é o custo inesperado com APIs externas. O LiteLLM oferece ferramentas robustas para mitigar isso:
+O maior risco de uma arquitetura híbrida é o custo inesperado com APIs externas. No homeserver:
 
-*   **Orçamentos (Budgets):** Como configurado na seção de implementação, você pode definir orçamentos totais, por chave de API ou por usuário. Se um orçamento for atingido, o LiteLLM bloqueará novas requisições para modelos pagos, evitando gastos excessivos.
-*   **Cache:** O cache integrado (local ou em Redis) armazena respostas para requisições idênticas. Se a mesma pergunta for feita várias vezes, apenas a primeira incorrerá em custo de API; as subsequentes serão servidas diretamente do cache, economizando dinheiro e melhorando a latência.
-*   **UI de Observabilidade:** A interface de usuário do LiteLLM (acessível em `https://llm.seudominio.com`) fornece um dashboard para visualizar o uso, os custos por modelo e os logs de requisição, permitindo que você entenda seus padrões de uso e otimize suas estratégias de roteamento.
+*   **Orçamento por cliente:** cada cliente tem uma chave virtual própria (`litellm_client_keys`) com orçamento mensal (`litellm_key_budgets`), aplicado pelo `setup-ai-keys.yml`. Estourou, aquele cliente recebe erro; os outros seguem.
+*   **Alerta de gasto:** o Prometheus raspa as métricas do LiteLLM e o alerta `llm-gasto-alto` avisa no Telegram quando o gasto das últimas 24 h passa de `llm_gasto_diario_alerta`.
+*   **Observabilidade:** a tela do LiteLLM em `https://llm.seudominio.com` (atrás do Authelia) mostra gasto, tokens e chamadas por chave e por modelo. O rastreamento passo a passo de agentes (Langfuse) entra com os agentes.
+*   **Cache:** o cache de respostas do LiteLLM não está ligado; pode ser acrescentado em `litellm_settings` se houver muitas perguntas repetidas.
 
-Ao adotar esta arquitetura de IA híbrida, seu home server se torna uma plataforma de IA verdadeiramente resiliente, flexível e inteligente, capaz de lidar com uma vasta gama de tarefas de forma eficiente e econômica.
+Ao adotar esta arquitetura de IA híbrida, seu home server se torna uma plataforma de IA resiliente e flexível, com um único lugar para trocar modelos, controlar custos e ver o uso.

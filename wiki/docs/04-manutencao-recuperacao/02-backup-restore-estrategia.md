@@ -180,7 +180,9 @@ Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/do
     * **Immich:** o próprio Immich grava um dump por dia em `/data/photos/backups/` (14 últimos);
     * **Nextcloud:** o timer `backup-nextcloud-db.timer` grava `nextcloud-<data>.dump` e `nextcloud-config-<data>.tar.gz` (o `config/` do Nextcloud, que também fica no disco local) em `/data/docker-volumes/nextcloud/db-dumps/` (duas semanas).
 
-    Os dois ficam em datasets ZFS (snapshots, Borg e cópia off-site). A restauração de cada um está na página 11. O script de exemplo abaixo vale para os bancos que ainda não têm dump automático (Authelia e Grafana).
+    * **LiteLLM** (na `ai-desktop-vm`): o timer `backup-litellm-db.timer` grava `litellm-<data>.dump` (chaves, orçamentos e histórico de uso) em `/data/docker-volumes/litellm/db-dumps/` (duas semanas); as chaves também podem ser recriadas pelo `setup-ai-keys.yml` a partir do vault ([seção 8](../01-manual-implementacao/08-stack-ia.md)).
+
+    Todos ficam em datasets ZFS (snapshots, Borg e cópia off-site). A restauração de cada um está na página 11. O script de exemplo abaixo vale para os bancos que ainda não têm dump automático (Authelia e Grafana).
 
 É **altamente recomendado** fazer dumps lógicos dos seus bancos de dados, além do backup do volume ZFS onde os arquivos do banco de dados residem. Dumps lógicos são mais portáteis e podem ser mais fáceis de restaurar para diferentes versões do PostgreSQL.
 

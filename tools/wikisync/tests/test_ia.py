@@ -262,3 +262,20 @@ def test_homepage_litellm():
     e = {list(x)[0]: list(x.values())[0] for x in ia}["litellm"]
     assert e["href"] == "https://llm.exemplo.com"
     assert e["siteMonitor"] == "http://192.168.15.68:4000/health/liveliness"
+
+
+# --- Documentação, catálogo e índice ---
+
+def test_catalogo_ia():
+    from test_fotos_arquivos import _catalogo
+    cat = _catalogo()
+    assert "openclaw" not in cat and "openclaude" not in cat
+    lt = cat["litellm"]
+    assert lt[3] == "`litellm`, `litellm_db`"
+    assert lt[4] == "protegida" and lt[5] == "`llm`" and lt[7] == "sim"
+    indice = (ROOT / "wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md").read_text(encoding="utf-8")
+    assert "**LLM-4**" in indice and "${TYPESAFE_API_KEY}" in indice
+    pagina = (ROOT / "wiki/docs/01-manual-implementacao/08-stack-ia.md").read_text(encoding="utf-8")
+    for trecho in ("setup-ai-keys.yml", "claude-gw", "ANTHROPIC_BASE_URL", "/v1/messages", "openwebui_login_form",
+                   "Vulkan", "decisao", "llm."):
+        assert trecho in pagina, trecho
