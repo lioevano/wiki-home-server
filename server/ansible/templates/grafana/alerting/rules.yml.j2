@@ -12,6 +12,7 @@
 {% set fora_do_ar_for = '3m' %}
 {% set certificado_dias = 14 %}
 {% set logins_falhos = 5 %}
+{% set gasto_llm_dia = llm_gasto_diario_alerta | default(5) %}
 {% set reinicios_max = 3 %}
 {% set fs = 'fstype!~"tmpfs|overlay|squashfs"' %}
 {% set regras = [
@@ -26,6 +27,7 @@
   {'uid': 'zfs-degradado', 'ds': 'prometheus', 'expr': 'node_zfs_zpool_state{state!="online"}', 'op': 'gt', 'v': 0, 'for': '1m', 'sev': 'critical', 'summary': 'Pool ZFS {{ $$labels.zpool }} em estado {{ $$labels.state }}'},
   {'uid': 'container-reiniciando', 'ds': 'prometheus', 'expr': 'resets(container_cpu_usage_seconds_total{name!=""}[15m])', 'op': 'gt', 'v': reinicios_max, 'for': '0s', 'sev': 'warning', 'summary': '{{ $$labels.name }} reiniciou mais de ' ~ reinicios_max ~ ' vezes em 15 min ({{ $$labels.instance }})'},
   {'uid': 'authelia-logins-falhos', 'ds': 'loki', 'expr': 'sum(count_over_time({job="docker_logs"} != "query=" |~ "Unsuccessful (1FA|TOTP|WebAuthn|Duo) authentication attempt" [10m]))', 'op': 'gt', 'v': logins_falhos, 'for': '0s', 'sev': 'warning', 'summary': 'Mais de ' ~ logins_falhos ~ ' logins falhos no Authelia em 10 min'},
+  {'uid': 'llm-gasto-alto', 'ds': 'prometheus', 'expr': 'sum(increase(litellm_spend_metric_total[1d]))', 'op': 'gt', 'v': gasto_llm_dia, 'for': '0s', 'sev': 'warning', 'summary': 'Gasto com LLM nas últimas 24 h passou de US$ ' ~ gasto_llm_dia ~ ' (veja llm.)'},
 ] %}
 apiVersion: 1
 groups:

@@ -222,3 +222,43 @@ def test_dump_generico_nos_dois_bancos():
     sd = next(x["ansible.builtin.systemd"] for x in tarefas if "ansible.builtin.systemd" in x)
     assert sd["name"] == "backup-litellm-db.timer" and sd["enabled"] is True
     assert not (ROOT / "server/ansible/templates/nextcloud/backup-nextcloud-db.sh.j2").exists()
+
+
+# --- Integrações: llm., métricas, alerta e painel ---
+
+def test_router_llm_com_authelia():
+    out = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2",
+                                base_domain="exemplo.com", ai_desktop_vm_ip_var="192.168.15.68"))
+    r = out["http"]["routers"]["litellm-dynamic"]
+    assert r["rule"] == "Host(`llm.exemplo.com`)"
+    assert r["middlewares"] == ["authelia-forwardauth@docker"]
+    svc = out["http"]["services"][r["service"]]
+    assert svc["loadBalancer"]["servers"] == [{"url": "http://192.168.15.68:4000"}]
+
+
+def test_job_litellm_e_alerta_de_gasto():
+    from test_midia import PROM_VARS
+    jobs = {j["job_name"]: j for j in yaml.safe_load(render(
+        "templates/prometheus.yml.j2", groups={"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS))["scrape_configs"]}
+    assert jobs["litellm"]["static_configs"][0]["targets"] == ["192.168.15.68:4001"]
+    sem_ia = {j["job_name"] for j in yaml.safe_load(render(
+        "templates/prometheus.yml.j2", groups={}, **PROM_VARS))["scrape_configs"]}
+    assert "litellm" not in sem_ia
+    regras = {r["uid"]: r for r in yaml.safe_load(render(
+        "templates/grafana/alerting/rules.yml.j2", llm_gasto_diario_alerta=7))["groups"][0]["rules"]}
+    r = regras["llm-gasto-alto"]
+    assert r["data"][0]["model"]["expr"] == "sum(increase(litellm_spend_metric_total[1d]))"
+    assert r["data"][1]["model"]["conditions"][0]["evaluator"] == {"type": "gt", "params": [7]}
+    assert r["labels"]["severity"] == "warning"
+
+
+def test_homepage_litellm():
+    from test_midia import PROM_VARS
+    import re as _re
+    src = (ROOT / "server/ansible/templates/homepage/services.yaml.j2").read_text(encoding="utf-8")
+    ctx = {"base_domain": "exemplo.com", "groups": {"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS}
+    ctx.update({v: "x" for v in set(_re.findall(r"\{\{\s*([a-z_]+)", src)) - {"item"} if v not in ctx})
+    ia = next(g for g in yaml.safe_load(render("templates/homepage/services.yaml.j2", **ctx)) if "ia" in g)["ia"]
+    e = {list(x)[0]: list(x.values())[0] for x in ia}["litellm"]
+    assert e["href"] == "https://llm.exemplo.com"
+    assert e["siteMonitor"] == "http://192.168.15.68:4000/health/liveliness"

@@ -96,3 +96,11 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115
+{% if 'ai_desktop' in groups %}
+
+  # Gateway LiteLLM: tokens, custo e latência por chave e modelo (servidor de métricas na porta 4001, só LAN).
+  - job_name: 'litellm'
+    static_configs:
+      - targets: ['{{ ai_desktop_vm_ip_var }}:4001']
+        labels: {app: 'litellm'}
+{% endif %}

@@ -454,6 +454,15 @@ http:
       middlewares:
         - "authelia-forwardauth@docker" # Protegido por Authelia (middleware definido no compose do Authelia)
 
+    litellm-dynamic: # Tela de uso e administração do LiteLLM (llm.); a API fica só na LAN
+      entryPoints: ["websecure"]
+      rule: "Host(`llm.{{ base_domain }}`)"
+      service: "litellm-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+      middlewares:
+        - "authelia-forwardauth@docker"
+
     # Adicione aqui roteadores para outros serviços RAG/AI na ai-desktop-vm se necessário
     # Exemplo para um hipotético OpenNotebookLM
     # opennotebooklm-dynamic:
@@ -470,6 +479,11 @@ http:
           # Aponta para o IP da ai-desktop-vm e a porta que o compose da stack ai publica (3000 -> 8080 no container).
           # A variável ai_desktop_vm_ip_var vem do inventário Ansible (hosts.ini).
           - url: "http://{{ ai_desktop_vm_ip_var }}:3000"
+
+    litellm-svc-dynamic:
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:4000"
 
     # opennotebooklm-svc-dynamic:
     #   loadBalancer:
