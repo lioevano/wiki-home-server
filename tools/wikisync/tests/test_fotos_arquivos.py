@@ -55,6 +55,7 @@ PEM_TESTE = "-----BEGIN PRIVATE KEY-----\nLINHA1\nLINHA2\n-----END PRIVATE KEY--
 OIDC = {
     "immich": {"secret": "segredoImmich123", "secret_digest": "$pbkdf2-sha512$310000$aW1taWNo$ZGlnZXN0"},
     "nextcloud": {"secret": "segredoNextcloud123", "secret_digest": "$pbkdf2-sha512$310000$bmV4dA$ZGlnZXN0"},
+    "openwebui": {"secret": "segredoOpenwebui123", "secret_digest": "$pbkdf2-sha512$310000$b3dlYg$ZGlnZXN0"},
 }
 
 
@@ -72,7 +73,7 @@ def test_oidc_clientes():
     assert jwk["algorithm"] == "RS256" and jwk["use"] == "sig"
     assert jwk["key"].strip() == PEM_TESTE
     cli = {c["client_id"]: c for c in oidc["clients"]}
-    assert set(cli) == {"immich", "nextcloud"}
+    assert set(cli) == {"immich", "nextcloud", "openwebui"}
     for nome, c in cli.items():
         assert c["authorization_policy"] == "two_factor"
         assert c["require_pkce"] is True and c["pkce_challenge_method"] == "S256"
@@ -85,7 +86,7 @@ def test_oidc_clientes():
     assert cli["nextcloud"]["token_endpoint_auth_method"] == "client_secret_post"
     assert cli["nextcloud"]["redirect_uris"] == [f"https://nextcloud.{DOM}/apps/user_oidc/code"]
     assert cli["nextcloud"]["scopes"] == ["openid", "profile", "email", "groups"]
-    assert "segredoImmich123" not in _authelia() and "segredoNextcloud123" not in _authelia()
+    assert all(v["secret"] not in _authelia() for v in OIDC.values())
 
 
 def test_bypass_dos_publicos():

@@ -702,7 +702,7 @@ notifier:
 #     # Para verificar a configuração do notificador ao iniciar Authelia:
 #     # startup_check_address: "email_de_teste_para_receber_notificacao@example.com"
 
-# Provedor OpenID Connect (SSO): Immich e Nextcloud entram com a conta e o 2FA deste Authelia (página 11).
+# Provedor OpenID Connect (SSO): Immich e Nextcloud (página 11) e Open WebUI (página 08) entram com a conta e o 2FA deste Authelia.
 # Segredos no vault: hmac_secret, a chave RSA de assinatura (jwks) e, de cada cliente, só o digest
 # pbkdf2-sha512 do segredo (o segredo em claro fica com o app).
 identity_providers:
@@ -745,6 +745,20 @@ identity_providers:
         grant_types: ["authorization_code"]
         userinfo_signed_response_alg: "none"
         token_endpoint_auth_method: "client_secret_post"
+      - client_id: "openwebui"
+        client_name: "Open WebUI"
+        client_secret: "{{ oidc_clients.openwebui.secret_digest }}"
+        public: false
+        authorization_policy: "two_factor"
+        require_pkce: true
+        pkce_challenge_method: "S256"
+        redirect_uris:
+          - "https://openwebui.{{ base_domain }}/oauth/oidc/callback"
+        scopes: ["openid", "profile", "groups", "email"] # groups: o Open WebUI só aceita quem está em 'admins'
+        response_types: ["code"]
+        grant_types: ["authorization_code"]
+        userinfo_signed_response_alg: "none"
+        token_endpoint_auth_method: "client_secret_basic"
 
 # Configuração TOTP (Time-based One-Time Password)
 totp:

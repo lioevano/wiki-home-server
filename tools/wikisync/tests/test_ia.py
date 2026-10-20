@@ -160,3 +160,42 @@ def test_playbook_de_chaves_idempotente():
     assert {"key", "key_alias", "max_budget", "budget_duration"} <= set(corpo)
     assert corpo["budget_duration"] == "30d"
     assert "max_budget" in str(upd["when"]) and "budget_duration" in str(upd["when"])
+
+
+# --- Open WebUI com OIDC ---
+
+def test_cliente_oidc_openwebui():
+    from test_fotos_arquivos import DOM, OIDC, _authelia
+    cli = {c["client_id"]: c for c in yaml.safe_load(_authelia())["identity_providers"]["oidc"]["clients"]}
+    c = cli["openwebui"]
+    assert c["client_name"] == "Open WebUI"
+    assert c["client_secret"] == OIDC["openwebui"]["secret_digest"]
+    assert c["authorization_policy"] == "two_factor" and c["public"] is False
+    assert c["require_pkce"] is True and c["pkce_challenge_method"] == "S256"
+    assert c["token_endpoint_auth_method"] == "client_secret_basic"
+    assert c["redirect_uris"] == [f"https://openwebui.{DOM}/oauth/oidc/callback"]
+    assert c["scopes"] == ["openid", "profile", "groups", "email"]
+    assert "openwebui" in yaml.safe_load(VAULT_EX.read_text(encoding="utf-8"))["oidc_clients"]
+
+
+def test_openwebui_oidc():
+    env = _env(_svc(AI)["open-webui"])
+    esperado = {
+        "WEBUI_URL": "https://openwebui.${BASE_DOMAIN_FROM_VAULT}",
+        "OAUTH_CLIENT_ID": "openwebui",
+        "OAUTH_CLIENT_SECRET": "${OPENWEBUI_OAUTH_CLIENT_SECRET}",
+        "OPENID_PROVIDER_URL": "https://auth.${BASE_DOMAIN_FROM_VAULT}/.well-known/openid-configuration",
+        "OAUTH_PROVIDER_NAME": "Authelia",
+        "OAUTH_CODE_CHALLENGE_METHOD": "S256",
+        "OAUTH_SCOPES": "openid email profile groups",
+        "ENABLE_OAUTH_SIGNUP": "true",
+        "OAUTH_MERGE_ACCOUNTS_BY_EMAIL": "true",
+        "ENABLE_OAUTH_ROLE_MANAGEMENT": "true",
+        "OAUTH_ROLES_CLAIM": "groups",
+        "OAUTH_ALLOWED_ROLES": "admins",
+        "OAUTH_ADMIN_ROLES": "admins",
+        "ENABLE_LOGIN_FORM": "${OPENWEBUI_LOGIN_FORM}",
+    }
+    for k, v in esperado.items():
+        assert env.get(k) == v, k
+    assert _configs(PB_AI, "ai.env")["OPENWEBUI_LOGIN_FORM"] == "{{ openwebui_login_form | bool | lower }}"

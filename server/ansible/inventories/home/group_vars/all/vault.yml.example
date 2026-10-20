@@ -64,6 +64,9 @@ oidc_clients:
   nextcloud:
     secret: "SEGREDO_DO_CLIENTE_NEXTCLOUD"
     secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_NEXTCLOUD"
+  openwebui:
+    secret: "SEGREDO_DO_CLIENTE_OPENWEBUI"
+    secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_OPENWEBUI"
 
 # --- Configurações Gerais ---
 # Email para notificações do Let's Encrypt (renovação de certificados, problemas).

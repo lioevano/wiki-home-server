@@ -91,6 +91,21 @@ services:
       - OPENAI_API_BASE_URL=http://litellm:4000/v1
       - OPENAI_API_KEY=${LITELLM_KEY_OPENWEBUI} # chave virtual do Open WebUI no LiteLLM (nunca a mestra)
       - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
+      - WEBUI_URL=https://openwebui.${BASE_DOMAIN_FROM_VAULT}
+      # Login pelo OIDC do Authelia (cliente openwebui); só entra quem está no grupo 'admins'.
+      - OAUTH_CLIENT_ID=openwebui
+      - OAUTH_CLIENT_SECRET=${OPENWEBUI_OAUTH_CLIENT_SECRET}
+      - OPENID_PROVIDER_URL=https://auth.${BASE_DOMAIN_FROM_VAULT}/.well-known/openid-configuration
+      - OAUTH_PROVIDER_NAME=Authelia
+      - OAUTH_CODE_CHALLENGE_METHOD=S256
+      - OAUTH_SCOPES=openid email profile groups
+      - ENABLE_OAUTH_SIGNUP=true
+      - OAUTH_MERGE_ACCOUNTS_BY_EMAIL=true
+      - ENABLE_OAUTH_ROLE_MANAGEMENT=true
+      - OAUTH_ROLES_CLAIM=groups
+      - OAUTH_ALLOWED_ROLES=admins
+      - OAUTH_ADMIN_ROLES=admins
+      - ENABLE_LOGIN_FORM=${OPENWEBUI_LOGIN_FORM} # true só até vincular o admin; depois false (página 08)
       - TZ=${SYSTEM_TIMEZONE}
     depends_on:
       - litellm
