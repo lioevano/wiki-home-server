@@ -244,3 +244,15 @@ O `setup-notes-volumes.yml` gera as chaves e o `config.xml` antes do primeiro de
     ```
 
 Se você e a IA editarem a mesma nota ao mesmo tempo, o Syncthing guarda as duas versões (`*.sync-conflict-*`): abra as duas, junte à mão e apague a cópia. A busca ignora esses arquivos.
+
+## Conectores para o Claude
+
+Os dois MCPs são publicados pelo túnel em `https://notas.<domínio>/mcp` (busca) e `https://escrita.<domínio>/mcp` (escrita), cada um atrás de um **mcp-auth-proxy**. O claude.ai exige OAuth com registro dinâmico de cliente, que o Authelia 4.38 não oferece; o proxy faz esse papel e manda o login para o OIDC do Authelia (cliente `mcp`, com 2FA). Só quem está no grupo `admins` passa. Por isso os dois subdomínios ficam fora do forward-auth do Authelia (regras `bypass` e routers sem middleware na [seção 5](05-rede-segura.md)); o hostname curinga `*` do túnel já os encaminha ao Traefik. O `sync.` fica atrás do Authelia como os demais.
+
+| Cliente | Como conectar |
+|---|---|
+| claude.ai (navegador e app) | **Configurações → Conectores → Adicionar conector personalizado**, um para cada URL acima (`Notas` e `Notas – escrita`). O botão **Conectar** abre o login do Authelia. Os conectores criados no navegador aparecem no app do celular. |
+| Claude Code (PC) | `claude mcp add --transport http notas https://notas.<domínio>/mcp` e `claude mcp add --transport http escrita https://escrita.<domínio>/mcp`; depois `/mcp` → **Authenticate** abre o login no navegador. |
+| Open WebUI | Já vem configurado (página 8): ferramentas **Notas (busca)** e **Notas (escrita)**, pela rede interna, só para administradores. |
+
+Dica: deixe só o conector de busca ligado na conversa e ligue o de escrita quando quiser que o Claude crie ou edite notas.

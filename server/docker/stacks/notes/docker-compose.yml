@@ -101,3 +101,59 @@ services:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 1m
       timeout: 10s
+
+  # Conector notas. (busca em todos os vaults e documentos): OAuth 2.1 com registro dinâmico (exigido pelo claude.ai), login delegado ao
+  # OIDC do Authelia (cliente 'mcp', 2FA) e só para o grupo admins. Traefik: notas. → porta 8481.
+  mcp_auth_busca:
+    image: ghcr.io/sigbit/mcp-auth-proxy:v2.10.2 # = mcp_auth_proxy_version (group_vars)
+    container_name: mcp_auth_busca
+    restart: unless-stopped
+    networks:
+      - notes_mcp
+    ports:
+      - "${AI_DESKTOP_VM_IP}:8481:80"
+    command: ["http://qmd:8181/mcp"]
+    volumes:
+      - "${NOTES_STACK_MCP_AUTH_BUSCA_PATH}:/data" # estado OAuth (regerável: perder = novo login)
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+      - EXTERNAL_URL=https://notas.${BASE_DOMAIN_FROM_VAULT}
+      - NO_AUTO_TLS=true # o TLS fica no Traefik
+      - LISTEN=:80
+      - DATA_PATH=/data
+      - OIDC_CONFIGURATION_URL=https://auth.${BASE_DOMAIN_FROM_VAULT}/.well-known/openid-configuration
+      - OIDC_CLIENT_ID=mcp
+      - OIDC_CLIENT_SECRET=${MCP_OIDC_CLIENT_SECRET}
+      - OIDC_SCOPES=openid,profile,email,groups
+      - OIDC_ALLOWED_ATTRIBUTES=/groups=admins
+      - OIDC_PROVIDER_NAME=Authelia
+      - AUTH_HMAC_SECRET=${MCP_AUTH_HMAC_SECRET}
+      - TRUSTED_PROXIES=${CORE_SERVICES_VM_IP} # Traefik
+
+  # Conector escrita. (escrita em Trabalho e Estudos): OAuth 2.1 com registro dinâmico (exigido pelo claude.ai), login delegado ao
+  # OIDC do Authelia (cliente 'mcp', 2FA) e só para o grupo admins. Traefik: escrita. → porta 8482.
+  mcp_auth_escrita:
+    image: ghcr.io/sigbit/mcp-auth-proxy:v2.10.2 # = mcp_auth_proxy_version (group_vars)
+    container_name: mcp_auth_escrita
+    restart: unless-stopped
+    networks:
+      - notes_mcp
+    ports:
+      - "${AI_DESKTOP_VM_IP}:8482:80"
+    command: ["http://notes_escrita:8000/mcp"]
+    volumes:
+      - "${NOTES_STACK_MCP_AUTH_ESCRITA_PATH}:/data" # estado OAuth (regerável: perder = novo login)
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+      - EXTERNAL_URL=https://escrita.${BASE_DOMAIN_FROM_VAULT}
+      - NO_AUTO_TLS=true # o TLS fica no Traefik
+      - LISTEN=:80
+      - DATA_PATH=/data
+      - OIDC_CONFIGURATION_URL=https://auth.${BASE_DOMAIN_FROM_VAULT}/.well-known/openid-configuration
+      - OIDC_CLIENT_ID=mcp
+      - OIDC_CLIENT_SECRET=${MCP_OIDC_CLIENT_SECRET}
+      - OIDC_SCOPES=openid,profile,email,groups
+      - OIDC_ALLOWED_ATTRIBUTES=/groups=admins
+      - OIDC_PROVIDER_NAME=Authelia
+      - AUTH_HMAC_SECRET=${MCP_AUTH_HMAC_SECRET}
+      - TRUSTED_PROXIES=${CORE_SERVICES_VM_IP} # Traefik

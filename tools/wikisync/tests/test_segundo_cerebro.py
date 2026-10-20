@@ -309,3 +309,70 @@ def test_syncthing_generate():
     assert c["creates"].endswith("syncthing/config/config.xml")
     assert t["no_log"] is True
     assert _main()["syncthing_version"] == "2.1.6"
+
+
+# --- Task 6: acesso remoto (mcp-auth-proxy, Authelia, Traefik) ---
+
+from test_fotos_arquivos import DOM, OIDC, _authelia  # noqa: E402
+
+VAULT_EX = ROOT / "server/ansible/inventories/home/group_vars/all/vault.yml.example"
+PROXIES = (("mcp_auth_busca", "notas", "http://qmd:8181/mcp", "8481", "BUSCA"),
+           ("mcp_auth_escrita", "escrita", "http://notes_escrita:8000/mcp", "8482", "ESCRITA"))
+
+
+def test_proxies_mcp():
+    svc = _svc(NOTES)
+    for nome, sub, backend, porta, dados in PROXIES:
+        p = svc[nome]
+        assert p["image"] == "ghcr.io/sigbit/mcp-auth-proxy:v2.10.2", nome
+        assert p["command"] == [backend]
+        assert p["ports"] == [f"${{AI_DESKTOP_VM_IP}}:{porta}:80"]
+        assert p["networks"] == ["notes_mcp"]
+        assert _vols(p) == [f"${{NOTES_STACK_MCP_AUTH_{dados}_PATH}}:/data"]
+        e = _env(p)
+        assert e["EXTERNAL_URL"] == f"https://{sub}.${{BASE_DOMAIN_FROM_VAULT}}"
+        assert e["NO_AUTO_TLS"] == "true" and e["LISTEN"] == ":80" and e["DATA_PATH"] == "/data"
+        assert e["OIDC_CONFIGURATION_URL"] == "https://auth.${BASE_DOMAIN_FROM_VAULT}/.well-known/openid-configuration"
+        assert e["OIDC_CLIENT_ID"] == "mcp" and e["OIDC_CLIENT_SECRET"] == "${MCP_OIDC_CLIENT_SECRET}"
+        assert e["OIDC_SCOPES"] == "openid,profile,email,groups"
+        assert e["OIDC_ALLOWED_ATTRIBUTES"] == "/groups=admins"
+        assert e["AUTH_HMAC_SECRET"] == "${MCP_AUTH_HMAC_SECRET}"
+        assert e["TRUSTED_PROXIES"] == "${CORE_SERVICES_VM_IP}"
+        assert "PASSWORD" not in e
+    assert _main()["mcp_auth_proxy_version"] == "v2.10.2"
+
+
+def test_cliente_oidc_mcp():
+    cli = {c["client_id"]: c for c in yaml.safe_load(_authelia())["identity_providers"]["oidc"]["clients"]}
+    c = cli["mcp"]
+    assert c["client_secret"] == OIDC["mcp"]["secret_digest"] and c["public"] is False
+    assert c["authorization_policy"] == "two_factor"
+    assert c["require_pkce"] is False and "pkce_challenge_method" not in c
+    assert c["token_endpoint_auth_method"] == "client_secret_basic"
+    assert c["scopes"] == ["openid", "profile", "email", "groups"]
+    assert c["redirect_uris"] == [f"https://notas.{DOM}/.auth/oidc/callback", f"https://escrita.{DOM}/.auth/oidc/callback"]
+    vault = yaml.safe_load(VAULT_EX.read_text(encoding="utf-8"))
+    assert "mcp" in vault["oidc_clients"]
+    for k in ("mcp_auth_hmac_secret", "syncthing_gui_password", "syncthing_api_key"):
+        assert k in vault, k
+
+
+def test_bypass_notas_e_escrita():
+    regras = yaml.safe_load(_authelia())["access_control"]["rules"]
+    curinga = next(i for i, r in enumerate(regras) if r["domain"] == f"*.{DOM}")
+    for sub in ("notas", "escrita"):
+        idx = [i for i, r in enumerate(regras) if r["domain"] == f"{sub}.{DOM}"]
+        assert len(idx) == 1, sub
+        assert regras[idx[0]]["policy"] == "bypass" and "resources" not in regras[idx[0]]
+        assert idx[0] < curinga
+
+
+def test_rotas_notes():
+    cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2",
+                                base_domain=DOM, ai_desktop_vm_ip_var=AI_IP))
+    rot, srv = cfg["http"]["routers"], cfg["http"]["services"]
+    por_host = {r["rule"]: r for r in rot.values()}
+    for sub, porta, auth in (("notas", 8481, False), ("escrita", 8482, False), ("sync", 8384, True)):
+        r = por_host[f"Host(`{sub}.{DOM}`)"]
+        assert ("authelia-forwardauth@docker" in r.get("middlewares", [])) is auth, sub
+        assert srv[r["service"]]["loadBalancer"]["servers"] == [{"url": f"http://{AI_IP}:{porta}"}]

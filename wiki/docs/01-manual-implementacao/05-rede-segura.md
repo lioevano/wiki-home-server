@@ -463,6 +463,31 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
+    # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
+    # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
+    notas-dynamic:
+      entryPoints: ["websecure"]
+      rule: "Host(`notas.{{ base_domain }}`)"
+      service: "notas-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+
+    escrita-dynamic:
+      entryPoints: ["websecure"]
+      rule: "Host(`escrita.{{ base_domain }}`)"
+      service: "escrita-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+
+    syncthing-dynamic:
+      entryPoints: ["websecure"]
+      rule: "Host(`sync.{{ base_domain }}`)"
+      service: "syncthing-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+      middlewares:
+        - "authelia-forwardauth@docker"
+
     # Adicione aqui roteadores para outros serviços RAG/AI na ai-desktop-vm se necessário
     # Exemplo para um hipotético OpenNotebookLM
     # opennotebooklm-dynamic:
@@ -484,6 +509,21 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ ai_desktop_vm_ip_var }}:4000"
+
+    notas-svc-dynamic: # mcp_auth_busca (stack notes)
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:8481"
+
+    escrita-svc-dynamic: # mcp_auth_escrita (stack notes)
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:8482"
+
+    syncthing-svc-dynamic:
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:8384"
 
     # opennotebooklm-svc-dynamic:
     #   loadBalancer:
@@ -681,6 +721,12 @@ access_control:
       policy: bypass
     - domain: "office.{{ base_domain }}"
       policy: bypass
+    # Conectores MCP do segundo cérebro (página 12): o claude.ai e o Claude Code fazem OAuth com o mcp-auth-proxy,
+    # que manda o login para o OIDC deste Authelia (cliente 'mcp', two_factor, só o grupo admins).
+    - domain: "notas.{{ base_domain }}"
+      policy: bypass
+    - domain: "escrita.{{ base_domain }}"
+      policy: bypass
 
     # Regra geral para todos os outros subdomínios do seu domínio base: requer dois fatores.
     - domain: "*.{{ base_domain }}"
@@ -769,6 +815,22 @@ identity_providers:
         redirect_uris:
           - "https://openwebui.{{ base_domain }}/oauth/oidc/callback"
         scopes: ["openid", "profile", "groups", "email"] # groups: o Open WebUI só aceita quem está em 'admins'
+        response_types: ["code"]
+        grant_types: ["authorization_code"]
+        userinfo_signed_response_alg: "none"
+        token_endpoint_auth_method: "client_secret_basic"
+      # Os dois mcp-auth-proxy do segundo cérebro (página 12). Sem PKCE: o proxy não o envia ao provedor; ele
+      # mesmo exige PKCE dos clientes MCP (claude.ai, Claude Code). Só quem está no grupo admins passa.
+      - client_id: "mcp"
+        client_name: "Segundo cérebro (MCP)"
+        client_secret: "{{ oidc_clients.mcp.secret_digest }}"
+        public: false
+        authorization_policy: "two_factor"
+        require_pkce: false
+        redirect_uris:
+          - "https://notas.{{ base_domain }}/.auth/oidc/callback"
+          - "https://escrita.{{ base_domain }}/.auth/oidc/callback"
+        scopes: ["openid", "profile", "email", "groups"]
         response_types: ["code"]
         grant_types: ["authorization_code"]
         userinfo_signed_response_alg: "none"
