@@ -535,3 +535,13 @@ def test_sonda_do_hub_em_si():
     alvos = [(c["targets"][0], c["labels"]["app"]) for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
              for c in j["static_configs"]]
     assert ("http://agentgateway:15020/metrics", "agentgateway") in alvos
+
+
+def test_clone_sem_become_user():
+    """Revisão final: become_user para usuário sem privilégio exige acl nas VMs (não instalado) — o clone falharia."""
+    tarefas = _pb_tasks(PB_AGENTS)
+    i = next(k for k, t in enumerate(tarefas) if "ansible.builtin.git" in t)
+    assert "become_user" not in tarefas[i]
+    dono = tarefas[i + 1].get("ansible.builtin.file", {})
+    assert dono.get("path") == "{{ vm_local_data_path }}/ops/repo" and dono.get("recurse") is True
+    assert dono.get("owner") == "{{ docker_puid }}" and dono.get("group") == "{{ docker_pgid }}"
