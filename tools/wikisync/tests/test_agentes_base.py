@@ -275,3 +275,46 @@ def test_hub_valida(tmp_path):
     arq.write_text(_hub_txt().replace("/segredos/", f"{segredos}/"), encoding="utf-8")
     r = subprocess.run(["agentgateway", "--validate-only", "-f", str(arq)], capture_output=True, text=True, timeout=60)
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+# --- Task 6: conector público servidor. ---
+
+from test_fotos_arquivos import DOM, OIDC, _authelia  # noqa: E402
+
+
+def test_proxy_servidor():
+    p = _svc(AGENTS)["mcp_auth_servidor"]
+    assert p["image"] == "ghcr.io/sigbit/mcp-auth-proxy:v2.10.2"
+    assert p["command"] == ["http://agentgateway:4000/mcp"]
+    assert "ports" not in p
+    assert set(p["networks"]) == {"agents_internal", "proxy"}
+    assert _vols(p) == ["${MCP_AUTH_SERVIDOR_DATA_PATH}:/data"]
+    e = _env(p)
+    assert e["EXTERNAL_URL"] == "https://servidor.${BASE_DOMAIN_FROM_VAULT}"
+    assert e["NO_AUTO_TLS"] == "true" and e["LISTEN"] == ":80" and e["DATA_PATH"] == "/data"
+    assert e["OIDC_CONFIGURATION_URL"] == "https://auth.${BASE_DOMAIN_FROM_VAULT}/.well-known/openid-configuration"
+    assert e["OIDC_CLIENT_ID"] == "mcp" and e["OIDC_CLIENT_SECRET"] == "${MCP_OIDC_CLIENT_SECRET}"
+    assert e["OIDC_SCOPES"] == "openid,profile,email,groups"
+    assert e["OIDC_ALLOWED_ATTRIBUTES"] == "/groups=admins"
+    assert e["AUTH_HMAC_SECRET"] == "${MCP_AUTH_HMAC_SECRET}"
+    assert e["TRUSTED_PROXIES"] == "172.16.0.0/12"  # o Traefik na rede proxy
+    assert "PASSWORD" not in e
+    labels = p["labels"]
+    assert labels["traefik.enable"] == "true"
+    assert labels["traefik.http.routers.servidor.rule"] == "Host(`servidor.${BASE_DOMAIN_FROM_VAULT}`)"
+    assert labels["traefik.http.services.servidor-svc.loadbalancer.server.port"] == "80"
+    assert labels["traefik.docker.network"] == "proxy"
+    assert not any("authelia" in str(v) for v in labels.values())
+    configs = _configs(PB_AGENTS, "agents.env")
+    assert configs["MCP_AUTH_SERVIDOR_DATA_PATH"] == "{{ vm_local_data_path }}/mcp-auth-servidor"
+    assert configs["MCP_OIDC_CLIENT_SECRET"] == "{{ oidc_clients.mcp.secret }}"
+
+
+def test_authelia_servidor():
+    cfg = yaml.safe_load(_authelia())
+    mcp = next(c for c in cfg["identity_providers"]["oidc"]["clients"] if c["client_id"] == "mcp")
+    assert mcp["redirect_uris"] == [f"https://{s}.{DOM}/.auth/oidc/callback" for s in ("notas", "escrita", "servidor")]
+    regras = cfg["access_control"]["rules"]
+    curinga = next(i for i, r in enumerate(regras) if r["domain"] == f"*.{DOM}")
+    idx = [i for i, r in enumerate(regras) if r["domain"] == f"servidor.{DOM}"]
+    assert len(idx) == 1 and regras[idx[0]]["policy"] == "bypass" and idx[0] < curinga

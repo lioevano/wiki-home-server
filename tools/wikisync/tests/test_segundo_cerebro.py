@@ -438,7 +438,8 @@ def test_cliente_oidc_mcp():
     assert c["require_pkce"] is False and "pkce_challenge_method" not in c
     assert c["token_endpoint_auth_method"] == "client_secret_basic"
     assert c["scopes"] == ["openid", "profile", "email", "groups"]
-    assert c["redirect_uris"] == [f"https://notas.{DOM}/.auth/oidc/callback", f"https://escrita.{DOM}/.auth/oidc/callback"]
+    # notas e escrita (4b); servidor entrou na base dos agentes (4c1, test_authelia_servidor)
+    assert c["redirect_uris"][:2] == [f"https://notas.{DOM}/.auth/oidc/callback", f"https://escrita.{DOM}/.auth/oidc/callback"]
     vault = yaml.safe_load(VAULT_EX.read_text(encoding="utf-8"))
     assert "mcp" in vault["oidc_clients"]
     for k in ("mcp_auth_hmac_secret", "syncthing_gui_password", "syncthing_api_key"):
