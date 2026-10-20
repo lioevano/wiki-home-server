@@ -60,7 +60,7 @@ services:
       retries: 5
 
   grafana:
-    image: grafana/grafana-oss:latest
+    image: grafana/grafana-oss:13.2.4 # fixada: o MCP do Grafana (página 13) depende da API
     container_name: grafana
     restart: unless-stopped
     user: "${DOCKER_PUID}:${DOCKER_PGID}"
@@ -193,7 +193,7 @@ services:
   # ===================== AUTOMAÇÃO =====================
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
+    image: docker.n8n.io/n8nio/n8n:2.44.4 # fixada: o MCP nativo do n8n exige >= 2.33 (página 13)
     container_name: n8n_app
     restart: unless-stopped
     networks:
@@ -220,7 +220,7 @@ services:
       traefik.http.services.n8n.loadbalancer.server.port: '5678'
 
   homeassistant:
-    image: ghcr.io/home-assistant/home-assistant:latest
+    image: ghcr.io/home-assistant/home-assistant:2026.10.2 # fixada: MCP embutido (página 13)
     container_name: homeassistant
     restart: unless-stopped
     volumes:

@@ -71,6 +71,10 @@ oidc_clients:
   mcp:
     secret: "SEGREDO_DO_CLIENTE_MCP"
     secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_MCP"
+  # Langfuse (página 13).
+  langfuse:
+    secret: "SEGREDO_DO_CLIENTE_LANGFUSE"
+    secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_LANGFUSE"
 
 # --- Configurações Gerais ---
 # Email para notificações do Let's Encrypt (renovação de certificados, problemas).
@@ -158,3 +162,38 @@ homepage_widget_keys:
   portainer: "CHAVE_DE_API_DO_PORTAINER"
   qbittorrent_user: "admin"
   qbittorrent_password: "SENHA_DO_QBITTORRENT"
+
+# --- Agentes: base (página 13) ---
+# Chaves dos clientes da rota de controle do hub (LAN): "ag-" + openssl rand -hex 24. No config do hub só vai o hash.
+agents_api_keys:
+  claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
+  agentes: "ag-CHAVE_DOS_AGENTES"
+# Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
+grafana_sa_tokens:
+  leitura: "glsa_TOKEN_VIEWER"
+  controle: "glsa_TOKEN_EDITOR"
+# Token de longa duração do Home Assistant (Perfil › Segurança) usado pelo hub no /api/mcp.
+homeassistant_mcp_token: "TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT_PARA_O_MCP"
+# Token do n8n em Settings › Instance-level MCP › API key.
+n8n_mcp_token: "TOKEN_DO_MCP_DO_N8N"
+# Chave de API do Portainer (Minha conta › Access tokens) usada pelo ops.
+portainer_api_key: "ptr_CHAVE_DE_API_DO_PORTAINER_PARA_O_OPS"
+# Chave SSH própria do runner do ops (ssh-keygen -t ed25519 -C ops-runner); a pública vai para os hosts.
+ops_ssh_private_key: |
+  -----BEGIN OPENSSH PRIVATE KEY-----
+  CHAVE_PRIVADA_DO_RUNNER
+  -----END OPENSSH PRIVATE KEY-----
+# A mesma senha do ansible-vault deste repositório (o runner descriptografa o vault.yml).
+ops_vault_password: "SENHA_DO_ANSIBLE_VAULT"
+# Langfuse: salt e segredos (openssl rand -base64 32), encryption_key (openssl rand -hex 32), senhas dos
+# bancos e as chaves do projeto criadas na primeira subida (pk-lf-/sk-lf- + openssl rand -hex 16).
+langfuse_secrets:
+  salt: "SALT_DO_LANGFUSE"
+  encryption_key: "64_HEX_DO_LANGFUSE"
+  nextauth_secret: "SEGREDO_DE_SESSAO_DO_LANGFUSE"
+  db_password: "SENHA_DO_POSTGRES_DO_LANGFUSE"
+  clickhouse_password: "SENHA_DO_CLICKHOUSE_DO_LANGFUSE"
+  redis_password: "SENHA_DO_REDIS_DO_LANGFUSE"
+  minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
+  public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
+  secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"

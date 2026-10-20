@@ -260,6 +260,10 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       mcp:
         secret: "SEGREDO_DO_CLIENTE_MCP"
         secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_MCP"
+      # Langfuse (página 13).
+      langfuse:
+        secret: "SEGREDO_DO_CLIENTE_LANGFUSE"
+        secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_LANGFUSE"
 
     # --- Configurações Gerais ---
     # Email para notificações do Let's Encrypt (renovação de certificados, problemas).
@@ -347,6 +351,41 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       portainer: "CHAVE_DE_API_DO_PORTAINER"
       qbittorrent_user: "admin"
       qbittorrent_password: "SENHA_DO_QBITTORRENT"
+
+    # --- Agentes: base (página 13) ---
+    # Chaves dos clientes da rota de controle do hub (LAN): "ag-" + openssl rand -hex 24. No config do hub só vai o hash.
+    agents_api_keys:
+      claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
+      agentes: "ag-CHAVE_DOS_AGENTES"
+    # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
+    grafana_sa_tokens:
+      leitura: "glsa_TOKEN_VIEWER"
+      controle: "glsa_TOKEN_EDITOR"
+    # Token de longa duração do Home Assistant (Perfil › Segurança) usado pelo hub no /api/mcp.
+    homeassistant_mcp_token: "TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT_PARA_O_MCP"
+    # Token do n8n em Settings › Instance-level MCP › API key.
+    n8n_mcp_token: "TOKEN_DO_MCP_DO_N8N"
+    # Chave de API do Portainer (Minha conta › Access tokens) usada pelo ops.
+    portainer_api_key: "ptr_CHAVE_DE_API_DO_PORTAINER_PARA_O_OPS"
+    # Chave SSH própria do runner do ops (ssh-keygen -t ed25519 -C ops-runner); a pública vai para os hosts.
+    ops_ssh_private_key: |
+      -----BEGIN OPENSSH PRIVATE KEY-----
+      CHAVE_PRIVADA_DO_RUNNER
+      -----END OPENSSH PRIVATE KEY-----
+    # A mesma senha do ansible-vault deste repositório (o runner descriptografa o vault.yml).
+    ops_vault_password: "SENHA_DO_ANSIBLE_VAULT"
+    # Langfuse: salt e segredos (openssl rand -base64 32), encryption_key (openssl rand -hex 32), senhas dos
+    # bancos e as chaves do projeto criadas na primeira subida (pk-lf-/sk-lf- + openssl rand -hex 16).
+    langfuse_secrets:
+      salt: "SALT_DO_LANGFUSE"
+      encryption_key: "64_HEX_DO_LANGFUSE"
+      nextauth_secret: "SEGREDO_DE_SESSAO_DO_LANGFUSE"
+      db_password: "SENHA_DO_POSTGRES_DO_LANGFUSE"
+      clickhouse_password: "SENHA_DO_CLICKHOUSE_DO_LANGFUSE"
+      redis_password: "SENHA_DO_REDIS_DO_LANGFUSE"
+      minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
+      public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
+      secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"
     ```
     !!! important "Como Editar o Arquivo Vault no Futuro"
         Para editar o arquivo `vault.yml` após sua criação, SEMPRE use o comando:
@@ -570,6 +609,47 @@ notes_documentos_extensoes: [pdf, docx, pptx, xlsx, html, htm, csv, txt, md]
 notes_documentos_max_mb: 50
 # Modelos do qmd ({} = padrões do qmd). Ex.: {embed: "hf:Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-Q8_0.gguf"}
 qmd_modelos: {}
+
+# --- Agentes: base (página 13) ---
+# Versões fixadas: hub de MCPs, MCP do Grafana, imagem local do ops (FastMCP + ansible-core) e Langfuse.
+agentgateway_version: "v1.6.0"
+mcp_grafana_version: "2.1.1"
+ops_fastmcp_version: "4.1.2"
+ops_ansible_core_version: "2.21.5"
+langfuse_version: "4.66.0"
+# Rota de leitura do hub (conector Servidor, aberto pela internet): o que cada alvo pode mostrar.
+# "*" = todas as ferramentas do alvo (só vale para alvos que rodam em instância somente leitura).
+agents_leitura:
+  grafana: "*"
+  ops: "*"
+  homeassistant: ["GetLiveContext"]
+  n8n: ["search_workflows"]
+# O ops recusa reiniciar estes containers e redeployar estas stacks (o caminho de controle da própria IA).
+ops_containers_protegidos: [traefik, authelia, cloudflared, portainer, agentgateway, mcp_auth_servidor, ops_leitura, ops_controle]
+ops_stacks_protegidas: [core, agents]
+# Playbooks que a IA pode simular (ansible_check) e aplicar (ansible_aplicar). Fora da lista: criação de VMs,
+# host Proxmox, rede core (Traefik/Authelia) e o deploy completo.
+ops_playbooks_permitidos:
+  - { nome: setup-base-ubuntu.yml, descricao: "Configuração base das VMs Ubuntu (pacotes, montagens NFS, Docker, Alloy)" }
+  - { nome: setup-monitoring-stack-volumes.yml, descricao: "Configs de Prometheus, Grafana, alertas e Homepage" }
+  - { nome: setup-n8n-volumes.yml, descricao: "Diretórios e variáveis do n8n" }
+  - { nome: setup-productivity-automation-volumes.yml, descricao: "Diretórios e variáveis de Home Assistant e afins" }
+  - { nome: setup-media-stack-volumes.yml, descricao: "Configs e variáveis da stack de mídia" }
+  - { nome: setup-photos-stack-volumes.yml, descricao: "Configs e variáveis do Immich" }
+  - { nome: setup-cloud-stack-volumes.yml, descricao: "Configs e variáveis do Nextcloud e do Collabora" }
+  - { nome: setup-ai-volumes.yml, descricao: "Configs e variáveis da stack de IA (LiteLLM, Open WebUI, Ollama)" }
+  - { nome: setup-ai-keys.yml, descricao: "Chaves virtuais do LiteLLM por cliente" }
+  - { nome: setup-notes-volumes.yml, descricao: "Segundo cérebro: Syncthing, qmd, conversor e timers" }
+# Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
+ops_endpoints:
+  core: "local"
+  ai: "ai-desktop-vm"
+# Repositório que o runner do ops clona e atualiza (git pull) antes de cada execução.
+ops_repo_url: "https://github.com/lioevano/wiki-home-server.git"
+# Minutos em que um ansible_check vale para o ansible_aplicar.
+ops_plano_validade_min: 30
+# Dias de traces guardados no Langfuse.
+langfuse_retencao_dias: 30
 ```
 
 Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).

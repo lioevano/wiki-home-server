@@ -51,6 +51,10 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
    ```
 3. No Portainer, abra a stack `apps`, recarregue `apps.env` em **Env** e clique em **Update the stack**.
 
+### Versões fixadas
+
+O Grafana (`13.2.4`), o n8n (`2.44.4`) e o Home Assistant (`2026.10.2`) têm versão fixada no compose: o hub de MCPs da [base dos agentes](13-agentes-base.md) usa as APIs deles (o MCP nativo do n8n exige 2.33 ou mais nova; o do Home Assistant é embutido). Para atualizar, troque a versão no compose, confira as notas da versão nova e teste as ferramentas pelo Claude Code (página 13) depois do redeploy.
+
 ## Preparação dos Volumes
 
 Os volumes são criados pelos playbooks Ansible `ansible/playbooks/setup-productivity-automation-volumes.yml`, `ansible/playbooks/setup-n8n-volumes.yml` e `ansible/playbooks/setup-monitoring-stack-volumes.yml`. A partir de `server/ansible`:

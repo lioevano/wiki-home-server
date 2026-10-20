@@ -142,3 +142,44 @@ notes_documentos_extensoes: [pdf, docx, pptx, xlsx, html, htm, csv, txt, md]
 notes_documentos_max_mb: 50
 # Modelos do qmd ({} = padrões do qmd). Ex.: {embed: "hf:Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-Q8_0.gguf"}
 qmd_modelos: {}
+
+# --- Agentes: base (página 13) ---
+# Versões fixadas: hub de MCPs, MCP do Grafana, imagem local do ops (FastMCP + ansible-core) e Langfuse.
+agentgateway_version: "v1.6.0"
+mcp_grafana_version: "2.1.1"
+ops_fastmcp_version: "4.1.2"
+ops_ansible_core_version: "2.21.5"
+langfuse_version: "4.66.0"
+# Rota de leitura do hub (conector Servidor, aberto pela internet): o que cada alvo pode mostrar.
+# "*" = todas as ferramentas do alvo (só vale para alvos que rodam em instância somente leitura).
+agents_leitura:
+  grafana: "*"
+  ops: "*"
+  homeassistant: ["GetLiveContext"]
+  n8n: ["search_workflows"]
+# O ops recusa reiniciar estes containers e redeployar estas stacks (o caminho de controle da própria IA).
+ops_containers_protegidos: [traefik, authelia, cloudflared, portainer, agentgateway, mcp_auth_servidor, ops_leitura, ops_controle]
+ops_stacks_protegidas: [core, agents]
+# Playbooks que a IA pode simular (ansible_check) e aplicar (ansible_aplicar). Fora da lista: criação de VMs,
+# host Proxmox, rede core (Traefik/Authelia) e o deploy completo.
+ops_playbooks_permitidos:
+  - { nome: setup-base-ubuntu.yml, descricao: "Configuração base das VMs Ubuntu (pacotes, montagens NFS, Docker, Alloy)" }
+  - { nome: setup-monitoring-stack-volumes.yml, descricao: "Configs de Prometheus, Grafana, alertas e Homepage" }
+  - { nome: setup-n8n-volumes.yml, descricao: "Diretórios e variáveis do n8n" }
+  - { nome: setup-productivity-automation-volumes.yml, descricao: "Diretórios e variáveis de Home Assistant e afins" }
+  - { nome: setup-media-stack-volumes.yml, descricao: "Configs e variáveis da stack de mídia" }
+  - { nome: setup-photos-stack-volumes.yml, descricao: "Configs e variáveis do Immich" }
+  - { nome: setup-cloud-stack-volumes.yml, descricao: "Configs e variáveis do Nextcloud e do Collabora" }
+  - { nome: setup-ai-volumes.yml, descricao: "Configs e variáveis da stack de IA (LiteLLM, Open WebUI, Ollama)" }
+  - { nome: setup-ai-keys.yml, descricao: "Chaves virtuais do LiteLLM por cliente" }
+  - { nome: setup-notes-volumes.yml, descricao: "Segundo cérebro: Syncthing, qmd, conversor e timers" }
+# Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
+ops_endpoints:
+  core: "local"
+  ai: "ai-desktop-vm"
+# Repositório que o runner do ops clona e atualiza (git pull) antes de cada execução.
+ops_repo_url: "https://github.com/lioevano/wiki-home-server.git"
+# Minutos em que um ansible_check vale para o ansible_aplicar.
+ops_plano_validade_min: 30
+# Dias de traces guardados no Langfuse.
+langfuse_retencao_dias: 30
