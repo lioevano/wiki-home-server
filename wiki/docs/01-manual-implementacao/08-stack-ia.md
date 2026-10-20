@@ -94,6 +94,9 @@ general_settings:
    ```
 6. **Modelo local:** `docker exec -it ollama ollama pull llama3.2:3b`.
 
+!!! warning "Banco do LiteLLM fora dos snapshots ZFS"
+    O Postgres do LiteLLM fica no disco local da VM (`/opt/local-data/litellm-db`), fora dos snapshots ZFS, como os do Immich e do Nextcloud (regra DAD-5). O backup dele é o dump diário do timer `backup-litellm-db.timer` em `docker-volumes/litellm/db-dumps/` (duas semanas), listado na [estratégia de backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md). As chaves dos clientes também podem ser recriadas a qualquer momento pelo `setup-ai-keys.yml`.
+
 ### Variáveis da stack
 
 | Variável | Origem |
