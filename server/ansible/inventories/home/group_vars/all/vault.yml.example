@@ -98,6 +98,14 @@ llm_api_keys:
   anthropic: "SUA_CHAVE_ANTHROPIC"
   google_gemini: "SUA_CHAVE_GEMINI"
   typesafe: "SUA_CHAVE_TYPESAFE" # Jev (modelo de decisão); console da TypeSafe AI
+# Senha do Postgres do LiteLLM (stack ai; página 08). Só letras e números.
+litellm_db_password: "SENHA_FORTE_PARA_O_DB_DO_LITELLM"
+# Uma chave virtual do LiteLLM por cliente (gere com: echo sk-$(openssl rand -hex 24)). Os clientes usam
+# estas, nunca a litellm_master_key; o setup-ai-keys.yml as cria no LiteLLM com o orçamento de cada uma.
+litellm_client_keys:
+  openwebui: "sk-CHAVE_DO_OPEN_WEBUI"
+  claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
+  n8n: "sk-CHAVE_DO_N8N"
 # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
 openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 

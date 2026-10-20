@@ -123,3 +123,40 @@ def test_variaveis_ai_no_env():
     env_tpl = (ROOT / "server/docker/stacks/.env.template").read_text(encoding="utf-8")
     for txt in (PB_AI.read_text(encoding="utf-8"), env_tpl):
         assert "OPENCLAW" not in txt.upper() and "OPENCLAUDE" not in txt.upper()
+
+
+# --- Chaves virtuais por cliente ---
+
+VAULT_EX = ROOT / "server/ansible/inventories/home/group_vars/all/vault.yml.example"
+PB_KEYS = ROOT / "server/ansible/playbooks/setup-ai-keys.yml"
+CLIENTES = {"openwebui", "claude_code", "n8n"}
+
+
+def test_chaves_por_cliente():
+    v = yaml.safe_load(VAULT_EX.read_text(encoding="utf-8"))
+    chaves = v["litellm_client_keys"]
+    assert set(chaves) == CLIENTES
+    assert all(str(x).startswith("sk-") for x in chaves.values())
+    assert "litellm_db_password" in v
+    orc = _main()["litellm_key_budgets"]
+    assert set(orc) == CLIENTES and all(isinstance(x, (int, float)) and x > 0 for x in orc.values())
+
+
+def test_playbook_de_chaves_idempotente():
+    play = yaml.safe_load(PB_KEYS.read_text(encoding="utf-8"))[0]
+    assert play["hosts"] == "ai_desktop"
+    uris = [t for t in play["tasks"] if "ansible.builtin.uri" in t]
+    assert uris
+    for t in uris:
+        assert t.get("no_log") is True, t["name"]
+        assert t["ansible.builtin.uri"]["headers"]["Authorization"] == "Bearer {{ litellm_master_key }}"
+        assert t["loop"] in ("{{ litellm_client_keys | dict2items }}", "{{ chaves_info.results }}"), t["name"]
+    por_rota = {next(r for r in ("/key/info", "/key/generate", "/key/update") if r in t["ansible.builtin.uri"]["url"]): t
+                for t in uris}
+    info, gen, upd = por_rota["/key/info"], por_rota["/key/generate"], por_rota["/key/update"]
+    assert 404 in info["ansible.builtin.uri"]["status_code"] and info["changed_when"] is False
+    assert "status" in str(gen["when"]) and "200" in str(gen["when"])
+    corpo = gen["ansible.builtin.uri"]["body"]
+    assert {"key", "key_alias", "max_budget", "budget_duration"} <= set(corpo)
+    assert corpo["budget_duration"] == "30d"
+    assert "max_budget" in str(upd["when"]) and "budget_duration" in str(upd["when"])

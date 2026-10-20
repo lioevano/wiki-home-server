@@ -1,0 +1,61 @@
+# ansible/playbooks/setup-ai-keys.yml
+# Cria ou atualiza no LiteLLM uma chave virtual por cliente (litellm_client_keys do vault), com orçamento
+# mensal (litellm_key_budgets). Roda DEPOIS do deploy da stack ai; pode rodar de novo a qualquer momento:
+# só muda o que estiver diferente. Página 08.
+- name: Chaves virtuais do LiteLLM por cliente
+  hosts: ai_desktop
+  gather_facts: false
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    litellm_url: "http://{{ ai_desktop_vm_ip_var }}:4000"
+
+  tasks:
+    - name: Consultar cada chave no LiteLLM
+      ansible.builtin.uri:
+        url: "{{ litellm_url }}/key/info?key={{ item.value }}"
+        method: GET
+        headers:
+          Authorization: "Bearer {{ litellm_master_key }}"
+        status_code: [200, 400, 404] # 400/404: a chave ainda não existe
+      loop: "{{ litellm_client_keys | dict2items }}"
+      register: chaves_info
+      changed_when: false
+      no_log: true # a URL e a resposta contêm a chave
+
+    - name: Criar as chaves que não existem
+      ansible.builtin.uri:
+        url: "{{ litellm_url }}/key/generate"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ litellm_master_key }}"
+        body_format: json
+        body:
+          key: "{{ item.item.value }}"
+          key_alias: "{{ item.item.key }}"
+          max_budget: "{{ litellm_key_budgets[item.item.key] }}"
+          budget_duration: "30d" # orçamento renovado a cada 30 dias
+      loop: "{{ chaves_info.results }}"
+      when: item.status != 200
+      changed_when: true
+      no_log: true
+
+    - name: Atualizar orçamento das chaves existentes que mudaram
+      ansible.builtin.uri:
+        url: "{{ litellm_url }}/key/update"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ litellm_master_key }}"
+        body_format: json
+        body:
+          key: "{{ item.item.value }}"
+          max_budget: "{{ litellm_key_budgets[item.item.key] }}"
+          budget_duration: "30d" # orçamento renovado a cada 30 dias
+      loop: "{{ chaves_info.results }}"
+      when: >-
+        item.status == 200 and
+        ((item.json.info.max_budget | float) != (litellm_key_budgets[item.item.key] | float)
+         or item.json.info.budget_duration != '30d')
+      changed_when: true
+      no_log: true

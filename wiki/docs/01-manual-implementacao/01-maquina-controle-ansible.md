@@ -287,6 +287,14 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       anthropic: "SUA_CHAVE_ANTHROPIC"
       google_gemini: "SUA_CHAVE_GEMINI"
       typesafe: "SUA_CHAVE_TYPESAFE" # Jev (modelo de decisão); console da TypeSafe AI
+    # Senha do Postgres do LiteLLM (stack ai; página 08). Só letras e números.
+    litellm_db_password: "SENHA_FORTE_PARA_O_DB_DO_LITELLM"
+    # Uma chave virtual do LiteLLM por cliente (gere com: echo sk-$(openssl rand -hex 24)). Os clientes usam
+    # estas, nunca a litellm_master_key; o setup-ai-keys.yml as cria no LiteLLM com o orçamento de cada uma.
+    litellm_client_keys:
+      openwebui: "sk-CHAVE_DO_OPEN_WEBUI"
+      claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
+      n8n: "sk-CHAVE_DO_N8N"
     # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
     openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -519,6 +527,11 @@ llm_fallbacks:
   - { rapido: ["gpt-6-luna"] }
 # Alerta do Grafana quando o gasto com LLM em 24 h passa deste valor (US$).
 llm_gasto_diario_alerta: 5
+# Orçamento mensal (US$) de cada chave virtual do LiteLLM (setup-ai-keys.yml). Estourou: o cliente recebe erro.
+litellm_key_budgets:
+  openwebui: 20
+  claude_code: 50
+  n8n: 10
 # Versão do Ollama; o role ml-tools constrói homeserver/ollama-vulkan:<versão> (oficial + Mesa/RADV).
 ollama_version: "0.40.6"
 # Formulário de login local do Open WebUI: ligado só até vincular o admin pelo OIDC do Authelia; depois, false.
