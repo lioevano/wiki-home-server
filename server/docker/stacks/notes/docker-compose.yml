@@ -1,0 +1,49 @@
+# docker/stacks/notes/docker-compose.yml
+# Segundo cérebro: Syncthing (vaults do Obsidian), qmd (busca local), MCP de escrita só em Trabalho e Estudos e
+# os mcp-auth-proxy que publicam os dois MCPs com login pelo Authelia. Roda na ai-desktop-vm.
+# O escopo de cada serviço é dado pelas montagens: o que não está montado não existe para ele.
+# Variáveis: /opt/portainer_stack_envs/notes.env, gerado por ansible/playbooks/setup-notes-volumes.yml.
+# Página: 01-manual-implementacao/12-segundo-cerebro.md
+version: '3.9'
+
+networks:
+  notes_network:
+    name: notes_network
+    driver: bridge
+  # MCPs sem autenticação própria: só nesta rede (os proxies e o Open WebUI se juntam a ela).
+  notes_mcp:
+    name: notes_mcp
+    driver: bridge
+
+services:
+  # Busca local (BM25 + vetorial + reordenação) sobre os vaults e os documentos do Nextcloud. Tudo :ro.
+  qmd:
+    image: ${QMD_IMAGE}
+    pull_policy: never # imagem construída na VM (localhost/...); nunca buscar em registro
+    container_name: qmd
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    labels:
+      diun.enable: "false" # imagem local: o Diun não tem onde procurar versão nova
+    networks:
+      - notes_network
+      - notes_mcp
+    command: ["qmd", "mcp", "--http", "--host", "0.0.0.0", "--port", "8181"]
+    volumes:
+      - "${NOTES_STACK_DATA_PATH}/pessoal:/notes/pessoal:ro"
+      - "${NOTES_STACK_DATA_PATH}/trabalho:/notes/trabalho:ro"
+      - "${NOTES_STACK_DATA_PATH}/estudos:/notes/estudos:ro"
+      - "${NOTES_STACK_DOCUMENTOS_PATH}:/notes/documentos:ro"
+      - "${NOTES_STACK_QMD_CONFIG_PATH}:/config"
+      - "${NOTES_STACK_QMD_CACHE_PATH}:/cache"
+    devices:
+      - /dev/dri
+    group_add:
+      - "${AI_RENDER_GID}" # grupo render da VM (acesso a /dev/dri/renderD*)
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+      - HOME=/cache
+      - QMD_CONFIG_DIR=/config
+      - XDG_CACHE_HOME=/cache
+      # Host aceitos: o nome interno (Open WebUI, agentes) e o público, que o mcp-auth-proxy repassa.
+      - QMD_ALLOWED_HOSTS=qmd,qmd:8181,notas.${BASE_DOMAIN_FROM_VAULT}

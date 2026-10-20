@@ -1,0 +1,6 @@
+# Imagem do qmd (busca local do segundo cérebro, página 12): Node 22 + Mesa/RADV para o Vulkan.
+FROM node:22-bookworm-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends mesa-vulkan-drivers libvulkan1 ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @tobilu/qmd@{{ qmd_version }}

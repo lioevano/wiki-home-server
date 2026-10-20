@@ -13,6 +13,12 @@ Os vaults do Obsidian **Pessoal**, **Trabalho** e **Estudos**, editados no PC e 
 | Estudos | buscar, ler, criar, editar e mover |
 | Documentos (Nextcloud) | buscar e ler (cópia convertida) |
 
+## Arquivos
+
+- Stack: `docker/stacks/notes/docker-compose.yml` (Portainer, endpoint da `ai-desktop-vm`, variáveis em `/opt/portainer_stack_envs/notes.env`).
+- Preparação: `ansible/playbooks/setup-notes-volumes.yml` (diretórios, imagens locais, coleções do qmd, `notes.env`), rodado antes do deploy.
+- Arquivos literais nesta página: `ansible/templates/notes/`.
+
 ## Dados
 
 O dataset `data/notes` (cota de 20G, [seção 2](02-proxmox-ve-host.md)) é exportado só para a `ai-desktop-vm` e tem snapshots automáticos a cada 15 minutos ([guia de snapshots](../03-guias-sustentacao/12-guia-snapshots-zfs.md)): é por eles que se desfaz uma edição da IA. O dataset `files` do Nextcloud é montado **só leitura** na mesma VM.
@@ -164,4 +170,44 @@ RUN pip install --no-cache-dir "markitdown[pdf,docx,pptx,xlsx]=={{ markitdown_ve
 COPY conversor.py /app/conversor.py
 USER 65534:65534
 ENTRYPOINT ["python", "/app/conversor.py"]
+```
+
+## Busca (qmd)
+
+O **qmd** junta busca por palavra-chave (BM25), busca semântica e reordenação, com modelos GGUF que rodam na própria VM (na GPU, pelo Vulkan; sem ela, na CPU). Na primeira indexação ele baixa os modelos do Hugging Face (cerca de 2 GB) para `/opt/local-data/qmd`. O container monta os vaults e os documentos **só leitura** e expõe um MCP (`query`, `get`, `multi_get`, `metadata`, `status`) em `http://qmd:8181/mcp`, só na rede Docker `notes_mcp`.
+
+A imagem local, construída pelo `setup-notes-volumes.yml` (reconstrói quando o Dockerfile muda):
+
+```jinja title="ansible/templates/notes/Dockerfile.qmd.j2"
+# Imagem do qmd (busca local do segundo cérebro, página 12): Node 22 + Mesa/RADV para o Vulkan.
+FROM node:22-bookworm-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends mesa-vulkan-drivers libvulkan1 ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+RUN npm install -g @tobilu/qmd@{{ qmd_version }}
+```
+
+As coleções (gerado em `docker-volumes/qmd/config/index.yml`). O contexto de cada coleção é devolvido junto com os resultados, para o Claude saber o que pode alterar:
+
+```jinja title="ansible/templates/notes/index.yml.j2"
+# Coleções do qmd (segundo cérebro, página 12). Gerado pelo setup-notes-volumes.yml; não edite na VM.
+{% set ignorar = ['.obsidian/**', '.trash/**', '**/*.sync-conflict-*'] %}
+{% set colecoes = {
+  'pessoal': 'Vault Pessoal do Obsidian. Somente leitura: não há ferramenta que altere estas notas.',
+  'trabalho': 'Vault de Trabalho e projetos do Obsidian. Pode ser editado pelo MCP de escrita (/notes/trabalho).',
+  'estudos': 'Vault de Estudos e conhecimento do Obsidian. Pode ser editado pelo MCP de escrita (/notes/estudos).',
+  'documentos': 'Documentos do Nextcloud convertidos para Markdown (somente leitura). O campo origem aponta o arquivo original.',
+} %}
+{% if qmd_modelos %}
+models: {{ qmd_modelos | to_json }}
+{% endif %}
+collections:
+{% for nome, descricao in colecoes.items() %}
+  {{ nome }}:
+    path: /notes/{{ nome }}
+    pattern: "**/*.md"
+    ignore: {{ ignorar | to_json }}
+    context:
+      "/": "{{ descricao }}"
+{% endfor %}
 ```

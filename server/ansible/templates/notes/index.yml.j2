@@ -1,0 +1,20 @@
+# Coleções do qmd (segundo cérebro, página 12). Gerado pelo setup-notes-volumes.yml; não edite na VM.
+{% set ignorar = ['.obsidian/**', '.trash/**', '**/*.sync-conflict-*'] %}
+{% set colecoes = {
+  'pessoal': 'Vault Pessoal do Obsidian. Somente leitura: não há ferramenta que altere estas notas.',
+  'trabalho': 'Vault de Trabalho e projetos do Obsidian. Pode ser editado pelo MCP de escrita (/notes/trabalho).',
+  'estudos': 'Vault de Estudos e conhecimento do Obsidian. Pode ser editado pelo MCP de escrita (/notes/estudos).',
+  'documentos': 'Documentos do Nextcloud convertidos para Markdown (somente leitura). O campo origem aponta o arquivo original.',
+} %}
+{% if qmd_modelos %}
+models: {{ qmd_modelos | to_json }}
+{% endif %}
+collections:
+{% for nome, descricao in colecoes.items() %}
+  {{ nome }}:
+    path: /notes/{{ nome }}
+    pattern: "**/*.md"
+    ignore: {{ ignorar | to_json }}
+    context:
+      "/": "{{ descricao }}"
+{% endfor %}

@@ -1,0 +1,146 @@
+# ansible/playbooks/setup-notes-volumes.yml
+# Diretórios, imagens locais, configuração do qmd e notes.env da stack notes (segundo cérebro). Página 12.
+# Roda antes do deploy da stack no Portainer.
+- name: Preparar volumes, imagens e configuração da stack notes
+  hosts: ai_desktop
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    notes_nfs: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}"
+    notes_imagens: /opt/notes-images
+
+  tasks:
+    # --- Diretórios ---
+    - name: Criar as pastas dos vaults no dataset notes
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop: [pessoal, trabalho, estudos]
+
+    - name: Criar diretórios no NFS (configuração do Syncthing e do qmd)
+      ansible.builtin.file:
+        path: "{{ notes_nfs }}/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop: [syncthing/config, qmd/config]
+
+    # Regeráveis (DAD-5): banco do Syncthing, índice e modelos do qmd, documentos convertidos, dados OAuth dos proxies.
+    - name: Criar diretórios no disco local
+      ansible.builtin.file:
+        path: "{{ vm_local_data_path }}/{{ item }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0770'
+      loop: [syncthing, qmd, notes-documentos, mcp-auth-busca, mcp-auth-escrita]
+
+    # --- Busca (qmd) ---
+    - name: Gerar as coleções do qmd
+      ansible.builtin.template:
+        src: ../templates/notes/index.yml.j2
+        dest: "{{ notes_nfs }}/qmd/config/index.yml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    # --- Imagens locais (nome com 'localhost/': nunca resolve para um registro; o compose usa pull_policy: never) ---
+    - name: Criar diretórios de build das imagens
+      ansible.builtin.file:
+        path: "{{ notes_imagens }}/{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+      loop: [qmd, conversor]
+
+    - name: Gerar o Dockerfile do qmd
+      ansible.builtin.template:
+        src: ../templates/notes/Dockerfile.qmd.j2
+        dest: "{{ notes_imagens }}/qmd/Dockerfile"
+        mode: '0644'
+      register: dockerfile_qmd
+
+    # force_source: reconstrói também quando só o Dockerfile mudou (a tag nova já força).
+    - name: Construir a imagem local do qmd
+      community.docker.docker_image:
+        name: localhost/homeserver/qmd
+        tag: "{{ qmd_version }}"
+        source: build
+        build:
+          path: "{{ notes_imagens }}/qmd"
+          pull: true
+        force_source: "{{ dockerfile_qmd.changed }}"
+
+    - name: Copiar o script do conversor
+      ansible.builtin.copy:
+        src: ../templates/notes/conversor.py
+        dest: "{{ notes_imagens }}/conversor/conversor.py"
+        mode: '0644'
+      register: script_conversor
+
+    - name: Gerar o Dockerfile do conversor
+      ansible.builtin.template:
+        src: ../templates/notes/Dockerfile.conversor.j2
+        dest: "{{ notes_imagens }}/conversor/Dockerfile"
+        mode: '0644'
+      register: dockerfile_conversor
+
+    - name: Construir a imagem local do conversor
+      community.docker.docker_image:
+        name: localhost/homeserver/notes-conversor
+        tag: "{{ markitdown_version }}"
+        source: build
+        build:
+          path: "{{ notes_imagens }}/conversor"
+          pull: true
+        force_source: "{{ dockerfile_conversor.changed or script_conversor.changed }}"
+
+    # GID do grupo render da VM, que o qmd precisa para abrir /dev/dri/renderD*.
+    - name: Ler o GID do grupo render
+      ansible.builtin.getent:
+        database: group
+        key: render
+
+    # --- .env para Portainer ---
+    - name: Garantir diretório de envs do Portainer
+      ansible.builtin.file:
+        path: "{{ portainer_env_files_dest_path_on_vm }}"
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Gerar notes.env para Portainer
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/notes.env"
+        owner: root
+        group: root
+        mode: '0600'
+      vars:
+        stack_name: notes
+        stack_configs:
+          - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'CORE_SERVICES_VM_IP', value: "{{ core_services_vm_ip_var }}" }
+          - { name: 'AI_RENDER_GID', value: "{{ ansible_facts.getent_group.render[1] }}" }
+          - { name: 'NOTES_STACK_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}" }
+          - { name: 'NOTES_STACK_SYNCTHING_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/syncthing/config" }
+          - { name: 'NOTES_STACK_SYNCTHING_DB_PATH', value: "{{ vm_local_data_path }}/syncthing" }
+          - { name: 'NOTES_STACK_QMD_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/qmd/config" }
+          - { name: 'NOTES_STACK_QMD_CACHE_PATH', value: "{{ vm_local_data_path }}/qmd" }
+          - { name: 'NOTES_STACK_DOCUMENTOS_PATH', value: "{{ vm_local_data_path }}/notes-documentos" }
+          - { name: 'NOTES_STACK_MCP_AUTH_BUSCA_PATH', value: "{{ vm_local_data_path }}/mcp-auth-busca" }
+          - { name: 'NOTES_STACK_MCP_AUTH_ESCRITA_PATH', value: "{{ vm_local_data_path }}/mcp-auth-escrita" }
+          - { name: 'QMD_IMAGE', value: "localhost/homeserver/qmd:{{ qmd_version }}" }
+          - { name: 'NOTES_ESCRITA_IMAGE', value: "localhost/homeserver/notes-escrita:{{ mcp_filesystem_version }}" }
+          - { name: 'SYNCTHING_API_KEY', value: "{{ syncthing_api_key }}" }
+          - { name: 'MCP_OIDC_CLIENT_SECRET', value: "{{ oidc_clients.mcp.secret }}" }
+          - { name: 'MCP_AUTH_HMAC_SECRET', value: "{{ mcp_auth_hmac_secret }}" }

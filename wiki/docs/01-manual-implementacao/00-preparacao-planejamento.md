@@ -179,7 +179,7 @@ Thumbs.db
 
 ```bash title="docker/stacks/.env.template"
 # docker/stacks/.env.template
-# Contrato de variáveis usadas pelos docker-compose.yml das stacks (core, apps, ai).
+# Contrato de variáveis usadas pelos docker-compose.yml das stacks (core, apps, ai, notes).
 # Este MODELO pode ser versionado; os arquivos .env REAIS nunca são commitados.
 # Em produção, os .env das stacks apps e ai são gerados pelo Ansible (templates/portainer_stack_env.j2,
 # playbooks setup-*-volumes.yml); a stack core recebe as variáveis no playbook setup-core-networking.yml.
@@ -297,6 +297,22 @@ LITELLM_KEY_OPENWEBUI=
 OPENWEBUI_SECRET_KEY=
 OPENWEBUI_OAUTH_CLIENT_SECRET=
 OPENWEBUI_LOGIN_FORM=
+
+# --- Stack notes (segundo cérebro: Syncthing, qmd, escrita, mcp-auth-proxy; página 12) ---
+CORE_SERVICES_VM_IP=
+NOTES_STACK_DATA_PATH=
+NOTES_STACK_SYNCTHING_CONFIG_PATH=
+NOTES_STACK_SYNCTHING_DB_PATH=
+NOTES_STACK_QMD_CONFIG_PATH=
+NOTES_STACK_QMD_CACHE_PATH=
+NOTES_STACK_DOCUMENTOS_PATH=
+NOTES_STACK_MCP_AUTH_BUSCA_PATH=
+NOTES_STACK_MCP_AUTH_ESCRITA_PATH=
+QMD_IMAGE=
+NOTES_ESCRITA_IMAGE=
+SYNCTHING_API_KEY=
+MCP_OIDC_CLIENT_SECRET=
+MCP_AUTH_HMAC_SECRET=
 ```
 !!! important "Segurança de Segredos com .gitignore"
     O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e só é versionado **criptografado** (começa com `$ANSIBLE_VAULT;`); por isso ele não está no `.gitignore`. Cópias abertas (`*.decrypted*`) são bloqueadas pelo `.gitignore`. Arquivos `.env` reais com segredos (gerados pelo Ansible nas VMs) **NUNCA** devem ser commitados.

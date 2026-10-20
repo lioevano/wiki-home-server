@@ -161,3 +161,88 @@ def test_origem_vazia_nao_apaga(tmp_path):
     args = ["--origem", str(tmp_path / "nao-existe"), "--destino", str(destino), "--extensoes", "pdf", "--max-mb", "1"]
     assert c.main(args) == 2
     assert (destino / "a.pdf.md").exists()
+
+
+# --- Task 3: busca (qmd) e esqueleto da stack notes ---
+
+from test_midia import _env, _svc  # noqa: E402
+from test_fotos_arquivos import COMUNS, _configs, _env_task, _pb_tasks, _vars_compose  # noqa: E402
+
+NOTES = ROOT / "server/docker/stacks/notes/docker-compose.yml"
+PB_NOTES = ROOT / "server/ansible/playbooks/setup-notes-volumes.yml"
+
+
+def _vols(servico) -> list[str]:
+    return list(servico.get("volumes", []))
+
+
+def test_qmd_so_leitura_e_sem_porta():
+    q = _svc(NOTES)["qmd"]
+    assert "ports" not in q
+    v = _vols(q)
+    for nome in ("pessoal", "trabalho", "estudos"):
+        assert f"${{NOTES_STACK_DATA_PATH}}/{nome}:/notes/{nome}:ro" in v
+    assert "${NOTES_STACK_DOCUMENTOS_PATH}:/notes/documentos:ro" in v
+    assert sorted(x for x in v if not x.endswith(":ro")) == sorted(
+        ["${NOTES_STACK_QMD_CONFIG_PATH}:/config", "${NOTES_STACK_QMD_CACHE_PATH}:/cache"])
+    assert q["devices"] == ["/dev/dri"] and q["group_add"] == ["${AI_RENDER_GID}"]
+    assert q["image"] == "${QMD_IMAGE}" and q["pull_policy"] == "never"
+    assert q["labels"]["diun.enable"] == "false"
+    assert q["command"] == ["qmd", "mcp", "--http", "--host", "0.0.0.0", "--port", "8181"]
+    e = _env(q)
+    assert e["QMD_CONFIG_DIR"] == "/config" and e["XDG_CACHE_HOME"] == "/cache"
+    assert e["QMD_ALLOWED_HOSTS"] == "qmd,qmd:8181,notas.${BASE_DOMAIN_FROM_VAULT}"
+    assert "notes_mcp" in q["networks"]
+    redes = yaml.safe_load(NOTES.read_text(encoding="utf-8"))["networks"]
+    assert redes["notes_mcp"]["name"] == "notes_mcp"
+
+
+def test_index_qmd():
+    cfg = yaml.safe_load(render("templates/notes/index.yml.j2", qmd_modelos={}))
+    col = cfg["collections"]
+    assert set(col) == {"pessoal", "trabalho", "estudos", "documentos"}
+    for nome, c in col.items():
+        assert c["path"] == f"/notes/{nome}" and c["pattern"] == "**/*.md"
+        assert c["ignore"] == [".obsidian/**", ".trash/**", "**/*.sync-conflict-*"]
+        assert c["context"]["/"]
+    assert "models" not in cfg
+    cfg = yaml.safe_load(render("templates/notes/index.yml.j2", qmd_modelos={"embed": "hf:x/y/z.gguf"}))
+    assert cfg["models"] == {"embed": "hf:x/y/z.gguf"}
+
+
+def _tarefa(pb, modulo, **filtro):
+    for t in _pb_tasks(pb):
+        args = t.get(modulo)
+        if isinstance(args, dict) and all(str(args.get(k, "")).endswith(v) for k, v in filtro.items()):
+            return t
+    raise AssertionError(f"tarefa {modulo} {filtro} ausente")
+
+
+def test_imagens_locais_reconstroem():
+    for nome, tag, dockerfile in (("qmd", "{{ qmd_version }}", "Dockerfile.qmd.j2"),
+                                  ("notes-conversor", "{{ markitdown_version }}", "Dockerfile.conversor.j2")):
+        img = _tarefa(PB_NOTES, "community.docker.docker_image", name=f"localhost/homeserver/{nome}")
+        a = img["community.docker.docker_image"]
+        assert a["source"] == "build" and a["tag"] == tag
+        tpl = _tarefa(PB_NOTES, "ansible.builtin.template", src=dockerfile)
+        assert a["force_source"].startswith("{{ " + tpl["register"] + ".changed")
+    conv = _tarefa(PB_NOTES, "community.docker.docker_image", name="localhost/homeserver/notes-conversor")
+    assert "script_conversor.changed" in conv["community.docker.docker_image"]["force_source"]
+    q = render("templates/notes/Dockerfile.qmd.j2", qmd_version="2.8.3")
+    assert "@tobilu/qmd@2.8.3" in q and "mesa-vulkan-drivers" in q and "node:22-bookworm-slim" in q
+    c = render("templates/notes/Dockerfile.conversor.j2", markitdown_version="0.1.8")
+    assert "markitdown[pdf,docx,pptx,xlsx]==0.1.8" in c
+
+
+def test_variaveis_notes_no_env():
+    cfg = _configs(PB_NOTES, "notes.env")
+    assert _vars_compose(NOTES) <= set(cfg) | COMUNS
+    assert _env_task(PB_NOTES, "notes.env")["ansible.builtin.template"]["mode"] == "0600"
+    for k in ("NOTES_STACK_SYNCTHING_DB_PATH", "NOTES_STACK_QMD_CACHE_PATH", "NOTES_STACK_DOCUMENTOS_PATH",
+              "NOTES_STACK_MCP_AUTH_BUSCA_PATH", "NOTES_STACK_MCP_AUTH_ESCRITA_PATH"):
+        assert cfg[k].startswith("{{ vm_local_data_path }}/"), k
+    assert cfg["NOTES_STACK_DATA_PATH"] == "{{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}"
+    for img in ("qmd", "notes-escrita"):
+        assert any(v.startswith(f"localhost/homeserver/{img}:") for v in cfg.values()), img
+    for s in _svc(NOTES).values():
+        assert not str(s.get("image", "")).endswith(":latest")

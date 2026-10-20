@@ -256,6 +256,10 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       openwebui:
         secret: "SEGREDO_DO_CLIENTE_OPENWEBUI"
         secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_OPENWEBUI"
+      # Conectores MCP do segundo cérebro (página 12): os dois mcp-auth-proxy usam o mesmo cliente.
+      mcp:
+        secret: "SEGREDO_DO_CLIENTE_MCP"
+        secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_MCP"
 
     # --- Configurações Gerais ---
     # Email para notificações do Let's Encrypt (renovação de certificados, problemas).
@@ -307,6 +311,13 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     telegram_chat_id: "ID_DO_CHAT_DO_TELEGRAM"
     # Token que autentica quem chama o webhook do n8n (gere com: openssl rand -hex 32).
     notificacoes_webhook_token: "TOKEN_DO_WEBHOOK_DE_NOTIFICACOES"
+
+    # --- Segundo cérebro (stack notes, página 12) ---
+    # Senha do painel do Syncthing (usuário em syncthing_gui_user) e chave da API dele (openssl rand -hex 24).
+    syncthing_gui_password: "SENHA_DO_PAINEL_DO_SYNCTHING"
+    syncthing_api_key: "CHAVE_DA_API_DO_SYNCTHING"
+    # Assina os tokens OAuth emitidos pelos mcp-auth-proxy (openssl rand -base64 32). Fixo: trocar invalida os logins.
+    mcp_auth_hmac_secret: "BASE64_DE_32_BYTES"
 
     # --- Mídia (stack media, página 10) ---
     # Chaves de API das *arr, fixadas por variável de ambiente (gere cada uma com: openssl rand -hex 16).
