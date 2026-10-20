@@ -8,6 +8,11 @@ A IA (Claude Code, app Claude, agentes) alcança o homeserver por um **hub de MC
 
 ## Arquivos
 
+Stack e preparação:
+
+- `docker/stacks/agents/docker-compose.yml` — stack `agents` na `core-services-vm` (Portainer, endpoint `local`, variáveis em `/opt/portainer_stack_envs/agents.env`): `mcp_grafana_leitura`/`mcp_grafana_controle`, `ops_leitura`/`ops_controle` e o hub.
+- `ansible/playbooks/setup-agents-volumes.yml` — diretórios em `/opt/local-data/ops`, chave SSH e senha do vault do runner (`0400`), clone do repositório, imagem `localhost/homeserver/ops` e `agents.env`.
+
 MCP de operações (`ops`), código Python próprio, testado em `tools/wikisync/tests/test_ops.py` (sem rede):
 
 - `docker/images/ops/ops/__init__.py` — descrição do pacote.

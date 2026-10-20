@@ -640,6 +640,7 @@ ops_playbooks_permitidos:
   - { nome: setup-ai-volumes.yml, descricao: "Configs e variáveis da stack de IA (LiteLLM, Open WebUI, Ollama)" }
   - { nome: setup-ai-keys.yml, descricao: "Chaves virtuais do LiteLLM por cliente" }
   - { nome: setup-notes-volumes.yml, descricao: "Segundo cérebro: Syncthing, qmd, conversor e timers" }
+  - { nome: setup-agents-volumes.yml, descricao: "Base dos agentes: config do hub, imagem do ops e agents.env" }
 # Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
 ops_endpoints:
   core: "local"

@@ -66,3 +66,93 @@ def test_vault_agentes():
                        "redis_password", "minio_password", "public_key", "secret_key"}
     assert lf["public_key"].startswith("pk-lf-") and lf["secret_key"].startswith("sk-lf-")
     assert set(v["oidc_clients"]["langfuse"]) == {"secret", "secret_digest"}
+
+
+# --- Task 4: stack agents e preparação da core ---
+
+from test_fotos_arquivos import COMUNS, _configs, _pb_tasks, _vars_compose  # noqa: E402
+
+AGENTS = ROOT / "server/docker/stacks/agents/docker-compose.yml"
+PB_AGENTS = ROOT / "server/ansible/playbooks/setup-agents-volumes.yml"
+
+
+def _vols(servico) -> list[str]:
+    return [v if isinstance(v, str) else f"{v['source']}:{v['target']}" for v in servico.get("volumes", [])]
+
+
+def test_grafana_mcp_leitura_e_controle():
+    s = _svc(AGENTS)
+    for nome, token, escrita in (("mcp_grafana_leitura", "${GRAFANA_SA_TOKEN_LEITURA}", False),
+                                 ("mcp_grafana_controle", "${GRAFANA_SA_TOKEN_CONTROLE}", True)):
+        g = s[nome]
+        assert g["image"] == "grafana/mcp-grafana:2.1.1"
+        cmd = g["command"]
+        assert cmd[cmd.index("-t") + 1] == "streamable-http"
+        assert cmd[cmd.index("--address") + 1] == "0.0.0.0:8000"
+        assert cmd[cmd.index("--allowed-hosts") + 1] == f"{nome}:8000"
+        assert ("--disable-write" in cmd) is not escrita
+        env = _env(g)
+        assert env["GRAFANA_URL"] == "http://grafana:3000"
+        assert env["GRAFANA_SERVICE_ACCOUNT_TOKEN"] == token
+        assert set(g["networks"]) == {"agents_internal", "internal_services"}
+        assert "ports" not in g
+
+
+def test_ops_leitura_sem_segredos_de_escrita():
+    s = _svc(AGENTS)
+    leitura, controle = s["ops_leitura"], s["ops_controle"]
+    assert _env(leitura)["OPS_MODO"] == "leitura" and not leitura.get("volumes")
+    assert _env(controle)["OPS_MODO"] == "controle"
+    assert set(_vols(controle)) == {"${OPS_DATA_PATH}/segredos:/segredos:ro", "${OPS_DATA_PATH}/repo:/repo"}
+    for o in (leitura, controle):
+        env = _env(o)
+        assert env["PORTAINER_URL"] == "http://portainer:9000"
+        assert env["PORTAINER_API_KEY"] == "${PORTAINER_API_KEY}"
+        for var in ("OPS_PLAYBOOKS", "OPS_CONTAINERS_PROTEGIDOS", "OPS_STACKS_PROTEGIDAS", "OPS_ENDPOINTS"):
+            assert env[var] == "${" + var + "}", var
+        assert set(o["networks"]) == {"agents_internal", "proxy"}
+        assert "ports" not in o
+        assert o["image"] == "${OPS_IMAGE}" and o["pull_policy"] == "never"
+        assert o["user"] == "${DOCKER_PUID}:${DOCKER_PGID}"
+        assert env["HOME"] == "/tmp"
+    # só o controle tem o runner: chave, vault e o callback de saída compatível com o ansible-core novo
+    env = _env(controle)
+    assert env["OPS_CHAVE_SSH"] == "/segredos/id_ed25519"
+    assert env["ANSIBLE_VAULT_PASSWORD_FILE"] == "/segredos/vault_pass"
+    assert env["ANSIBLE_STDOUT_CALLBACK"] == "default" and env["ANSIBLE_CALLBACK_RESULT_FORMAT"] == "yaml"
+    assert "ANSIBLE_VAULT_PASSWORD_FILE" not in _env(leitura)
+
+
+def test_segredos_do_runner():
+    tarefas = _pb_tasks(PB_AGENTS)
+    copias = [t for t in tarefas if "ansible.builtin.copy" in t
+              and "/ops/segredos/" in str(t["ansible.builtin.copy"].get("dest", ""))]
+    destinos = {t["ansible.builtin.copy"]["dest"].rsplit("/", 1)[1] for t in copias}
+    assert destinos == {"id_ed25519", "vault_pass"}
+    for t in copias:
+        assert t["ansible.builtin.copy"]["mode"] == "0400" and t.get("no_log") is True
+        assert t["ansible.builtin.copy"]["dest"].startswith("{{ vm_local_data_path }}/ops/segredos/")
+    configs = _configs(PB_AGENTS, "agents.env")
+    env_task = next(t for t in tarefas if str(t.get("ansible.builtin.template", {}).get("dest", "")).endswith("/agents.env"))
+    assert env_task["ansible.builtin.template"]["mode"] == "0600"
+    assert _vars_compose(AGENTS) <= set(configs) | COMUNS
+    assert configs["OPS_DATA_PATH"] == "{{ vm_local_data_path }}/ops"
+    assert "items2dict" in configs["OPS_PLAYBOOKS"] and "to_json" in configs["OPS_PLAYBOOKS"]
+    assert configs["OPS_IMAGE"] == "localhost/homeserver/ops:{{ ops_fastmcp_version }}"
+
+
+def test_imagem_ops_construida_e_repo_clonado():
+    tarefas = _pb_tasks(PB_AGENTS)
+    img = next(t for t in tarefas if "community.docker.docker_image" in t)["community.docker.docker_image"]
+    assert img["name"] == "localhost/homeserver/ops" and img["tag"] == "{{ ops_fastmcp_version }}"
+    assert img["source"] == "build"
+    registros = [t["register"] for t in tarefas if "register" in t
+                 and ("ansible.builtin.copy" in t or "ansible.builtin.template" in t)
+                 and "{{ ops_imagem }}" in str(t.get("ansible.builtin.copy", t.get("ansible.builtin.template", {})).get("dest", ""))]
+    assert yaml.safe_load(PB_AGENTS.read_text(encoding="utf-8"))[0]["vars"]["ops_imagem"] == "/opt/ops-image"
+    assert len(registros) >= 3  # Dockerfile + código, requirements.txt, requirements.yml
+    for r in registros:
+        assert r + ".changed" in img["force_source"]
+    git = next(t for t in tarefas if "ansible.builtin.git" in t)["ansible.builtin.git"]
+    assert git["repo"] == "{{ ops_repo_url }}" and git["dest"] == "{{ vm_local_data_path }}/ops/repo"
+    assert git.get("update") is False  # o runner faz o pull antes de cada execução

@@ -1,0 +1,91 @@
+# docker/stacks/agents/docker-compose.yml
+# Base dos agentes (página 13), na core-services-vm: hub de MCPs (agentgateway), MCP do Grafana e MCP de
+# operações (ops), cada um em par leitura/controle. A rota de leitura do hub só alcança as instâncias *_leitura,
+# que nem registram ferramentas de escrita. Variáveis em /opt/portainer_stack_envs/agents.env
+# (setup-agents-volumes.yml). Nenhum MCP publica porta: só o hub, e só a rota de controle, no IP da LAN.
+
+x-ops-env: &ops-env
+  TZ: ${SYSTEM_TIMEZONE}
+  HOME: /tmp
+  PORTAINER_URL: http://portainer:9000
+  PORTAINER_API_KEY: ${PORTAINER_API_KEY}
+  OPS_ENDPOINTS: ${OPS_ENDPOINTS}
+  OPS_CONTAINERS_PROTEGIDOS: ${OPS_CONTAINERS_PROTEGIDOS}
+  OPS_STACKS_PROTEGIDAS: ${OPS_STACKS_PROTEGIDAS}
+  OPS_PLAYBOOKS: ${OPS_PLAYBOOKS}
+  NOTIFICACOES_WEBHOOK_URL: http://n8n:5678/webhook/notificar
+  NOTIFICACOES_WEBHOOK_TOKEN: ${NOTIFICACOES_WEBHOOK_TOKEN}
+
+services:
+  mcp_grafana_leitura:
+    image: grafana/mcp-grafana:2.1.1
+    container_name: mcp_grafana_leitura
+    restart: unless-stopped
+    command: ["-t", "streamable-http", "--address", "0.0.0.0:8000", "--allowed-hosts", "mcp_grafana_leitura:8000",
+              "--disable-write"]
+    environment:
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_SERVICE_ACCOUNT_TOKEN: ${GRAFANA_SA_TOKEN_LEITURA} # service account com papel Viewer
+    networks:
+      - agents_internal
+      - internal_services
+
+  mcp_grafana_controle:
+    image: grafana/mcp-grafana:2.1.1
+    container_name: mcp_grafana_controle
+    restart: unless-stopped
+    command: ["-t", "streamable-http", "--address", "0.0.0.0:8000", "--allowed-hosts", "mcp_grafana_controle:8000"]
+    environment:
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_SERVICE_ACCOUNT_TOKEN: ${GRAFANA_SA_TOKEN_CONTROLE} # service account com papel Editor
+    networks:
+      - agents_internal
+      - internal_services
+
+  ops_leitura:
+    image: ${OPS_IMAGE}
+    pull_policy: never
+    container_name: ops_leitura
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    labels:
+      diun.enable: "false"
+    environment:
+      <<: *ops-env
+      OPS_MODO: leitura # só ferramentas de consulta; sem chave SSH, vault nem repositório montados
+    networks:
+      - agents_internal
+      - proxy # Portainer (portainer:9000) e o webhook do n8n
+
+  ops_controle:
+    image: ${OPS_IMAGE}
+    pull_policy: never
+    container_name: ops_controle
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    labels:
+      diun.enable: "false"
+    environment:
+      <<: *ops-env
+      OPS_MODO: controle
+      OPS_REPO_DIR: /repo
+      OPS_INVENTARIO: inventories/home/hosts.ini
+      OPS_CHAVE_SSH: /segredos/id_ed25519
+      ANSIBLE_VAULT_PASSWORD_FILE: /segredos/vault_pass
+      # O ansible.cfg do repositório pede o callback 'yaml', que saiu do community.general recente.
+      ANSIBLE_STDOUT_CALLBACK: default
+      ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
+    volumes:
+      - ${OPS_DATA_PATH}/segredos:/segredos:ro
+      - ${OPS_DATA_PATH}/repo:/repo
+    networks:
+      - agents_internal
+      - proxy
+
+networks:
+  agents_internal:
+    name: agents_internal
+  proxy:
+    external: true
+  internal_services:
+    external: true

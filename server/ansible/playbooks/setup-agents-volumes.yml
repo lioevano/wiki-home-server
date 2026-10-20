@@ -1,0 +1,117 @@
+# ansible/playbooks/setup-agents-volumes.yml
+# Base dos agentes (página 13): diretórios, segredos do runner, clone do repositório, imagem local do ops,
+# config do hub e agents.env da stack agents. Roda na core-services-vm antes do deploy da stack no Portainer.
+- name: Preparar a stack agents
+  hosts: core_services
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    ops_dir: "{{ vm_local_data_path }}/ops"
+    ops_imagem: /opt/ops-image
+
+  tasks:
+    # --- Diretórios (disco local: segredos e clone regerável) ---
+    - name: Criar os diretórios do ops
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "{{ ops_dir }}", mode: '0750' }
+        - { path: "{{ ops_dir }}/segredos", mode: '0700' }
+        - { path: "{{ ops_dir }}/repo", mode: '0750' }
+
+    # --- Segredos do runner (só o ops_controle monta) ---
+    - name: Gravar a chave SSH do runner
+      ansible.builtin.copy:
+        content: "{{ ops_ssh_private_key }}"
+        dest: "{{ vm_local_data_path }}/ops/segredos/id_ed25519"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0400'
+      no_log: true
+
+    - name: Gravar a senha do vault do runner
+      ansible.builtin.copy:
+        content: "{{ ops_vault_password }}"
+        dest: "{{ vm_local_data_path }}/ops/segredos/vault_pass"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0400'
+      no_log: true
+
+    # --- Repositório (o runner faz git pull antes de cada execução) ---
+    - name: Clonar o repositório para o runner
+      ansible.builtin.git:
+        repo: "{{ ops_repo_url }}"
+        dest: "{{ vm_local_data_path }}/ops/repo"
+        update: false
+      become_user: "{{ docker_user_name_on_vm }}"
+
+    # --- Imagem local do ops ---
+    - name: Criar o diretório de build do ops
+      ansible.builtin.file:
+        path: "{{ ops_imagem }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copiar o código e o Dockerfile do ops
+      ansible.builtin.copy:
+        src: ../../docker/images/ops/
+        dest: "{{ ops_imagem }}/"
+        mode: preserve
+      register: ops_codigo
+
+    - name: Gerar o requirements.txt do ops (versões do group_vars)
+      ansible.builtin.template:
+        src: ../templates/agents/ops-requirements.txt.j2
+        dest: "{{ ops_imagem }}/requirements.txt"
+        mode: '0644'
+      register: ops_requirements
+
+    - name: Copiar as coleções Ansible do repositório
+      ansible.builtin.copy:
+        src: ../requirements.yml
+        dest: "{{ ops_imagem }}/requirements.yml"
+        mode: '0644'
+      register: ops_colecoes
+
+    # force_source: reconstrói quando o código, as versões ou as coleções mudam (a tag só muda com o FastMCP).
+    - name: Construir a imagem local do ops
+      community.docker.docker_image:
+        name: localhost/homeserver/ops
+        tag: "{{ ops_fastmcp_version }}"
+        source: build
+        build:
+          path: "{{ ops_imagem }}"
+          pull: true
+        force_source: "{{ ops_codigo.changed or ops_requirements.changed or ops_colecoes.changed }}"
+
+    # --- Variáveis da stack ---
+    - name: Gerar agents.env para Portainer
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/agents.env"
+        owner: root
+        group: root
+        mode: '0600'
+      vars:
+        stack_name: agents
+        stack_configs:
+          - { name: 'CORE_SERVICES_VM_IP_VAR', value: "{{ core_services_vm_ip_var }}" }
+          - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'OPS_IMAGE', value: "localhost/homeserver/ops:{{ ops_fastmcp_version }}" }
+          - { name: 'OPS_DATA_PATH', value: "{{ vm_local_data_path }}/ops" }
+          - { name: 'OPS_ENDPOINTS', value: "{{ ops_endpoints | to_json }}" }
+          - { name: 'OPS_CONTAINERS_PROTEGIDOS', value: "{{ ops_containers_protegidos | join(',') }}" }
+          - { name: 'OPS_STACKS_PROTEGIDAS', value: "{{ ops_stacks_protegidas | join(',') }}" }
+          - { name: 'OPS_PLAYBOOKS', value: "{{ ops_playbooks_permitidos | items2dict(key_name='nome', value_name='descricao') | to_json }}" }
+          - { name: 'PORTAINER_API_KEY', value: "{{ portainer_api_key }}" }
+          - { name: 'GRAFANA_SA_TOKEN_LEITURA', value: "{{ grafana_sa_tokens.leitura }}" }
+          - { name: 'GRAFANA_SA_TOKEN_CONTROLE', value: "{{ grafana_sa_tokens.controle }}" }
+          - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }

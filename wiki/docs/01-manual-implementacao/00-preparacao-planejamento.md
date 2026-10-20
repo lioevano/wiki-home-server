@@ -313,6 +313,20 @@ NOTES_ESCRITA_IMAGE=
 SYNCTHING_API_KEY=
 MCP_OIDC_CLIENT_SECRET=
 MCP_AUTH_HMAC_SECRET=
+
+# --- Stack agents (base dos agentes: hub, mcp-grafana, ops; core-services-vm; página 13) ---
+CORE_SERVICES_VM_IP_VAR=
+AI_DESKTOP_VM_IP=
+OPS_IMAGE=
+OPS_DATA_PATH=
+OPS_ENDPOINTS=
+OPS_CONTAINERS_PROTEGIDOS=
+OPS_STACKS_PROTEGIDAS=
+OPS_PLAYBOOKS=
+PORTAINER_API_KEY=
+GRAFANA_SA_TOKEN_LEITURA=
+GRAFANA_SA_TOKEN_CONTROLE=
+NOTIFICACOES_WEBHOOK_TOKEN=
 ```
 !!! important "Segurança de Segredos com .gitignore"
     O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e só é versionado **criptografado** (começa com `$ANSIBLE_VAULT;`); por isso ele não está no `.gitignore`. Cópias abertas (`*.decrypted*`) são bloqueadas pelo `.gitignore`. Arquivos `.env` reais com segredos (gerados pelo Ansible nas VMs) **NUNCA** devem ser commitados.
