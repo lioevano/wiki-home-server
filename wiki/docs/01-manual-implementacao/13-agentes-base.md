@@ -5,3 +5,14 @@ description: "Base dos agentes: hub de MCPs (agentgateway) com rota de leitura p
 # Seção 13: Agentes — base (hub de MCPs, operações e rastreio)
 
 A IA (Claude Code, app Claude, agentes) alcança o homeserver por um **hub de MCPs** na `core-services-vm`: **leitura de qualquer lugar** (métricas, logs, alertas, containers, a casa e as automações, pelo conector **Servidor**) e **ações só na LAN** (reiniciar containers, redeployar stacks, rodar playbooks Ansible, comandar a casa, executar workflows). Toda chamada de LLM e de ferramenta fica rastreada no **Langfuse**.
+
+## Arquivos
+
+MCP de operações (`ops`), código Python próprio, testado em `tools/wikisync/tests/test_ops.py` (sem rede):
+
+- `docker/images/ops/ops/__init__.py` — descrição do pacote.
+- `docker/images/ops/ops/config.py` — configuração lida das variáveis de ambiente (`OPS_MODO`, `PORTAINER_URL`, listas de protegidos e de playbooks).
+- `docker/images/ops/ops/politica.py` — o que é recusado (containers e stacks protegidos) e a limpeza das saídas (segredos mascarados, texto longo truncado).
+- `docker/images/ops/ops/portainer.py` — cliente da API do Portainer: containers das duas VMs, logs, reinício, stacks e redeploy.
+- `docker/images/ops/ops/auditoria.py` — registro de cada ação (JSON no log, coletado para o Loki) e aviso no Telegram pelo webhook do n8n.
+- `docker/images/ops/ops/ferramentas.py` — as ferramentas MCP; no modo `leitura`, as que mudam algo nem existem.
