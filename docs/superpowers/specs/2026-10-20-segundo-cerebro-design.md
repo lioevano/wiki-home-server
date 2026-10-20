@@ -149,3 +149,17 @@ Uma edição feita pela IA em `trabalho/` é gravada no NFS pelo `notes_escrita`
 - **Open WebUI com MCP declarado por ambiente** pode não existir na versão fixada: então o cadastro fica manual e documentado (exceção ao `ENABLE_PERSISTENT_CONFIG=false`).
 - **Syncthing em NFS:** inotify não vê escritas de outras máquinas no NFS — aqui só a própria VM escreve, então funciona; varredura periódica de segurança configurada.
 - **Volume dos documentos do Nextcloud:** a primeira conversão e o primeiro `embed` podem levar horas; os timers não se sobrepõem (`flock`).
+
+## 13. Ajustes do plano
+
+Conferências feitas ao escrever o plano (`docs/superpowers/plans/2026-10-20-segundo-cerebro.md`) que mudam detalhes acima:
+
+- **Cliente OIDC `mcp` sem PKCE:** o mcp-auth-proxy (v2.10.2) não envia PKCE ao provedor; o cliente usa `require_pkce: false` e `client_secret_basic`. 2FA e o grupo `admins` continuam.
+- **AUT-3:** `notas.` e `escrita.` são Exposição `publica` (login próprio pelo proxy) e ganham regra `bypass` no Authelia antes da curinga.
+- **Retenção dos snapshots:** padrão do `zfs-auto-snapshot` (15 min ×4, hora ×24, dia ×31, semana ×8, mês ×12), em vez de 8/24/14.
+- **Sem métricas do Syncthing no Prometheus** (o `/metrics` exige o token da API, que ficaria no `prometheus.yml`) e sem o alerta de pasta com erro; a disponibilidade vem da sonda `/rest/noauth/health`. O alerta `notes-timer-falhou` fica.
+- **Dados dos mcp-auth-proxy no disco local** (BoltDB; regeráveis — perder = fazer login de novo).
+- **Export de `notes` só para o IP da `ai-desktop-vm`**, não para o CIDR.
+- **Correção:** a montagem do `rag_sources` usava `'ai-desktop-vm' in group_names`, que nunca é verdadeiro (o grupo é `ai_desktop`); passa a `'ai_desktop' in group_names`.
+- **Open WebUI** recebe os MCPs por `TOOL_SERVER_CONNECTIONS` (v0.12.3 lê a variável mesmo com `ENABLE_PERSISTENT_CONFIG=false`); sem `access_grants`, só admins usam.
+- **Modelo do qmd** trocável por `qmd_modelos` (bloco `models:` do `index.yml`), não por `QMD_EMBED_MODEL`.
