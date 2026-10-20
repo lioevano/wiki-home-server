@@ -30,17 +30,19 @@ def _tabela(linhas: list[dict], campos: list[str]) -> str:
 
 def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
                 enviar: auditoria.Enviar | None) -> dict[str, Ferramenta]:
-    def acao(nome_acao: str, alvo: str, executar: Callable[[], str]) -> str:
+    def acao(nome_acao: str, alvo: str, executar: Callable[[], "str | tuple[str, bool, str]"]) -> str:
+        """executar devolve o texto, ou (texto, deu_certo, alvo) quando o resultado depende do que rodou (Ansible)."""
         inicio = time.monotonic()
         try:
-            texto = executar()
+            r = executar()
         except Recusado as erro:
             auditoria.registrar(nome_acao, alvo, "recusado", time.monotonic() - inicio, str(erro), enviar)
             raise
         except Exception as erro:
             auditoria.registrar(nome_acao, alvo, "erro", time.monotonic() - inicio, str(erro), enviar)
             raise
-        auditoria.registrar(nome_acao, alvo, "ok", time.monotonic() - inicio, texto[-300:], enviar)
+        texto, ok, alvo = (r, True, alvo) if isinstance(r, str) else r
+        auditoria.registrar(nome_acao, alvo, "ok" if ok else "erro", time.monotonic() - inicio, texto[-300:], enviar)
         return texto
 
     # --- leitura ---
@@ -93,14 +95,16 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
             """Simula um playbook (--check --diff) no commit atual do repositório e devolve o diff e um plano_id."""
             def fazer() -> str:
                 r = _runner().check(playbook, limite)
-                return f"plano_id: {r['plano_id']}\ncommit: {r['commit']}\nrc: {r['rc']}\n{r['saida']}"
+                texto = f"plano_id: {r['plano_id']}\ncommit: {r['commit']}\nrc: {r['rc']}\n{r['saida']}"
+                return texto, r["rc"] == 0, playbook
             return acao("ansible_check", playbook, fazer)
 
         def ansible_aplicar(plano_id: str) -> str:
             """Aplica de verdade o playbook simulado pelo ansible_check (mesmo playbook, limite e commit; vale 30 min)."""
             def fazer() -> str:
                 r = _runner().aplicar(plano_id)
-                return f"playbook: {r['playbook']}\ncommit: {r['commit']}\nrc: {r['rc']}\n{r['saida']}"
+                texto = f"playbook: {r['playbook']}\ncommit: {r['commit']}\nrc: {r['rc']}\n{r['saida']}"
+                return texto, r["rc"] == 0, r["playbook"]
             return acao("ansible_aplicar", plano_id, fazer)
 
         lista += [

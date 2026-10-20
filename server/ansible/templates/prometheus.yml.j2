@@ -86,6 +86,9 @@ scrape_configs:
       # Hub de MCPs (base dos agentes, página 13): o mcp_auth_servidor responde à metadata OAuth sem login.
       - targets: ['http://mcp_auth_servidor:80/.well-known/oauth-protected-resource']
         labels: {app: 'agentgateway'}
+      # ...e o próprio hub (métricas no :15020, sem login): o proxy responde mesmo com o hub fora.
+      - targets: ['http://agentgateway:15020/metrics']
+        labels: {app: 'agentgateway'}
 {% if 'ai_desktop' in groups %}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:3000/health']
         labels: {app: 'open-webui'}

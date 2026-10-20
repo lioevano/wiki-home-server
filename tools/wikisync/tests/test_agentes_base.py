@@ -171,9 +171,12 @@ CHAVES = {"claude_code": "ag-CHAVE-CLAUDE-123", "agentes": "ag-CHAVE-AGENTES-456
 SEGREDOS_ALVOS = {"homeassistant_mcp_token": "HA-TOKEN-SECRETO", "n8n_mcp_token": "N8N-TOKEN-SECRETO"}
 
 
+TOKENS_INTERNOS = {"backends": "INTERNO-BACKENDS-789", "proxy": "INTERNO-PROXY-012"}
+
+
 def _hub_txt() -> str:
     return render(HUB_TPL, agents_leitura=_main()["agents_leitura"], agents_api_keys=CHAVES,
-                  ai_desktop_vm_ip_var="192.168.15.68", **SEGREDOS_ALVOS)
+                  agents_tokens_internos=TOKENS_INTERNOS, ai_desktop_vm_ip_var="192.168.15.68", **SEGREDOS_ALVOS)
 
 
 def _hub() -> dict:
@@ -208,7 +211,8 @@ def test_rota_leitura_so_le():
         'mcp.tool.target == "homeassistant" && mcp.tool.name in ["GetLiveContext"]',
         'mcp.tool.target == "n8n" && mcp.tool.name in ["search_workflows"]',
     ]
-    assert "apiKey" not in _rota(4000)["policies"]  # o login é o OAuth do mcp_auth_servidor
+    # o login é o OAuth do mcp_auth_servidor; a chave da rota é o token interno que só ele repassa (revisão final, C1)
+    assert [k["metadata"]["cliente"] for k in _rota(4000)["policies"]["apiKey"]["keys"]] == ["mcp_auth_servidor"]
 
 
 def test_rota_controle_com_chave():
@@ -227,7 +231,7 @@ def test_rota_controle_com_chave():
 
 def test_hub_sem_segredos_e_tolerante():
     txt = _hub_txt()
-    for segredo in list(CHAVES.values()) + list(SEGREDOS_ALVOS.values()):
+    for segredo in list(CHAVES.values()) + list(SEGREDOS_ALVOS.values()) + list(TOKENS_INTERNOS.values()):
         assert segredo not in txt, segredo
     for porta in (4000, 4100):
         mcp = _rota(porta)["backends"][0]["mcp"]
@@ -258,7 +262,8 @@ def test_hub_no_compose():
     assert cfg["ansible.builtin.template"]["dest"] == "{{ vm_local_data_path }}/agentgateway/config.yaml"
     tokens = [t for t in tarefas if "ansible.builtin.copy" in t
               and "/agentgateway/segredos/" in str(t["ansible.builtin.copy"].get("dest", ""))]
-    assert {t["ansible.builtin.copy"]["dest"].rsplit("/", 1)[1] for t in tokens} == {"homeassistant_token", "n8n_token"}
+    assert {t["ansible.builtin.copy"]["dest"].rsplit("/", 1)[1] for t in tokens} == {"homeassistant_token", "n8n_token",
+                                                                                     "backends_token"}
     assert all(t["ansible.builtin.copy"]["mode"] == "0400" and t.get("no_log") is True for t in tokens)
     configs = _configs(PB_AGENTS, "agents.env")
     assert configs["AGENTGATEWAY_CONFIG_PATH"] == "{{ vm_local_data_path }}/agentgateway/config.yaml"
@@ -270,7 +275,7 @@ def test_hub_valida(tmp_path):
     arq = tmp_path / "config.yaml"
     segredos = tmp_path / "segredos"
     segredos.mkdir()
-    for nome in ("homeassistant_token", "n8n_token"):
+    for nome in ("homeassistant_token", "n8n_token", "backends_token"):
         (segredos / nome).write_text("token-de-teste\n", encoding="utf-8")
     arq.write_text(_hub_txt().replace("/segredos/", f"{segredos}/"), encoding="utf-8")
     r = subprocess.run(["agentgateway", "--validate-only", "-f", str(arq)], capture_output=True, text=True, timeout=60)
@@ -425,7 +430,8 @@ def test_observabilidade_agentes():
     jobs = {j["job_name"]: j for j in cfg["scrape_configs"]}
     assert jobs["agentgateway"]["static_configs"][0]["targets"] == ["agentgateway:15020"]
     alvos = {c["labels"]["app"]: c["targets"][0] for c in jobs["blackbox_http"]["static_configs"]}
-    assert alvos["agentgateway"] == "http://mcp_auth_servidor:80/.well-known/oauth-protected-resource"
+    hub = [c["targets"][0] for c in jobs["blackbox_http"]["static_configs"] if c["labels"]["app"] == "agentgateway"]
+    assert "http://mcp_auth_servidor:80/.well-known/oauth-protected-resource" in hub
     assert alvos["langfuse"] == f"http://{ai_ip}:3100/api/public/health"
     regras = (ROOT / "server/ansible/templates/grafana/alerting/rules.yml.j2").read_text(encoding="utf-8")
     linha = next(l for l in regras.splitlines() if "'ops-acao-falhou'" in l)
@@ -476,3 +482,56 @@ def test_catalogo_e_pagina_agentes():
     assert "fora dos snapshots" in pag
     mk = (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
     assert "01-manual-implementacao/13-agentes-base.md" in mk
+
+
+# --- Revisão final (4c1) ---
+
+def _hub_txt_rev() -> str:
+    return _hub_txt()
+
+
+def test_backends_e_rota_de_leitura_exigem_token():
+    """C1: hub → ops/mcp-grafana com token em arquivo; mcp_auth_servidor → rota de leitura com token (hash no config)."""
+    txt = _hub_txt_rev()
+    hub = yaml.safe_load(txt)
+    for valor in TOKENS_INTERNOS.values():
+        assert valor not in txt
+    for b in hub["binds"]:
+        rota = b["listeners"][0]["routes"][0]
+        alvos = {t["name"]: t for t in rota["backends"][0]["mcp"]["targets"]}
+        for nome in ("grafana", "ops"):
+            assert alvos[nome]["policies"]["backendAuth"]["key"] == {"file": "/segredos/backends_token"}, (b["port"], nome)
+    leitura = next(b for b in hub["binds"] if b["port"] == 4000)["listeners"][0]["routes"][0]["policies"]
+    assert leitura["apiKey"]["mode"] == "strict"
+    assert [k["keyHash"] for k in leitura["apiKey"]["keys"]] == [
+        "sha256:" + hashlib.sha256(TOKENS_INTERNOS["proxy"].encode()).hexdigest()]
+    s = _svc(AGENTS)
+    assert _env(s["mcp_auth_servidor"])["PROXY_BEARER_TOKEN"] == "${AGENTS_TOKEN_PROXY}"
+    for nome in ("mcp_grafana_leitura", "mcp_grafana_controle"):
+        assert _env(s[nome])["MCP_GRAFANA_SERVER_TOKEN"] == "${AGENTS_TOKEN_BACKENDS}"
+    for nome in ("ops_leitura", "ops_controle"):
+        assert _env(s[nome])["OPS_TOKEN"] == "${AGENTS_TOKEN_BACKENDS}"
+    tokens = [t for t in _pb_tasks(PB_AGENTS) if "ansible.builtin.copy" in t
+              and str(t["ansible.builtin.copy"].get("dest", "")).endswith("/agentgateway/segredos/backends_token")]
+    assert tokens and tokens[0]["ansible.builtin.copy"]["mode"] == "0400" and tokens[0].get("no_log") is True
+    v = _vault()
+    assert set(v["agents_tokens_internos"]) == {"backends", "proxy"}
+
+
+def test_runner_nao_reinicia_o_docker_da_core():
+    """I2: setup-base-ubuntu mexe no Docker/NFS/Alloy das VMs (inclusive a core, onde roda o próprio ops)."""
+    nomes = [p["nome"] for p in _main()["ops_playbooks_permitidos"]]
+    assert "setup-base-ubuntu.yml" not in nomes and "setup-core-networking.yml" not in nomes
+
+
+def test_imagem_ops_construida_com_o_uid():
+    img = next(t for t in _pb_tasks(PB_AGENTS) if "community.docker.docker_image" in t)["community.docker.docker_image"]
+    assert img["build"]["args"] == {"UID": "{{ docker_puid }}", "GID": "{{ docker_pgid }}"}
+
+
+def test_sonda_do_hub_em_si():
+    """I4: a sonda do mcp_auth_servidor responde mesmo com o hub fora; a do :15020 é do próprio hub."""
+    cfg = yaml.safe_load(render("templates/prometheus.yml.j2", groups={"ai_desktop": ["ai-desktop-vm"]}, **PROM_VARS))
+    alvos = [(c["targets"][0], c["labels"]["app"]) for j in cfg["scrape_configs"] if j["job_name"] == "blackbox_http"
+             for c in j["static_configs"]]
+    assert ("http://agentgateway:15020/metrics", "agentgateway") in alvos

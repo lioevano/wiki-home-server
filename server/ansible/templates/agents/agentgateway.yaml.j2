@@ -8,12 +8,21 @@
 } %}
 {% macro alvos(sufixo) %}
           targets:
+          # ops e mcp-grafana só aceitam o token interno do hub (as redes Docker são compartilhadas).
           - name: grafana
             mcp:
               host: http://mcp_grafana_{{ sufixo }}:8000/mcp
+            policies:
+              backendAuth:
+                key:
+                  file: /segredos/backends_token
           - name: ops
             mcp:
               host: http://ops_{{ sufixo }}:8000/mcp
+            policies:
+              backendAuth:
+                key:
+                  file: /segredos/backends_token
 {% for nome, alvo in alvos_fixos.items() %}
           - name: {{ nome }}
             mcp:
@@ -34,13 +43,24 @@ config:
     randomSampling: "true"
 
 binds:
-# Rota de leitura: só pela rede interna, atrás do mcp_auth_servidor (OAuth + Authelia, grupo admins).
+# Rota de leitura: atrás do mcp_auth_servidor (OAuth + Authelia, grupo admins), que repassa o token interno
+# 'proxy' — sem ele, outro container das redes compartilhadas não lê nada.
 - port: 4000
   listeners:
   - name: leitura
     routes:
     - name: leitura
       policies:
+        apiKey:
+          mode: strict
+          location:
+            header:
+              name: Authorization
+              prefix: "Bearer "
+          keys:
+          - keyHash: "sha256:{{ agents_tokens_internos.proxy | hash('sha256') }}"
+            metadata:
+              cliente: mcp_auth_servidor
         mcpAuthorization:
           rules:
 {% for alvo, ferramentas in agents_leitura.items() %}

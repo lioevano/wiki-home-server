@@ -332,3 +332,84 @@ def test_servidor_registra_com_anotacoes():
     for trecho in ('transport="http"', 'host="0.0.0.0"', "port=8000", 'path="/mcp"', "destructiveHint",
                    "readOnlyHint", "Config.do_ambiente(os.environ)", "enviar_webhook"):
         assert trecho in srv, trecho
+
+
+# --- Revisão final (4c1) ---
+
+import asyncio  # noqa: E402
+
+from ops.autenticacao import ExigirToken  # noqa: E402
+
+
+def _chamar_asgi(app, cabecalhos: list[tuple[bytes, bytes]]):
+    enviados = []
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(msg):
+        enviados.append(msg)
+
+    escopo = {"type": "http", "method": "POST", "path": "/mcp", "headers": cabecalhos}
+    asyncio.run(app(escopo, receive, send))
+    return enviados
+
+
+def test_ops_exige_token_interno():
+    """C1: sem o token do hub, o ops recusa (qualquer container nas redes compartilhadas alcançaria a porta 8000)."""
+    chamadas = []
+
+    async def app(escopo, receive, send):
+        chamadas.append(escopo["path"])
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    protegido = ExigirToken(app, token="segredo-interno")
+    for cab in ([], [(b"authorization", b"Bearer errado")], [(b"authorization", b"segredo-interno")]):
+        resp = _chamar_asgi(protegido, cab)
+        assert resp[0]["status"] == 401, cab
+    assert chamadas == []
+    resp = _chamar_asgi(protegido, [(b"authorization", b"Bearer segredo-interno")])
+    assert resp[0]["status"] == 200 and chamadas == ["/mcp"]
+    with pytest.raises(ValueError):
+        ExigirToken(app, token="")
+
+
+def test_saida_do_ansible_mascara_env_e_pem():
+    """C2: o --diff de um .env mostra chaves cujo nome não tem 'token'/'password'."""
+    saida = "\n".join([
+        "--- before", "+++ after", "@@ -1,2 +1,4 @@",
+        "+PORTAINER_API_KEY=ptr_abc123", "-OPENAI_API_KEY=sk-old", "+LANGFUSE_SALT=salzinho",
+        "+LANGFUSE_OTEL_AUTH=cGs6c2s=",
+        "-----BEGIN OPENSSH PRIVATE KEY-----", "b3BlbnNzaC1rZXktdjEAAAAA", "-----END OPENSSH PRIVATE KEY-----",
+        "TASK [ok]", "changed: [core-services-vm]",
+    ])
+    limpo = limpar_saida(saida, 10_000)
+    for proibido in ("ptr_abc123", "sk-old", "salzinho", "cGs6c2s=", "b3BlbnNzaC1rZXktdjEAAAAA"):
+        assert proibido not in limpo, proibido
+    assert "TASK [ok]" in limpo and "changed: [core-services-vm]" in limpo and "+++ after" in limpo
+
+
+def test_playbook_que_falha_registra_erro(capsys):
+    """I1: rc ≠ 0 vira resultado 'erro' (dispara o alerta ops-acao-falhou), mas a saída volta para a IA."""
+    class Falha(Comandos):
+        def __call__(self, argv, cwd, timeout):
+            rc, out = super().__call__(argv, cwd, timeout)
+            return (2, "fatal: [core-services-vm]: FAILED!") if argv[0] == "ansible-playbook" and "--check" not in argv else (rc, out)
+    cfg = _cfg()
+    avisos = []
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), Runner(cfg, Falha(), Relogio()), avisos.append)
+    plano = fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml").splitlines()[0].split(": ", 1)[1]
+    texto = fs["ansible_aplicar"].funcao(plano_id=plano)
+    assert "FAILED" in texto
+    registro = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert registro["acao"] == "ansible_aplicar" and registro["resultado"] == "erro"
+    assert registro["alvo"] == "setup-media-stack-volumes.yml"  # o playbook, não o plano_id
+    assert avisos[-1]["gravidade"] == "warning"
+
+
+def test_imagem_ops_usa_o_uid_do_compose():
+    """I3: o ssh aborta ('No user exists for uid') se o UID do container não existir no /etc/passwd da imagem."""
+    d = (IMG / "Dockerfile").read_text(encoding="utf-8")
+    assert "ARG UID" in d and "ARG GID" in d
+    assert "useradd --uid ${UID} --gid ${GID}" in d or "useradd --uid \"${UID}\" --gid \"${GID}\"" in d

@@ -357,6 +357,11 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     agents_api_keys:
       claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
       agentes: "ag-CHAVE_DOS_AGENTES"
+    # Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends) e mcp_auth_servidor → rota de leitura (proxy).
+    # As redes Docker são compartilhadas: sem eles, qualquer container chamaria as ferramentas direto.
+    agents_tokens_internos:
+      backends: "TOKEN_INTERNO_DOS_BACKENDS"
+      proxy: "TOKEN_INTERNO_DO_PROXY"
     # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
     grafana_sa_tokens:
       leitura: "glsa_TOKEN_VIEWER"
@@ -628,9 +633,8 @@ agents_leitura:
 ops_containers_protegidos: [traefik, authelia, cloudflared, portainer, agentgateway, mcp_auth_servidor, ops_leitura, ops_controle]
 ops_stacks_protegidas: [core, agents]
 # Playbooks que a IA pode simular (ansible_check) e aplicar (ansible_aplicar). Fora da lista: criação de VMs,
-# host Proxmox, rede core (Traefik/Authelia) e o deploy completo.
+# host Proxmox, rede core (Traefik/Authelia), base das VMs (Docker/NFS/Alloy da core, onde roda o ops) e o deploy completo.
 ops_playbooks_permitidos:
-  - { nome: setup-base-ubuntu.yml, descricao: "Configuração base das VMs Ubuntu (pacotes, montagens NFS, Docker, Alloy)" }
   - { nome: setup-monitoring-stack-volumes.yml, descricao: "Configs de Prometheus, Grafana, alertas e Homepage" }
   - { nome: setup-n8n-volumes.yml, descricao: "Diretórios e variáveis do n8n" }
   - { nome: setup-productivity-automation-volumes.yml, descricao: "Diretórios e variáveis de Home Assistant e afins" }

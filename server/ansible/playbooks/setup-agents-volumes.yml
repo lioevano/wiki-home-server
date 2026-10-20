@@ -90,6 +90,9 @@
         build:
           path: "{{ ops_imagem }}"
           pull: true
+          args:
+            UID: "{{ docker_puid }}"
+            GID: "{{ docker_pgid }}"
         force_source: "{{ ops_codigo.changed or ops_requirements.changed or ops_colecoes.changed }}"
 
     # --- Hub (agentgateway): config sem segredos e tokens dos alvos em arquivos ---
@@ -131,6 +134,15 @@
         mode: '0400'
       no_log: true
 
+    - name: Gravar o token interno do hub para o ops e o mcp-grafana
+      ansible.builtin.copy:
+        content: "{{ agents_tokens_internos.backends }}"
+        dest: "{{ vm_local_data_path }}/agentgateway/segredos/backends_token"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0400'
+      no_log: true
+
     # --- Variáveis da stack ---
     - name: Gerar agents.env para Portainer
       ansible.builtin.template:
@@ -156,6 +168,8 @@
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
           - { name: 'AGENTGATEWAY_CONFIG_PATH', value: "{{ vm_local_data_path }}/agentgateway/config.yaml" }
           - { name: 'AGENTGATEWAY_DATA_PATH', value: "{{ vm_local_data_path }}/agentgateway" }
+          - { name: 'AGENTS_TOKEN_BACKENDS', value: "{{ agents_tokens_internos.backends }}" }
+          - { name: 'AGENTS_TOKEN_PROXY', value: "{{ agents_tokens_internos.proxy }}" }
           - { name: 'MCP_AUTH_SERVIDOR_DATA_PATH', value: "{{ vm_local_data_path }}/mcp-auth-servidor" }
           - { name: 'MCP_OIDC_CLIENT_SECRET', value: "{{ oidc_clients.mcp.secret }}" }
           - { name: 'MCP_AUTH_HMAC_SECRET', value: "{{ mcp_auth_hmac_secret }}" }

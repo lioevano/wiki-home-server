@@ -50,6 +50,7 @@ MCP de operações (`ops`), código Python próprio, testado em `tools/wikisync/
 - `docker/images/ops/ops/config.py` — configuração lida das variáveis de ambiente (`OPS_MODO`, `PORTAINER_URL`, listas de protegidos e de playbooks).
 - `docker/images/ops/ops/politica.py` — o que é recusado (containers e stacks protegidos) e a limpeza das saídas (segredos mascarados, texto longo truncado).
 - `docker/images/ops/ops/portainer.py` — cliente da API do Portainer: containers das duas VMs, logs, reinício, stacks e redeploy.
+- `docker/images/ops/ops/autenticacao.py` — exige o token interno do hub (`OPS_TOKEN`) em toda requisição: as redes Docker são compartilhadas com outras aplicações.
 - `docker/images/ops/ops/auditoria.py` — registro de cada ação (JSON no log, coletado para o Loki) e aviso no Telegram pelo webhook do n8n.
 - `docker/images/ops/ops/ferramentas.py` — as ferramentas MCP; no modo `leitura`, as que mudam algo nem existem.
 - `docker/images/ops/ops/runner.py` — runner Ansible: `git pull`, `ansible-playbook --check --diff` com `plano_id`, aplicação só do plano simulado no mesmo commit, uma execução por vez.
@@ -66,7 +67,7 @@ ansible-core=={{ ops_ansible_core_version }}
 
 ## Hub de MCPs (agentgateway)
 
-O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na rede interna) recebe o conector **Servidor** pelo `mcp_auth_servidor` e só alcança instâncias que não sabem escrever (`mcp_grafana_leitura`, `ops_leitura`), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (`agents_leitura`). A **rota `controle`** (porta 4100, publicada só no IP da `core-services-vm` na LAN) alcança tudo e exige a chave de um cliente (`agents_api_keys`); no config vai só o hash. Os tokens do Home Assistant e do n8n ficam em arquivos `0400` montados no container, e a autenticação do rastreio no Langfuse vem da variável `OTEL_EXPORTER_OTLP_TRACES_HEADERS` — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (`failOpen`).
+O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na rede interna, com o token interno que só o `mcp_auth_servidor` tem) recebe o conector **Servidor** e só alcança instâncias que não sabem escrever (`mcp_grafana_leitura`, `ops_leitura`), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (`agents_leitura`). A **rota `controle`** (porta 4100, publicada só no IP da `core-services-vm` na LAN) alcança tudo e exige a chave de um cliente (`agents_api_keys`); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o `ops` e o `mcp-grafana` exigem (`agents_tokens_internos.backends`: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos `0400` montados no container, e a autenticação do rastreio no Langfuse vem da variável `OTEL_EXPORTER_OTLP_TRACES_HEADERS` — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (`failOpen`).
 
 ```jinja title="ansible/templates/agents/agentgateway.yaml.j2"
 # Hub de MCPs da base dos agentes (página 13). Gerado pelo setup-agents-volumes.yml em
@@ -79,12 +80,21 @@ O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na
 } %}
 {% macro alvos(sufixo) %}
           targets:
+          # ops e mcp-grafana só aceitam o token interno do hub (as redes Docker são compartilhadas).
           - name: grafana
             mcp:
               host: http://mcp_grafana_{{ sufixo }}:8000/mcp
+            policies:
+              backendAuth:
+                key:
+                  file: /segredos/backends_token
           - name: ops
             mcp:
               host: http://ops_{{ sufixo }}:8000/mcp
+            policies:
+              backendAuth:
+                key:
+                  file: /segredos/backends_token
 {% for nome, alvo in alvos_fixos.items() %}
           - name: {{ nome }}
             mcp:
@@ -105,13 +115,24 @@ config:
     randomSampling: "true"
 
 binds:
-# Rota de leitura: só pela rede interna, atrás do mcp_auth_servidor (OAuth + Authelia, grupo admins).
+# Rota de leitura: atrás do mcp_auth_servidor (OAuth + Authelia, grupo admins), que repassa o token interno
+# 'proxy' — sem ele, outro container das redes compartilhadas não lê nada.
 - port: 4000
   listeners:
   - name: leitura
     routes:
     - name: leitura
       policies:
+        apiKey:
+          mode: strict
+          location:
+            header:
+              name: Authorization
+              prefix: "Bearer "
+          keys:
+          - keyHash: "sha256:{{ agents_tokens_internos.proxy | hash('sha256') }}"
+            metadata:
+              cliente: mcp_auth_servidor
         mcpAuthorization:
           rules:
 {% for alvo, ferramentas in agents_leitura.items() %}
@@ -174,7 +195,7 @@ Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):
 3. **n8n:** *Settings → Instance-level MCP* → **Enable MCP access** → aba **API key** → `n8n_mcp_token`. Libere os workflows que a IA pode ver e executar (*Available in MCP* em cada workflow, ou **Workflows enabled**); nenhum fica liberado sem você marcar.
 4. **Portainer:** *My account → Access tokens → Add access token* → `portainer_api_key`. Confira os nomes dos ambientes em *Environments* (`local` para a core e o agente da VM de IA) e ajuste `ops_endpoints` se forem outros.
 5. **Runner do Ansible:** `ssh-keygen -t ed25519 -C ops-runner -f ops-runner` na máquina de controle → a privada vai para `ops_ssh_private_key`; a pública (`ops-runner.pub`) entra no `~/.ssh/authorized_keys` do usuário Ansible das VMs (`vm_ansible_user_name`) e do host Proxmox (`proxmox_ansible_user_on_host`). `ops_vault_password` é a senha do `ansible-vault` deste repositório. O runner só funciona depois que o `vault.yml` criptografado existir no repositório (ele clona do GitHub).
-6. **Clientes do hub:** `agents_api_keys.claude_code` e `agents_api_keys.agentes` (`ag-` + `openssl rand -hex 24`).
+6. **Clientes do hub:** `agents_api_keys.claude_code` e `agents_api_keys.agentes` (`ag-` + `openssl rand -hex 24`), e os tokens internos `agents_tokens_internos.backends` (hub → `ops`/`mcp-grafana`) e `agents_tokens_internos.proxy` (`mcp_auth_servidor` → rota de leitura), com `openssl rand -hex 32`.
 7. **Langfuse:** `langfuse_secrets` (salt e segredos com `openssl rand -base64 32`, `encryption_key` com `openssl rand -hex 32`, chaves do projeto `pk-lf-…`/`sk-lf-…`) e o cliente OIDC `langfuse` (`oidc_clients.langfuse`, digest como nos outros clientes, página 05).
 
 ## Deploy
@@ -198,6 +219,7 @@ As ferramentas aparecem com o prefixo do alvo: `grafana_…`, `ops_…`, `homeas
 
 - As ferramentas que mudam algo (`ops_container_reiniciar`, `ops_stack_redeploy`, `ops_ansible_aplicar` e as de escrita do Grafana, da casa e do n8n) vêm marcadas como destrutivas: o Claude Code pede sua aprovação a cada uso. Não marque "sempre permitir" para elas.
 - **Containers e stacks protegidos:** `ops_containers_protegidos` (Traefik, Authelia, cloudflared, Portainer, o hub e o próprio `ops`) e `ops_stacks_protegidas` (`core`, `agents`) são recusados — o caminho de controle da IA não é mexido por ela.
+- **Fora da lista de playbooks:** `setup-base-ubuntu.yml` (mexe no Docker, nas montagens e no Alloy de todas as VMs, inclusive a core, onde rodam o hub e o próprio `ops`), `setup-core-networking.yml`, `setup-proxmox-host.yml`, `vm-deploy.yml` e `full-deploy.yml`: esses continuam na máquina de controle.
 - **Ansible em dois passos:** `ops_ansible_check(playbook, limite?)` faz `git pull`, roda `--check --diff` e devolve o diff e um `plano_id`; `ops_ansible_aplicar(plano_id)` aplica **o mesmo** playbook e limite, só se o repositório não mudou e o plano tem menos de `ops_plano_validade_min` (30) minutos. Só playbooks de `ops_playbooks_permitidos`; uma execução por vez. Para liberar outro playbook, acrescente-o à lista (página 01) e rode o `setup-agents-volumes.yml`.
 - **Registro:** cada ação (feita, recusada ou com erro) vira uma linha JSON `"evento": "ops_acao"` no log do `ops` (Loki) e um aviso no Telegram; ação com erro dispara o alerta **ops-acao-falhou** (página 09). Cada chamada de ferramenta também aparece no Langfuse.
 - **Injeção de prompt:** logs, notas e páginas lidos pela IA podem trazer instruções; a aprovação a cada ação, as listas de protegidos e de playbooks e a simulação obrigatória limitam o dano.
@@ -207,7 +229,7 @@ As ferramentas aparecem com o prefixo do alvo: `grafana_…`, `ops_…`, `homeas
 | Falha | Comportamento | O que fazer |
 |---|---|---|
 | Home Assistant, n8n ou Grafana fora | As ferramentas dele somem; o resto funciona (`failOpen`) | Ver a sonda e o log do hub (`docker logs agentgateway`) |
-| Hub fora | Conector Servidor e Claude Code sem ferramentas do servidor; alerta **servico-fora-do-ar** (`agentgateway`) | Portainer → stack `agents` |
+| Hub fora | Conector Servidor e Claude Code sem ferramentas do servidor; alerta **servico-fora-do-ar** (`agentgateway`, sonda nas métricas do próprio hub) | Portainer → stack `agents` |
 | Portainer fora | `ops` responde erro claro nas ferramentas de containers e stacks | Restaurar o Portainer |
 | `ops_ansible_aplicar` recusado | Plano vencido, já usado ou repositório mudou | Rodar `ops_ansible_check` de novo |
 | Playbook falha no meio | Erro devolvido com o fim da saída, aviso no Telegram, alerta | Ver o log; corrigir e simular de novo |

@@ -4,8 +4,10 @@ from __future__ import annotations
 import os
 
 from fastmcp import FastMCP
+from starlette.middleware import Middleware
 
 from .auditoria import enviar_webhook
+from .autenticacao import ExigirToken
 from .config import Config
 from .ferramentas import ferramentas
 from .portainer import Portainer, http_real
@@ -23,7 +25,9 @@ def main() -> None:
         so_le = not f.destrutiva and f.nome != "ansible_check"
         mcp.tool(f.funcao, name=f.nome, description=f.descricao,
                  annotations={"readOnlyHint": so_le, "destructiveHint": f.destrutiva, "openWorldHint": False})
-    mcp.run(transport="http", host="0.0.0.0", port=8000, path="/mcp")
+    # Só o hub chama o ops (token interno em OPS_TOKEN): as redes Docker são compartilhadas com outras aplicações.
+    mcp.run(transport="http", host="0.0.0.0", port=8000, path="/mcp",
+            middleware=[Middleware(ExigirToken, token=os.environ.get("OPS_TOKEN", ""))])
 
 
 if __name__ == "__main__":

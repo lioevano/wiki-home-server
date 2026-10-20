@@ -10,6 +10,9 @@ COPY requirements.yml /tmp/requirements.yml
 RUN ansible-galaxy collection install -r /tmp/requirements.yml -p /usr/share/ansible/collections
 COPY ops /app/ops
 WORKDIR /app
-RUN useradd --uid 1000 --create-home ops
+# O compose roda com o UID/GID do dockeruser: o ssh do Ansible aborta se o UID não existir no /etc/passwd.
+ARG UID=1000
+ARG GID=1000
+RUN groupadd --gid ${GID} ops && useradd --uid ${UID} --gid ${GID} --create-home ops
 USER ops
 ENTRYPOINT ["python", "-m", "ops.server"]

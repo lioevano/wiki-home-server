@@ -15,6 +15,7 @@ x-ops-env: &ops-env
   OPS_PLAYBOOKS: ${OPS_PLAYBOOKS}
   NOTIFICACOES_WEBHOOK_URL: http://n8n:5678/webhook/notificar
   NOTIFICACOES_WEBHOOK_TOKEN: ${NOTIFICACOES_WEBHOOK_TOKEN}
+  OPS_TOKEN: ${AGENTS_TOKEN_BACKENDS} # só o hub chama (as redes proxy/agents_internal são compartilhadas)
 
 services:
   agentgateway:
@@ -59,6 +60,7 @@ services:
       OIDC_ALLOWED_ATTRIBUTES: /groups=admins
       AUTH_HMAC_SECRET: ${MCP_AUTH_HMAC_SECRET}
       TRUSTED_PROXIES: 172.16.0.0/12 # o Traefik, na rede proxy
+      PROXY_BEARER_TOKEN: ${AGENTS_TOKEN_PROXY} # token interno: só ele abre a rota de leitura do hub
     labels:
       traefik.enable: "true"
       traefik.docker.network: proxy
@@ -81,6 +83,7 @@ services:
     environment:
       GRAFANA_URL: http://grafana:3000
       GRAFANA_SERVICE_ACCOUNT_TOKEN: ${GRAFANA_SA_TOKEN_LEITURA} # service account com papel Viewer
+      MCP_GRAFANA_SERVER_TOKEN: ${AGENTS_TOKEN_BACKENDS} # só o hub chama (redes compartilhadas)
     networks:
       - agents_internal
       - internal_services
@@ -93,6 +96,7 @@ services:
     environment:
       GRAFANA_URL: http://grafana:3000
       GRAFANA_SERVICE_ACCOUNT_TOKEN: ${GRAFANA_SA_TOKEN_CONTROLE} # service account com papel Editor
+      MCP_GRAFANA_SERVER_TOKEN: ${AGENTS_TOKEN_BACKENDS} # só o hub chama (redes compartilhadas)
     networks:
       - agents_internal
       - internal_services
