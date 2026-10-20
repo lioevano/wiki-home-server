@@ -92,9 +92,11 @@ services:
     command: ["supergateway", "--stdio", "mcp-server-filesystem /notes/trabalho /notes/estudos",
               "--outputTransport", "streamableHttp", "--stateful", "--sessionTimeout", "600000",
               "--port", "8000", "--healthEndpoint", "/healthz"]
-    volumes:
+    volumes: # só Trabalho e Estudos; a .obsidian (plugins que rodam no PC) por cima, só leitura
       - "${NOTES_STACK_DATA_PATH}/trabalho:/notes/trabalho"
+      - "${NOTES_STACK_DATA_PATH}/trabalho/.obsidian:/notes/trabalho/.obsidian:ro"
       - "${NOTES_STACK_DATA_PATH}/estudos:/notes/estudos"
+      - "${NOTES_STACK_DATA_PATH}/estudos/.obsidian:/notes/estudos/.obsidian:ro"
     environment:
       - TZ=${SYSTEM_TIMEZONE}
     healthcheck:

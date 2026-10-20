@@ -145,19 +145,26 @@
 
 # --- Snapshots automáticos só nos vaults (segundo cérebro, página 12) ---
 # O zfs-auto-snapshot tira snapshots de todo dataset cuja propriedade com.sun:auto-snapshot não seja 'false'.
-# Desligada no pool (os filhos herdam) e ligada só em notes: a mídia não acumula snapshots de arquivos apagados.
+# Desligada em todos os pools (os filhos herdam) e ligada só em notes: a mídia não acumula snapshots de arquivos apagados.
 # Retenção padrão do pacote: 15 min ×4, hora ×24, dia ×31, semana ×8, mês ×12.
 - name: "Instalar o zfs-auto-snapshot"
   ansible.builtin.apt:
     name: zfs-auto-snapshot
     state: present
 
-- name: "Desligar snapshots automáticos no pool (herdado pelos datasets)"
+# Todos os pools, não só o 'data': com o Proxmox instalado em ZFS (rpool), os discos das VMs também levariam snapshots.
+- name: "Listar os pools ZFS do host"
+  ansible.builtin.command: zpool list -H -o name
+  register: zfs_pools
+  changed_when: false
+
+- name: "Desligar snapshots automáticos em cada pool (herdado pelos datasets)"
   community.general.zfs:
-    name: data
+    name: "{{ item }}"
     state: present
     extra_zfs_properties:
       "com.sun:auto-snapshot": "false"
+  loop: "{{ zfs_pools.stdout_lines }}"
 
 - name: "Ligar snapshots automáticos no dataset dos vaults"
   community.general.zfs:

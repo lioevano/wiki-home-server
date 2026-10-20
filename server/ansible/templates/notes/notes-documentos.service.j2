@@ -6,4 +6,9 @@ After=docker.service remote-fs.target
 
 [Service]
 Type=oneshot
+# Um PDF que trave a conversão não para tudo: depois de 4 h a rodada é encerrada (a próxima retoma pelo manifesto).
+# O timeout mata o cliente docker, não o container; por isso o rm -f antes e depois.
+TimeoutStartSec=4h
+ExecStartPre=-/usr/bin/docker rm -f notes_conversor
+ExecStopPost=-/usr/bin/docker rm -f notes_conversor
 ExecStart=/usr/bin/flock -E 0 -n /run/notes-documentos.lock /usr/bin/docker run --rm --name notes_conversor --user {{ docker_puid }}:{{ docker_pgid }} -v {{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}/{{ notes_nextcloud_usuario }}/files:/origem:ro -v {{ vm_local_data_path }}/notes-documentos:/destino localhost/homeserver/notes-conversor:{{ markitdown_version }} --origem /origem --destino /destino --extensoes {{ notes_documentos_extensoes | join(',') }} --max-mb {{ notes_documentos_max_mb }}

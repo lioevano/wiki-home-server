@@ -23,6 +23,17 @@
         mode: '0775'
       loop: [pessoal, trabalho, estudos]
 
+    # O notes_escrita monta a .obsidian só leitura por cima do vault (plugins rodam JavaScript no PC);
+    # a montagem precisa da pasta antes do deploy.
+    - name: Criar a .obsidian dos vaults que a IA pode editar
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}/{{ item }}/.obsidian"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0775'
+      loop: [trabalho, estudos]
+
     - name: Criar diretórios no NFS (configuração do Syncthing e do qmd)
       ansible.builtin.file:
         path: "{{ notes_nfs }}/{{ item }}"

@@ -69,6 +69,7 @@ from pathlib import Path
 from typing import Callable
 
 MANIFESTO = ".manifesto.json"
+SALVAR_A_CADA = 20
 
 
 @dataclass
@@ -97,9 +98,19 @@ def _arquivos(origem: Path) -> list[Path]:
 
 def _gravar(caminho: Path, texto: str) -> None:
     caminho.parent.mkdir(parents=True, exist_ok=True)
-    tmp = caminho.with_name(caminho.name + ".tmp")
-    tmp.write_text(texto, encoding="utf-8")
-    os.replace(tmp, caminho)
+    tmp = caminho.parent / f".{os.getpid()}.tmp"  # nome curto: o do arquivo pode já estar no limite de 255 bytes
+    try:
+        tmp.write_text(texto, encoding="utf-8")
+        os.replace(tmp, caminho)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def _apagar(caminho: Path) -> None:
+    try:
+        caminho.unlink(missing_ok=True)
+    except OSError:  # nome longo demais: a cópia nunca chegou a existir
+        pass
 
 
 def _podar(pasta: Path, destino: Path) -> None:
@@ -118,40 +129,44 @@ def sincronizar(origem: Path, destino: Path, extensoes: set[str], max_bytes: int
 
     resumo = Resumo()
     vistos = set()
-    for p in sorted(arquivos):
-        if p.suffix.lower().lstrip(".") not in extensoes:
-            continue
-        st = p.stat()
-        if st.st_size > max_bytes:
-            print(f"grande demais, ignorado: {p}", file=sys.stderr)
-            continue
-        rel = p.relative_to(origem).as_posix()
-        vistos.add(rel)
-        assinatura = [st.st_size, st.st_mtime_ns]
-        saida = destino / (rel + ".md")
-        if manifesto.get(rel) == assinatura and saida.exists():
-            resumo.mantidos += 1
-            continue
-        try:
-            texto = converter(p)
-        except Exception as erro:  # um documento ruim não para os outros
-            print(f"falha ao converter {rel}: {erro}", file=sys.stderr)
-            resumo.falhas.append(rel)
-            manifesto.pop(rel, None)
-            continue
-        _gravar(saida, f'---\norigem: "Nextcloud/{rel}"\n---\n\n{texto}')
-        manifesto[rel] = assinatura
-        resumo.convertidos += 1
+    try:  # o manifesto é salvo no fim, a cada SALVAR_A_CADA conversões e se a rodada for interrompida
+        for p in sorted(arquivos):
+            if p.suffix.lower().lstrip(".") not in extensoes:
+                continue
+            rel = p.relative_to(origem).as_posix()
+            saida = destino / (rel + ".md")
+            try:  # um documento ruim (ou que sumiu no meio da rodada) não para os outros
+                st = p.stat()
+                if st.st_size > max_bytes:
+                    print(f"grande demais, ignorado: {p}", file=sys.stderr)
+                    continue
+                vistos.add(rel)
+                assinatura = [st.st_size, st.st_mtime_ns]
+                if manifesto.get(rel) == assinatura and saida.exists():
+                    resumo.mantidos += 1
+                    continue
+                texto = converter(p)
+                _gravar(saida, f'---\norigem: "Nextcloud/{rel}"\n---\n\n{texto}')
+            except Exception as erro:
+                print(f"falha ao converter {rel}: {erro}", file=sys.stderr)
+                resumo.falhas.append(rel)
+                manifesto.pop(rel, None)
+                vistos.discard(rel)
+                _apagar(saida)  # a versão antiga não fica no índice depois que a nova falhou
+                continue
+            manifesto[rel] = assinatura
+            resumo.convertidos += 1
+            if resumo.convertidos % SALVAR_A_CADA == 0:
+                _gravar(arq_manifesto, json.dumps(manifesto, ensure_ascii=False, indent=1, sort_keys=True))
 
-    for rel in sorted(set(manifesto) - vistos):
-        saida = destino / (rel + ".md")
-        if saida.exists():
-            saida.unlink()
-        _podar(saida.parent, destino)
-        del manifesto[rel]
-        resumo.removidos += 1
-
-    _gravar(arq_manifesto, json.dumps(manifesto, ensure_ascii=False, indent=1, sort_keys=True))
+        for rel in sorted(set(manifesto) - vistos):
+            saida = destino / (rel + ".md")
+            _apagar(saida)
+            _podar(saida.parent, destino)
+            del manifesto[rel]
+            resumo.removidos += 1
+    finally:
+        _gravar(arq_manifesto, json.dumps(manifesto, ensure_ascii=False, indent=1, sort_keys=True))
     return resumo
 
 
@@ -236,7 +251,7 @@ collections:
 
 ## Escrita (Trabalho e Estudos)
 
-O MCP oficial de arquivos (`@modelcontextprotocol/server-filesystem`) roda dentro do **supergateway**, que o expõe em `http://notes_escrita:8000/mcp` (Streamable HTTP), também só na rede `notes_mcp`. O container monta **apenas** `trabalho/` e `estudos/`: o vault Pessoal e os arquivos do Nextcloud não existem para ele, então nenhuma instrução (nem uma nota maliciosa) consegue alterá-los. Ferramentas: ler, listar, buscar por nome, criar, sobrescrever (`write_file`), editar trechos (`edit_file`, com prévia), criar pastas e mover — **não há ferramenta de apagar**, e mover não sobrescreve um destino existente.
+O MCP oficial de arquivos (`@modelcontextprotocol/server-filesystem`) roda dentro do **supergateway**, que o expõe em `http://notes_escrita:8000/mcp` (Streamable HTTP), também só na rede `notes_mcp`. O container monta **apenas** `trabalho/` e `estudos/`: o vault Pessoal e os arquivos do Nextcloud não existem para ele, então nenhuma instrução (nem uma nota maliciosa) consegue alterá-los. A pasta `.obsidian` de cada vault entra **só leitura** por cima: ela guarda os plugins do Obsidian, que rodam JavaScript no PC — uma injeção de prompt não pode instalar ou ligar um plugin. O playbook cria essas pastas antes do deploy (a montagem precisa delas). Continua possível a IA escrever blocos `dataviewjs` ou de Templater numa nota; se você usa esses plugins, revise o que a IA escreveu antes de abrir a nota. Ferramentas: ler, listar, buscar por nome, criar, sobrescrever (`write_file`), editar trechos (`edit_file`, com prévia), criar pastas e mover — **não há ferramenta de apagar**, e mover não sobrescreve um destino existente.
 
 ```jinja title="ansible/templates/notes/Dockerfile.escrita.j2"
 # Imagem do MCP de escrita do segundo cérebro (página 12): server-filesystem exposto em HTTP pelo supergateway.
@@ -292,6 +307,11 @@ After=docker.service remote-fs.target
 
 [Service]
 Type=oneshot
+# Um PDF que trave a conversão não para tudo: depois de 4 h a rodada é encerrada (a próxima retoma pelo manifesto).
+# O timeout mata o cliente docker, não o container; por isso o rm -f antes e depois.
+TimeoutStartSec=4h
+ExecStartPre=-/usr/bin/docker rm -f notes_conversor
+ExecStopPost=-/usr/bin/docker rm -f notes_conversor
 ExecStart=/usr/bin/flock -E 0 -n /run/notes-documentos.lock /usr/bin/docker run --rm --name notes_conversor --user {{ docker_puid }}:{{ docker_pgid }} -v {{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}/{{ notes_nextcloud_usuario }}/files:/origem:ro -v {{ vm_local_data_path }}/notes-documentos:/destino localhost/homeserver/notes-conversor:{{ markitdown_version }} --origem /origem --destino /destino --extensoes {{ notes_documentos_extensoes | join(',') }} --max-mb {{ notes_documentos_max_mb }}
 ```
 

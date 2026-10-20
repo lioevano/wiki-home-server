@@ -50,8 +50,23 @@ def test_snapshots_so_em_notes():
     assert pacotes
     props = {t["community.general.zfs"]["name"]: t["community.general.zfs"]["extra_zfs_properties"]
              for t in tarefas if "community.general.zfs" in t}
-    assert props["data"] == {"com.sun:auto-snapshot": "false"}
     assert props["data/{{ zfs_notes_dataset_name }}"] == {"com.sun:auto-snapshot": "true"}
+
+
+def test_snapshots_desligados_em_todos_os_pools():
+    """Revisão final: com o Proxmox em ZFS (rpool), os discos das VMs também levariam snapshots."""
+    tarefas = yaml.safe_load(PVE_TASKS.read_text(encoding="utf-8"))
+    lista = next(t for t in tarefas if "zpool list -H -o name" in str(t.get("ansible.builtin.command", "")))
+    assert lista.get("changed_when") is False and "register" in lista
+    desliga = [t for t in tarefas if "community.general.zfs" in t
+               and t["community.general.zfs"]["extra_zfs_properties"] == {"com.sun:auto-snapshot": "false"}]
+    assert len(desliga) == 1
+    assert desliga[0]["community.general.zfs"]["name"] == "{{ item }}"
+    assert desliga[0]["loop"] == "{{ " + lista["register"] + ".stdout_lines }}"
+    nomes = [t.get("name") for t in tarefas]
+    liga = next(t for t in tarefas if "community.general.zfs" in t
+                and t["community.general.zfs"]["extra_zfs_properties"] == {"com.sun:auto-snapshot": "true"})
+    assert nomes.index(desliga[0]["name"]) < nomes.index(liga["name"])
 
 
 # --- Task 2: conversor de documentos do Nextcloud ---
@@ -128,6 +143,72 @@ def test_falha_nao_para_o_resto(tmp_path):
     assert (destino / "ok.pdf.md").exists()
     assert r.falhas == ["quebrado.pdf"] and r.convertidos == 1
     assert "quebrado.pdf" not in (destino / ".manifesto.json").read_text(encoding="utf-8")
+
+
+def test_arquivo_some_no_meio(tmp_path):
+    """Revisão final: arquivo apagado no Nextcloud durante a rodada não derruba a conversão."""
+    c = _conv()
+    origem, destino = tmp_path / "origem", tmp_path / "destino"
+    _arq(origem, "a.pdf"), _arq(origem, "b.pdf"), _arq(origem, "c.pdf")
+
+    def apaga_b(p):
+        if p.name == "a.pdf":
+            (origem / "b.pdf").unlink()
+        return _falso(p)
+
+    r = c.sincronizar(origem, destino, EXT, 10_000, apaga_b)
+    assert r.falhas == ["b.pdf"] and r.convertidos == 2
+    assert (destino / "c.pdf.md").exists()
+
+
+def test_nome_longo_nao_para(tmp_path):
+    """Revisão final: nome de 255 bytes não cabe com '.md' — conta como falha, o resto segue."""
+    c = _conv()
+    origem, destino = tmp_path / "origem", tmp_path / "destino"
+    longo = "x" * 251 + ".pdf"
+    _arq(origem, longo), _arq(origem, "ok.pdf")
+    r = c.sincronizar(origem, destino, EXT, 10_000, _falso)
+    assert r.falhas == [longo] and (destino / "ok.pdf.md").exists()
+
+
+def test_manifesto_salvo_mesmo_se_interrompido(tmp_path):
+    """Revisão final: rodada interrompida não perde o que já converteu."""
+    c = _conv()
+    origem, destino = tmp_path / "origem", tmp_path / "destino"
+    _arq(origem, "a.pdf"), _arq(origem, "b.pdf"), _arq(origem, "c.pdf")
+
+    def para_em_c(p):
+        if p.name == "c.pdf":
+            raise KeyboardInterrupt
+        return _falso(p)
+
+    with pytest.raises(KeyboardInterrupt):
+        c.sincronizar(origem, destino, EXT, 10_000, para_em_c)
+    manifesto = json.loads((destino / ".manifesto.json").read_text(encoding="utf-8"))
+    assert set(manifesto) == {"a.pdf", "b.pdf"}
+    r = c.sincronizar(origem, destino, EXT, 10_000, _falso)
+    assert r.mantidos == 2 and r.convertidos == 1
+
+
+def test_falha_depois_de_converter_tira_a_copia_antiga(tmp_path):
+    """Revisão final: versão nova que não converte não deixa a antiga no índice para sempre."""
+    c = _conv()
+    origem, destino = tmp_path / "origem", tmp_path / "destino"
+    a = _arq(origem, "a.pdf"); _arq(origem, "b.pdf")
+    c.sincronizar(origem, destino, EXT, 10_000, _falso)
+    a.write_text("versão nova", encoding="utf-8")
+    os.utime(a, ns=(a.stat().st_atime_ns, a.stat().st_mtime_ns + 10**9))
+
+    def falha_em_a(p):
+        if p.name == "a.pdf":
+            raise ValueError("não converte mais")
+        return _falso(p)
+
+    r = c.sincronizar(origem, destino, EXT, 10_000, falha_em_a)
+    assert r.falhas == ["a.pdf"] and not (destino / "a.pdf.md").exists()
+    a.unlink()
+    c.sincronizar(origem, destino, EXT, 10_000, _falso)
+    assert sorted(x.name for x in destino.rglob("*.md")) == ["b.pdf.md"]
 
 
 def test_ignora_symlink_oculto_e_grande(tmp_path):
@@ -253,7 +334,14 @@ def test_variaveis_notes_no_env():
 def test_escrita_so_trabalho_e_estudos():
     e = _svc(NOTES)["notes_escrita"]
     assert _vols(e) == ["${NOTES_STACK_DATA_PATH}/trabalho:/notes/trabalho",
-                        "${NOTES_STACK_DATA_PATH}/estudos:/notes/estudos"]
+                        "${NOTES_STACK_DATA_PATH}/trabalho/.obsidian:/notes/trabalho/.obsidian:ro",
+                        "${NOTES_STACK_DATA_PATH}/estudos:/notes/estudos",
+                        "${NOTES_STACK_DATA_PATH}/estudos/.obsidian:/notes/estudos/.obsidian:ro"]
+    # a pasta .obsidian (plugins com JavaScript que roda no PC) existe antes do deploy, para a montagem ro
+    pastas = [t for t in _pb_tasks(PB_NOTES) if "ansible.builtin.file" in t
+              and "/.obsidian" in str(t["ansible.builtin.file"].get("path", ""))]
+    assert pastas and all(t["ansible.builtin.file"]["state"] == "directory" for t in pastas)
+    assert {"trabalho", "estudos"} <= set(pastas[0].get("loop", []))
     assert "ports" not in e
     assert e["user"] == "${DOCKER_PUID}:${DOCKER_PGID}"
     assert e["networks"] == ["notes_mcp"]
@@ -415,6 +503,14 @@ def test_units_notes():
     for t in habilitar:
         s = t["ansible.builtin.systemd"]
         assert s.get("enabled") is True and "state" not in s  # habilitado, mas só inicia depois do deploy
+
+
+def test_conversor_tem_tempo_limite():
+    """Revisão final: PDF que trava o markitdown não pode parar a conversão para sempre (flock -E 0 esconde)."""
+    doc = _unit("notes-documentos.service")
+    assert "TimeoutStartSec=4h" in doc
+    assert "ExecStartPre=-/usr/bin/docker rm -f notes_conversor" in doc  # sobra de rodada morta
+    assert "ExecStopPost=-/usr/bin/docker rm -f notes_conversor" in doc  # o timeout mata o cliente, não o container
 
 
 def test_coletor_systemd_e_alerta():
