@@ -28,9 +28,11 @@
     group: root
     mode: '0644'
 
-- name: "Construir a imagem local do Ollama com Vulkan (homeserver/ollama-vulkan)"
+# Nome com 'localhost/': nunca resolve para o Docker Hub (um namespace 'homeserver' de terceiros
+# não pode substituir esta imagem); o compose usa pull_policy: never.
+- name: "Construir a imagem local do Ollama com Vulkan (localhost/homeserver/ollama-vulkan)"
   community.docker.docker_image:
-    name: homeserver/ollama-vulkan
+    name: localhost/homeserver/ollama-vulkan
     tag: "{{ ollama_version }}"
     source: build
     build:

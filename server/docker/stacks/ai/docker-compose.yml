@@ -62,8 +62,11 @@ services:
   # role ml-tools; sem GPU reconhecida, roda em CPU. Sem porta publicada: só o LiteLLM fala com ele.
   ollama:
     image: ${OLLAMA_IMAGE}
+    pull_policy: never # imagem construída na VM (localhost/...); nunca buscar em registro
     container_name: ollama
     restart: unless-stopped
+    labels:
+      diun.enable: "false" # o Diun não tem onde procurar versão nova de uma imagem local
     networks:
       - ai_network
     volumes:
@@ -87,6 +90,9 @@ services:
     volumes:
       - "${AI_STACK_OPENWEBUI_DATA_PATH}:/app/backend/data"
     environment:
+      # O compose é a fonte da verdade: sem isto, o Open WebUI grava a configuração no banco na primeira
+      # partida e passa a ignorar estas variáveis (chave do LiteLLM, Ollama desligado, formulário de login).
+      - ENABLE_PERSISTENT_CONFIG=false
       - ENABLE_OLLAMA_API=false
       - OPENAI_API_BASE_URL=http://litellm:4000/v1
       - OPENAI_API_KEY=${LITELLM_KEY_OPENWEBUI} # chave virtual do Open WebUI no LiteLLM (nunca a mestra)

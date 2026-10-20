@@ -110,11 +110,11 @@ def test_ollama_vulkan_sem_porta():
     assert "rocm" not in tarefas.lower()
     t = yaml.safe_load(tarefas)
     img = next(x["community.docker.docker_image"] for x in t if "community.docker.docker_image" in x)
-    assert img["name"] == "homeserver/ollama-vulkan" and img["tag"] == "{{ ollama_version }}"
+    assert img["name"] == "localhost/homeserver/ollama-vulkan" and img["tag"] == "{{ ollama_version }}"
     assert img["source"] == "build"
     df = render("roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2", ollama_version="0.40.6")
     assert "FROM ollama/ollama:0.40.6" in df and "mesa-vulkan-drivers" in df
-    assert _configs(PB_AI, "ai.env")["OLLAMA_IMAGE"] == "homeserver/ollama-vulkan:{{ ollama_version }}"
+    assert _configs(PB_AI, "ai.env")["OLLAMA_IMAGE"] == "localhost/homeserver/ollama-vulkan:{{ ollama_version }}"
 
 
 def test_variaveis_ai_no_env():
@@ -151,7 +151,8 @@ def test_playbook_de_chaves_idempotente():
         assert t.get("no_log") is True, t["name"]
         assert t["ansible.builtin.uri"]["headers"]["Authorization"] == "Bearer {{ litellm_master_key }}"
         assert t["loop"] in ("{{ litellm_client_keys | dict2items }}", "{{ chaves_info.results }}"), t["name"]
-    por_rota = {next(r for r in ("/key/info", "/key/generate", "/key/update") if r in t["ansible.builtin.uri"]["url"]): t
+    por_rota = {next(r for r in ("/key/info", "/key/generate", "/key/update", "/key/delete")
+                     if r in t["ansible.builtin.uri"]["url"]): t
                 for t in uris}
     info, gen, upd = por_rota["/key/info"], por_rota["/key/generate"], por_rota["/key/update"]
     assert 404 in info["ansible.builtin.uri"]["status_code"] and info["changed_when"] is False
@@ -279,3 +280,38 @@ def test_catalogo_ia():
     for trecho in ("setup-ai-keys.yml", "claude-gw", "ANTHROPIC_BASE_URL", "/v1/messages", "openwebui_login_form",
                    "Vulkan", "decisao", "llm."):
         assert trecho in pagina, trecho
+
+
+# --- Correções da revisão final ---
+
+def test_openwebui_config_vem_do_compose():
+    # Sem isto, o Open WebUI grava a configuração no banco na primeira partida e passa a ignorar o compose
+    # (chave do LiteLLM, Ollama desligado, formulário de login).
+    assert _env(_svc(AI)["open-webui"])["ENABLE_PERSISTENT_CONFIG"] == "false"
+
+
+def test_imagem_local_do_ollama_nunca_vem_do_registro():
+    # "homeserver/..." resolveria para docker.io; um namespace tomado por terceiros entregaria outra imagem.
+    o = _svc(AI)["ollama"]
+    assert o["pull_policy"] == "never"
+    assert o["labels"]["diun.enable"] == "false"
+
+
+def test_playbook_chaves_hash_rotacao_e_apagadas():
+    play = yaml.safe_load(PB_KEYS.read_text(encoding="utf-8"))[0]
+    uris = {t["name"]: t for t in play["tasks"] if "ansible.builtin.uri" in t}
+    info = next(t for t in uris.values() if "/key/info" in t["ansible.builtin.uri"]["url"])
+    assert "item.value | hash('sha256')" in info["ansible.builtin.uri"]["url"]  # chave crua fora da URL/logs
+    gen = next(t for t in uris.values() if "/key/generate" in t["ansible.builtin.uri"]["url"])
+    upd = next(t for t in uris.values() if "/key/update" in t["ansible.builtin.uri"]["url"])
+    apaga = next(t for t in uris.values() if "/key/delete" in t["ansible.builtin.uri"]["url"])
+    assert "deleted" in str(gen["when"]) and "deleted" in str(upd["when"])  # chave apagada na tela = inexistente
+    assert apaga["ansible.builtin.uri"]["body"] == {"key_aliases": ["{{ item.item.key }}"]}  # troca de valor no vault
+    assert apaga["when"] == gen["when"]
+    nomes = [t["name"] for t in play["tasks"]]
+    assert nomes.index(apaga["name"]) < nomes.index(gen["name"])
+
+
+def test_doc_jev_pela_rota_unificada():
+    pagina = (ROOT / "wiki/docs/01-manual-implementacao/08-stack-ia.md").read_text(encoding="utf-8")
+    assert "/v1/systemone" in pagina and '"model": "decisao"' in pagina

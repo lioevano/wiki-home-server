@@ -157,7 +157,7 @@
           - { name: 'AI_STACK_OPENWEBUI_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openwebui/data" }
           - { name: 'AI_STACK_DIUN_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun-ai/data" }
           - { name: 'AI_RENDER_GID', value: "{{ ansible_facts.getent_group.render[1] }}" }
-          - { name: 'OLLAMA_IMAGE', value: "homeserver/ollama-vulkan:{{ ollama_version }}" }
+          - { name: 'OLLAMA_IMAGE', value: "localhost/homeserver/ollama-vulkan:{{ ollama_version }}" }
           - { name: 'LITELLM_MASTER_KEY', value: "{{ litellm_master_key }}" }
           - { name: 'LITELLM_DB_PASSWORD', value: "{{ litellm_db_password }}" }
           - { name: 'ANTHROPIC_API_KEY', value: "{{ llm_api_keys.anthropic }}" }

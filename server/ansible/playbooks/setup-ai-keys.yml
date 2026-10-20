@@ -14,15 +14,35 @@
   tasks:
     - name: Consultar cada chave no LiteLLM
       ansible.builtin.uri:
-        url: "{{ litellm_url }}/key/info?key={{ item.value }}"
+        # Só o hash sha256 vai na URL: a chave crua ficaria nos logs de acesso (e no Loki).
+        url: "{{ litellm_url }}/key/info?key={{ item.value | hash('sha256') }}"
         method: GET
         headers:
           Authorization: "Bearer {{ litellm_master_key }}"
-        status_code: [200, 400, 404] # 400/404: a chave ainda não existe
+        status_code: [200, 400, 404] # 400/404: a chave não existe (apagada na tela: 200 com status 'deleted')
       loop: "{{ litellm_client_keys | dict2items }}"
       register: chaves_info
       changed_when: false
       no_log: true # a URL e a resposta contêm a chave
+
+    # Valor trocado no vault: a chave antiga ainda tem o mesmo alias; apaga-se pelo alias antes de criar a nova
+    # (o LiteLLM recusa alias repetido, e a antiga continuaria valendo).
+    - name: Apagar a chave antiga do mesmo cliente (alias) antes de criar
+      ansible.builtin.uri:
+        url: "{{ litellm_url }}/key/delete"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ litellm_master_key }}"
+        body_format: json
+        body:
+          key_aliases: ["{{ item.item.key }}"]
+        status_code: [200, 400, 404] # 400/404: não havia chave com esse alias
+      loop: "{{ chaves_info.results }}"
+      when: >-
+        item.status != 200 or
+        (item.json.info.status | default('')) in ['deleted', 'expired', 'revoked']
+      changed_when: false
+      no_log: true
 
     - name: Criar as chaves que não existem
       ansible.builtin.uri:
@@ -37,7 +57,9 @@
           max_budget: "{{ litellm_key_budgets[item.item.key] }}"
           budget_duration: "30d" # orçamento renovado a cada 30 dias
       loop: "{{ chaves_info.results }}"
-      when: item.status != 200
+      when: >-
+        item.status != 200 or
+        (item.json.info.status | default('')) in ['deleted', 'expired', 'revoked']
       changed_when: true
       no_log: true
 
@@ -55,6 +77,7 @@
       loop: "{{ chaves_info.results }}"
       when: >-
         item.status == 200 and
+        (item.json.info.status | default('')) not in ['deleted', 'expired', 'revoked'] and
         ((item.json.info.max_budget | float) != (litellm_key_budgets[item.item.key] | float)
          or item.json.info.budget_duration != '30d')
       changed_when: true

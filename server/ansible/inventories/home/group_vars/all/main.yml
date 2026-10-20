@@ -118,7 +118,7 @@ litellm_key_budgets:
   openwebui: 20
   claude_code: 50
   n8n: 10
-# Versão do Ollama; o role ml-tools constrói homeserver/ollama-vulkan:<versão> (oficial + Mesa/RADV).
+# Versão do Ollama; o role ml-tools constrói localhost/homeserver/ollama-vulkan:<versão> (oficial + Mesa/RADV).
 ollama_version: "0.40.6"
 # Formulário de login local do Open WebUI: ligado só até vincular o admin pelo OIDC do Authelia; depois, false.
 openwebui_login_form: true

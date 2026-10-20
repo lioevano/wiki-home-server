@@ -36,7 +36,7 @@ Os clientes não citam o modelo do provedor, e sim um **apelido**. Para trocar d
 
 Os modelos também ficam disponíveis pelo nome próprio (`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`, `gpt-6.1-sol`, `gpt-6-luna`, `gemini-3.8-flash`). A fonte da verdade é o código: o LiteLLM roda com `store_model_in_db: false`, então modelos criados pela tela não sobrevivem a um restart.
 
-**Jev (`decisao`).** O Jev, da TypeSafe AI, não conversa: recebe um estado e uma pergunta e devolve uma decisão tipada (sim/não com probabilidade, uma escolha entre opções ou uma nota), com confiança. É barato e rápido, bom para triagem, roteamento e "aprovar ou não" dentro de automações e agentes (4c). Ele é usado pela rota de passagem `POST http://<ai_desktop_vm_ip_var>:4000/typesafe/v1/systemone`, com a chave virtual do cliente no `Authorization: Bearer`; o LiteLLM troca pela `TYPESAFE_API_KEY` e registra o custo. Não há streaming.
+**Jev (`decisao`).** O Jev, da TypeSafe AI, não conversa: recebe um estado e uma pergunta e devolve uma decisão tipada (sim/não com probabilidade, uma escolha entre opções ou uma nota), com confiança. É barato e rápido, bom para triagem, roteamento e "aprovar ou não" dentro de automações e agentes (4c). Os clientes o chamam pela rota unificada `POST http://<ai_desktop_vm_ip_var>:4000/v1/systemone` com `"model": "decisao"` no corpo e a chave virtual do cliente no `Authorization: Bearer`; o LiteLLM resolve o apelido, troca pela `TYPESAFE_API_KEY` e registra o custo. A rota `/typesafe/...` também existe, mas é passagem crua para a API da TypeSafe (não consulta os apelidos; use o nome do modelo deles). Não há streaming.
 
 ### Configuração do LiteLLM
 
@@ -86,7 +86,7 @@ general_settings:
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-volumes.yml --ask-vault-pass --check
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-volumes.yml --ask-vault-pass
    ```
-   O playbook aplica o role `ansible/roles/apps/ml-tools/` (constrói `homeserver/ollama-vulkan:<ollama_version>` a partir de `ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2`: a imagem oficial mais o driver Vulkan da AMD), gera o `config.yaml`, cria o banco local do LiteLLM em `/opt/local-data/litellm-db`, instala o dump diário (`ansible/templates/backup-postgres.sh.j2`, timer `backup-litellm-db.timer`) e grava o `/opt/portainer_stack_envs/ai.env` (`0600`).
+   O playbook aplica o role `ansible/roles/apps/ml-tools/` (constrói `localhost/homeserver/ollama-vulkan:<ollama_version>` a partir de `ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2`: a imagem oficial mais o driver Vulkan da AMD), gera o `config.yaml`, cria o banco local do LiteLLM em `/opt/local-data/litellm-db`, instala o dump diário (`ansible/templates/backup-postgres.sh.j2`, timer `backup-litellm-db.timer`) e grava o `/opt/portainer_stack_envs/ai.env` (`0600`).
 4. **Portainer:** adicione o ambiente da ai-desktop-vm (**Environments → Add environment → Docker Standalone → Agent**, endereço `<ai_desktop_vm_ip_var>:9001`; o `AGENT_SECRET` vem de `portainer_agent_secret`), depois **Stacks → Add Stack** `ai` com `docker/stacks/ai/docker-compose.yml` e o `ai.env` → **Deploy the stack**.
 5. **Chaves dos clientes:** com o LiteLLM no ar, crie as chaves virtuais e seus orçamentos:
    ```bash
@@ -105,7 +105,7 @@ general_settings:
 | `AI_STACK_LITELLM_DB_PATH` | `vm_local_data_path` + `litellm-db` (disco local) |
 | `AI_DESKTOP_VM_IP` | `ai_desktop_vm_ip_var` do `hosts.ini` |
 | `AI_RENDER_GID` | GID do grupo `render` da VM (lido pelo playbook) |
-| `OLLAMA_IMAGE` | `homeserver/ollama-vulkan:{{ ollama_version }}` |
+| `OLLAMA_IMAGE` | `localhost/homeserver/ollama-vulkan:{{ ollama_version }}` |
 | `LITELLM_MASTER_KEY`, `LITELLM_DB_PASSWORD` | vault `litellm_master_key`, `litellm_db_password` |
 | `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`, `TYPESAFE_API_KEY` | vault `llm_api_keys.*` (só o `litellm` recebe) |
 | `LITELLM_KEY_OPENWEBUI` | vault `litellm_client_keys.openwebui` |
@@ -117,13 +117,13 @@ Para mudar variáveis ou segredos: edite o vault ou o `group_vars` pela wiki, ro
 
 ## Chaves, orçamentos e uso
 
-Cada cliente tem uma **chave virtual** própria (`litellm_client_keys`), nunca a chave mestra: `openwebui`, `claude_code` e `n8n` (os agentes da próxima etapa ganham as suas). O `ansible/playbooks/setup-ai-keys.yml` cria no LiteLLM as que faltam e ajusta o orçamento das que mudaram (`litellm_key_budgets`, US$ por mês, renovado a cada 30 dias); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.
+Cada cliente tem uma **chave virtual** própria (`litellm_client_keys`), nunca a chave mestra: `openwebui`, `claude_code` e `n8n` (os agentes da próxima etapa ganham as suas). O `ansible/playbooks/setup-ai-keys.yml` cria no LiteLLM as que faltam (inclusive as apagadas pela tela), troca a chave de um cliente quando o valor no vault muda (apaga a antiga pelo alias e cria a nova) e ajusta o orçamento das que mudaram (`litellm_key_budgets`, US$ por mês, renovado a cada 30 dias); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.
 
 **Ver o uso:** `https://llm.seudominio.com` (atrás do Authelia; entre com a `litellm_master_key`) mostra gasto, tokens e chamadas por chave e por modelo. O Prometheus raspa as métricas do LiteLLM (job `litellm`, porta 4001), e o alerta `llm-gasto-alto` avisa no Telegram quando o gasto das últimas 24 h passa de `llm_gasto_diario_alerta` (US$ 5 por padrão).
 
 ## Open WebUI
 
-O Open WebUI fala só com o LiteLLM (com a chave `openwebui`) — o acesso direto ao Ollama fica desligado, então todo uso aparece na tela do LiteLLM. Os modelos que aparecem nele são os do `llm_models`, inclusive os apelidos.
+O Open WebUI fala só com o LiteLLM (com a chave `openwebui`) — o acesso direto ao Ollama fica desligado, então todo uso aparece na tela do LiteLLM. Ele roda com `ENABLE_PERSISTENT_CONFIG=false`: a configuração vem sempre do compose (chave, conexões, formulário de login), e mudanças feitas em *Admin → Settings* nessas áreas não sobrevivem a um restart. Os modelos que aparecem nele são os do `llm_models`, inclusive os apelidos.
 
 O login é o **OIDC do Authelia** (cliente `openwebui`), além do forward-auth na frente: só entra quem está no grupo `admins` do Authelia, que vira administrador. No primeiro acesso:
 
@@ -161,7 +161,7 @@ Se um recurso novo do Claude Code der erro `400` pelo gateway (campos que o Lite
 
 ## Ollama e a GPU (Vulkan)
 
-A RX 5600 XT (RDNA1, `gfx1010`) não tem suporte oficial no ROCm; o Ollama usa a GPU por **Vulkan**, com o driver RADV do Mesa que a imagem local `homeserver/ollama-vulkan` acrescenta à oficial. O container recebe só `/dev/dri` e o grupo `render`.
+A RX 5600 XT (RDNA1, `gfx1010`) não tem suporte oficial no ROCm; o Ollama usa a GPU por **Vulkan**, com o driver RADV do Mesa que a imagem local `localhost/homeserver/ollama-vulkan` acrescenta à oficial. O prefixo `localhost/` e o `pull_policy: never` garantem que ela nunca venha de um registro (no Portainer, não use *Re-pull image* nela), e o Diun a ignora. O container recebe só `/dev/dri` e o grupo `render`.
 
 * **Conferir:** `docker logs ollama | grep -i -E "vulkan|gpu"` deve listar a placa; com um modelo carregado, `docker exec ollama ollama ps` mostra `GPU` na coluna de processador.
 * **Se não pegar:** o Ollama roda em CPU sozinho — mais lento, mas funciona. Para forçar CPU (por exemplo, para liberar a GPU), acrescente `OLLAMA_VULKAN=0` ao `environment` do `ollama`.
@@ -184,6 +184,6 @@ A RX 5600 XT (RDNA1, `gfx1010`) não tem suporte oficial no ROCm; o Ollama usa a
 1. `curl -s http://<ai_desktop_vm_ip_var>:4000/health/liveliness` responde; `curl -s http://<ai_desktop_vm_ip_var>:4001/metrics | head` mostra métricas `litellm_`.
 2. No Open WebUI (entrando pelo Authelia), converse com `principal`, `rapido` e `local`; na tela `llm.`, as três chamadas aparecem na chave `openwebui`.
 3. `claude-gw` responde e `/status` mostra o gateway; a chamada aparece na chave `claude_code`.
-4. Uma chamada a `decisao` pela rota `/typesafe/v1/systemone` volta uma decisão com confiança.
+4. Uma chamada a `/v1/systemone` com `"model": "decisao"` volta uma decisão com confiança.
 5. `docker exec ollama ollama ps` mostra o modelo local na GPU (ou CPU, se o Vulkan não pegou).
 6. `sudo systemctl start backup-litellm-db.service` cria um `litellm-<data>.dump` em `docker-volumes/litellm/db-dumps/`.
