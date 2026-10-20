@@ -1,0 +1,6 @@
+# Imagem do conversor de documentos do segundo cérebro (página 12).
+FROM python:3.13-slim
+RUN pip install --no-cache-dir "markitdown[pdf,docx,pptx,xlsx]=={{ markitdown_version }}"
+COPY conversor.py /app/conversor.py
+USER 65534:65534
+ENTRYPOINT ["python", "/app/conversor.py"]
