@@ -156,3 +156,122 @@ def test_imagem_ops_construida_e_repo_clonado():
     git = next(t for t in tarefas if "ansible.builtin.git" in t)["ansible.builtin.git"]
     assert git["repo"] == "{{ ops_repo_url }}" and git["dest"] == "{{ vm_local_data_path }}/ops/repo"
     assert git.get("update") is False  # o runner faz o pull antes de cada execução
+
+
+# --- Task 5: hub (agentgateway) ---
+
+import hashlib  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+
+import pytest  # noqa: E402
+
+HUB_TPL = "templates/agents/agentgateway.yaml.j2"
+CHAVES = {"claude_code": "ag-CHAVE-CLAUDE-123", "agentes": "ag-CHAVE-AGENTES-456"}
+SEGREDOS_ALVOS = {"homeassistant_mcp_token": "HA-TOKEN-SECRETO", "n8n_mcp_token": "N8N-TOKEN-SECRETO"}
+
+
+def _hub_txt() -> str:
+    return render(HUB_TPL, agents_leitura=_main()["agents_leitura"], agents_api_keys=CHAVES,
+                  ai_desktop_vm_ip_var="192.168.15.68", **SEGREDOS_ALVOS)
+
+
+def _hub() -> dict:
+    return yaml.safe_load(_hub_txt())
+
+
+def _bind(porta) -> dict:
+    return next(b for b in _hub()["binds"] if b["port"] == porta)
+
+
+def _rota(porta) -> dict:
+    return _bind(porta)["listeners"][0]["routes"][0]
+
+
+def _alvos(porta) -> dict:
+    return {t["name"]: t for t in _rota(porta)["backends"][0]["mcp"]["targets"]}
+
+
+def test_rota_leitura_so_le():
+    alvos = _alvos(4000)
+    assert set(alvos) == {"grafana", "ops", "homeassistant", "n8n"}
+    assert alvos["grafana"]["mcp"]["host"] == "http://mcp_grafana_leitura:8000/mcp"
+    assert alvos["ops"]["mcp"]["host"] == "http://ops_leitura:8000/mcp"
+    assert alvos["homeassistant"]["mcp"]["host"] == "http://homeassistant:8123/api/mcp"
+    assert alvos["n8n"]["mcp"]["host"] == "http://n8n:5678/mcp-server/http"
+    assert "_controle" not in yaml.safe_dump(_rota(4000))
+    regras = _rota(4000)["policies"]["mcpAuthorization"]["rules"]
+    assert all(list(r) == ["allow"] for r in regras)
+    assert [r["allow"] for r in regras] == [
+        'mcp.tool.target == "grafana"',
+        'mcp.tool.target == "ops"',
+        'mcp.tool.target == "homeassistant" && mcp.tool.name in ["GetLiveContext"]',
+        'mcp.tool.target == "n8n" && mcp.tool.name in ["search_workflows"]',
+    ]
+    assert "apiKey" not in _rota(4000)["policies"]  # o login é o OAuth do mcp_auth_servidor
+
+
+def test_rota_controle_com_chave():
+    alvos = _alvos(4100)
+    assert set(alvos) == {"grafana", "ops", "homeassistant", "n8n"}
+    assert alvos["grafana"]["mcp"]["host"] == "http://mcp_grafana_controle:8000/mcp"
+    assert alvos["ops"]["mcp"]["host"] == "http://ops_controle:8000/mcp"
+    pol = _rota(4100)["policies"]["apiKey"]
+    assert pol["mode"] == "strict"
+    assert pol["location"] == {"header": {"name": "Authorization", "prefix": "Bearer "}}
+    esperado = {f"sha256:{hashlib.sha256(v.encode()).hexdigest()}": c for c, v in CHAVES.items()}
+    assert {k["keyHash"]: k["metadata"]["cliente"] for k in pol["keys"]} == esperado
+    assert not any("key" in k for k in pol["keys"])
+    assert "mcpAuthorization" not in _rota(4100)["policies"]
+
+
+def test_hub_sem_segredos_e_tolerante():
+    txt = _hub_txt()
+    for segredo in list(CHAVES.values()) + list(SEGREDOS_ALVOS.values()):
+        assert segredo not in txt, segredo
+    for porta in (4000, 4100):
+        mcp = _rota(porta)["backends"][0]["mcp"]
+        assert mcp["failureMode"] == "failOpen" and mcp["prefixMode"] == "always"
+        alvos = _alvos(porta)
+        assert alvos["homeassistant"]["policies"]["backendAuth"]["key"] == {"file": "/segredos/homeassistant_token"}
+        assert alvos["n8n"]["policies"]["backendAuth"]["key"] == {"file": "/segredos/n8n_token"}
+    cfg = _hub()["config"]
+    assert cfg["statsAddr"] == "0.0.0.0:15020"
+    assert cfg["tracing"]["otlpEndpoint"] == "http://192.168.15.68:3100/api/public/otel"
+    assert cfg["tracing"]["otlpProtocol"] == "http"
+    assert "headers" not in cfg["tracing"]  # a autenticação vai por OTEL_EXPORTER_OTLP_TRACES_HEADERS
+    assert cfg["logging"]["format"] == "json"
+
+
+def test_hub_no_compose():
+    hub = _svc(AGENTS)["agentgateway"]
+    assert hub["image"] == "cr.agentgateway.dev/agentgateway:v1.6.0"
+    assert hub["ports"] == ["${CORE_SERVICES_VM_IP_VAR}:4100:4100"]
+    assert set(hub["networks"]) == {"agents_internal", "proxy"}
+    assert "${AGENTGATEWAY_CONFIG_PATH}:/config/config.yaml:ro" in _vols(hub)
+    assert "${AGENTGATEWAY_DATA_PATH}/segredos:/segredos:ro" in _vols(hub)
+    assert hub["command"] == ["-f", "/config/config.yaml"]
+    assert hub["user"] == "${DOCKER_PUID}:${DOCKER_PGID}"
+    assert _env(hub)["OTEL_EXPORTER_OTLP_TRACES_HEADERS"] == "Authorization=Basic ${LANGFUSE_OTEL_AUTH}"
+    tarefas = _pb_tasks(PB_AGENTS)
+    cfg = next(t for t in tarefas if t.get("ansible.builtin.template", {}).get("src") == "../" + HUB_TPL)
+    assert cfg["ansible.builtin.template"]["dest"] == "{{ vm_local_data_path }}/agentgateway/config.yaml"
+    tokens = [t for t in tarefas if "ansible.builtin.copy" in t
+              and "/agentgateway/segredos/" in str(t["ansible.builtin.copy"].get("dest", ""))]
+    assert {t["ansible.builtin.copy"]["dest"].rsplit("/", 1)[1] for t in tokens} == {"homeassistant_token", "n8n_token"}
+    assert all(t["ansible.builtin.copy"]["mode"] == "0400" and t.get("no_log") is True for t in tokens)
+    configs = _configs(PB_AGENTS, "agents.env")
+    assert configs["AGENTGATEWAY_CONFIG_PATH"] == "{{ vm_local_data_path }}/agentgateway/config.yaml"
+    assert "b64encode" in configs["LANGFUSE_OTEL_AUTH"] and "langfuse_secrets.public_key" in configs["LANGFUSE_OTEL_AUTH"]
+
+
+@pytest.mark.skipif(shutil.which("agentgateway") is None, reason="binário agentgateway ausente")
+def test_hub_valida(tmp_path):
+    arq = tmp_path / "config.yaml"
+    segredos = tmp_path / "segredos"
+    segredos.mkdir()
+    for nome in ("homeassistant_token", "n8n_token"):
+        (segredos / nome).write_text("token-de-teste\n", encoding="utf-8")
+    arq.write_text(_hub_txt().replace("/segredos/", f"{segredos}/"), encoding="utf-8")
+    r = subprocess.run(["agentgateway", "--validate-only", "-f", str(arq)], capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stdout + r.stderr

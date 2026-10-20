@@ -1,6 +1,7 @@
 """Testes dos templates e arquivos de observabilidade do server (Loki, Alloy, Prometheus, alertas)."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
@@ -45,6 +46,7 @@ def render(rel: str, **vars) -> str:
     env.filters["combine"] = _combine
     env.filters["to_nice_json"] = _to_nice_json
     env.filters["to_json"] = json.dumps
+    env.filters["hash"] = lambda valor, alg="sha1": hashlib.new(alg, str(valor).encode()).hexdigest()
     return env.get_template(rel).render(**vars)
 
 

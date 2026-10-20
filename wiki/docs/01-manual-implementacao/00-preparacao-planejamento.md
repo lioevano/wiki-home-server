@@ -327,6 +327,9 @@ PORTAINER_API_KEY=
 GRAFANA_SA_TOKEN_LEITURA=
 GRAFANA_SA_TOKEN_CONTROLE=
 NOTIFICACOES_WEBHOOK_TOKEN=
+AGENTGATEWAY_CONFIG_PATH=
+AGENTGATEWAY_DATA_PATH=
+LANGFUSE_OTEL_AUTH=
 ```
 !!! important "Segurança de Segredos com .gitignore"
     O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e só é versionado **criptografado** (começa com `$ANSIBLE_VAULT;`); por isso ele não está no `.gitignore`. Cópias abertas (`*.decrypted*`) são bloqueadas pelo `.gitignore`. Arquivos `.env` reais com segredos (gerados pelo Ansible nas VMs) **NUNCA** devem ser commitados.

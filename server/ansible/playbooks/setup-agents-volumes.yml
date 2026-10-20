@@ -92,6 +92,44 @@
           pull: true
         force_source: "{{ ops_codigo.changed or ops_requirements.changed or ops_colecoes.changed }}"
 
+    # --- Hub (agentgateway): config sem segredos e tokens dos alvos em arquivos ---
+    - name: Criar os diretórios do hub
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "{{ vm_local_data_path }}/agentgateway", mode: '0750' }
+        - { path: "{{ vm_local_data_path }}/agentgateway/segredos", mode: '0700' }
+
+    - name: Gerar o config do hub
+      ansible.builtin.template:
+        src: ../templates/agents/agentgateway.yaml.j2
+        dest: "{{ vm_local_data_path }}/agentgateway/config.yaml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0644'
+
+    - name: Gravar o token do Home Assistant para o hub
+      ansible.builtin.copy:
+        content: "{{ homeassistant_mcp_token }}"
+        dest: "{{ vm_local_data_path }}/agentgateway/segredos/homeassistant_token"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0400'
+      no_log: true
+
+    - name: Gravar o token do n8n para o hub
+      ansible.builtin.copy:
+        content: "{{ n8n_mcp_token }}"
+        dest: "{{ vm_local_data_path }}/agentgateway/segredos/n8n_token"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0400'
+      no_log: true
+
     # --- Variáveis da stack ---
     - name: Gerar agents.env para Portainer
       ansible.builtin.template:
@@ -115,3 +153,6 @@
           - { name: 'GRAFANA_SA_TOKEN_LEITURA', value: "{{ grafana_sa_tokens.leitura }}" }
           - { name: 'GRAFANA_SA_TOKEN_CONTROLE', value: "{{ grafana_sa_tokens.controle }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
+          - { name: 'AGENTGATEWAY_CONFIG_PATH', value: "{{ vm_local_data_path }}/agentgateway/config.yaml" }
+          - { name: 'AGENTGATEWAY_DATA_PATH', value: "{{ vm_local_data_path }}/agentgateway" }
+          - { name: 'LANGFUSE_OTEL_AUTH', value: "{{ (langfuse_secrets.public_key ~ ':' ~ langfuse_secrets.secret_key) | b64encode }}" }

@@ -17,6 +17,28 @@ x-ops-env: &ops-env
   NOTIFICACOES_WEBHOOK_TOKEN: ${NOTIFICACOES_WEBHOOK_TOKEN}
 
 services:
+  agentgateway:
+    image: cr.agentgateway.dev/agentgateway:v1.6.0 # mesma versão de agentgateway_version (group_vars)
+    container_name: agentgateway
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    command: ["-f", "/config/config.yaml"]
+    environment:
+      TZ: ${SYSTEM_TIMEZONE}
+      # Rastreio no Langfuse (OTLP): o cabeçalho fica fora do config, que não tem segredos.
+      OTEL_EXPORTER_OTLP_TRACES_HEADERS: "Authorization=Basic ${LANGFUSE_OTEL_AUTH}"
+      OTEL_SERVICE_NAME: agentgateway
+    volumes:
+      - ${AGENTGATEWAY_CONFIG_PATH}:/config/config.yaml:ro
+      - ${AGENTGATEWAY_DATA_PATH}/segredos:/segredos:ro # tokens do Home Assistant e do n8n (0400)
+    ports:
+      # Só a rota de controle, só no IP da LAN (Docker não passa pelo UFW; a proteção é o bind + a chave).
+      # A rota de leitura (4000) e as métricas (15020) ficam na rede interna.
+      - "${CORE_SERVICES_VM_IP_VAR}:4100:4100"
+    networks:
+      - agents_internal
+      - proxy # Home Assistant, n8n e o Prometheus
+
   mcp_grafana_leitura:
     image: grafana/mcp-grafana:2.1.1
     container_name: mcp_grafana_leitura

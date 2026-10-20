@@ -32,3 +32,91 @@ As versões do FastMCP e do ansible-core vêm do `group_vars` por este template,
 fastmcp=={{ ops_fastmcp_version }}
 ansible-core=={{ ops_ansible_core_version }}
 ```
+
+## Hub de MCPs (agentgateway)
+
+O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na rede interna) recebe o conector **Servidor** pelo `mcp_auth_servidor` e só alcança instâncias que não sabem escrever (`mcp_grafana_leitura`, `ops_leitura`), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (`agents_leitura`). A **rota `controle`** (porta 4100, publicada só no IP da `core-services-vm` na LAN) alcança tudo e exige a chave de um cliente (`agents_api_keys`); no config vai só o hash. Os tokens do Home Assistant e do n8n ficam em arquivos `0400` montados no container, e a autenticação do rastreio no Langfuse vem da variável `OTEL_EXPORTER_OTLP_TRACES_HEADERS` — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (`failOpen`).
+
+```jinja title="ansible/templates/agents/agentgateway.yaml.j2"
+# Hub de MCPs da base dos agentes (página 13). Gerado pelo setup-agents-volumes.yml em
+# {{ '{{' }} vm_local_data_path {{ '}}' }}/agentgateway/config.yaml. Sem segredos: chaves dos clientes só como hash;
+# tokens dos alvos em arquivos (/segredos); autenticação do rastreio por variável de ambiente.
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+{% set alvos_fixos = {
+  'homeassistant': {'host': 'http://homeassistant:8123/api/mcp', 'token': '/segredos/homeassistant_token'},
+  'n8n': {'host': 'http://n8n:5678/mcp-server/http', 'token': '/segredos/n8n_token'},
+} %}
+{% macro alvos(sufixo) %}
+          targets:
+          - name: grafana
+            mcp:
+              host: http://mcp_grafana_{{ sufixo }}:8000/mcp
+          - name: ops
+            mcp:
+              host: http://ops_{{ sufixo }}:8000/mcp
+{% for nome, alvo in alvos_fixos.items() %}
+          - name: {{ nome }}
+            mcp:
+              host: {{ alvo.host }}
+            policies:
+              backendAuth:
+                key:
+                  file: {{ alvo.token }}
+{% endfor %}
+{% endmacro %}
+config:
+  statsAddr: 0.0.0.0:15020
+  logging:
+    format: json
+  tracing:
+    otlpEndpoint: http://{{ ai_desktop_vm_ip_var }}:3100/api/public/otel
+    otlpProtocol: http
+    randomSampling: "true"
+
+binds:
+# Rota de leitura: só pela rede interna, atrás do mcp_auth_servidor (OAuth + Authelia, grupo admins).
+- port: 4000
+  listeners:
+  - name: leitura
+    routes:
+    - name: leitura
+      policies:
+        mcpAuthorization:
+          rules:
+{% for alvo, ferramentas in agents_leitura.items() %}
+{% if ferramentas == '*' %}
+          - allow: 'mcp.tool.target == "{{ alvo }}"'
+{% else %}
+          - allow: 'mcp.tool.target == "{{ alvo }}" && mcp.tool.name in {{ ferramentas | to_json }}'
+{% endif %}
+{% endfor %}
+      backends:
+      - mcp:
+          prefixMode: always
+          failureMode: failOpen
+{{ alvos('leitura') }}
+# Rota de controle: só na LAN (porta publicada no IP da core-services-vm), com a chave de cada cliente.
+- port: 4100
+  listeners:
+  - name: controle
+    routes:
+    - name: controle
+      policies:
+        apiKey:
+          mode: strict
+          location:
+            header:
+              name: Authorization
+              prefix: "Bearer "
+          keys:
+{% for cliente, chave in agents_api_keys.items() %}
+          - keyHash: "sha256:{{ chave | hash('sha256') }}"
+            metadata:
+              cliente: {{ cliente }}
+{% endfor %}
+      backends:
+      - mcp:
+          prefixMode: always
+          failureMode: failOpen
+{{ alvos('controle') }}
+```
