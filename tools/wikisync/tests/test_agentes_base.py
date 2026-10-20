@@ -435,6 +435,44 @@ def test_observabilidade_agentes():
     ctx.update({v: "x" for v in set(_re.findall(r"\{\{\s*([a-z_]+)", src)) - {"item"} if v not in ctx})
     grupos = {list(g)[0]: {list(x)[0]: list(x.values())[0] for x in list(g.values())[0]}
               for g in yaml.safe_load(render("templates/homepage/services.yaml.j2", **ctx))}
-    assert grupos["ia"]["servidor"]["href"] == f"https://servidor.{DOM}"
+    hub = grupos["ia"]["agentgateway"]  # PNL-1: nome = id do catálogo; na core, status pelo container
+    assert hub["href"] == f"https://servidor.{DOM}"
+    assert hub["server"] == "core" and hub["container"] == "mcp_auth_servidor" and "siteMonitor" not in hub
     assert grupos["ia"]["langfuse"]["href"] == f"https://langfuse.{DOM}"
     assert grupos["ia"]["langfuse"]["siteMonitor"] == alvos["langfuse"]
+
+
+# --- Task 9: página 13, catálogo e índice ---
+
+CATALOGO = ROOT / "wiki/docs/02-visao-geral-arquitetura/09-catalogo-aplicacoes.md"
+INDICE = ROOT / "wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md"
+BACKUP = ROOT / "wiki/docs/04-manutencao-recuperacao/02-backup-restore-estrategia.md"
+
+
+def _linha_catalogo(app: str) -> list[str]:
+    linha = next(l for l in CATALOGO.read_text(encoding="utf-8").splitlines() if l.startswith(f"| `{app}` |"))
+    return [c.strip() for c in linha.strip("|").split("|")]
+
+
+def test_catalogo_e_pagina_agentes():
+    hub = _linha_catalogo("agentgateway")
+    assert hub[2] == "agents / core-services-vm"
+    assert hub[3].startswith("`mcp_auth_servidor`, `agentgateway`")
+    for svc in ("mcp_grafana_leitura", "mcp_grafana_controle", "ops_leitura", "ops_controle"):
+        assert f"`{svc}`" in hub[3]
+    assert hub[4:9] == ["publica", "`servidor`", "local", "sim", "—"] and hub[9] == "`+mcp`"
+    lf = _linha_catalogo("langfuse")
+    assert lf[2] == "langfuse / ai-desktop-vm" and lf[3].startswith("`langfuse_web`")
+    assert lf[4:8] == ["protegida", "`langfuse`", "local", "não"]
+    indice = INDICE.read_text(encoding="utf-8")
+    for regra in ("**MCP-4**", "**MCP-5**", "**MCP-6**", "**MCP-7**"):
+        assert regra in indice, regra
+    backup = BACKUP.read_text(encoding="utf-8")
+    assert "agentgateway" in backup and "langfuse" in backup.lower()
+    pag = PAG13.read_text(encoding="utf-8")
+    for secao in ("## Arquitetura", "## Tokens e chaves", "## Deploy", "## Conectar o Claude", "## Ações e aprovação",
+                  "## Falhas", "## Teste de ponta a ponta"):
+        assert secao in pag, secao
+    assert "fora dos snapshots" in pag
+    mk = (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
+    assert "01-manual-implementacao/13-agentes-base.md" in mk

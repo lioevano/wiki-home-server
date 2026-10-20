@@ -34,6 +34,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 
 | Aplicação | Categoria | Stack / VM | Serviços | Exposição | Subdomínio | Dados | Métricas | Provê | Ajustes | Página |
 |---|---|---|---|---|---|---|---|---|---|---|
+| `agentgateway` | ia | agents / core-services-vm | `mcp_auth_servidor`, `agentgateway`, `mcp_grafana_leitura`, `mcp_grafana_controle`, `ops_leitura`, `ops_controle` | publica | `servidor` | local | sim | — | `+mcp` | [Agentes: base](../01-manual-implementacao/13-agentes-base.md) |
 | `alloy` | monitoramento | ansible:infra/alloy / proxmox_main_host; ansible:infra/alloy / core-services-vm; ansible:infra/alloy / ai-desktop-vm | `alloy` | interna | — | nenhum | sim | `logs`, `metricas` | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy) |
 | `authelia` | infra | core / core-services-vm | `authelia`, `authelia_db` | publica | `auth` | nfs | não | `autenticacao`, `mcp` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
 | `bazarr` | mídia | media / core-services-vm | `bazarr` | protegida | `bazarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
@@ -49,6 +50,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `homepage` | infra | apps / core-services-vm | `homepage` | protegida | `home` | nfs | não | `painel` | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `immich` | produtividade | photos / core-services-vm | `immich_server`, `immich_ml`, `immich_redis`, `immich_db` | publica | `fotos` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `jellyfin` | mídia | media / core-services-vm | `jellyfin` | publica | `jellyfin` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
+| `langfuse` | ia | langfuse / ai-desktop-vm | `langfuse_web`, `langfuse_worker`, `langfuse_db`, `langfuse_clickhouse`, `langfuse_redis`, `langfuse_minio` | protegida | `langfuse` | local | não | — | — | [Agentes: base](../01-manual-implementacao/13-agentes-base.md) |
 | `lidarr` | mídia | media / core-services-vm | `lidarr` | protegida | `lidarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `litellm` | ia | ai / ai-desktop-vm | `litellm`, `litellm_db` | protegida | `llm` | nfs | sim | `llm` | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `loki` | monitoramento | apps / core-services-vm | `loki` | interna | — | nfs | não | `logs` | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |

@@ -24,6 +24,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 
 | Aplicação | Stack / VM | Integrações ativas | Página |
 |---|---|---|---|
+| `agentgateway` | agents / core-services-vm | roteamento, autenticacao, acesso-externo, metricas, logs, dados, variaveis, mcp, documentacao, notificacoes, painel | `01-manual-implementacao/13-agentes-base.md` |
 | `alloy` | ansible:infra/alloy / proxmox_main_host; ansible:infra/alloy / core-services-vm; ansible:infra/alloy / ai-desktop-vm | metricas, logs, documentacao, notificacoes | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `authelia` | core / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/05-rede-segura.md` |
 | `bazarr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
@@ -39,6 +40,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `homepage` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `immich` | photos / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `jellyfin` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
+| `langfuse` | langfuse / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/13-agentes-base.md` |
 | `lidarr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `litellm` | ai / ai-desktop-vm | roteamento, autenticacao, acesso-externo, metricas, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/08-stack-ia.md` |
 | `loki` | apps / core-services-vm | dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/07-deploy-apps.md` |
@@ -93,6 +95,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/10-midia.md` | Seção 10: Mídia (Jellyfin, *arr, Seerr e VPN) | Stack media: Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Recyclarr e qBittorrent atrás da ProtonVPN (gluetun), com /data único e importação por hardlink. |
 | `01-manual-implementacao/11-fotos-arquivos.md` | Seção 11: Fotos e Arquivos (Immich, Nextcloud e Collabora) | Stacks photos (Immich) e cloud (Nextcloud, cron e Collabora), públicas pelo túnel com login OIDC do Authelia, datasets com cota e bancos no disco local. |
 | `01-manual-implementacao/12-segundo-cerebro.md` | Seção 12: Segundo cérebro (Obsidian, Syncthing, busca local e MCP) | Stack notes na VM de IA: vaults do Obsidian sincronizados pelo Syncthing, busca local com qmd sobre as notas e os documentos do Nextcloud, e MCP para o Claude com escopo por vault. |
+| `01-manual-implementacao/13-agentes-base.md` | Seção 13: Agentes — base (hub de MCPs, operações e rastreio) | Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle na LAN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -137,13 +140,15 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/inventories/home/group_vars/all/vault.yml.example` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md` |
 | `ansible/inventories/home/hosts.ini` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` |
 | `ansible/playbooks/full-deploy.yml` | playbook | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
+| `ansible/playbooks/setup-agents-volumes.yml` | playbook | `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/playbooks/setup-ai-keys.yml` | playbook | `01-manual-implementacao/08-stack-ia.md` |
-| `ansible/playbooks/setup-ai-volumes.yml` | playbook | `01-manual-implementacao/08-stack-ia.md` |
+| `ansible/playbooks/setup-ai-volumes.yml` | playbook | `01-manual-implementacao/08-stack-ia.md`, `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/playbooks/setup-base-ubuntu.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` |
 | `ansible/playbooks/setup-cloud-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/playbooks/setup-core-networking.yml` | playbook | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` |
+| `ansible/playbooks/setup-langfuse-volumes.yml` | playbook | `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/playbooks/setup-media-stack-volumes.yml` | playbook | `01-manual-implementacao/10-midia.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
-| `ansible/playbooks/setup-monitoring-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/playbooks/setup-monitoring-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/playbooks/setup-n8n-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
 | `ansible/playbooks/setup-notes-volumes.yml` | playbook | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/playbooks/setup-photos-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
@@ -182,6 +187,8 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/traefik.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/tools/ai-cli-tools/tasks/main.yml` | role-tasks | `03-guias-sustentacao/13-usando-geminicli.md` |
+| `ansible/templates/agents/agentgateway.yaml.j2` | template | `01-manual-implementacao/13-agentes-base.md` |
+| `ansible/templates/agents/ops-requirements.txt.j2` | template | `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/templates/backup-postgres.sh.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/templates/blackbox.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
 | `ansible/templates/grafana/alerting/contact-points.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
@@ -206,11 +213,22 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/recyclarr.yml.j2` | template | `01-manual-implementacao/10-midia.md` |
+| `docker/images/ops/Dockerfile` | outro | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/__init__.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/auditoria.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/config.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/ferramentas.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/politica.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/portainer.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/runner.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/server.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `docker/stacks/agents/docker-compose.yml` | stack | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` |
 | `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
 | `docker/stacks/cloud/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `docker/stacks/core/docker-compose.yml` | stack | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md` |
+| `docker/stacks/langfuse/docker-compose.yml` | stack | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/stacks/media/docker-compose.yml` | stack | `01-manual-implementacao/10-midia.md` |
 | `docker/stacks/notes/docker-compose.yml` | stack | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `docker/stacks/photos/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |

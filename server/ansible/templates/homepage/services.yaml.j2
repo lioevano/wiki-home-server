@@ -182,11 +182,12 @@
         icon: obsidian.png
         href: https://escrita.{{ base_domain }}
         siteMonitor: http://{{ ai_desktop_vm_ip_var }}:8482/.well-known/oauth-protected-resource
-    - servidor:
+    - agentgateway:
         icon: mdi-server-network
-        description: MCP do servidor (leitura)
+        description: Hub de MCPs (conector Servidor)
         href: https://servidor.{{ base_domain }}
-        siteMonitor: http://mcp_auth_servidor:80/.well-known/oauth-protected-resource
+        server: core
+        container: mcp_auth_servidor
     - langfuse:
         icon: langfuse.png
         description: Rastreio de LLM e ferramentas

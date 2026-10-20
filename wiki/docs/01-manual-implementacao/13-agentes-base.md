@@ -6,6 +6,35 @@ description: "Base dos agentes: hub de MCPs (agentgateway) com rota de leitura p
 
 A IA (Claude Code, app Claude, agentes) alcança o homeserver por um **hub de MCPs** na `core-services-vm`: **leitura de qualquer lugar** (métricas, logs, alertas, containers, a casa e as automações, pelo conector **Servidor**) e **ações só na LAN** (reiniciar containers, redeployar stacks, rodar playbooks Ansible, comandar a casa, executar workflows). Toda chamada de LLM e de ferramenta fica rastreada no **Langfuse**.
 
+## Arquitetura
+
+```mermaid
+flowchart LR
+    claude[claude.ai / celular] -- OAuth + Authelia 2FA --> proxy[mcp_auth_servidor<br/>servidor.]
+    code[Claude Code / agentes<br/>na LAN] -- chave Bearer --> controle[agentgateway :4100<br/>rota controle]
+    proxy --> leitura[agentgateway :4000<br/>rota leitura]
+    leitura --> gl[mcp_grafana_leitura]
+    leitura --> ol[ops_leitura]
+    leitura --> ha[Home Assistant /api/mcp<br/>só GetLiveContext]
+    leitura --> n8[n8n /mcp-server/http<br/>só search_workflows]
+    controle --> gc[mcp_grafana_controle]
+    controle --> oc[ops_controle<br/>Portainer + Ansible]
+    controle --> ha
+    controle --> n8
+    leitura -. traces .-> lf[Langfuse]
+    controle -. traces .-> lf
+```
+
+| Rota | Onde | Quem usa | Alcança |
+|---|---|---|---|
+| `leitura` | `https://servidor.<domínio>/mcp` (túnel → Traefik → `mcp_auth_servidor`) | claude.ai, app do celular | Grafana (Prometheus, Loki, alertas, painéis) só leitura; containers, logs, stacks e playbooks (listar); estado da casa; lista de workflows |
+| `controle` | `http://<IP da core-services-vm>:4100/mcp` (só LAN; VPN quando existir) | Claude Code em casa, agentes (4c3) | tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (`ansible_check` → `ansible_aplicar`), comandar a casa, executar e editar workflows liberados |
+
+Por que duas rotas: a internet só alcança **código que não sabe escrever** (as instâncias `*_leitura` nem registram ferramentas de escrita) **e** uma lista fechada de ferramentas (`agents_leitura`); as ações ficam num endereço que só existe na rede de casa, com uma chave por cliente.
+
+!!! warning "Fora dos snapshots ZFS"
+    O config do hub, os segredos do runner, o clone do repositório e o estado OAuth do `mcp_auth_servidor` ficam no disco local da `core-services-vm` (`/opt/local-data/agentgateway`, `/opt/local-data/ops`, `/opt/local-data/mcp-auth-servidor`), e os dados do Langfuse no disco local da `ai-desktop-vm` (`/opt/local-data/langfuse`): **fora dos snapshots ZFS e sem backup**. Tudo é regerável pelos playbooks a partir do vault; os traces do Langfuse são descartáveis.
+
 ## Arquivos
 
 Stack e preparação:
@@ -135,3 +164,61 @@ A retenção automática por projeto do Langfuse é um recurso pago (entitlement
 
 - **Pela tela:** em **Tracing**, filtre por data (ex.: mais antigos que 30 dias), selecione e apague.
 - **Tudo de uma vez:** pare a stack `langfuse` no Portainer, apague `/opt/local-data/langfuse/clickhouse/data` e `/opt/local-data/langfuse/minio` e suba de novo — a organização, o projeto e as chaves voltam pelas variáveis `LANGFUSE_INIT_*`.
+
+## Tokens e chaves
+
+Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):
+
+1. **Grafana:** *Administration → Users and access → Service accounts* → duas contas, `mcp-leitura` (papel **Viewer**) e `mcp-controle` (papel **Editor**); um token em cada → `grafana_sa_tokens.leitura` e `grafana_sa_tokens.controle`.
+2. **Home Assistant:** *Configurações → Dispositivos e serviços → Adicionar integração → Model Context Protocol Server* (escolha a API **Assist**, que expõe as entidades marcadas para o assistente); depois *Perfil → Segurança → Tokens de acesso de longa duração* → `homeassistant_mcp_token`.
+3. **n8n:** *Settings → Instance-level MCP* → **Enable MCP access** → aba **API key** → `n8n_mcp_token`. Libere os workflows que a IA pode ver e executar (*Available in MCP* em cada workflow, ou **Workflows enabled**); nenhum fica liberado sem você marcar.
+4. **Portainer:** *My account → Access tokens → Add access token* → `portainer_api_key`. Confira os nomes dos ambientes em *Environments* (`local` para a core e o agente da VM de IA) e ajuste `ops_endpoints` se forem outros.
+5. **Runner do Ansible:** `ssh-keygen -t ed25519 -C ops-runner -f ops-runner` na máquina de controle → a privada vai para `ops_ssh_private_key`; a pública (`ops-runner.pub`) entra no `~/.ssh/authorized_keys` do usuário Ansible das VMs (`vm_ansible_user_name`) e do host Proxmox (`proxmox_ansible_user_on_host`). `ops_vault_password` é a senha do `ansible-vault` deste repositório. O runner só funciona depois que o `vault.yml` criptografado existir no repositório (ele clona do GitHub).
+6. **Clientes do hub:** `agents_api_keys.claude_code` e `agents_api_keys.agentes` (`ag-` + `openssl rand -hex 24`).
+7. **Langfuse:** `langfuse_secrets` (salt e segredos com `openssl rand -base64 32`, `encryption_key` com `openssl rand -hex 32`, chaves do projeto `pk-lf-…`/`sk-lf-…`) e o cliente OIDC `langfuse` (`oidc_clients.langfuse`, digest como nos outros clientes, página 05).
+
+## Deploy
+
+1. Na máquina de controle: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-agents-volumes.yml` (core: diretórios, segredos, clone, imagem `localhost/homeserver/ops`, config do hub, `agents.env`) e `playbooks/setup-langfuse-volumes.yml` (ai: diretórios e `langfuse.env`). Rode também `setup-ai-volumes.yml` (o `ai.env` ganha as chaves do Langfuse) e `setup-monitoring-stack-volumes.yml` (job do hub, sondas, alerta e painel).
+2. **Portainer → Stacks → Add Stack** no endpoint da `ai-desktop-vm`: `langfuse` com `docker/stacks/langfuse/docker-compose.yml` e `/opt/portainer_stack_envs/langfuse.env`. A primeira subida cria a organização, o projeto e as chaves. Depois, **Update the stack** da `ai` (o LiteLLM passa a mandar as chamadas ao Langfuse).
+3. **Portainer → Stacks → Add Stack** no endpoint `local` (core): `agents` com `docker/stacks/agents/docker-compose.yml` e `/opt/portainer_stack_envs/agents.env`.
+4. Atualize a Authelia (página 05: cliente `langfuse`, redirect `servidor` no cliente `mcp`, regra `bypass` de `servidor.`) e o Traefik (router `langfuse.`). O hostname curinga do túnel já leva `servidor.` e `langfuse.` ao Traefik.
+
+## Conectar o Claude
+
+| Cliente | Como |
+|---|---|
+| claude.ai (navegador e celular) | **Configurações → Conectores → Adicionar conector personalizado** com `https://servidor.<domínio>/mcp` (nome `Servidor`). **Conectar** abre o login do Authelia (2FA, só o grupo `admins`). Só leitura. |
+| Claude Code (PC, na LAN) | `claude mcp add --transport http servidor http://<IP da core-services-vm>:4100/mcp --header "Authorization: Bearer <agents_api_keys.claude_code>"`. A chave fica no `~/.claude.json` do seu usuário, nunca em repositório. Fora de casa, use a rota de leitura (`https://servidor.<domínio>/mcp`) até a VPN existir. |
+| Agentes (4c3) | Mesma rota de controle, com a chave `agents_api_keys.agentes`. |
+
+As ferramentas aparecem com o prefixo do alvo: `grafana_…`, `ops_…`, `homeassistant_…`, `n8n_…`.
+
+## Ações e aprovação
+
+- As ferramentas que mudam algo (`ops_container_reiniciar`, `ops_stack_redeploy`, `ops_ansible_aplicar` e as de escrita do Grafana, da casa e do n8n) vêm marcadas como destrutivas: o Claude Code pede sua aprovação a cada uso. Não marque "sempre permitir" para elas.
+- **Containers e stacks protegidos:** `ops_containers_protegidos` (Traefik, Authelia, cloudflared, Portainer, o hub e o próprio `ops`) e `ops_stacks_protegidas` (`core`, `agents`) são recusados — o caminho de controle da IA não é mexido por ela.
+- **Ansible em dois passos:** `ops_ansible_check(playbook, limite?)` faz `git pull`, roda `--check --diff` e devolve o diff e um `plano_id`; `ops_ansible_aplicar(plano_id)` aplica **o mesmo** playbook e limite, só se o repositório não mudou e o plano tem menos de `ops_plano_validade_min` (30) minutos. Só playbooks de `ops_playbooks_permitidos`; uma execução por vez. Para liberar outro playbook, acrescente-o à lista (página 01) e rode o `setup-agents-volumes.yml`.
+- **Registro:** cada ação (feita, recusada ou com erro) vira uma linha JSON `"evento": "ops_acao"` no log do `ops` (Loki) e um aviso no Telegram; ação com erro dispara o alerta **ops-acao-falhou** (página 09). Cada chamada de ferramenta também aparece no Langfuse.
+- **Injeção de prompt:** logs, notas e páginas lidos pela IA podem trazer instruções; a aprovação a cada ação, as listas de protegidos e de playbooks e a simulação obrigatória limitam o dano.
+
+## Falhas
+
+| Falha | Comportamento | O que fazer |
+|---|---|---|
+| Home Assistant, n8n ou Grafana fora | As ferramentas dele somem; o resto funciona (`failOpen`) | Ver a sonda e o log do hub (`docker logs agentgateway`) |
+| Hub fora | Conector Servidor e Claude Code sem ferramentas do servidor; alerta **servico-fora-do-ar** (`agentgateway`) | Portainer → stack `agents` |
+| Portainer fora | `ops` responde erro claro nas ferramentas de containers e stacks | Restaurar o Portainer |
+| `ops_ansible_aplicar` recusado | Plano vencido, já usado ou repositório mudou | Rodar `ops_ansible_check` de novo |
+| Playbook falha no meio | Erro devolvido com o fim da saída, aviso no Telegram, alerta | Ver o log; corrigir e simular de novo |
+| Langfuse fora | LiteLLM e hub seguem (envio assíncrono); rastreio perdido no período | Portainer → stack `langfuse` |
+| Authelia fora | Login novo no Servidor falha; a rota de controle (chave) segue | Restaurar o Authelia |
+
+## Teste de ponta a ponta
+
+1. `curl -s http://<IP da core>:4100/mcp` sem cabeçalho → `401`; com `-H "Authorization: Bearer <chave>"` e um `initialize` MCP → resposta do hub.
+2. No Claude Code: "liste os containers da VM de IA" (`ops_containers_listar`) e "quais alertas estão disparando?" (`grafana_…`).
+3. "Simule o playbook setup-media-stack-volumes.yml" → diff e `plano_id`; "aplique" → aprovação pedida, execução, aviso no Telegram.
+4. "Reinicie o traefik" → recusado (protegido), aviso no Telegram.
+5. No claude.ai, conector Servidor: "o que o Home Assistant diz da sala?" funciona; "desligue a luz da sala" → a ferramenta não existe na rota de leitura.
+6. No Langfuse (`https://langfuse.<domínio>`): as chamadas do LiteLLM e as do hub aparecem em **Tracing**.
