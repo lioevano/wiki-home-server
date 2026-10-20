@@ -1,56 +1,43 @@
 # ansible/roles/apps/ml-tools/tasks/main.yml
-# Este role é para a VM ai-desktop-vm
-# Assume que o passthrough da GPU AMD (RX 5600XT) para esta VM foi configurado no Proxmox.
-# Instala o driver AMD/ROCm usado pelo container do Ollama (/dev/kfd e /dev/dri).
+# Este role é para a VM ai-desktop-vm (GPU AMD RX 5600 XT passada pelo Proxmox).
+# O Ollama usa a GPU por Vulkan (Mesa RADV) dentro do container; não há driver de GPU a instalar na VM
+# além do amdgpu do kernel. Este role constrói a imagem local do Ollama com o RADV e libera /dev/dri.
 
-- name: "Verificar se GPU AMD está presente na VM (lspci)"
-  ansible.builtin.command: lspci -nn
-  register: lspci_output_vm
-  changed_when: false
-  failed_when: false
+- name: "Adicionar usuários aos grupos 'render' e 'video' para acesso à GPU"
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: render,video
+    append: yes
+  loop:
+    - "{{ vm_ansible_user_name }}"
+    - "{{ docker_user_name_on_vm }}"
 
-- name: "Instalar drivers AMD ROCm para RX 5600XT (Ubuntu 22.04)"
-  when: "'AMD' in lspci_output_vm.stdout and ('Radeon RX 5600' in lspci_output_vm.stdout or 'Navi 10' in lspci_output_vm.stdout or '1002:731f' in lspci_output_vm.stdout)"
-  block:
-    - name: "Adicionar chave GPG do ROCm"
-      ansible.builtin.get_url:
-        url: https://repo.radeon.com/rocm/rocm.gpg.key
-        dest: /etc/apt/keyrings/rocm.gpg
-        mode: '0644'
-        force: yes
-      notify: Update apt cache after adding key ROCm
+- name: "Criar diretório de build da imagem do Ollama com Vulkan"
+  ansible.builtin.file:
+    path: /opt/ollama-vulkan
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
 
-    - name: "Adicionar repositório AMD ROCm"
-      ansible.builtin.apt_repository:
-        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/5.7 {{ ansible_distribution_codename }} main"
-        state: present
-        filename: rocm
-      notify: Update apt cache after adding repo ROCm
+- name: "Gerar o Dockerfile da imagem do Ollama com Vulkan"
+  ansible.builtin.template:
+    src: Dockerfile.ollama-vulkan.j2
+    dest: /opt/ollama-vulkan/Dockerfile
+    owner: root
+    group: root
+    mode: '0644'
 
-    - name: "Instalar pacotes ROCm (drivers e SDK básico)"
-      ansible.builtin.apt:
-        name:
-          - amdgpu-dkms
-          - rocm-hip-sdk
-          - mesa-utils
-        state: present
-        update_cache: yes
-      notify: Reboot VM for GPU drivers
+- name: "Construir a imagem local do Ollama com Vulkan (homeserver/ollama-vulkan)"
+  community.docker.docker_image:
+    name: homeserver/ollama-vulkan
+    tag: "{{ ollama_version }}"
+    source: build
+    build:
+      path: /opt/ollama-vulkan
+      pull: true
+    force_source: false # reconstrói só quando ollama_version muda (tag nova)
 
-    - name: "Adicionar usuários aos grupos 'render' e 'video' para acesso à GPU"
-      ansible.builtin.user:
-        name: "{{ item }}"
-        groups: render,video
-        append: yes
-      loop:
-        - "{{ vm_ansible_user_name }}"
-        - "{{ docker_user_name_on_vm }}"
-  rescue:
-    - name: "Falha ao tentar instalar ROCm"
-      ansible.builtin.debug:
-        msg: "Não foi possível instalar os drivers ROCm. Verifique compatibilidade da GPU e versão do ROCm. Ollama pode rodar em modo CPU."
-
-# O Ollama roda em container (imagem ollama/ollama:rocm na stack ai); este role só prepara o driver da GPU.
 # Migração: se uma instalação nativa antiga existir, ela é desativada para liberar a porta 11434.
 - name: "Verificar instalação nativa antiga do Ollama"
   ansible.builtin.stat:

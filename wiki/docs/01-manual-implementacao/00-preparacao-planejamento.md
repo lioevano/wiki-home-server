@@ -278,20 +278,25 @@ N8N_SUBDOMAIN=n8n
 N8N_CONFIG_PATH=
 AUTO_STACK_HOMEASSISTANT_CONFIG_PATH=
 
-# --- Stack ai (Ollama, LiteLLM, Open WebUI, OpenClaw, OpenClaude, Diun) ---
+# --- Stack ai (LiteLLM + Postgres, Ollama com Vulkan, Open WebUI, Diun; página 08) ---
 AI_DESKTOP_VM_IP=
-AI_STACK_OLLAMA_MODELS_PATH=
 AI_STACK_LITELLM_CONFIG_PATH=
+AI_STACK_LITELLM_DB_PATH=
+AI_STACK_OLLAMA_MODELS_PATH=
 AI_STACK_OPENWEBUI_DATA_PATH=
-AI_STACK_OPENCLAW_CONFIG_PATH=
-AI_STACK_OPENCLAUDE_CONFIG_PATH=
-AI_STACK_OPENCLAUDE_MEMORY_PATH=
 AI_STACK_DIUN_DATA_PATH=
+AI_RENDER_GID=
+OLLAMA_IMAGE=
 LITELLM_MASTER_KEY=
-OPENWEBUI_SECRET_KEY=
-OPENAI_API_KEY=
+LITELLM_DB_PASSWORD=
 ANTHROPIC_API_KEY=
+OPENAI_API_KEY=
 GEMINI_API_KEY=
+TYPESAFE_API_KEY=
+LITELLM_KEY_OPENWEBUI=
+OPENWEBUI_SECRET_KEY=
+OPENWEBUI_OAUTH_CLIENT_SECRET=
+OPENWEBUI_LOGIN_FORM=
 ```
 !!! important "Segurança de Segredos com .gitignore"
     O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e só é versionado **criptografado** (começa com `$ANSIBLE_VAULT;`); por isso ele não está no `.gitignore`. Cópias abertas (`*.decrypted*`) são bloqueadas pelo `.gitignore`. Arquivos `.env` reais com segredos (gerados pelo Ansible nas VMs) **NUNCA** devem ser commitados.

@@ -1,6 +1,8 @@
 # docker/stacks/ai/docker-compose.yml
-# Stack de IA: Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude (logs e métricas: Alloy no host)
-# Roda na ai-desktop-vm
+# Stack de IA: gateway LiteLLM (+ Postgres), Ollama (Vulkan), Open WebUI e Diun. Logs e métricas do host e
+# dos containers: Alloy na VM. Roda na ai-desktop-vm (gerenciada pelo Portainer central via Portainer Agent).
+# Variáveis: /opt/portainer_stack_envs/ai.env, gerado por ansible/playbooks/setup-ai-volumes.yml.
+# Página: 01-manual-implementacao/08-stack-ia.md
 version: '3.9'
 
 networks:
@@ -9,89 +11,86 @@ networks:
     driver: bridge
 
 services:
+  # Gateway único: API OpenAI e Anthropic (/v1/messages, usada pelo Claude Code) e passagem do Jev (/typesafe).
+  # Só ele recebe chaves de provedor e a chave mestra; os clientes usam chaves virtuais (setup-ai-keys.yml).
+  litellm:
+    image: docker.io/litellm/litellm-database:v1.106.0
+    container_name: litellm_proxy
+    restart: unless-stopped
+    networks:
+      - ai_network
+    ports:
+      - "${AI_DESKTOP_VM_IP}:4000:4000" # API na LAN (de fora, só pela VPN); a tela de uso sai em llm. pelo Traefik + Authelia
+      - "${AI_DESKTOP_VM_IP}:4001:4001" # métricas Prometheus (servidor separado, sem tráfego de inferência)
+    volumes:
+      - "${AI_STACK_LITELLM_CONFIG_PATH}/config.yaml:/app/config.yaml:ro"
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
+      - DATABASE_URL=postgresql://litellm:${LITELLM_DB_PASSWORD}@litellm_db:5432/litellm
+      - STORE_MODEL_IN_DB=False
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - TYPESAFE_API_KEY=${TYPESAFE_API_KEY}
+      - TZ=${SYSTEM_TIMEZONE}
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--prometheus_metrics_port", "4001"]
+    depends_on:
+      litellm_db:
+        condition: service_healthy
+
+  # Chaves virtuais, orçamentos e registro de uso. Disco local da VM (backup: dump diário no NFS).
+  litellm_db:
+    image: postgres:16-alpine
+    container_name: litellm_db
+    restart: unless-stopped
+    networks:
+      - ai_network
+    volumes:
+      - "${AI_STACK_LITELLM_DB_PATH}:/var/lib/postgresql/data"
+    environment:
+      - POSTGRES_DB=litellm
+      - POSTGRES_USER=litellm
+      - POSTGRES_PASSWORD=${LITELLM_DB_PASSWORD}
+      - TZ=${SYSTEM_TIMEZONE}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm -d litellm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Modelos locais pequenos. Imagem local = oficial + Mesa/RADV (Vulkan na RX 5600 XT), construída pelo
+  # role ml-tools; sem GPU reconhecida, roda em CPU. Sem porta publicada: só o LiteLLM fala com ele.
   ollama:
-    image: ollama/ollama:rocm # GPU AMD (RX 5600 XT) via ROCm; sem GPU suportada o Ollama roda em CPU
+    image: ${OLLAMA_IMAGE}
     container_name: ollama
     restart: unless-stopped
     networks:
       - ai_network
     volumes:
       - "${AI_STACK_OLLAMA_MODELS_PATH}:/root/.ollama"
-    ports:
-      - "127.0.0.1:11434:11434"
-    devices: # GPU AMD passada para a VM (driver instalado pelo role ml-tools)
-      - /dev/kfd
+    devices:
       - /dev/dri
-
-  litellm:
-    image: ghcr.io/berriai/litellm:main-latest
-    container_name: litellm_proxy
-    restart: unless-stopped
-    networks:
-      - ai_network
-    ports:
-      - "${AI_DESKTOP_VM_IP}:4000:4000" # API na LAN (clientes como OpenClaw no desktop); interna = sem rota no Traefik
-    volumes:
-      - "${AI_STACK_LITELLM_CONFIG_PATH}/config.yaml:/app/config.yaml:ro"
+    group_add:
+      - "${AI_RENDER_GID}" # grupo render da VM (acesso a /dev/dri/renderD*)
     environment:
-      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY}
       - TZ=${SYSTEM_TIMEZONE}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-    command: ["--config", "/app/config.yaml", "--port", "4000"]
-    depends_on:
-      - ollama
 
+  # Chat no navegador e no celular. Só usa o LiteLLM (com a chave virtual dele), então todo uso fica registrado.
   open-webui:
-    image: ghcr.io/open-webui/open-webui:main
+    image: ghcr.io/open-webui/open-webui:v0.12.3
     container_name: open_webui
     restart: unless-stopped
     networks:
       - ai_network
     ports:
-      - "${AI_DESKTOP_VM_IP}:3000:8080"
+      - "${AI_DESKTOP_VM_IP}:3000:8080" # alvo do Traefik (openwebui.), atrás do Authelia
     volumes:
       - "${AI_STACK_OPENWEBUI_DATA_PATH}:/app/backend/data"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - OPENAI_API_BASE_URL=http://litellm:4000/v1 # LiteLLM como API compatível com OpenAI
-      - OPENAI_API_KEY=${LITELLM_MASTER_KEY} # chave do proxy LiteLLM (não é chave de provedor)
+      - ENABLE_OLLAMA_API=false
+      - OPENAI_API_BASE_URL=http://litellm:4000/v1
+      - OPENAI_API_KEY=${LITELLM_KEY_OPENWEBUI} # chave virtual do Open WebUI no LiteLLM (nunca a mestra)
       - WEBUI_SECRET_KEY=${OPENWEBUI_SECRET_KEY}
-      - PUID=${DOCKER_PUID}
-      - PGID=${DOCKER_PGID}
-      - TZ=${SYSTEM_TIMEZONE}
-    depends_on:
-      - ollama
-      - litellm
-
-  openclaw:
-    image: ghcr.io/openclaw/openclaw:latest
-    container_name: openclaw
-    restart: unless-stopped
-    networks:
-      - ai_network
-    volumes:
-      - "${AI_STACK_OPENCLAW_CONFIG_PATH}:/app/config"
-    environment:
-      - LITELLM_BASE_URL=http://litellm:4000
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY}
-      - TZ=${SYSTEM_TIMEZONE}
-    depends_on:
-      - litellm
-
-  openclaude:
-    image: ghcr.io/openclaude/openclaude:latest
-    container_name: openclaude
-    restart: unless-stopped
-    networks:
-      - ai_network
-    volumes:
-      - "${AI_STACK_OPENCLAUDE_CONFIG_PATH}:/app/config"
-      - "${AI_STACK_OPENCLAUDE_MEMORY_PATH}:/app/memory"
-    environment:
-      - LITELLM_BASE_URL=http://litellm:4000
-      - LITELLM_API_KEY=${LITELLM_MASTER_KEY}
       - TZ=${SYSTEM_TIMEZONE}
     depends_on:
       - litellm

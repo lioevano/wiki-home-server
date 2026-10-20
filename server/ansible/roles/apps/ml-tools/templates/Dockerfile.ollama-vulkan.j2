@@ -1,0 +1,7 @@
+# ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2
+# Imagem oficial do Ollama + driver Vulkan da AMD (Mesa RADV). A oficial só traz o carregador (libvulkan1);
+# sem o RADV o Ollama não enxerga a RX 5600 XT (RDNA1, fora da lista do ROCm) e roda em CPU.
+FROM ollama/ollama:{{ ollama_version }}
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends mesa-vulkan-drivers \
+    && rm -rf /var/lib/apt/lists/*

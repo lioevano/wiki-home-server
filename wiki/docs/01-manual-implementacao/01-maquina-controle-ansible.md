@@ -519,6 +519,10 @@ llm_fallbacks:
   - { rapido: ["gpt-6-luna"] }
 # Alerta do Grafana quando o gasto com LLM em 24 h passa deste valor (US$).
 llm_gasto_diario_alerta: 5
+# Versão do Ollama; o role ml-tools constrói homeserver/ollama-vulkan:<versão> (oficial + Mesa/RADV).
+ollama_version: "0.40.6"
+# Formulário de login local do Open WebUI: ligado só até vincular o admin pelo OIDC do Authelia; depois, false.
+openwebui_login_form: true
 ```
 
 Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).

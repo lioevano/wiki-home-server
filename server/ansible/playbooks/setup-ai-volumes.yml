@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-ai-volumes.yml
-# Volumes e configs para a stack de IA (Ollama + LiteLLM + Open WebUI + OpenClaw + OpenClaude)
+# Volumes, configs e ai.env da stack de IA (LiteLLM + Postgres, Ollama com Vulkan, Open WebUI, Diun). Página 08.
 - name: Preparar volumes e configuração da Stack de IA
   hosts: ai_desktop
   become: true
@@ -29,6 +29,13 @@
         group: "{{ docker_pgid }}"
         mode: '0644'
 
+    # Banco do LiteLLM no disco local (Postgres não vai para NFS); backup = dump diário no NFS.
+    - name: Criar diretório local do banco do LiteLLM
+      ansible.builtin.file:
+        path: "{{ vm_local_data_path }}/litellm-db"
+        state: directory
+        mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório
+
     # --- Ollama ---
     - name: Criar diretório dos modelos Ollama no NFS
       ansible.builtin.file:
@@ -47,27 +54,6 @@
         group: "{{ docker_pgid }}"
         mode: '0775'
 
-    # --- OpenClaw ---
-    - name: Criar diretório do OpenClaw no NFS
-      ansible.builtin.file:
-        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaw/config"
-        state: directory
-        owner: "{{ docker_puid }}"
-        group: "{{ docker_pgid }}"
-        mode: '0775'
-
-    # --- OpenClaude ---
-    - name: Criar diretórios do OpenClaude no NFS
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        owner: "{{ docker_puid }}"
-        group: "{{ docker_pgid }}"
-        mode: '0775'
-      with_items:
-        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/config"
-        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory"
-
     # --- Diun da VM de IA (atualizações de imagens, integração notificacoes) ---
     - name: Criar diretório de dados do Diun da VM de IA no NFS
       ansible.builtin.file:
@@ -76,6 +62,12 @@
         owner: "{{ docker_puid }}"
         group: "{{ docker_pgid }}"
         mode: '0775'
+
+    # GID do grupo render da VM, que o container do Ollama precisa para abrir /dev/dri/renderD*.
+    - name: Ler o GID do grupo render
+      ansible.builtin.getent:
+        database: group
+        key: render
 
     # --- .env para Portainer ---
     - name: Garantir diretório de envs do Portainer
@@ -96,17 +88,22 @@
       vars:
         stack_name: ai
         stack_configs:
+          - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
           - { name: 'AI_STACK_LITELLM_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/config" }
+          - { name: 'AI_STACK_LITELLM_DB_PATH', value: "{{ vm_local_data_path }}/litellm-db" }
           - { name: 'AI_STACK_OLLAMA_MODELS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/ollama/models" }
           - { name: 'AI_STACK_OPENWEBUI_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openwebui/data" }
-          - { name: 'AI_STACK_OPENCLAW_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaw/config" }
-          - { name: 'AI_STACK_OPENCLAUDE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/config" }
-          - { name: 'AI_STACK_OPENCLAUDE_MEMORY_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/openclaude/memory" }
           - { name: 'AI_STACK_DIUN_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/diun-ai/data" }
-          - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
-          - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'AI_RENDER_GID', value: "{{ ansible_facts.getent_group.render[1] }}" }
+          - { name: 'OLLAMA_IMAGE', value: "homeserver/ollama-vulkan:{{ ollama_version }}" }
           - { name: 'LITELLM_MASTER_KEY', value: "{{ litellm_master_key }}" }
-          - { name: 'OPENAI_API_KEY', value: "{{ llm_api_keys.openai }}" }
+          - { name: 'LITELLM_DB_PASSWORD', value: "{{ litellm_db_password }}" }
           - { name: 'ANTHROPIC_API_KEY', value: "{{ llm_api_keys.anthropic }}" }
+          - { name: 'OPENAI_API_KEY', value: "{{ llm_api_keys.openai }}" }
           - { name: 'GEMINI_API_KEY', value: "{{ llm_api_keys.google_gemini }}" }
+          - { name: 'TYPESAFE_API_KEY', value: "{{ llm_api_keys.typesafe }}" }
+          - { name: 'LITELLM_KEY_OPENWEBUI', value: "{{ litellm_client_keys.openwebui }}" }
           - { name: 'OPENWEBUI_SECRET_KEY', value: "{{ openwebui_secret_key }}" }
+          - { name: 'OPENWEBUI_OAUTH_CLIENT_SECRET', value: "{{ oidc_clients.openwebui.secret }}" }
+          - { name: 'OPENWEBUI_LOGIN_FORM', value: "{{ openwebui_login_form | bool | lower }}" }
+          - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
