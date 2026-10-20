@@ -221,3 +221,26 @@ O MCP oficial de arquivos (`@modelcontextprotocol/server-filesystem`) roda dentr
 FROM node:24-bookworm-slim
 RUN npm install -g supergateway@{{ supergateway_version }} @modelcontextprotocol/server-filesystem@{{ mcp_filesystem_version }}
 USER node
+```
+
+## Sincronização (Syncthing)
+
+O servidor é um nó sempre ligado do Syncthing. Cada vault é uma pasta do Syncthing, compartilhada entre o servidor, o PC (Syncthing) e o celular (**Syncthing-Fork**, do F-Droid). Fora de casa, os aparelhos se encontram pelos relays públicos do Syncthing: o tráfego é criptografado de ponta a ponta e o relay não lê nada. Quando o Tailscale existir, a conexão passa a ser direta.
+
+O `setup-notes-volumes.yml` gera as chaves e o `config.xml` antes do primeiro deploy, com o usuário `syncthing_gui_user` e a senha `syncthing_gui_password` do vault no painel. O painel fica em `https://sync.<domínio>` (atrás do Authelia) e em `http://<IP da ai-desktop-vm>:8384` na rede de casa.
+
+### Parear os aparelhos
+
+1. No servidor (painel `sync.`), em **Ações → Mostrar ID**, copie o ID do dispositivo.
+2. No PC e no celular, adicione o dispositivo com esse ID. Como o container não recebe a descoberta local, informe o endereço `tcp://<IP da ai-desktop-vm>:22000` (e deixe `dynamic` também, para fora de casa).
+3. No servidor, aceite os dispositivos e crie três pastas, com caminhos `/var/syncthing/notes/pessoal`, `/var/syncthing/notes/trabalho` e `/var/syncthing/notes/estudos`, compartilhadas com os dois aparelhos. Em cada aparelho, aceite a pasta e aponte para o vault correspondente do Obsidian.
+4. Nos aparelhos (não no servidor), ligue o **versionamento "Staggered"** em cada pasta: é ele que guarda a versão anterior quando uma edição chega de outro lugar — inclusive uma edição da IA no servidor.
+5. Em cada pasta, crie o `.stignore` com as linhas abaixo, para não sincronizar o estado da janela do Obsidian, que muda o tempo todo:
+
+    ```text
+    .obsidian/workspace.json
+    .obsidian/workspace-mobile.json
+    .trash
+    ```
+
+Se você e a IA editarem a mesma nota ao mesmo tempo, o Syncthing guarda as duas versões (`*.sync-conflict-*`): abra as duas, junte à mão e apague a cópia. A busca ignora esses arquivos.

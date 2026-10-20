@@ -279,3 +279,33 @@ def test_ninguem_mais_escreve_em_pessoal():
             if v.startswith("${NOTES_STACK_DATA_PATH}:"):
                 assert nome == "syncthing", (nome, v)
             assert "files" not in v.split(":")[0].lower(), (nome, v)
+
+
+# --- Task 5: Syncthing ---
+
+def test_syncthing():
+    s = _svc(NOTES)["syncthing"]
+    assert s["image"] == "docker.io/syncthing/syncthing:2.1.6"
+    e = _env(s)
+    assert e["PUID"] == "${DOCKER_PUID}" and e["PGID"] == "${DOCKER_PGID}"
+    assert e["STHOMEDIR"] == ""
+    assert e["STCONFDIR"] == "/var/syncthing/config" and e["STDATADIR"] == "/var/syncthing/data"
+    assert e["STGUIAPIKEY"] == "${SYNCTHING_API_KEY}" and e["STNOUPGRADE"] == "1"
+    assert sorted(_vols(s)) == sorted(["${NOTES_STACK_DATA_PATH}:/var/syncthing/notes",
+                                       "${NOTES_STACK_SYNCTHING_CONFIG_PATH}:/var/syncthing/config",
+                                       "${NOTES_STACK_SYNCTHING_DB_PATH}:/var/syncthing/data"])
+    assert s["ports"] == ["${AI_DESKTOP_VM_IP}:8384:8384", "${AI_DESKTOP_VM_IP}:22000:22000/tcp",
+                          "${AI_DESKTOP_VM_IP}:22000:22000/udp"]
+    assert "/rest/noauth/health" in " ".join(s["healthcheck"]["test"])
+
+
+def test_syncthing_generate():
+    t = next(t for t in _pb_tasks(PB_NOTES)
+             if "generate" in str(t.get("ansible.builtin.command", {}).get("cmd", "")))
+    c = t["ansible.builtin.command"]
+    assert "docker run --rm" in c["cmd"] and "docker.io/syncthing/syncthing:{{ syncthing_version }}" in c["cmd"]
+    assert "generate --gui-user {{ syncthing_gui_user }} --gui-password -" in c["cmd"]
+    assert c["stdin"] == "{{ syncthing_gui_password }}"
+    assert c["creates"].endswith("syncthing/config/config.xml")
+    assert t["no_log"] is True
+    assert _main()["syncthing_version"] == "2.1.6"

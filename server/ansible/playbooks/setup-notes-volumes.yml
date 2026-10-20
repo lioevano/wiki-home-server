@@ -42,6 +42,22 @@
         mode: '0770'
       loop: [syncthing, qmd, notes-documentos, mcp-auth-busca, mcp-auth-escrita]
 
+    # --- Syncthing ---
+    # Gera chaves e config.xml com usuário e senha do painel antes do primeiro deploy (só se ainda não existir).
+    - name: Gerar a configuração inicial do Syncthing
+      ansible.builtin.command:
+        cmd: >-
+          docker run --rm -i
+          -e STHOMEDIR= -e STCONFDIR=/var/syncthing/config -e STDATADIR=/var/syncthing/data
+          -e PUID={{ docker_puid }} -e PGID={{ docker_pgid }}
+          -v {{ notes_nfs }}/syncthing/config:/var/syncthing/config
+          -v {{ vm_local_data_path }}/syncthing:/var/syncthing/data
+          docker.io/syncthing/syncthing:{{ syncthing_version }}
+          generate --gui-user {{ syncthing_gui_user }} --gui-password - --no-port-probing
+        stdin: "{{ syncthing_gui_password }}"
+        creates: "{{ notes_nfs }}/syncthing/config/config.xml"
+      no_log: true
+
     # --- Busca (qmd) ---
     - name: Gerar as coleções do qmd
       ansible.builtin.template:

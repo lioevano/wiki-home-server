@@ -16,6 +16,36 @@ networks:
     driver: bridge
 
 services:
+  # Nó do servidor no Syncthing: sempre ligado, pareado com o PC e o celular. Único serviço que escreve no Pessoal.
+  # Configuração e chaves no NFS; banco interno no disco local (regerável por uma varredura).
+  syncthing:
+    image: docker.io/syncthing/syncthing:2.1.6 # = syncthing_version (group_vars), usada também no 'generate'
+    container_name: syncthing
+    restart: unless-stopped
+    networks:
+      - notes_network
+    ports:
+      - "${AI_DESKTOP_VM_IP}:8384:8384" # painel (Traefik: sync.; tem usuário e senha)
+      - "${AI_DESKTOP_VM_IP}:22000:22000/tcp" # sincronização
+      - "${AI_DESKTOP_VM_IP}:22000:22000/udp"
+    volumes:
+      - "${NOTES_STACK_DATA_PATH}:/var/syncthing/notes"
+      - "${NOTES_STACK_SYNCTHING_CONFIG_PATH}:/var/syncthing/config"
+      - "${NOTES_STACK_SYNCTHING_DB_PATH}:/var/syncthing/data"
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+      - PUID=${DOCKER_PUID}
+      - PGID=${DOCKER_PGID}
+      - STHOMEDIR= # a imagem define STHOMEDIR; vazio para usar config e dados separados
+      - STCONFDIR=/var/syncthing/config
+      - STDATADIR=/var/syncthing/data
+      - STGUIAPIKEY=${SYNCTHING_API_KEY}
+      - STNOUPGRADE=1 # versão fixada; atualização pela imagem
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fkLsS -m 2 127.0.0.1:8384/rest/noauth/health | grep -o OK || exit 1"]
+      interval: 1m
+      timeout: 10s
+
   # Busca local (BM25 + vetorial + reordenação) sobre os vaults e os documentos do Nextcloud. Tudo :ro.
   qmd:
     image: ${QMD_IMAGE}
