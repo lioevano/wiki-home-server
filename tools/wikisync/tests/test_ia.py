@@ -199,3 +199,26 @@ def test_openwebui_oidc():
     for k, v in esperado.items():
         assert env.get(k) == v, k
     assert _configs(PB_AI, "ai.env")["OPENWEBUI_LOGIN_FORM"] == "{{ openwebui_login_form | bool | lower }}"
+
+
+# --- Dump genérico de Postgres ---
+
+def test_dump_generico_nos_dois_bancos():
+    from test_fotos_arquivos import PB_CLOUD, _script_dump
+    nc = _script_dump(PB_CLOUD, "/usr/local/sbin/backup-nextcloud-db.sh")
+    lt = _script_dump(PB_AI, "/usr/local/sbin/backup-litellm-db.sh")
+    assert "docker exec nextcloud_db pg_dump -U nextcloud -d nextcloud -Fc" in nc
+    assert "docker exec litellm_db pg_dump -U litellm -d litellm -Fc" in lt
+    assert 'destino="/mnt/pve_data_zfs/docker-volumes/litellm/db-dumps"' in lt
+    for out in (nc, lt):
+        assert "-mtime +14" in out and "*.tmp" in out
+    assert "tar " in nc and "tar " not in lt
+    tarefas = _pb_tasks(PB_AI)
+    copias = {x["ansible.builtin.copy"]["dest"]: x["ansible.builtin.copy"]["content"]
+              for x in tarefas if "ansible.builtin.copy" in x}
+    timer = copias["/etc/systemd/system/backup-litellm-db.timer"]
+    assert "OnCalendar=*-*-* 03:45:00" in timer and "Persistent=true" in timer
+    assert "ExecStart=/usr/local/sbin/backup-litellm-db.sh" in copias["/etc/systemd/system/backup-litellm-db.service"]
+    sd = next(x["ansible.builtin.systemd"] for x in tarefas if "ansible.builtin.systemd" in x)
+    assert sd["name"] == "backup-litellm-db.timer" and sd["enabled"] is True
+    assert not (ROOT / "server/ansible/templates/nextcloud/backup-nextcloud-db.sh.j2").exists()

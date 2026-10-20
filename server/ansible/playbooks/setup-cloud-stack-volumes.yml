@@ -65,11 +65,18 @@
 
     - name: Instalar o script de dump do banco do Nextcloud
       ansible.builtin.template:
-        src: ../templates/nextcloud/backup-nextcloud-db.sh.j2
+        src: ../templates/backup-postgres.sh.j2
         dest: /usr/local/sbin/backup-nextcloud-db.sh
         owner: root
         group: root
         mode: '0750'
+      vars:
+        backup_container: nextcloud_db
+        backup_db: nextcloud
+        backup_user: nextcloud
+        backup_dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/db-dumps"
+        backup_prefix: nextcloud
+        backup_extra_dir: "{{ vm_local_data_path }}/nextcloud/config" # instanceid, secret e passwordsalt
 
     - name: Instalar o serviço systemd do dump
       ansible.builtin.copy:

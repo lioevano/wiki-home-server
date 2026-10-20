@@ -61,7 +61,7 @@ Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-v
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-cloud-stack-volumes.yml --ask-vault-pass
    ```
     * `ansible/playbooks/setup-photos-stack-volumes.yml` cria os diretórios, gera o `immich.json` a partir de `ansible/templates/immich/immich.json.j2` (`0600`, contém o segredo do cliente OIDC) e o `/opt/portainer_stack_envs/photos.env` (`0600`).
-    * `ansible/playbooks/setup-cloud-stack-volumes.yml` cria os diretórios (banco, html e config no disco local), deixa a raiz do dataset `files` em `0770`, grava o hook `ansible/templates/nextcloud/10-homeserver.sh.j2`, instala o dump diário (`ansible/templates/nextcloud/backup-nextcloud-db.sh.j2` e o timer systemd) e gera o `/opt/portainer_stack_envs/cloud.env` (`0600`).
+    * `ansible/playbooks/setup-cloud-stack-volumes.yml` cria os diretórios (banco, html e config no disco local), deixa a raiz do dataset `files` em `0770`, grava o hook `ansible/templates/nextcloud/10-homeserver.sh.j2`, instala o dump diário (`ansible/templates/backup-postgres.sh.j2` e o timer systemd) e gera o `/opt/portainer_stack_envs/cloud.env` (`0600`).
 4. **Portainer → Stacks → Add Stack**, uma de cada vez: `photos` com `docker/stacks/photos/docker-compose.yml` e o `photos.env`; `cloud` com `docker/stacks/cloud/docker-compose.yml` e o `cloud.env` → **Deploy the stack**. Se a stack `apps` ainda tiver o Nextcloud antigo, atualize-a antes (**Update the stack** com o compose atual).
 
 ### Variáveis das stacks

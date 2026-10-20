@@ -1,0 +1,21 @@
+#!/bin/bash
+# ansible/templates/backup-postgres.sh.j2
+# Dump diário de um Postgres que roda no disco local da VM (fora dos snapshots ZFS), gravado no NFS.
+# Usado pelo Nextcloud (setup-cloud-stack-volumes.yml, que também copia o config/) e pelo LiteLLM
+# (setup-ai-volumes.yml). Variáveis da tarefa: backup_container, backup_db, backup_user, backup_dest,
+# backup_prefix e, opcional, backup_extra_dir (diretório copiado junto, em .tar.gz).
+set -euo pipefail
+
+destino="{{ backup_dest }}"
+dia="$(date +%F)"
+arquivo="$destino/{{ backup_prefix }}-$dia.dump"
+
+docker exec {{ backup_container }} pg_dump -U {{ backup_user }} -d {{ backup_db }} -Fc > "$arquivo.tmp"
+mv "$arquivo.tmp" "$arquivo"
+{% if backup_extra_dir is defined %}
+extra="$destino/{{ backup_prefix }}-config-$dia.tar.gz"
+tar -czf "$extra.tmp" -C "{{ backup_extra_dir }}" .
+mv "$extra.tmp" "$extra"
+{% endif %}
+# Mantém duas semanas; sobras de uma execução que falhou no meio também saem.
+find "$destino" \( -name '{{ backup_prefix }}-*.dump' -o -name '{{ backup_prefix }}-config-*.tar.gz' -o -name '*.tmp' \) -mtime +14 -delete

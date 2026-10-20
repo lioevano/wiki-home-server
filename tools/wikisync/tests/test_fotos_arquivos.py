@@ -233,7 +233,20 @@ CLOUD = ROOT / "server/docker/stacks/cloud/docker-compose.yml"
 APPS = ROOT / "server/docker/stacks/apps/docker-compose.yml"
 PB_CLOUD = ROOT / "server/ansible/playbooks/setup-cloud-stack-volumes.yml"
 HOOK_TPL = "templates/nextcloud/10-homeserver.sh.j2"
-DUMP_TPL = "templates/nextcloud/backup-nextcloud-db.sh.j2"
+DUMP_TPL = "templates/backup-postgres.sh.j2"
+DUMP_BASE = dict(vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes",
+                 vm_local_data_path="/opt/local-data")
+
+
+def _script_dump(pb, destino) -> str:
+    """Renderiza o dump genérico com as vars: da tarefa do playbook que instala o script em `destino`."""
+    import jinja2
+    tarefa = next(x for x in _pb_tasks(pb)
+                  if x.get("ansible.builtin.template", {}).get("dest") == destino)
+    assert tarefa["ansible.builtin.template"]["src"] == "../" + DUMP_TPL
+    vars_ = {k: jinja2.Environment().from_string(str(v)).render(**DUMP_BASE) if isinstance(v, str) else v
+             for k, v in tarefa.get("vars", {}).items()}
+    return render(DUMP_TPL, **DUMP_BASE, **vars_)
 MIDDLEWARE_TPL = "roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2"
 
 
@@ -313,7 +326,7 @@ def test_hook_sem_segredo_e_idempotente(tmp_path):
 def test_dump_diario_do_nextcloud():
     tarefas = _pb_tasks(PB_CLOUD)
     script = next(t for t in tarefas
-                  if str(t.get("ansible.builtin.template", {}).get("src", "")).endswith("backup-nextcloud-db.sh.j2"))
+                  if t.get("ansible.builtin.template", {}).get("dest") == "/usr/local/sbin/backup-nextcloud-db.sh")
     assert script["ansible.builtin.template"]["mode"] == "0750"
     copias = {t["ansible.builtin.copy"]["dest"]: t["ansible.builtin.copy"]["content"]
               for t in tarefas if "ansible.builtin.copy" in t}
@@ -322,8 +335,7 @@ def test_dump_diario_do_nextcloud():
     assert any(k.endswith(".service") for k in copias)
     sd = next(t for t in tarefas if "ansible.builtin.systemd" in t)["ansible.builtin.systemd"]
     assert sd["name"].endswith(".timer") and sd["enabled"] is True and sd.get("daemon_reload") is True
-    out = render(DUMP_TPL, vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes",
-                 vm_local_data_path="/opt/local-data")
+    out = _script_dump(PB_CLOUD, "/usr/local/sbin/backup-nextcloud-db.sh")
     assert "pg_dump" in out and "/mnt/pve_data_zfs/docker-volumes/nextcloud/db-dumps" in out
     assert "-mtime +14" in out and "-delete" in out
 
@@ -403,8 +415,7 @@ def test_nextcloud_html_e_config_no_disco_local():
 
 
 def test_dump_guarda_o_config_do_nextcloud():
-    out = render(DUMP_TPL, vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_dataset_name="docker-volumes",
-                 vm_local_data_path="/opt/local-data")
+    out = _script_dump(PB_CLOUD, "/usr/local/sbin/backup-nextcloud-db.sh")
     assert "tar" in out and "/opt/local-data/nextcloud/config" in out  # instanceid, secret e passwordsalt
     assert "nextcloud-config-*.tar.gz" in out and "*.tmp" in out
 
