@@ -42,7 +42,7 @@ def test_litellm_config_de_llm_models():
     assert g["store_model_in_db"] is False
     assert g["master_key"] == "os.environ/LITELLM_MASTER_KEY"
     assert g["database_url"] == "os.environ/DATABASE_URL"
-    assert cfg["litellm_settings"]["callbacks"] == ["prometheus"]
+    assert cfg["litellm_settings"]["callbacks"] == ["prometheus", "langfuse_otel"]  # Langfuse: base dos agentes (4c1)
 
 
 def test_litellm_config_sem_segredos():

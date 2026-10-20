@@ -12,6 +12,8 @@ Stack e preparação:
 
 - `docker/stacks/agents/docker-compose.yml` — stack `agents` na `core-services-vm` (Portainer, endpoint `local`, variáveis em `/opt/portainer_stack_envs/agents.env`): `mcp_grafana_leitura`/`mcp_grafana_controle`, `ops_leitura`/`ops_controle` e o hub.
 - `ansible/playbooks/setup-agents-volumes.yml` — diretórios em `/opt/local-data/ops`, chave SSH e senha do vault do runner (`0400`), clone do repositório, imagem `localhost/homeserver/ops` e `agents.env`.
+- `docker/stacks/langfuse/docker-compose.yml` — stack `langfuse` na `ai-desktop-vm` (Portainer, endpoint `ai-desktop-vm`, variáveis em `/opt/portainer_stack_envs/langfuse.env`): web, worker, Postgres, ClickHouse, Redis e MinIO.
+- `ansible/playbooks/setup-langfuse-volumes.yml` — diretórios em `/opt/local-data/langfuse` (com o dono que cada imagem usa) e `langfuse.env`.
 
 MCP de operações (`ops`), código Python próprio, testado em `tools/wikisync/tests/test_ops.py` (sem rede):
 
@@ -120,3 +122,16 @@ binds:
           failureMode: failOpen
 {{ alvos('controle') }}
 ```
+
+## Rastreio (Langfuse)
+
+O **Langfuse** guarda cada chamada de LLM (o LiteLLM manda pelo callback `langfuse_otel`) e cada chamada de ferramenta pelo hub (traces OTLP), com custo, latência, entrada e saída. A tela fica em `https://langfuse.<domínio>`, atrás do Authelia; o login do próprio Langfuse é só pelo SSO (cliente OIDC `langfuse`): quem entra cai na organização **Homeserver** como admin. A organização, o projeto e as chaves (`langfuse_secrets.public_key`/`secret_key`) são criados na primeira subida pelas variáveis `LANGFUSE_INIT_*` — não há passos na tela.
+
+Os dados (Postgres, ClickHouse, MinIO, Redis) ficam no disco local da `ai-desktop-vm` e **não têm backup**: traces são descartáveis. O alerta **disco-cheio** avisa se o disco local encher.
+
+### Limpeza dos traces
+
+A retenção automática por projeto do Langfuse é um recurso pago (entitlement `data-retention`, só nos planos Enterprise e da nuvem); na versão aberta os traces ficam até alguém apagar. Para limpar:
+
+- **Pela tela:** em **Tracing**, filtre por data (ex.: mais antigos que 30 dias), selecione e apague.
+- **Tudo de uma vez:** pare a stack `langfuse` no Portainer, apague `/opt/local-data/langfuse/clickhouse/data` e `/opt/local-data/langfuse/minio` e suba de novo — a organização, o projeto e as chaves voltam pelas variáveis `LANGFUSE_INIT_*`.

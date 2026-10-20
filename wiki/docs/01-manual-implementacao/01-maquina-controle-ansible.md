@@ -641,6 +641,7 @@ ops_playbooks_permitidos:
   - { nome: setup-ai-keys.yml, descricao: "Chaves virtuais do LiteLLM por cliente" }
   - { nome: setup-notes-volumes.yml, descricao: "Segundo cérebro: Syncthing, qmd, conversor e timers" }
   - { nome: setup-agents-volumes.yml, descricao: "Base dos agentes: config do hub, imagem do ops e agents.env" }
+  - { nome: setup-langfuse-volumes.yml, descricao: "Langfuse: diretórios e langfuse.env" }
 # Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
 ops_endpoints:
   core: "local"
@@ -649,8 +650,6 @@ ops_endpoints:
 ops_repo_url: "https://github.com/lioevano/wiki-home-server.git"
 # Minutos em que um ansible_check vale para o ansible_aplicar.
 ops_plano_validade_min: 30
-# Dias de traces guardados no Langfuse.
-langfuse_retencao_dias: 30
 ```
 
 Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).

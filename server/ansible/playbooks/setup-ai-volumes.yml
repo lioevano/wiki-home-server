@@ -165,6 +165,9 @@
           - { name: 'GEMINI_API_KEY', value: "{{ llm_api_keys.google_gemini }}" }
           - { name: 'TYPESAFE_API_KEY', value: "{{ llm_api_keys.typesafe }}" }
           - { name: 'LITELLM_KEY_OPENWEBUI', value: "{{ litellm_client_keys.openwebui }}" }
+          - { name: 'LANGFUSE_PUBLIC_KEY', value: "{{ langfuse_secrets.public_key }}" }
+          - { name: 'LANGFUSE_SECRET_KEY', value: "{{ langfuse_secrets.secret_key }}" }
+          - { name: 'LANGFUSE_OTEL_HOST', value: "http://{{ ai_desktop_vm_ip_var }}:3100" }
           - { name: 'OPENWEBUI_SECRET_KEY', value: "{{ openwebui_secret_key }}" }
           - { name: 'OPENWEBUI_OAUTH_CLIENT_SECRET', value: "{{ oidc_clients.openwebui.secret }}" }
           - { name: 'OPENWEBUI_LOGIN_FORM', value: "{{ openwebui_login_form | bool | lower }}" }

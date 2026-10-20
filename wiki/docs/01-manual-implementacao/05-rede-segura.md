@@ -463,6 +463,15 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
+    langfuse-dynamic: # Rastreio de LLM e ferramentas (página 13); login do Langfuse pelo OIDC do mesmo Authelia
+      entryPoints: ["websecure"]
+      rule: "Host(`langfuse.{{ base_domain }}`)"
+      service: "langfuse-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+      middlewares:
+        - "authelia-forwardauth@docker"
+
     # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
     # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
     notas-dynamic:
@@ -509,6 +518,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ ai_desktop_vm_ip_var }}:4000"
+
+    langfuse-svc-dynamic:
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:3100"
 
     notas-svc-dynamic: # mcp_auth_busca (stack notes)
       loadBalancer:
@@ -834,6 +848,21 @@ identity_providers:
           - "https://notas.{{ base_domain }}/.auth/oidc/callback"
           - "https://escrita.{{ base_domain }}/.auth/oidc/callback"
           - "https://servidor.{{ base_domain }}/.auth/oidc/callback"
+        scopes: ["openid", "profile", "email", "groups"]
+        response_types: ["code"]
+        grant_types: ["authorization_code"]
+        userinfo_signed_response_alg: "none"
+        token_endpoint_auth_method: "client_secret_basic"
+      # Langfuse (página 13): rastreio das chamadas de LLM e de ferramentas; login só pelo SSO.
+      - client_id: "langfuse"
+        client_name: "Langfuse"
+        client_secret: "{{ oidc_clients.langfuse.secret_digest }}"
+        public: false
+        authorization_policy: "two_factor"
+        require_pkce: true
+        pkce_challenge_method: "S256"
+        redirect_uris:
+          - "https://langfuse.{{ base_domain }}/api/auth/callback/custom"
         scopes: ["openid", "profile", "email", "groups"]
         response_types: ["code"]
         grant_types: ["authorization_code"]

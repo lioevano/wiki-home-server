@@ -58,6 +58,7 @@ OIDC = {
     "nextcloud": {"secret": "segredoNextcloud123", "secret_digest": "$pbkdf2-sha512$310000$bmV4dA$ZGlnZXN0"},
     "openwebui": {"secret": "segredoOpenwebui123", "secret_digest": "$pbkdf2-sha512$310000$b3dlYg$ZGlnZXN0"},
     "mcp": {"secret": "segredoMcp123", "secret_digest": "$pbkdf2-sha512$310000$bWNw$ZGlnZXN0"},
+    "langfuse": {"secret": "segredoLangfuse123", "secret_digest": "$pbkdf2-sha512$310000$bGFuZ2Z1c2U$ZGlnZXN0"},
 }
 
 
@@ -75,7 +76,7 @@ def test_oidc_clientes():
     assert jwk["algorithm"] == "RS256" and jwk["use"] == "sig"
     assert jwk["key"].strip() == PEM_TESTE
     cli = {c["client_id"]: c for c in oidc["clients"]}
-    assert set(cli) == {"immich", "nextcloud", "openwebui", "mcp"}
+    assert set(cli) == {"immich", "nextcloud", "openwebui", "mcp", "langfuse"}  # langfuse: base dos agentes (4c1)
     for nome, c in cli.items():
         assert c["authorization_policy"] == "two_factor"
         if nome != "mcp":  # o mcp-auth-proxy não envia PKCE ao provedor (test_cliente_oidc_mcp)

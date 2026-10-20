@@ -1,0 +1,51 @@
+# ansible/playbooks/setup-langfuse-volumes.yml
+# Langfuse (página 13): diretórios no disco local da ai-desktop-vm e langfuse.env da stack langfuse.
+# Dados descartáveis (traces): ficam fora dos snapshots e sem backup (DAD-5). Roda antes do deploy no Portainer.
+- name: Preparar a stack langfuse
+  hosts: ai_desktop
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    langfuse_dir: "{{ vm_local_data_path }}/langfuse"
+
+  tasks:
+    - name: Criar os diretórios do Langfuse
+      ansible.builtin.file:
+        path: "{{ langfuse_dir }}/{{ item.nome }}"
+        state: directory
+        owner: "{{ item.dono }}"
+        group: "{{ item.dono }}"
+        mode: '0750'
+      loop:
+        # O ClickHouse roda como 101:101 (imagem oficial); os demais ajustam o dono na entrada.
+        - { nome: postgres, dono: 70 }   # usuário postgres da imagem alpine
+        - { nome: clickhouse/data, dono: 101 }
+        - { nome: clickhouse/logs, dono: 101 }
+        - { nome: minio, dono: 65532 }   # usuário nonroot da imagem Chainguard
+        - { nome: redis, dono: 999 }     # usuário redis da imagem alpine
+
+    - name: Gerar langfuse.env para Portainer
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/langfuse.env"
+        owner: root
+        group: root
+        mode: '0600'
+      vars:
+        stack_name: langfuse
+        stack_configs:
+          - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'LANGFUSE_DATA_PATH', value: "{{ vm_local_data_path }}/langfuse" }
+          - { name: 'LANGFUSE_SALT', value: "{{ langfuse_secrets.salt }}" }
+          - { name: 'LANGFUSE_ENCRYPTION_KEY', value: "{{ langfuse_secrets.encryption_key }}" }
+          - { name: 'LANGFUSE_NEXTAUTH_SECRET', value: "{{ langfuse_secrets.nextauth_secret }}" }
+          - { name: 'LANGFUSE_DB_PASSWORD', value: "{{ langfuse_secrets.db_password }}" }
+          - { name: 'LANGFUSE_CLICKHOUSE_PASSWORD', value: "{{ langfuse_secrets.clickhouse_password }}" }
+          - { name: 'LANGFUSE_REDIS_PASSWORD', value: "{{ langfuse_secrets.redis_password }}" }
+          - { name: 'LANGFUSE_MINIO_PASSWORD', value: "{{ langfuse_secrets.minio_password }}" }
+          - { name: 'LANGFUSE_PUBLIC_KEY', value: "{{ langfuse_secrets.public_key }}" }
+          - { name: 'LANGFUSE_SECRET_KEY', value: "{{ langfuse_secrets.secret_key }}" }
+          - { name: 'LANGFUSE_OIDC_CLIENT_SECRET', value: "{{ oidc_clients.langfuse.secret }}" }

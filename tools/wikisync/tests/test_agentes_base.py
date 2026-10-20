@@ -50,7 +50,7 @@ def test_variaveis_agentes():
     assert m["ops_endpoints"] == {"core": "local", "ai": "ai-desktop-vm"}
     assert m["ops_repo_url"] == "https://github.com/lioevano/wiki-home-server.git"
     assert m["ops_plano_validade_min"] == 30
-    assert m["langfuse_retencao_dias"] == 30
+    assert "langfuse_retencao_dias" not in m  # retenção por projeto é recurso Enterprise do Langfuse
 
 
 def test_vault_agentes():
@@ -318,3 +318,96 @@ def test_authelia_servidor():
     curinga = next(i for i, r in enumerate(regras) if r["domain"] == f"*.{DOM}")
     idx = [i for i, r in enumerate(regras) if r["domain"] == f"servidor.{DOM}"]
     assert len(idx) == 1 and regras[idx[0]]["policy"] == "bypass" and idx[0] < curinga
+
+
+# --- Task 7: Langfuse ---
+
+LANGFUSE = ROOT / "server/docker/stacks/langfuse/docker-compose.yml"
+PB_LANGFUSE = ROOT / "server/ansible/playbooks/setup-langfuse-volumes.yml"
+AI = ROOT / "server/docker/stacks/ai/docker-compose.yml"
+PB_AI = ROOT / "server/ansible/playbooks/setup-ai-volumes.yml"
+PAG13 = ROOT / "wiki/docs/01-manual-implementacao/13-agentes-base.md"
+
+
+def test_langfuse_stack():
+    s = _svc(LANGFUSE)
+    assert set(s) == {"langfuse_web", "langfuse_worker", "langfuse_db", "langfuse_clickhouse", "langfuse_redis",
+                      "langfuse_minio"}
+    imagens = {n: v["image"] for n, v in s.items()}
+    assert imagens["langfuse_web"] == "docker.langfuse.com/langfuse/langfuse:4.66.0"
+    assert imagens["langfuse_worker"] == "docker.langfuse.com/langfuse/langfuse-worker:4.66.0"
+    assert imagens["langfuse_db"] == "docker.io/postgres:17-alpine"
+    assert imagens["langfuse_clickhouse"] == "docker.io/clickhouse/clickhouse-server:25.12"
+    assert imagens["langfuse_redis"] == "docker.io/redis:7.4-alpine"
+    assert imagens["langfuse_minio"].startswith("cgr.dev/chainguard/minio@sha256:")
+    for nome, svc in s.items():
+        assert ("ports" in svc) is (nome == "langfuse_web"), nome
+        for v in _vols(svc):
+            assert v.startswith("${LANGFUSE_DATA_PATH}/"), (nome, v)
+    assert s["langfuse_web"]["ports"] == ["${AI_DESKTOP_VM_IP}:3100:3000"]
+    web = _env(s["langfuse_web"])
+    assert web["NEXTAUTH_URL"] == "https://langfuse.${BASE_DOMAIN_FROM_VAULT}"
+    assert web["AUTH_DISABLE_USERNAME_PASSWORD"] == "true" and web["AUTH_DISABLE_SIGNUP"] == "false"
+    assert web["AUTH_CUSTOM_ISSUER"] == "https://auth.${BASE_DOMAIN_FROM_VAULT}"
+    assert web["AUTH_CUSTOM_CLIENT_ID"] == "langfuse"
+    assert web["AUTH_CUSTOM_CLIENT_SECRET"] == "${LANGFUSE_OIDC_CLIENT_SECRET}"
+    assert web["AUTH_CUSTOM_CLIENT_AUTH_METHOD"] == "client_secret_basic"
+    assert web["AUTH_CUSTOM_SCOPE"] == "openid profile email groups"
+    assert web["AUTH_CUSTOM_CHECKS"] == "pkce,state"
+    assert web["LANGFUSE_INIT_PROJECT_PUBLIC_KEY"] == "${LANGFUSE_PUBLIC_KEY}"
+    assert web["LANGFUSE_INIT_PROJECT_SECRET_KEY"] == "${LANGFUSE_SECRET_KEY}"
+    assert web["LANGFUSE_DEFAULT_ORG_ID"] == web["LANGFUSE_INIT_ORG_ID"] == "homeserver"
+    assert web["TELEMETRY_ENABLED"] == "false"
+    for nome in ("langfuse_web", "langfuse_worker"):
+        e = _env(s[nome])
+        assert e["DATABASE_URL"] == "postgresql://langfuse:${LANGFUSE_DB_PASSWORD}@langfuse_db:5432/langfuse"
+        assert e["CLICKHOUSE_PASSWORD"] == "${LANGFUSE_CLICKHOUSE_PASSWORD}"
+        assert e["REDIS_AUTH"] == "${LANGFUSE_REDIS_PASSWORD}"
+        assert e["SALT"] == "${LANGFUSE_SALT}" and e["ENCRYPTION_KEY"] == "${LANGFUSE_ENCRYPTION_KEY}"
+    # segredos só por variável
+    txt = LANGFUSE.read_text(encoding="utf-8")
+    for proibido in ("mysecret", "miniosecret", "myredissecret", "CHANGEME"):
+        assert proibido not in txt
+    configs = _configs(PB_LANGFUSE, "langfuse.env")
+    assert _vars_compose(LANGFUSE) <= set(configs) | COMUNS
+    assert configs["LANGFUSE_DATA_PATH"] == "{{ vm_local_data_path }}/langfuse"
+
+
+def test_cliente_oidc_langfuse():
+    cfg = yaml.safe_load(_authelia())
+    c = next(c for c in cfg["identity_providers"]["oidc"]["clients"] if c["client_id"] == "langfuse")
+    assert c["client_secret"] == OIDC["langfuse"]["secret_digest"] and c["public"] is False
+    assert c["authorization_policy"] == "two_factor"
+    assert c["require_pkce"] is True and c["pkce_challenge_method"] == "S256"
+    assert c["token_endpoint_auth_method"] == "client_secret_basic"
+    assert c["scopes"] == ["openid", "profile", "email", "groups"]
+    assert c["redirect_uris"] == [f"https://langfuse.{DOM}/api/auth/callback/custom"]
+
+
+def test_litellm_manda_para_o_langfuse():
+    ia = _svc(AI)
+    env = _env(ia["litellm"])
+    assert env["LANGFUSE_PUBLIC_KEY"] == "${LANGFUSE_PUBLIC_KEY}"
+    assert env["LANGFUSE_SECRET_KEY"] == "${LANGFUSE_SECRET_KEY}"
+    assert env["LANGFUSE_OTEL_HOST"] == "${LANGFUSE_OTEL_HOST}"
+    for nome, svc in ia.items():
+        if nome != "litellm":
+            assert "LANGFUSE_SECRET_KEY" not in _env(svc), nome
+    configs = _configs(PB_AI, "ai.env")
+    assert configs["LANGFUSE_OTEL_HOST"] == "http://{{ ai_desktop_vm_ip_var }}:3100"
+    assert configs["LANGFUSE_PUBLIC_KEY"] == "{{ langfuse_secrets.public_key }}"
+
+
+def test_rota_langfuse():
+    cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2",
+                                base_domain=DOM, ai_desktop_vm_ip_var="192.168.15.68"))
+    rot, srv = cfg["http"]["routers"], cfg["http"]["services"]
+    r = next(r for r in rot.values() if r["rule"] == f"Host(`langfuse.{DOM}`)")
+    assert "authelia-forwardauth@docker" in r["middlewares"]
+    assert srv[r["service"]]["loadBalancer"]["servers"] == [{"url": "http://192.168.15.68:3100"}]
+
+
+def test_retencao_langfuse():
+    """A retenção por projeto do Langfuse é Enterprise (entitlement data-retention): a página documenta a limpeza."""
+    pag = PAG13.read_text(encoding="utf-8")
+    assert "### Limpeza dos traces" in pag and "data-retention" in pag

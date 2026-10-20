@@ -1,0 +1,172 @@
+# docker/stacks/langfuse/docker-compose.yml
+# Langfuse (página 13), na ai-desktop-vm: rastreio das chamadas de LLM (LiteLLM) e de ferramentas (hub de MCPs).
+# Base: docker-compose.yml oficial da v4.66.0, com versões fixadas, segredos por variável e tudo no disco local
+# (dados descartáveis, sem backup). Só a web publica porta (Traefik em langfuse.; OTLP e API para o LiteLLM e o hub).
+# Variáveis em /opt/portainer_stack_envs/langfuse.env (setup-langfuse-volumes.yml).
+
+x-langfuse-env: &langfuse-env
+  TZ: ${SYSTEM_TIMEZONE}
+  DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD}@langfuse_db:5432/langfuse
+  SALT: ${LANGFUSE_SALT}
+  ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+  TELEMETRY_ENABLED: "false"
+  NEXTAUTH_URL: https://langfuse.${BASE_DOMAIN_FROM_VAULT}
+  CLICKHOUSE_MIGRATION_URL: clickhouse://langfuse_clickhouse:9000
+  CLICKHOUSE_URL: http://langfuse_clickhouse:8123
+  CLICKHOUSE_USER: clickhouse
+  CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse_minio:9000
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: minio
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://langfuse_minio:9000
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+  REDIS_HOST: langfuse_redis
+  REDIS_PORT: "6379"
+  REDIS_AUTH: ${LANGFUSE_REDIS_PASSWORD}
+
+x-depende: &depende
+  langfuse_db:
+    condition: service_healthy
+  langfuse_minio:
+    condition: service_healthy
+  langfuse_redis:
+    condition: service_healthy
+  langfuse_clickhouse:
+    condition: service_healthy
+
+services:
+  langfuse_web:
+    image: docker.langfuse.com/langfuse/langfuse:4.66.0 # mesma versão de langfuse_version (group_vars)
+    container_name: langfuse_web
+    restart: unless-stopped
+    depends_on: *depende
+    ports:
+      - "${AI_DESKTOP_VM_IP}:3100:3000" # Traefik (langfuse.), LiteLLM e hub (OTLP em /api/public/otel)
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+      # Organização e projeto criados na primeira subida, com as chaves do vault (sem passos na tela).
+      LANGFUSE_INIT_ORG_ID: homeserver
+      LANGFUSE_INIT_ORG_NAME: Homeserver
+      LANGFUSE_INIT_PROJECT_ID: homeserver
+      LANGFUSE_INIT_PROJECT_NAME: Homeserver
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+      # Quem entra pelo SSO cai na organização como admin.
+      LANGFUSE_DEFAULT_ORG_ID: homeserver
+      LANGFUSE_DEFAULT_ORG_ROLE: ADMIN
+      # Login só pelo OIDC do Authelia (cliente langfuse, página 05).
+      AUTH_DISABLE_USERNAME_PASSWORD: "true"
+      AUTH_DISABLE_SIGNUP: "false"
+      AUTH_CUSTOM_NAME: Authelia
+      AUTH_CUSTOM_ISSUER: https://auth.${BASE_DOMAIN_FROM_VAULT}
+      AUTH_CUSTOM_CLIENT_ID: langfuse
+      AUTH_CUSTOM_CLIENT_SECRET: ${LANGFUSE_OIDC_CLIENT_SECRET}
+      AUTH_CUSTOM_CLIENT_AUTH_METHOD: client_secret_basic
+      AUTH_CUSTOM_SCOPE: openid profile email groups
+      AUTH_CUSTOM_CHECKS: pkce,state
+      AUTH_CUSTOM_ALLOW_ACCOUNT_LINKING: "true"
+    networks:
+      - langfuse_internal
+
+  langfuse_worker:
+    image: docker.langfuse.com/langfuse/langfuse-worker:4.66.0
+    container_name: langfuse_worker
+    restart: unless-stopped
+    depends_on: *depende
+    environment:
+      <<: *langfuse-env
+    networks:
+      - langfuse_internal
+
+  langfuse_db:
+    image: docker.io/postgres:17-alpine
+    container_name: langfuse_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD}
+      POSTGRES_DB: langfuse
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - ${LANGFUSE_DATA_PATH}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - langfuse_internal
+
+  langfuse_clickhouse:
+    image: docker.io/clickhouse/clickhouse-server:25.12
+    container_name: langfuse_clickhouse
+    restart: unless-stopped
+    user: "101:101" # dono dos diretórios de dados (setup-langfuse-volumes.yml)
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+    volumes:
+      - ${LANGFUSE_DATA_PATH}/clickhouse/data:/var/lib/clickhouse
+      - ${LANGFUSE_DATA_PATH}/clickhouse/logs:/var/log/clickhouse-server
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    networks:
+      - langfuse_internal
+
+  langfuse_minio:
+    # O MinIO não publica mais imagem versionada; a da Chainguard só tem 'latest', então fica fixada pelo digest.
+    image: cgr.dev/chainguard/minio@sha256:32c504bea4574d8f29d719b37bc0dad920ecf3e22b81dc5cea0bb105af2ce10f
+    container_name: langfuse_minio
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: ${LANGFUSE_MINIO_PASSWORD}
+    volumes:
+      - ${LANGFUSE_DATA_PATH}/minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - langfuse_internal
+
+  langfuse_redis:
+    image: docker.io/redis:7.4-alpine
+    container_name: langfuse_redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${LANGFUSE_REDIS_PASSWORD}", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - ${LANGFUSE_DATA_PATH}/redis:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${LANGFUSE_REDIS_PASSWORD}
+    networks:
+      - langfuse_internal
+
+networks:
+  langfuse_internal:
+    name: langfuse_internal

@@ -24,7 +24,9 @@ router_settings:
 {% endfor %}
 
 litellm_settings:
-  callbacks: ["prometheus"] # métricas no servidor separado da porta 4001 (--prometheus_metrics_port)
+  # prometheus: métricas no servidor separado da porta 4001 (--prometheus_metrics_port);
+  # langfuse_otel: cada chamada vai para o Langfuse (página 13; LANGFUSE_PUBLIC_KEY/SECRET_KEY/OTEL_HOST no ambiente).
+  callbacks: ["prometheus", "langfuse_otel"]
 
 general_settings:
   master_key: "os.environ/LITELLM_MASTER_KEY"
