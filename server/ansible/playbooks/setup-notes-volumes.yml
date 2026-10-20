@@ -136,6 +136,29 @@
           pull: true
         force_source: "{{ dockerfile_escrita.changed }}"
 
+    # --- Timers: conversão dos documentos e reindexação (habilitados; iniciados depois do deploy, página 12) ---
+    - name: Instalar as units do segundo cérebro
+      ansible.builtin.template:
+        src: "../templates/notes/{{ item }}.j2"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - notes-documentos.service
+        - notes-documentos.timer
+        - notes-indice.service
+        - notes-indice.timer
+
+    - name: Habilitar os timers do segundo cérebro
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        daemon_reload: true
+      loop:
+        - notes-documentos.timer
+        - notes-indice.timer
+
     # GID do grupo render da VM, que o qmd precisa para abrir /dev/dri/renderD*.
     - name: Ler o GID do grupo render
       ansible.builtin.getent:

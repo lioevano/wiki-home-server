@@ -256,3 +256,55 @@ Os dois MCPs são publicados pelo túnel em `https://notas.<domínio>/mcp` (busc
 | Open WebUI | Já vem configurado (página 8): ferramentas **Notas (busca)** e **Notas (escrita)**, pela rede interna, só para administradores. |
 
 Dica: deixe só o conector de busca ligado na conversa e ligue o de escrita quando quiser que o Claude crie ou edite notas.
+
+## Conversão e indexação periódicas
+
+Dois timers systemd na `ai-desktop-vm`, instalados pelo `setup-notes-volumes.yml` (habilitados, mas só iniciados depois do deploy da stack): `notes-documentos` converte os documentos do Nextcloud a cada 10 minutos, e `notes-indice` roda `qmd update` (lê o que mudou) e `qmd embed` (gera os vetores) 5 minutos depois. O `flock` impede duas rodadas ao mesmo tempo — a primeira conversão e o primeiro `embed` podem levar horas; enquanto isso, as rodadas seguintes saem sem fazer nada. Se uma rodada falhar, o Alloy (coletor `systemd`) vê a unit em `failed` e o Grafana manda o alerta **notes-timer-falhou**.
+
+```jinja title="ansible/templates/notes/notes-documentos.service.j2"
+# Conversão dos documentos do Nextcloud (segundo cérebro, página 12). Origem só leitura.
+[Unit]
+Description=Converte os documentos do Nextcloud para Markdown (segundo cérebro)
+Requires=docker.service
+After=docker.service remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -E 0 -n /run/notes-documentos.lock /usr/bin/docker run --rm --name notes_conversor --user {{ docker_puid }}:{{ docker_pgid }} -v {{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}/{{ notes_nextcloud_usuario }}/files:/origem:ro -v {{ vm_local_data_path }}/notes-documentos:/destino localhost/homeserver/notes-conversor:{{ markitdown_version }} --origem /origem --destino /destino --extensoes {{ notes_documentos_extensoes | join(',') }} --max-mb {{ notes_documentos_max_mb }}
+```
+
+```jinja title="ansible/templates/notes/notes-documentos.timer.j2"
+[Unit]
+Description=Agenda a conversão dos documentos do Nextcloud (a cada 10 min)
+
+[Timer]
+OnCalendar=*:0/10
+Persistent=false
+
+[Install]
+WantedBy=timers.target
+```
+
+```jinja title="ansible/templates/notes/notes-indice.service.j2"
+# Reindexação do qmd (segundo cérebro, página 12): lê o que mudou e gera os vetores novos.
+[Unit]
+Description=Atualiza o índice do qmd (segundo cérebro)
+Requires=docker.service
+After=docker.service notes-documentos.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -E 0 -n /run/notes-indice.lock /usr/bin/docker exec qmd sh -c 'qmd update && qmd embed'
+```
+
+```jinja title="ansible/templates/notes/notes-indice.timer.j2"
+[Unit]
+Description=Agenda a reindexação do qmd (a cada 10 min, 5 min depois da conversão)
+
+[Timer]
+OnCalendar=*:5/10
+Persistent=false
+
+[Install]
+WantedBy=timers.target
+```

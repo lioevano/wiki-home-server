@@ -1,0 +1,9 @@
+# Conversão dos documentos do Nextcloud (segundo cérebro, página 12). Origem só leitura.
+[Unit]
+Description=Converte os documentos do Nextcloud para Markdown (segundo cérebro)
+Requires=docker.service
+After=docker.service remote-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -E 0 -n /run/notes-documentos.lock /usr/bin/docker run --rm --name notes_conversor --user {{ docker_puid }}:{{ docker_pgid }} -v {{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}/{{ notes_nextcloud_usuario }}/files:/origem:ro -v {{ vm_local_data_path }}/notes-documentos:/destino localhost/homeserver/notes-conversor:{{ markitdown_version }} --origem /origem --destino /destino --extensoes {{ notes_documentos_extensoes | join(',') }} --max-mb {{ notes_documentos_max_mb }}

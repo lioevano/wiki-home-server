@@ -42,7 +42,15 @@ loki.source.file "var_log" {
 }
 
 // ---------- Métricas do host ----------
-prometheus.exporter.unix "host" { }
+// O coletor systemd (além dos padrões) expõe o estado das units notes-* (timers do segundo cérebro, página 12),
+// usado pelo alerta notes-timer-falhou. Restrito a elas para não gerar uma série por unit do sistema.
+prometheus.exporter.unix "host" {
+  enable_collectors = ["systemd"]
+
+  systemd {
+    unit_include = "notes-.+\\.service"
+  }
+}
 
 discovery.relabel "host" {
   targets = prometheus.exporter.unix.host.targets

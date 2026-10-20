@@ -1,0 +1,9 @@
+[Unit]
+Description=Agenda a reindexação do qmd (a cada 10 min, 5 min depois da conversão)
+
+[Timer]
+OnCalendar=*:5/10
+Persistent=false
+
+[Install]
+WantedBy=timers.target

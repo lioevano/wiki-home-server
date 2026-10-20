@@ -1,0 +1,9 @@
+# Reindexação do qmd (segundo cérebro, página 12): lê o que mudou e gera os vetores novos.
+[Unit]
+Description=Atualiza o índice do qmd (segundo cérebro)
+Requires=docker.service
+After=docker.service notes-documentos.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flock -E 0 -n /run/notes-indice.lock /usr/bin/docker exec qmd sh -c 'qmd update && qmd embed'

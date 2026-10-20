@@ -376,3 +376,53 @@ def test_rotas_notes():
         r = por_host[f"Host(`{sub}.{DOM}`)"]
         assert ("authelia-forwardauth@docker" in r.get("middlewares", [])) is auth, sub
         assert srv[r["service"]]["loadBalancer"]["servers"] == [{"url": f"http://{AI_IP}:{porta}"}]
+
+
+# --- Task 7: timers, coletor systemd e alerta ---
+
+UNIT_VARS = dict(vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_files_dataset_name="files",
+                 notes_nextcloud_usuario="leo", vm_local_data_path="/opt/local-data", docker_puid=1001,
+                 docker_pgid=1001, markitdown_version="0.1.8",
+                 notes_documentos_extensoes=["pdf", "docx", "md"], notes_documentos_max_mb=50)
+
+
+def _unit(nome) -> str:
+    return render(f"templates/notes/{nome}.j2", **UNIT_VARS)
+
+
+def test_units_notes():
+    doc = _unit("notes-documentos.service")
+    assert "Type=oneshot" in doc
+    exec_doc = next(l for l in doc.splitlines() if l.startswith("ExecStart="))
+    for trecho in ("flock -E 0 -n /run/notes-documentos.lock", "docker run --rm",
+                   "-v /mnt/pve_data_zfs/files/leo/files:/origem:ro", "-v /opt/local-data/notes-documentos:/destino",
+                   "--user 1001:1001", "localhost/homeserver/notes-conversor:0.1.8", "--extensoes pdf,docx,md",
+                   "--max-mb 50", "--origem /origem", "--destino /destino"):
+        assert trecho in exec_doc, trecho
+    idx = _unit("notes-indice.service")
+    assert "Type=oneshot" in idx
+    assert "notes-documentos.service" in next(l for l in idx.splitlines() if l.startswith("After="))
+    exec_idx = next(l for l in idx.splitlines() if l.startswith("ExecStart="))
+    assert "flock -E 0 -n /run/notes-indice.lock" in exec_idx  # rodada anterior ainda ativa: sai 0, sem alerta
+    assert "docker exec qmd sh -c 'qmd update && qmd embed'" in exec_idx
+    for nome, cal in (("notes-documentos.timer", "OnCalendar=*:0/10"), ("notes-indice.timer", "OnCalendar=*:5/10")):
+        t = _unit(nome)
+        assert cal in t and "Persistent=false" in t and "WantedBy=timers.target" in t
+    tarefas = _pb_tasks(PB_NOTES)
+    habilitar = [t for t in tarefas if "ansible.builtin.systemd" in t
+                 and "notes-" in str(t["ansible.builtin.systemd"].get("name", "")) + str(t.get("loop", ""))]
+    assert habilitar
+    for t in habilitar:
+        s = t["ansible.builtin.systemd"]
+        assert s.get("enabled") is True and "state" not in s  # habilitado, mas só inicia depois do deploy
+
+
+def test_coletor_systemd_e_alerta():
+    alloy = (ROOT / "server/ansible/roles/infra/alloy/templates/config.alloy.j2").read_text(encoding="utf-8")
+    assert 'enable_collectors = ["systemd"]' in alloy and 'unit_include = "notes-.+\\\\.service"' in alloy
+    regras = {r["uid"]: r for r in yaml.safe_load(render(
+        "templates/grafana/alerting/rules.yml.j2"))["groups"][0]["rules"]}
+    r = regras["notes-timer-falhou"]
+    assert r["data"][0]["model"]["expr"] == 'node_systemd_unit_state{name=~"notes-.*", state="failed"}'
+    assert r["data"][1]["model"]["conditions"][0]["evaluator"] == {"type": "gt", "params": [0]}
+    assert r["labels"]["severity"] == "warning"
