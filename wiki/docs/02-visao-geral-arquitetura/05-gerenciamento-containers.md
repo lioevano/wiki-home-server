@@ -59,7 +59,7 @@ Embora o Docker Compose seja poderoso na linha de comando, o Portainer oferece u
     *   Dê um nome à stack.
     *   Cole o conteúdo do `docker-compose.yml` da aplicação.
     *   Em "Environment variables" (modo avançado):
-        *   "Load variables from .env file": Especifique o caminho para o arquivo `.env` na VM (e.g., `/opt/portainer_stack_envs/minha_stack.env`).
+        *   Cole o conteúdo do `.env` que o playbook gerou na VM (`/opt/portainer_stack_envs/<stack>.env`). O botão "Load variables from .env file" lê um arquivo do **seu computador**, não da VM ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
     *   Clique em "Deploy the stack".
 3.  **Verificação:**
     *   Portainer executa os comandos `docker compose` para criar as redes (se definidas no compose e não `external`), puxar imagens e iniciar os containers.

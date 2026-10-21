@@ -5,6 +5,8 @@
 - name: "apps.env: juntar os .env da stack apps sem nomes repetidos"
   ansible.builtin.shell: |
     set -euo pipefail
+    # VM nova no --check: o diretório ainda não existe (a tarefa que o cria só simula); nada a juntar.
+    [ -d "{{ portainer_env_files_dest_path_on_vm }}" ] || exit 0
     cd "{{ portainer_env_files_dest_path_on_vm }}"
     for f in productivity.env automation.env n8n.env monitoring.env; do
       if [ -f "$f" ]; then cat "$f"; fi

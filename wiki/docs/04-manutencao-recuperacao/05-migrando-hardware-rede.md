@@ -179,7 +179,7 @@ Se você precisar alterar o esquema de IP da sua rede doméstica (e.g., seu rote
         ```
 7.  **Configurações de Aplicações Específicas que Referenciam IPs (Raro, mas Verifique):**
     *   Idealmente, nenhuma das suas aplicações Docker deve ter sido configurada para usar IPs fixos da sua LAN diretamente em suas configurações. Elas devem usar nomes de serviço Docker para comunicação interna ou serem acessadas via Traefik/DNS para acesso externo.
-    *   Os IPs das VMs aparecem em vários lugares, mas **todos vêm do inventário**: o `ansible_host` no `hosts.ini` e as variáveis `core_services_vm_ip_var`/`ai_desktop_vm_ip_var` do `main.yml`, que devem bater com ele. São eles:
+    *   Os IPs das VMs aparecem em vários lugares, mas **todos vêm do inventário**: o `ansible_host` no `hosts.ini` e as variáveis `core_services_vm_ip_var`/`ai_desktop_vm_ip_var` em `[all:vars]` do mesmo `hosts.ini`, que devem bater com ele. São eles:
         *   o roteamento do Traefik para a VM de IA (`dynamic_ai_services.yml.j2`);
         *   as portas publicadas só no IP da LAN (`CORE_SERVICES_VM_IP_VAR` e `AI_DESKTOP_VM_IP` nos `.env`);
         *   os `extra_hosts` de `auth.` e `nextcloud.`;

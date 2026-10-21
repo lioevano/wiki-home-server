@@ -77,7 +77,7 @@ Como torrents e biblioteca estão no mesmo sistema de arquivos, a importação �
 | `SONARR_API_KEY`, `RADARR_API_KEY`, `LIDARR_API_KEY`, `PROWLARR_API_KEY` | vault `arr_api_keys.*` (viram `<APP>__AUTH__APIKEY`) |
 | `PROTONVPN_WIREGUARD_PRIVATE_KEY` | vault `protonvpn_wireguard_private_key` |
 
-As *arr usam `<APP>__AUTH__METHOD=External`: a interface já está atrás do Authelia, então não pedem um segundo login; as chamadas entre containers usam a chave de API. Para mudar uma chave, edite o vault, rode o playbook de novo, recarregue o `media.env` em **Env** e clique em **Update the stack**.
+As *arr usam `<APP>__AUTH__METHOD=External`: a interface já está atrás do Authelia, então não pedem um segundo login; as chamadas entre containers usam a chave de API. Para mudar uma chave, edite o vault, rode o playbook de novo, cole o `media.env` atualizado em **Advanced mode** ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
 
 ## Primeira configuração
 

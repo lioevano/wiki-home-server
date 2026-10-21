@@ -63,7 +63,7 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
    # sem erros? repita o laço sem --check
    ```
    No fim, cada um desses playbooks monta o `/opt/portainer_stack_envs/apps.env` (`0600`) com as tarefas de `ansible/playbooks/tasks/apps-env.yml`: junta os quatro `.env`, mantém só a primeira ocorrência de cada nome (as variáveis comuns e as do Telegram se repetem com o mesmo valor) e tira os comentários. Não é preciso juntar à mão.
-3. No Portainer, abra a stack `apps`, recarregue `apps.env` em **Env** e clique em **Update the stack**.
+3. No Portainer, abra a stack `apps`, cole o `apps.env` atualizado em **Advanced mode** ([como](#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
 
 ### Versões fixadas
 

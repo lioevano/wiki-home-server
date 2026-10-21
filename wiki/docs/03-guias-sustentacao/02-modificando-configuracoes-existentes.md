@@ -129,7 +129,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         2.  No Portainer, navegue até a stack que você deseja modificar.
         3.  Clique em "**Editor**".
         4.  Cole o conteúdo do `docker-compose.yml` atualizado.
-        5.  Se mudou variáveis ou segredos, rode antes o playbook da stack e recarregue o `.env` em **Env**.
+        5.  Se mudou variáveis ou segredos, rode antes o playbook da stack e cole o `.env` atualizado em **Advanced mode** ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
         6.  Clique em "**Update the stack**".
             *   Marque a opção "**Re-pull image and redeploy**" se você alterou a tag da imagem de um serviço e quer que o Portainer puxe a nova versão da imagem.
     *   **Se a Mudança é na Configuração Estática do Traefik ou Authelia (arquivos `.yml` principais):**

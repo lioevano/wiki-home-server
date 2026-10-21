@@ -115,7 +115,7 @@ general_settings:
 | `OPENWEBUI_LOGIN_FORM` | `openwebui_login_form` (`group_vars`) |
 | `NOTIFICACOES_WEBHOOK_TOKEN` | vault (Diun) |
 
-Para mudar variáveis ou segredos: edite o vault ou o `group_vars` pela wiki, rode o `setup-ai-volumes.yml` (sem `--diff`, que imprimiria os segredos), recarregue o `ai.env` em **Env** e **Update the stack**.
+Para mudar variáveis ou segredos: edite o vault ou o `group_vars` pela wiki, rode o `setup-ai-volumes.yml` (sem `--diff`, que imprimiria os segredos), cole o `ai.env` atualizado em **Advanced mode** ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack**.
 
 ## Chaves, orçamentos e uso
 
@@ -130,7 +130,7 @@ O Open WebUI fala só com o LiteLLM (com a chave `openwebui`) — o acesso diret
 O login é o **OIDC do Authelia** (cliente `openwebui`, política `so_admins`; o container chega ao Authelia pela LAN, com `extra_hosts`), além do forward-auth na frente: só entra quem está no grupo `admins` do Authelia, que vira administrador pelo grupo (`OAUTH_ADMIN_ROLES`; o papel padrão de quem chega é `pending`). No primeiro acesso:
 
 1. Abra `https://openwebui.seudominio.com` e entre por **Authelia**; se já existia uma conta local com o mesmo e-mail, as duas se juntam.
-2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, recarregue o `ai.env` e **Update the stack**. A mesma variável desliga a API de senha (`ENABLE_PASSWORD_AUTH`): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para `true` do mesmo jeito.
+2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, cole o `ai.env` atualizado ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack**. A mesma variável desliga a API de senha (`ENABLE_PASSWORD_AUTH`): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para `true` do mesmo jeito.
 
 ### Ferramentas: notas
 

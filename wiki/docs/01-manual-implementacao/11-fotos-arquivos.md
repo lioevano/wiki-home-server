@@ -126,8 +126,8 @@ Depois: `setup-photos-stack-volumes.yml` e `docker restart immich_server` (o Imm
 
 ## Atualizações
 
-* **Immich:** leia as notas da release, troque `immich_version` e, se o `docker-compose.yml` oficial da versão nova mudar a imagem do Valkey ou do Postgres, copie as novas no `docker/stacks/photos/docker-compose.yml`. Rode o `setup-photos-stack-volumes.yml`, recarregue o `photos.env` e **Update the stack** com **Re-pull image**.
-* **Nextcloud:** suba **uma versão principal por vez** (o Nextcloud não pula versões): `nextcloud_major` de `34` para `35`, `setup-cloud-stack-volumes.yml`, recarregue o `cloud.env` e **Update the stack** com **Re-pull image**. Acompanhe `docker logs -f nextcloud_app` até o fim da atualização; os apps incompatíveis ficam desativados e voltam quando houver versão nova deles.
+* **Immich:** leia as notas da release, troque `immich_version` e, se o `docker-compose.yml` oficial da versão nova mudar a imagem do Valkey ou do Postgres, copie as novas no `docker/stacks/photos/docker-compose.yml`. Rode o `setup-photos-stack-volumes.yml`, cole o `photos.env` atualizado ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack** com **Re-pull image**.
+* **Nextcloud:** suba **uma versão principal por vez** (o Nextcloud não pula versões): `nextcloud_major` de `34` para `35`, `setup-cloud-stack-volumes.yml`, cole o `cloud.env` atualizado e **Update the stack** com **Re-pull image**. Acompanhe `docker logs -f nextcloud_app` até o fim da atualização; os apps incompatíveis ficam desativados e voltam quando houver versão nova deles.
 
 ## Falhas
 

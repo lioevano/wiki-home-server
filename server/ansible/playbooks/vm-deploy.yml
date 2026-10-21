@@ -32,7 +32,7 @@
         vm_memory: 16384 # 16GB RAM, pode ser aumentada. Ex: 24576 (24GB)
         vm_disk_gb: 200 # Aumentado para modelos LLM maiores e SO
         vm_ipconfig: "ip={{ hostvars['ai-desktop-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
-        vm_tags: "llm,rag,ai_gpu,desktop,homelab,ansible_managed"
+        vm_tags: "llm,notas,ai_gpu,desktop,homelab,ansible_managed"
 
         # --- Configurações para GPU Passthrough (Exemplo para RX 5600XT) ---
         # !!! IMPORTANTE: Substitua pelos IDs PCI REAIS da sua GPU no host Proxmox !!!

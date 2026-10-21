@@ -46,7 +46,7 @@ flowchart LR
     ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml --ask-vault-pass
     ```
 
-    Se o playbook gerou um `.env` novo, abra a stack no Portainer, recarregue o arquivo em **Env** e clique em **Update the stack**.
+    Se o playbook gerou um `.env` novo, abra a stack no Portainer, cole o `.env` novo em **Advanced mode** ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
 
 !!! tip "Branches"
     Para mudanças grandes (um sub-projeto inteiro), trabalhe numa branch e abra um pull request: o `server-lint` roda também em PRs. Mudanças pequenas vão direto na `main`, já validadas localmente.

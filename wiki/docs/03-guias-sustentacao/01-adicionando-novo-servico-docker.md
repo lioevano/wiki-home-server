@@ -108,12 +108,13 @@ Acrescente `FERRAMENTAS_FILEBROWSER_CONFIG_PATH=` ao `docker/stacks/.env.templat
 
 ## 5. Validar e implantar
 
-1. `python tools/dev.py check`, `sync` e `sync --yes`; depois `test`, `build` e `lint`.
-2. Skill `audit-integrations` para a aplicação (sem `❌`/`⚠️`), `update-index` e um commit único com a wiki, o server e o índice.
-3. Na máquina de controle: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ferramentas-volumes.yml --check`, depois sem `--check`.
-4. Portainer → **Stacks** → **Add Stack** (ou, numa stack existente, **Editor** + **Update the stack**) com o compose do repositório e o `.env` gerado em **Env**.
-5. O hostname curinga do túnel já leva o subdomínio novo ao Traefik. Se a aplicação tiver regra ou router novo no Authelia ou no Traefik, rode também o `setup-core-networking.yml`.
-6. Rode o `setup-monitoring-stack-volumes.yml` se a aplicação entrou no Prometheus, no blackbox ou na Homepage.
+1. Acrescente o playbook novo ao `ansible/playbooks/full-deploy.yml` (página [04/03](../04-manutencao-recuperacao/03-cicd-basico-ansible.md); o `test` acusa se faltar) e, se a IA puder aplicá-lo, ao `ops_playbooks_permitidos` (página 01).
+2. `python tools/dev.py check`, `sync` e `sync --yes`; depois `test`, `build` e `lint`.
+3. Skill `audit-integrations` para a aplicação (sem `❌`/`⚠️`), `update-index` e um commit único com a wiki, o server e o índice.
+4. Na máquina de controle: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ferramentas-volumes.yml --ask-vault-pass --check`, depois sem `--check`.
+5. Portainer → **Stacks** → **Add Stack** (ou, numa stack existente, **Editor** + **Update the stack**) com o compose do repositório e o `.env` gerado colado em **Advanced mode** ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
+6. O hostname curinga do túnel já leva o subdomínio novo ao Traefik. Se a aplicação tiver regra ou router novo no Authelia ou no Traefik, rode também o `setup-core-networking.yml`.
+7. Rode o `setup-monitoring-stack-volumes.yml` se a aplicação entrou no Prometheus, no blackbox ou na Homepage.
 
 ## Erros comuns
 

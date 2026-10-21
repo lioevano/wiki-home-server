@@ -26,7 +26,7 @@ Hospedar uma aplicação publicamente, especialmente no domínio raiz que é fre
     *   **Risco:** Uma configuração incorreta no Traefik para o domínio raiz poderia acidentalmente expor outros serviços internos que não deveriam ser públicos, ou até mesmo o dashboard do Traefik se não estiver protegido corretamente por Authelia.
     *   **Mitigação:**
         1.  **Regra de Roteador Traefik Muito Específica:** Crie uma regra de roteador no Traefik **exclusivamente** para o domínio raiz (e.g., `Host(\`seudominio.com\`)`).
-        2.  **Prioridade de Roteadores:** Se você tiver outras regras mais genéricas (como um wildcard `HostS(\`*.seudominio.com\`)` para Authelia), certifique-se de que a regra do domínio raiz tenha uma **prioridade mais alta** (um número maior no Traefik) para ser correspondida primeiro, evitando que a regra wildcard "capture" o tráfego do domínio raiz indevidamente.
+        2.  **Prioridade de Roteadores:** Se você tiver outras regras mais genéricas (como um wildcard `HostRegexp(\`{sub:[a-z0-9-]+}.seudominio.com\`)` para Authelia), certifique-se de que a regra do domínio raiz tenha uma **prioridade mais alta** (um número maior no Traefik) para ser correspondida primeiro, evitando que a regra wildcard "capture" o tráfego do domínio raiz indevidamente.
         3.  **NÃO Aplicar Authelia ao Blog Público:** A menos que partes específicas do seu blog público exijam login (o que é incomum para a página principal de um blog), **não** aplique o middleware `authelia-forwardauth@docker` ao roteador do Traefik para o seu domínio raiz. Aplique apenas middlewares essenciais, como os de headers de segurança.
 
 *   **Ataques de Negação de Serviço (DDoS) ou Abuso na Aplicação Pública:**
@@ -82,7 +82,7 @@ Para máxima segurança, performance e mínimo consumo de recursos ao hospedar u
             # Exemplo, execute na sua máquina local após construir com Hugo
             # Assumindo que você tem acesso SSH à core-services-vm como vm_ansible_user
             # e que o playbook setup-blog-raiz-volumes.yml criou o diretório de destino.
-            rsync -avz --delete public/ {{ vm_ansible_user_name }}@{{ core_services_vm_ip_var }}:{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/meu_blog_raiz/html/
+            rsync -avz --delete public/ <usuário>@<IP da core-services-vm>:/mnt/pve_data_zfs/docker-volumes/meu_blog_raiz/html/
             ```
 
 3.  **Servidor Web Nginx (ou Caddy) em Docker para Servir os Arquivos:**
@@ -90,8 +90,6 @@ Para máxima segurança, performance e mínimo consumo de recursos ao hospedar u
 
         ```yaml
         # Exemplo: stack nova blog_raiz/docker-compose.yml (não faz parte do repositório)
-        version: '3.9'
-
         networks:
           proxy: # Para ser acessado via Traefik
             external: true
