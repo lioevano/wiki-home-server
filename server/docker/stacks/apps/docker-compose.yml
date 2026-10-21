@@ -20,7 +20,7 @@ services:
   # ===================== MONITORAMENTO =====================
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.15.0
     container_name: prometheus
     restart: unless-stopped
     networks:
@@ -101,7 +101,7 @@ services:
       traefik.http.services.grafana-svc.loadbalancer.server.port: "3000"
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.7.9
     container_name: loki
     restart: unless-stopped
     networks:
@@ -114,7 +114,7 @@ services:
     command: -config.file=/etc/loki/config.yaml
 
   blackbox-exporter:
-    image: prom/blackbox-exporter:latest
+    image: prom/blackbox-exporter:v0.29.0
     container_name: blackbox-exporter
     restart: unless-stopped
     networks:
@@ -140,13 +140,19 @@ services:
       - DIUN_PROVIDERS_DOCKER=true
       - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy:2375 # só leitura, sem o socket no container
       - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+      # Versões fixadas: o Diun olha as tags do repositório de cada imagem e avisa quando sai uma versão nova
+      # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 09.
+      - DIUN_DEFAULTS_WATCHREPO=true
+      - DIUN_DEFAULTS_SORTTAGS=semver
+      - DIUN_DEFAULTS_MAXTAGS=10
+      - DIUN_DEFAULTS_INCLUDETAGS=^v?\d+(\.\d+)+$$ # $$ = $ no compose
       - DIUN_NOTIF_WEBHOOK_ENDPOINT=http://n8n:5678/webhook/notificar
       - DIUN_NOTIF_WEBHOOK_METHOD=POST
       - DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION=Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}
       - DIUN_NOTIF_WEBHOOK_HEADERS_CONTENT-TYPE=application/json
 
   docker-socket-proxy:
-    image: tecnativa/docker-socket-proxy:latest
+    image: tecnativa/docker-socket-proxy:v0.5.0
     container_name: docker-socket-proxy
     restart: unless-stopped
     networks:
@@ -160,7 +166,7 @@ services:
       - POST=0
 
   homepage:
-    image: ghcr.io/gethomepage/homepage:latest
+    image: ghcr.io/gethomepage/homepage:v2.6.0
     container_name: homepage
     restart: unless-stopped
     networks:

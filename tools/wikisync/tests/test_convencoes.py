@@ -55,3 +55,32 @@ def test_full_deploy_cobre_todos_os_playbooks_de_volumes():
     assert len(importados) == len(set(importados)), "playbook repetido no full-deploy.yml"
     assert importados[:3] == ["setup-proxmox-host.yml", "setup-base-ubuntu.yml", "setup-core-networking.yml"]
     assert "setup-ai-keys.yml" not in importados and "vm-deploy.yml" not in importados
+
+
+def test_imagens_com_versao():
+    """Política de versões (spec 2026-10-21): nenhum compose usa :latest ou imagem sem tag. Imagens locais e as que
+    vêm de variável ficam de fora (a versão está no group_vars)."""
+    import yaml
+    achados = []
+    for compose in sorted((ROOT / "server/docker/stacks").glob("*/docker-compose.yml")):
+        for nome, svc in (yaml.safe_load(compose.read_text(encoding="utf-8"))["services"] or {}).items():
+            img = str(svc.get("image", ""))
+            if not img or img.startswith(("${", "localhost/")):
+                continue
+            sem_digest = img.split("@", 1)[0]
+            tag = sem_digest.rsplit(":", 1)[1] if ":" in sem_digest.rsplit("/", 1)[-1] else ""
+            if ("@sha256:" not in img and not tag) or tag in ("latest", "main", "master", "develop", "nightly"):
+                achados.append(f"{compose.parent.name}/{nome}: {img}")
+    assert achados == []
+
+
+def test_diun_observa_o_repositorio():
+    """Com as versões fixadas, o Diun só avisa de versão nova se olhar as tags do repositório (watch_repo)."""
+    import yaml
+    for stack, diun in (("apps", "diun"), ("ai", "diun_ai")):
+        svc = yaml.safe_load((ROOT / f"server/docker/stacks/{stack}/docker-compose.yml").read_text(encoding="utf-8"))["services"][diun]
+        env = dict(e.split("=", 1) for e in svc["environment"])
+        assert env["DIUN_DEFAULTS_WATCHREPO"] == "true"
+        assert env["DIUN_DEFAULTS_SORTTAGS"] == "semver"
+        assert env["DIUN_DEFAULTS_INCLUDETAGS"].split(" #")[0] == r"^v?\d+(\.\d+)+$$"  # $$ vira $ no compose
+        assert int(env["DIUN_DEFAULTS_MAXTAGS"]) >= 1

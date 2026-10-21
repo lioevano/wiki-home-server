@@ -152,6 +152,12 @@ services:
       - DIUN_PROVIDERS_DOCKER=true
       - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy-ai:2375 # só leitura, sem o socket no container
       - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
+      # Versões fixadas: o Diun olha as tags do repositório de cada imagem e avisa quando sai uma versão nova
+      # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 09.
+      - DIUN_DEFAULTS_WATCHREPO=true
+      - DIUN_DEFAULTS_SORTTAGS=semver
+      - DIUN_DEFAULTS_MAXTAGS=10
+      - DIUN_DEFAULTS_INCLUDETAGS=^v?\d+(\.\d+)+$$ # $$ = $ no compose
       - DIUN_NOTIF_WEBHOOK_ENDPOINT=https://n8n.${BASE_DOMAIN_FROM_VAULT}/webhook/notificar
       - DIUN_NOTIF_WEBHOOK_METHOD=POST
       - DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION=Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}
@@ -159,7 +165,7 @@ services:
 
   # Acesso só de leitura ao Docker desta VM para o Diun (listar containers e ler imagens), sem porta publicada.
   docker-socket-proxy-ai:
-    image: tecnativa/docker-socket-proxy:latest
+    image: tecnativa/docker-socket-proxy:v0.5.0
     container_name: docker_socket_proxy_ai
     restart: unless-stopped
     networks:

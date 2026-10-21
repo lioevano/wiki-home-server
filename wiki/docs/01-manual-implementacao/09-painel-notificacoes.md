@@ -57,12 +57,15 @@ O Authelia libera só `n8n.seudominio.com/webhook/…` (regra `bypass` com `reso
 
 ### Atualizações (Diun)
 
-Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true`), uma vez por dia às 9h:
+Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true`), uma vez por dia às 9h. Como toda imagem tem versão fixada (política de versões, abaixo), o Diun olha as **tags do repositório** de cada imagem (`DIUN_DEFAULTS_WATCHREPO=true`, ordenadas por `semver`, só as de versão: `DIUN_DEFAULTS_INCLUDETAGS=^v?\d+(\.\d+)+$`). Cada aviso é uma versão nova publicada. Na primeira rodada ele só registra as tags que já existem, sem avisar.
 
 | Serviço | Stack / VM | Webhook |
 |---|---|---|
 | `diun` | `apps` / `core-services-vm` | `http://n8n:5678/webhook/notificar` (rede `proxy`) |
 | `diun_ai` | `ai` / `ai-desktop-vm` | `https://n8n.seudominio.com/webhook/notificar` |
+
+!!! info "Política de versões"
+    Nenhum compose usa `:latest`: o repositório diz exatamente o que roda, e um **Re-pull** não traz uma versão nova por acaso (o `dev.py test` acusa uma tag `latest`). As imagens da linuxserver.io usam a versão do aplicativo (`4.0.20`), sem o sufixo `-lsNNN`; o Jellyfin, a série (`12.2`). Imagens locais (`localhost/homeserver/*`) ficam fora do Diun (`diun.enable: "false"`). Para atualizar, siga o [guia de atualização segura](../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos.md#atualizando-aplicações-docker-individuais-eg-nextcloud-jellyfin-sonarr).
 
 Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`). Nenhum dos dois monta o socket do Docker: o `diun` lê pelo `docker-socket-proxy` da stack `apps` e o `diun_ai` pelo `docker-socket-proxy-ai` da stack `ai` (`DIUN_PROVIDERS_DOCKER_ENDPOINT`), ambos só de leitura (`CONTAINERS=1`, `IMAGES=1`, `POST=0`). Cada proxy fica numa rede `internal` própria (`docker_socket` na core, com o Diun e a Homepage; `diun_ai_socket` na VM de IA, só com o `diun_ai`): só de leitura não quer dizer inofensivo, porque `CONTAINERS=1` mostra as variáveis de ambiente de qualquer container, inclusive as chaves de provedor do LiteLLM, e o n8n e o Open WebUI executam código. O workflow recusa (401) qualquer chamada se a variável do token estiver vazia no n8n.
 
