@@ -10,6 +10,12 @@ destino="{{ backup_dest }}"
 dia="$(date +%F)"
 arquivo="$destino/{{ backup_prefix }}-$dia.dump"
 
+# Antes do deploy da stack (o timer já fica ativo), não há banco: sai sem erro, só com o aviso no journal.
+if ! docker inspect {{ backup_container }} >/dev/null 2>&1; then
+    echo "container {{ backup_container }} não existe (stack ainda não implantada?); dump não feito"
+    exit 0
+fi
+
 docker exec {{ backup_container }} pg_dump -U {{ backup_user }} -d {{ backup_db }} -Fc > "$arquivo.tmp"
 mv "$arquivo.tmp" "$arquivo"
 {% if backup_extra_dir is defined %}

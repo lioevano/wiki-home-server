@@ -382,7 +382,7 @@ def test_cliente_oidc_langfuse():
     cfg = yaml.safe_load(_authelia())
     c = next(c for c in cfg["identity_providers"]["oidc"]["clients"] if c["client_id"] == "langfuse")
     assert c["client_secret"] == OIDC["langfuse"]["secret_digest"] and c["public"] is False
-    assert c["authorization_policy"] == "two_factor"
+    assert c["authorization_policy"] == "so_admins"
     assert c["require_pkce"] is True and c["pkce_challenge_method"] == "S256"
     assert c["token_endpoint_auth_method"] == "client_secret_basic"
     assert c["scopes"] == ["openid", "profile", "email", "groups"]

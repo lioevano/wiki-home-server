@@ -25,7 +25,7 @@ casa (Wi-Fi) ─────────────────────► 
 | `cloud` | `nextcloud_redis` / `nextcloud_db` | Cache e banco (Postgres) | — |
 | `cloud` | `collabora` | Edição de documentos (Nextcloud Office) | `http://collabora:9980` |
 
-Os três endereços públicos ficam fora do forward-auth do Authelia (regras `bypass` na [seção 5](05-rede-segura.md)): os apps de celular e de desktop não passam por ele. O login de cada app vai direto para o Authelia, com `two_factor`, pelo provedor OIDC configurado no mesmo `configuration.yml`. Quem já entrou no Authelia em outro subdomínio não precisa entrar de novo.
+Os três endereços públicos ficam fora do forward-auth do Authelia (regras `bypass` na [seção 5](05-rede-segura.md)): os apps de celular e de desktop não passam por ele. O login de cada app vai direto para o Authelia, com `two_factor`, pelo provedor OIDC configurado no mesmo `configuration.yml`. Os dois clientes usam a política `familia`: só quem está no grupo `users` do Authelia entra (e só então o Nextcloud cria a conta). Quem já entrou no Authelia em outro subdomínio não precisa entrar de novo.
 
 ## Dados
 

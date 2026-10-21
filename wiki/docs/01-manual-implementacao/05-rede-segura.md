@@ -745,6 +745,20 @@ access_control:
     - domain: "servidor.{{ base_domain }}"
       policy: bypass
 
+    # Painéis de administração (authelia_dominios_admins, página 01): só o grupo admins entra. A regra com
+    # subject só casa com quem está no grupo; a seguinte recusa os demais (sem ela, eles cairiam no curinga).
+    - domain:
+{% for sub in authelia_dominios_admins %}
+        - "{{ sub }}.{{ base_domain }}"
+{% endfor %}
+      subject: "group:admins"
+      policy: two_factor
+    - domain:
+{% for sub in authelia_dominios_admins %}
+        - "{{ sub }}.{{ base_domain }}"
+{% endfor %}
+      policy: deny
+
     # Regra geral para todos os outros subdomínios do seu domínio base: requer dois fatores.
     - domain: "*.{{ base_domain }}"
       policy: two_factor # Requer login bem-sucedido com primeiro e segundo fator
@@ -791,12 +805,26 @@ identity_providers:
         use: "sig"
         key: |
           {{ authelia_oidc_jwks_key | indent(10) }}
+    # Quem pode entrar em cada aplicação pelo OIDC (além do 2FA): sem a política, qualquer usuário do Authelia
+    # ganharia conta no Nextcloud ou no Immich.
+    authorization_policies:
+      so_admins:
+        default_policy: deny
+        rules:
+          - policy: two_factor
+            subject: "group:admins"
+      familia: # fotos e arquivos: quem estiver no grupo users
+        default_policy: deny
+        rules:
+          - policy: two_factor
+            subject: "group:users"
     clients:
       - client_id: "immich"
         client_name: "Immich"
         client_secret: "{{ oidc_clients.immich.secret_digest }}"
         public: false
-        authorization_policy: "two_factor"
+        authorization_policy: "familia"
+        pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"
         redirect_uris:
@@ -812,7 +840,8 @@ identity_providers:
         client_name: "Nextcloud"
         client_secret: "{{ oidc_clients.nextcloud.secret_digest }}"
         public: false
-        authorization_policy: "two_factor"
+        authorization_policy: "familia"
+        pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"
         redirect_uris:
@@ -826,7 +855,8 @@ identity_providers:
         client_name: "Open WebUI"
         client_secret: "{{ oidc_clients.openwebui.secret_digest }}"
         public: false
-        authorization_policy: "two_factor"
+        authorization_policy: "so_admins"
+        pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"
         redirect_uris:
@@ -842,7 +872,8 @@ identity_providers:
         client_name: "Conectores MCP (notas e servidor)"
         client_secret: "{{ oidc_clients.mcp.secret_digest }}"
         public: false
-        authorization_policy: "two_factor"
+        authorization_policy: "so_admins"
+        pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: false
         redirect_uris:
           - "https://notas.{{ base_domain }}/.auth/oidc/callback"
@@ -858,7 +889,8 @@ identity_providers:
         client_name: "Langfuse"
         client_secret: "{{ oidc_clients.langfuse.secret_digest }}"
         public: false
-        authorization_policy: "two_factor"
+        authorization_policy: "so_admins"
+        pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"
         redirect_uris:
@@ -883,6 +915,13 @@ regulation:
   find_time: 2m   # Janela de tempo para contar as tentativas falhas (e.g., 3 falhas em 2 minutos).
   ban_time: 5m    # Duração do banimento temporário.
 ```
+
+!!! info "Grupos: quem entra onde"
+    - **`admins`**: os painéis de administração listados em `authelia_dominios_admins` (página 01: Traefik, Portainer, Grafana, Prometheus, n8n, LiteLLM, Open WebUI, Langfuse, Syncthing, as *arr e o qBittorrent) e os clientes OIDC da política `so_admins` (Open WebUI, conectores MCP, Langfuse). Um usuário fora do grupo recebe **acesso negado**, mesmo com 2FA.
+    - **`users`**: os clientes OIDC da política `familia` (Immich e Nextcloud). Só ganha conta neles quem está neste grupo.
+    - Os demais subdomínios protegidos (`home.`, `hass.`) aceitam qualquer usuário com 2FA.
+
+    O consentimento de cada cliente OIDC é lembrado por um ano (`pre_configured_consent_duration`), então a tela "permitir acesso" não aparece a cada login.
 
 ##### `templates/users_database.yml.j2` (Usuários do backend `file`)
 

@@ -177,11 +177,11 @@ def test_homepage_recebe_todas_as_variaveis_do_painel():
 
 
 def test_authelia_bypass_para_publicas_antes_do_curinga():
-    src = (ROOT / "server/ansible/roles/infra/authelia-config/templates/configuration.yml.j2").read_text(encoding="utf-8")
-    regras = yaml.safe_load(re.sub(r"\{\{[^}]+\}\}", "x", src))["access_control"]["rules"]
+    from test_fotos_arquivos import DOM, _authelia
+    regras = yaml.safe_load(_authelia())["access_control"]["rules"]
     dominios = [r["domain"] for r in regras]
-    curinga = dominios.index("*.x")
-    for sub in ("jellyfin.x", "pedidos.x"):
+    curinga = dominios.index(f"*.{DOM}")
+    for sub in (f"jellyfin.{DOM}", f"pedidos.{DOM}"):
         i = dominios.index(sub)
         assert i < curinga and regras[i]["policy"] == "bypass"
 

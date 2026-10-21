@@ -548,6 +548,10 @@ portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
 # --- Subdomínios de serviços ---
 # Subdomínio do n8n (resulta em n8n.<base_domain>).
 n8n_subdomain: "n8n"
+# Painéis de administração: o Authelia só deixa entrar quem está no grupo admins (página 05). Os demais
+# subdomínios protegidos (home., hass.) aceitam qualquer usuário com 2FA.
+authelia_dominios_admins: [traefik, portainer, grafana, prometheus, n8n, llm, openwebui, langfuse, sync,
+                           sonarr, radarr, lidarr, prowlarr, bazarr, qbittorrent]
 
 # --- Grafana Alloy (coletor de logs e métricas; role infra/alloy) ---
 # Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.
@@ -591,6 +595,10 @@ litellm_key_budgets:
   openwebui: 20
   claude_code: 50
   n8n: 10
+# Modelos que uma chave não enxerga (setup-ai-keys.yml). O 'decisao' (Jev) devolve decisões tipadas para
+# automações e não serve para conversa. Cliente fora daqui vê todos.
+litellm_key_models_ocultos:
+  openwebui: [decisao]
 # Versão do Ollama; o role ml-tools constrói localhost/homeserver/ollama-vulkan:<versão> (oficial + Mesa/RADV).
 ollama_version: "0.40.6"
 # Formulário de login local do Open WebUI: ligado só até vincular o admin pelo OIDC do Authelia; depois, false.

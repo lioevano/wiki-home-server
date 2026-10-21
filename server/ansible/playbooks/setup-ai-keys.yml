@@ -10,6 +10,7 @@
     - ../inventories/home/group_vars/all/vault.yml
   vars:
     litellm_url: "http://{{ ai_desktop_vm_ip_var }}:4000"
+    litellm_todos_modelos: "{{ llm_models | map(attribute='name') | list }}"
 
   tasks:
     - name: Consultar cada chave no LiteLLM
@@ -56,6 +57,12 @@
           key_alias: "{{ item.item.key }}"
           max_budget: "{{ litellm_key_budgets[item.item.key] }}"
           budget_duration: "30d" # orçamento renovado a cada 30 dias
+          models: "{{ modelos }}" # litellm_key_models_ocultos (ex.: o Open WebUI não vê o 'decisao')
+      vars:
+        # Todos os modelos menos os ocultos para este cliente; [] = todos (o LiteLLM não restringe).
+        modelos: >-
+          {{ (litellm_todos_modelos | difference(litellm_key_models_ocultos[item.item.key]))
+             if item.item.key in litellm_key_models_ocultos else [] }}
       loop: "{{ chaves_info.results }}"
       when: >-
         item.status != 200 or
@@ -63,7 +70,7 @@
       changed_when: true
       no_log: true
 
-    - name: Atualizar orçamento das chaves existentes que mudaram
+    - name: Atualizar orçamento e modelos das chaves existentes que mudaram
       ansible.builtin.uri:
         url: "{{ litellm_url }}/key/update"
         method: POST
@@ -74,11 +81,18 @@
           key: "{{ item.item.value }}"
           max_budget: "{{ litellm_key_budgets[item.item.key] }}"
           budget_duration: "30d" # orçamento renovado a cada 30 dias
+          models: "{{ modelos }}"
+      vars:
+        # Todos os modelos menos os ocultos para este cliente; [] = todos (o LiteLLM não restringe).
+        modelos: >-
+          {{ (litellm_todos_modelos | difference(litellm_key_models_ocultos[item.item.key]))
+             if item.item.key in litellm_key_models_ocultos else [] }}
       loop: "{{ chaves_info.results }}"
       when: >-
         item.status == 200 and
         (item.json.info.status | default('')) not in ['deleted', 'expired', 'revoked'] and
         ((item.json.info.max_budget | float) != (litellm_key_budgets[item.item.key] | float)
-         or item.json.info.budget_duration != '30d')
+         or item.json.info.budget_duration != '30d'
+         or (item.json.info.models | default([]) | sort) != (modelos | sort))
       changed_when: true
       no_log: true

@@ -88,7 +88,7 @@ general_settings:
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-volumes.yml --ask-vault-pass --check
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-volumes.yml --ask-vault-pass
    ```
-   O playbook aplica o role `ansible/roles/apps/ml-tools/` (constrói `localhost/homeserver/ollama-vulkan:<ollama_version>` a partir de `ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2`: a imagem oficial mais o driver Vulkan da AMD), gera o `config.yaml`, cria o banco local do LiteLLM em `/opt/local-data/litellm-db`, instala o dump diário (`ansible/templates/backup-postgres.sh.j2`, timer `backup-litellm-db.timer`) e grava o `/opt/portainer_stack_envs/ai.env` (`0600`).
+   O playbook aplica o role `ansible/roles/apps/ml-tools/` (constrói `localhost/homeserver/ollama-vulkan:<ollama_version>` a partir de `ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2`: a imagem oficial mais o driver Vulkan da AMD; reconstrói quando a versão ou o Dockerfile mudam), gera o `config.yaml`, cria o banco local do LiteLLM em `/opt/local-data/litellm-db`, instala o dump diário (`ansible/templates/backup-postgres.sh.j2`, timer `backup-litellm-db.timer`) e grava o `/opt/portainer_stack_envs/ai.env` (`0600`).
 4. **Portainer:** adicione o ambiente da ai-desktop-vm (**Environments → Add environment → Docker Standalone → Agent**, endereço `<ai_desktop_vm_ip_var>:9001`; o `AGENT_SECRET` vem de `portainer_agent_secret`), depois **Stacks → Add Stack** `ai` com `docker/stacks/ai/docker-compose.yml` e o `ai.env` → **Deploy the stack**.
 5. **Chaves dos clientes:** com o LiteLLM no ar, crie as chaves virtuais e seus orçamentos:
    ```bash
@@ -97,7 +97,7 @@ general_settings:
 6. **Modelo local:** `docker exec -it ollama ollama pull llama3.2:3b`.
 
 !!! warning "Banco do LiteLLM fora dos snapshots ZFS"
-    O Postgres do LiteLLM fica no disco local da VM (`/opt/local-data/litellm-db`), fora dos snapshots ZFS, como os do Immich e do Nextcloud (regra DAD-5). O backup dele é o dump diário do timer `backup-litellm-db.timer` em `docker-volumes/litellm/db-dumps/` (duas semanas), listado na [estratégia de backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md). As chaves dos clientes também podem ser recriadas a qualquer momento pelo `setup-ai-keys.yml`.
+    O Postgres do LiteLLM fica no disco local da VM (`/opt/local-data/litellm-db`), fora dos snapshots ZFS, como os do Immich e do Nextcloud (regra DAD-5). O backup dele é o dump diário do timer `backup-litellm-db.timer` em `docker-volumes/litellm/db-dumps/` (duas semanas; antes do deploy da stack, sem o container, o dump só registra um aviso e não falha; depois, uma falha dispara o alerta `timer-falhou`), listado na [estratégia de backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md). As chaves dos clientes também podem ser recriadas a qualquer momento pelo `setup-ai-keys.yml`.
 
 ### Variáveis da stack
 
@@ -119,18 +119,18 @@ Para mudar variáveis ou segredos: edite o vault ou o `group_vars` pela wiki, ro
 
 ## Chaves, orçamentos e uso
 
-Cada cliente tem uma **chave virtual** própria (`litellm_client_keys`), nunca a chave mestra: `openwebui`, `claude_code` e `n8n` (os agentes da próxima etapa ganham as suas). O `ansible/playbooks/setup-ai-keys.yml` cria no LiteLLM as que faltam (inclusive as apagadas pela tela), troca a chave de um cliente quando o valor no vault muda (apaga a antiga pelo alias e cria a nova) e ajusta o orçamento das que mudaram (`litellm_key_budgets`, US$ por mês, renovado a cada 30 dias); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.
+Cada cliente tem uma **chave virtual** própria (`litellm_client_keys`), nunca a chave mestra: `openwebui`, `claude_code` e `n8n` (os agentes da próxima etapa ganham as suas). O `ansible/playbooks/setup-ai-keys.yml` cria no LiteLLM as que faltam (inclusive as apagadas pela tela), troca a chave de um cliente quando o valor no vault muda (apaga a antiga pelo alias e cria a nova) e ajusta o orçamento das que mudaram (`litellm_key_budgets`, US$ por mês, renovado a cada 30 dias) e os modelos que cada uma enxerga (`litellm_key_models_ocultos`; sem entrada, todos); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.
 
 **Ver o uso:** `https://llm.seudominio.com` (atrás do Authelia; entre com a `litellm_master_key`) mostra gasto, tokens e chamadas por chave e por modelo. O Prometheus raspa as métricas do LiteLLM (job `litellm`, porta 4001), e o alerta `llm-gasto-alto` avisa no Telegram quando o gasto das últimas 24 h passa de `llm_gasto_diario_alerta` (US$ 5 por padrão).
 
 ## Open WebUI
 
-O Open WebUI fala só com o LiteLLM (com a chave `openwebui`) — o acesso direto ao Ollama fica desligado, então todo uso aparece na tela do LiteLLM. Ele roda com `ENABLE_PERSISTENT_CONFIG=false`: a configuração vem sempre do compose (chave, conexões, formulário de login), e mudanças feitas em *Admin → Settings* nessas áreas não sobrevivem a um restart. Os modelos que aparecem nele são os do `llm_models`, inclusive os apelidos.
+O Open WebUI fala só com o LiteLLM (com a chave `openwebui`) — o acesso direto ao Ollama fica desligado, então todo uso aparece na tela do LiteLLM. Ele roda com `ENABLE_PERSISTENT_CONFIG=false`: a configuração vem sempre do compose (chave, conexões, formulário de login), e mudanças feitas em *Admin → Settings* nessas áreas não sobrevivem a um restart. Os modelos que aparecem nele são os do `llm_models`, inclusive os apelidos, menos os de `litellm_key_models_ocultos` (o `decisao`, que não conversa).
 
-O login é o **OIDC do Authelia** (cliente `openwebui`), além do forward-auth na frente: só entra quem está no grupo `admins` do Authelia, que vira administrador. No primeiro acesso:
+O login é o **OIDC do Authelia** (cliente `openwebui`), além do forward-auth na frente: só entra quem está no grupo `admins` do Authelia, que vira administrador pelo grupo (`OAUTH_ADMIN_ROLES`; o papel padrão de quem chega é `pending`). No primeiro acesso:
 
 1. Abra `https://openwebui.seudominio.com` e entre por **Authelia**; se já existia uma conta local com o mesmo e-mail, as duas se juntam.
-2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, recarregue o `ai.env` e **Update the stack**. Se o Authelia cair, volte para `true` do mesmo jeito.
+2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, recarregue o `ai.env` e **Update the stack**. A mesma variável desliga a API de senha (`ENABLE_PASSWORD_AUTH`): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para `true` do mesmo jeito.
 
 ### Ferramentas: notas
 

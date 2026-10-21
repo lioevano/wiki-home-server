@@ -120,6 +120,8 @@ services:
       - OAUTH_ALLOWED_ROLES=admins
       - OAUTH_ADMIN_ROLES=admins
       - ENABLE_LOGIN_FORM=${OPENWEBUI_LOGIN_FORM} # true só até vincular o admin; depois false (página 08)
+      - ENABLE_PASSWORD_AUTH=${OPENWEBUI_LOGIN_FORM} # sem o formulário, a API de senha também sai
+      - DEFAULT_USER_ROLE=pending # o papel vem do grupo (OAUTH_ADMIN_ROLES), nunca do "primeiro a entrar"
       # Ferramentas MCP do segundo cérebro (página 12). Sem access_grants = só administradores as usam.
       - 'TOOL_SERVER_CONNECTIONS=[{"type": "mcp", "url": "http://qmd:8181/mcp", "auth_type": "none", "key": "", "config": {"enable": true}, "info": {"id": "notas", "name": "Notas (busca)", "description": "Busca nos vaults Pessoal, Trabalho e Estudos e nos documentos do Nextcloud (só leitura)"}}, {"type": "mcp", "url": "http://notes_escrita:8000/mcp", "auth_type": "none", "key": "", "config": {"enable": true}, "info": {"id": "escrita", "name": "Notas (escrita)", "description": "Cria e edita notas nos vaults Trabalho e Estudos"}}]'
       - TZ=${SYSTEM_TIMEZONE}
@@ -127,7 +129,7 @@ services:
       - litellm
 
   diun_ai:
-    image: crazymax/diun:latest
+    image: crazymax/diun:4.33.0
     container_name: diun_ai
     command: serve
     restart: unless-stopped

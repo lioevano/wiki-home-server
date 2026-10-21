@@ -27,6 +27,7 @@
     owner: root
     group: root
     mode: '0644'
+  register: dockerfile_ollama
 
 # Nome com 'localhost/': nunca resolve para o Docker Hub (um namespace 'homeserver' de terceiros
 # não pode substituir esta imagem); o compose usa pull_policy: never.
@@ -38,7 +39,7 @@
     build:
       path: /opt/ollama-vulkan
       pull: true
-    force_source: false # reconstrói só quando ollama_version muda (tag nova)
+    force_source: "{{ dockerfile_ollama.changed }}" # tag nova (ollama_version) ou Dockerfile mudado
 
 # Migração: se uma instalação nativa antiga existir, ela é desativada para liberar a porta 11434.
 - name: "Verificar instalação nativa antiga do Ollama"

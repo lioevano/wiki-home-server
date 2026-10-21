@@ -66,7 +66,7 @@ Todas as aplicações com Exposição ≠ interna perdem acesso externo: remover
 
 ### Regras
 - **AUT-1** — Exposição `protegida`: o router do serviço principal inclui exatamente o middleware `authelia-forwardauth@docker` (pode haver outros na lista; nomes parecidos como `authelia@docker` **não** valem). *Evidência:* label `traefik.http.routers.<r>.middlewares` ou `middlewares:` do router no template do *file provider*.
-- **AUT-2** — Exposição `protegida`: o subdomínio é coberto por uma regra `two_factor` em `access_control.rules` — a regra curinga `"*.{{ base_domain }}"` → `two_factor` satisfaz. *Evidência:* `configuration.yml.j2`.
+- **AUT-2** — Exposição `protegida`: o subdomínio é coberto por uma regra `two_factor` em `access_control.rules` — a regra curinga `"*.{{ base_domain }}"` → `two_factor` satisfaz; painel de administração entra também em `authelia_dominios_admins` (`main.yml`), que vira a regra `two_factor` com `subject: group:admins` seguida de `deny` para os demais. *Evidência:* `configuration.yml.j2` e `main.yml`.
 - **AUT-3** — Exposição `publica`: existe regra `domain: "<Subdomínio>.{{ base_domain }}"` com `policy: bypass` **antes** da regra curinga, e o router **não** usa o middleware do Authelia. *Evidência:* `configuration.yml.j2` e labels. (O próprio `authelia` cumpre isso com a regra de `auth`.)
 - **AUT-4 (sobra)** — nenhuma regra `bypass`/`one_factor` específica para subdomínio que não exista no catálogo. *Evidência:* `configuration.yml.j2`.
 

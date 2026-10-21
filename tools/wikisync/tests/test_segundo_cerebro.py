@@ -434,7 +434,7 @@ def test_cliente_oidc_mcp():
     cli = {c["client_id"]: c for c in yaml.safe_load(_authelia())["identity_providers"]["oidc"]["clients"]}
     c = cli["mcp"]
     assert c["client_secret"] == OIDC["mcp"]["secret_digest"] and c["public"] is False
-    assert c["authorization_policy"] == "two_factor"
+    assert c["authorization_policy"] == "so_admins"
     assert c["require_pkce"] is False and "pkce_challenge_method" not in c
     assert c["token_endpoint_auth_method"] == "client_secret_basic"
     assert c["scopes"] == ["openid", "profile", "email", "groups"]

@@ -171,7 +171,7 @@ def test_cliente_oidc_openwebui():
     c = cli["openwebui"]
     assert c["client_name"] == "Open WebUI"
     assert c["client_secret"] == OIDC["openwebui"]["secret_digest"]
-    assert c["authorization_policy"] == "two_factor" and c["public"] is False
+    assert c["authorization_policy"] == "so_admins" and c["public"] is False
     assert c["require_pkce"] is True and c["pkce_challenge_method"] == "S256"
     assert c["token_endpoint_auth_method"] == "client_secret_basic"
     assert c["redirect_uris"] == [f"https://openwebui.{DOM}/oauth/oidc/callback"]
@@ -315,3 +315,66 @@ def test_playbook_chaves_hash_rotacao_e_apagadas():
 def test_doc_jev_pela_rota_unificada():
     pagina = (ROOT / "wiki/docs/01-manual-implementacao/08-stack-ia.md").read_text(encoding="utf-8")
     assert "/v1/systemone" in pagina and '"model": "decisao"' in pagina
+
+
+# --- Pendências menores (spec 2026-10-20-pendencias-menores, #22, #23, #25, #26, #27) ---
+
+def test_chave_do_openwebui_sem_o_modelo_decisao():
+    """#22: o apelido 'decisao' (Jev, saída tipada) não aparece na lista do Open WebUI."""
+    assert _main()["litellm_key_models_ocultos"] == {"openwebui": ["decisao"]}
+    play = yaml.safe_load(PB_KEYS.read_text(encoding="utf-8"))[0]
+    assert play["vars"]["litellm_todos_modelos"] == "{{ llm_models | map(attribute='name') | list }}"
+    uris = [t for t in play["tasks"] if "ansible.builtin.uri" in t]
+    gen = next(t for t in uris if "/key/generate" in t["ansible.builtin.uri"]["url"])
+    upd = next(t for t in uris if "/key/update" in t["ansible.builtin.uri"]["url"])
+    for t in (gen, upd):
+        assert t["ansible.builtin.uri"]["body"]["models"] == "{{ modelos }}", t["name"]
+        assert "litellm_key_models_ocultos" in t["vars"]["modelos"] and "difference" in t["vars"]["modelos"]
+    assert "models" in str(upd["when"]) and "modelos" in str(upd["when"])
+
+
+def test_modelos_por_chave_renderizados():
+    """A expressão do playbook: com ocultos, todos menos eles; sem ocultos, lista vazia (= todos no LiteLLM)."""
+    import jinja2
+    play = yaml.safe_load(PB_KEYS.read_text(encoding="utf-8"))[0]
+    upd = next(t for t in play["tasks"] if "/key/update" in str(t.get("ansible.builtin.uri", {}).get("url", "")))
+    env = jinja2.Environment()
+    env.filters["difference"] = lambda a, b: [x for x in a if x not in b]
+    todos = [m["name"] for m in _main()["llm_models"]]
+    tpl = env.from_string(upd["vars"]["modelos"])
+    ocultos = _main()["litellm_key_models_ocultos"]
+    abre = tpl.render(item={"item": {"key": "openwebui"}}, litellm_todos_modelos=todos,
+                      litellm_key_models_ocultos=ocultos)
+    assert "decisao" not in abre and "principal" in abre
+    assert tpl.render(item={"item": {"key": "claude_code"}}, litellm_todos_modelos=todos,
+                      litellm_key_models_ocultos=ocultos) == "[]"
+
+
+def test_openwebui_sem_senha_quando_o_formulario_sai():
+    """#23: o formulário escondido não basta; a API de senha sai junto, e ninguém entra como admin por padrão."""
+    env = _env(_svc(AI)["open-webui"])
+    assert env["ENABLE_PASSWORD_AUTH"] == "${OPENWEBUI_LOGIN_FORM}"
+    assert env["DEFAULT_USER_ROLE"] == "pending"
+
+
+def test_imagem_do_ollama_reconstroi_com_o_dockerfile():
+    """#25: mudar só o Dockerfile (mesma versão) reconstrói a imagem."""
+    tarefas = yaml.safe_load((ML_TOOLS / "tasks/main.yml").read_text(encoding="utf-8"))
+    tpl = next(t for t in tarefas if t.get("ansible.builtin.template", {}).get("src") == "Dockerfile.ollama-vulkan.j2")
+    img = next(t for t in tarefas if "community.docker.docker_image" in t)
+    assert img["community.docker.docker_image"]["force_source"] == "{{ " + tpl["register"] + ".changed }}"
+
+
+def test_dump_sem_container_nao_falha():
+    """#26: o timer fica ativo antes do deploy; sem o container do banco, o dump sai 0 com aviso."""
+    from test_fotos_arquivos import _script_dump
+    lt = _script_dump(PB_AI, "/usr/local/sbin/backup-litellm-db.sh")
+    checa = lt.index("docker inspect litellm_db")
+    assert checa < lt.index("pg_dump") and "exit 0" in lt[checa:lt.index("pg_dump")]
+
+
+def test_diun_com_versao_fixada():
+    """#27: o Diun não se avisa sobre ele mesmo em :latest."""
+    from test_midia import _svc as svc
+    assert _svc(AI)["diun_ai"]["image"] == "crazymax/diun:4.33.0"
+    assert svc(ROOT / "server/docker/stacks/apps/docker-compose.yml")["diun"]["image"] == "crazymax/diun:4.33.0"

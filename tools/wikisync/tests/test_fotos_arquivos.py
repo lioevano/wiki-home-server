@@ -62,8 +62,14 @@ OIDC = {
 }
 
 
+def _dominios_admins() -> list[str]:
+    main = ROOT / "server/ansible/inventories/home/group_vars/all/main.yml"
+    return yaml.safe_load(main.read_text(encoding="utf-8")).get("authelia_dominios_admins", [])
+
+
 def _authelia(pem=PEM_TESTE, oidc=OIDC) -> str:
-    return render(AUTHELIA_TPL, base_domain=DOM, authelia_jwt_secret="j" * 64,
+    return render(AUTHELIA_TPL, base_domain=DOM, authelia_dominios_admins=_dominios_admins(),
+                  authelia_jwt_secret="j" * 64,
                   authelia_session_secret="s" * 64, authelia_storage_encryption_key="e" * 64,
                   authelia_storage_postgres_password="p" * 32, authelia_oidc_hmac_secret="h" * 64,
                   authelia_oidc_jwks_key=pem, oidc_clients=oidc)
@@ -78,7 +84,7 @@ def test_oidc_clientes():
     cli = {c["client_id"]: c for c in oidc["clients"]}
     assert set(cli) == {"immich", "nextcloud", "openwebui", "mcp", "langfuse"}  # langfuse: base dos agentes (4c1)
     for nome, c in cli.items():
-        assert c["authorization_policy"] == "two_factor"
+        assert c["authorization_policy"] in oidc["authorization_policies"]  # todas exigem two_factor
         if nome != "mcp":  # o mcp-auth-proxy não envia PKCE ao provedor (test_cliente_oidc_mcp)
             assert c["require_pkce"] is True and c["pkce_challenge_method"] == "S256"
         assert c["client_secret"] == OIDC[nome]["secret_digest"]
@@ -435,3 +441,37 @@ def test_login_direto_no_authelia():
     out = render(HOOK_TPL, base_domain=DOM, oidc_clients=OIDC)
     assert "occ config:app:set --type=string --value=0 user_oidc allow_multiple_user_backends" in out
     assert "config:system:set user_oidc allow_multiple_user_backends" not in out
+
+
+# --- Pendências menores (spec 2026-10-20-pendencias-menores, #24, #30, #33) ---
+
+def test_dominios_de_administracao_so_para_admins():
+    """#24: llm., openwebui. e os outros painéis de administração recusam quem não é do grupo admins."""
+    import yaml as _y
+    main = _y.safe_load((ROOT / "server/ansible/inventories/home/group_vars/all/main.yml").read_text(encoding="utf-8"))
+    admins = main["authelia_dominios_admins"]
+    assert {"llm", "openwebui", "langfuse", "portainer", "traefik", "grafana", "prometheus", "sync"} <= set(admins)
+    assert not {"home", "hass", "auth"} & set(admins)
+    regras = yaml.safe_load(_authelia())["access_control"]["rules"]
+    dominios = [f"{d}.{DOM}" for d in admins]
+    curinga = next(i for i, r in enumerate(regras) if r["domain"] == f"*.{DOM}")
+    permite = next(i for i, r in enumerate(regras) if r.get("subject") == "group:admins")
+    nega = permite + 1
+    assert regras[permite]["domain"] == dominios and regras[permite]["policy"] == "two_factor"
+    assert regras[nega] == {"domain": dominios, "policy": "deny"}
+    assert nega < curinga
+
+
+def test_politicas_oidc_por_cliente():
+    """#33: só quem é do grupo certo ganha conta pelo OIDC; #30: consentimento lembrado por um ano."""
+    oidc = yaml.safe_load(_authelia())["identity_providers"]["oidc"]
+    pol = oidc["authorization_policies"]
+    assert pol["so_admins"] == {"default_policy": "deny",
+                                "rules": [{"policy": "two_factor", "subject": "group:admins"}]}
+    assert pol["familia"] == {"default_policy": "deny",
+                              "rules": [{"policy": "two_factor", "subject": "group:users"}]}
+    por_cliente = {c["client_id"]: c for c in oidc["clients"]}
+    assert {c: por_cliente[c]["authorization_policy"] for c in por_cliente} == {
+        "immich": "familia", "nextcloud": "familia",
+        "openwebui": "so_admins", "mcp": "so_admins", "langfuse": "so_admins"}
+    assert all(c["pre_configured_consent_duration"] == "1y" for c in oidc["clients"])
