@@ -14,7 +14,8 @@
 {% set logins_falhos = 5 %}
 {% set gasto_llm_dia = llm_gasto_diario_alerta | default(5) %}
 {% set reinicios_max = 3 %}
-{% set fs = 'fstype!~"tmpfs|overlay|squashfs"' %}
+{# nfs.*: o espaço do pool é medido no host; cada VM que monta o NFS repetiria o mesmo alerta #}
+{% set fs = 'fstype!~"tmpfs|overlay|squashfs|nfs.*"' %}
 {% set regras = [
   {'uid': 'servico-fora-do-ar', 'ds': 'prometheus', 'expr': '1 - probe_success{app!~"n8n|qbittorrent"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': '{{ $$labels.app }} está fora do ar'},
   {'uid': 'n8n-fora-do-ar', 'ds': 'prometheus', 'expr': '1 - probe_success{app="n8n"}', 'op': 'gt', 'v': 0, 'for': fora_do_ar_for, 'sev': 'critical', 'summary': 'n8n fora do ar: as notificações estão paradas'},

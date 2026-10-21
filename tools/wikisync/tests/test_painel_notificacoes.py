@@ -1,0 +1,83 @@
+"""Pendências do sub-projeto B (painel e notificações): spec 2026-10-20-pendencias-menores, #51 a #55."""
+from __future__ import annotations
+
+import json
+import shutil
+import subprocess
+
+import pytest
+import yaml
+
+from test_observabilidade import ROOT, render
+from test_midia import _env, _svc
+
+APPS = ROOT / "server/docker/stacks/apps/docker-compose.yml"
+AI = ROOT / "server/docker/stacks/ai/docker-compose.yml"
+P07 = ROOT / "wiki/docs/01-manual-implementacao/07-deploy-apps.md"
+P09 = ROOT / "wiki/docs/01-manual-implementacao/09-painel-notificacoes.md"
+
+
+def _regras():
+    return {r["uid"]: r for r in yaml.safe_load(render("templates/grafana/alerting/rules.yml.j2"))["groups"][0]["rules"]}
+
+
+def test_disco_cheio_ignora_nfs():
+    """#51: o espaço do pool é medido no host; cada VM que monta o NFS repetiria o mesmo alerta."""
+    expr = _regras()["disco-cheio"]["data"][0]["model"]["expr"]
+    assert 'fstype!~"tmpfs|overlay|squashfs|nfs.*"' in expr
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node ausente")
+def test_webhook_recusa_sem_token_configurado():
+    """#52: sem a variável, 'Bearer ' + undefined viraria 'Bearer undefined' e aceitaria quem mandasse isso."""
+    wf = json.loads((ROOT / "server/ansible/files/n8n/notificar.json").read_text(encoding="utf-8"))
+    cond = next(n for n in wf["nodes"] if n["name"] == "Autorizado?")["parameters"]["conditions"]["conditions"][0]
+    assert cond["leftValue"].startswith("={{ !!$env.NOTIFICACOES_WEBHOOK_TOKEN && ")
+    js = cond["leftValue"][len("={{ "):-len(" }}")].replace("$env", "env").replace("$json", "json")
+    teste = f"""
+const casos = [
+  [{{}}, {{headers: {{authorization: 'Bearer undefined'}}}}, false],
+  [{{NOTIFICACOES_WEBHOOK_TOKEN: ''}}, {{headers: {{authorization: 'Bearer '}}}}, false],
+  [{{NOTIFICACOES_WEBHOOK_TOKEN: 'abc'}}, {{headers: {{authorization: 'Bearer abc'}}}}, true],
+  [{{NOTIFICACOES_WEBHOOK_TOKEN: 'abc'}}, {{headers: {{}}}}, false],
+];
+for (const [env, json, esperado] of casos) {{
+  const r = Boolean({js});
+  if (r !== esperado) {{ console.error(JSON.stringify([env, json, r])); process.exit(1); }}
+}}
+"""
+    r = subprocess.run(["node", "-e", teste], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+
+
+def test_publicar_workflow_no_n8n_2():
+    """#53: no n8n 2.x, update:workflow --active está obsoleto; o comando é publish:workflow."""
+    texto = P09.read_text(encoding="utf-8")
+    assert "n8n publish:workflow --id=HsNotificar00001" in texto
+    assert "update:workflow" not in texto
+
+
+def test_apps_env_sem_nomes_repetidos(tmp_path):
+    """#54: os .env da stack apps repetem as variáveis comuns e as do Telegram; a junção fica com a primeira."""
+    linha = next(l for l in P07.read_text(encoding="utf-8").splitlines() if "> apps.env" in l)
+    assert "awk" in linha and "!visto[" in linha
+    for nome, conteudo in {"productivity.env": "# x\nTZ=1\nA=1\n", "automation.env": "TZ=1\n",
+                           "n8n.env": "TELEGRAM_BOT_TOKEN=t\nB=2\n", "monitoring.env": "TELEGRAM_BOT_TOKEN=t\nC=3\n"}.items():
+        (tmp_path / nome).write_text(conteudo, encoding="utf-8")
+    comando = linha.split("sudo sh -c '", 1)[1].rsplit("'", 1)[0].replace("cd /opt/portainer_stack_envs", f"cd {tmp_path}")
+    subprocess.run(["sh", "-c", comando], check=True)
+    linhas = (tmp_path / "apps.env").read_text(encoding="utf-8").split()
+    assert linhas == ["TZ=1", "A=1", "TELEGRAM_BOT_TOKEN=t", "B=2", "C=3"]
+
+
+def test_diun_pelo_socket_proxy():
+    """#55: o Diun não monta mais o socket do Docker; lê pelo proxy só de leitura."""
+    for compose, diun, proxy in ((APPS, "diun", "docker-socket-proxy"), (AI, "diun_ai", "docker-socket-proxy-ai")):
+        s = _svc(compose)
+        d = s[diun]
+        assert not any("docker.sock" in v for v in d.get("volumes", [])), diun
+        assert _env(d)["DIUN_PROVIDERS_DOCKER_ENDPOINT"] == f"tcp://{proxy}:2375"
+        p = _env(s[proxy])
+        assert p["CONTAINERS"] == "1" and p["IMAGES"] == "1" and p["POST"] == "0"
+        assert set(d["networks"]) & set(s[proxy]["networks"]), diun
+        assert "ports" not in s[proxy]

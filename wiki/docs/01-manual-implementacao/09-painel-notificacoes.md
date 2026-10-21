@@ -64,7 +64,7 @@ Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCH
 | `diun` | `apps` / `core-services-vm` | `http://n8n:5678/webhook/notificar` (rede `proxy`) |
 | `diun_ai` | `ai` / `ai-desktop-vm` | `https://n8n.seudominio.com/webhook/notificar` |
 
-Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`).
+Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`). Nenhum dos dois monta o socket do Docker: o `diun` lê pelo `docker-socket-proxy` da stack `apps` e o `diun_ai` pelo `docker-socket-proxy-ai` da stack `ai` (`DIUN_PROVIDERS_DOCKER_ENDPOINT`), ambos só de leitura (`CONTAINERS=1`, `IMAGES=1`, `POST=0`). O workflow recusa (401) qualquer chamada se a variável do token estiver vazia no n8n.
 
 ### Painel (Homepage)
 
@@ -76,7 +76,7 @@ A Homepage (`https://home.seudominio.com`, protegida pelo Authelia) roda na stac
 | `docker.yaml` | `core` → `docker-socket-proxy:2375` (estado dos containers da `core-services-vm`) |
 | `services.yaml` | uma entrada por aplicação `publica`/`protegida` do catálogo (regra PNL-1), agrupada pela Categoria, com atalho, status e widget quando houver (PNL-2) |
 
-O `docker-socket-proxy` dá à Homepage acesso **só de leitura** à lista de containers (`CONTAINERS=1`, `POST=0`), sem porta publicada; o status das aplicações da `core-services-vm` é o estado do container. As da `ai-desktop-vm` usam `siteMonitor` pela URL da LAN (a URL pública passa pelo Authelia e o teste falharia).
+O `docker-socket-proxy` dá à Homepage (e ao Diun) acesso **só de leitura** à lista de containers e às imagens (`CONTAINERS=1`, `IMAGES=1`, `POST=0`), sem porta publicada; o status das aplicações da `core-services-vm` é o estado do container. As da `ai-desktop-vm` usam `siteMonitor` pela URL da LAN (a URL pública passa pelo Authelia e o teste falharia).
 
 As credenciais dos widgets não ficam no `services.yaml`: lá aparecem só os placeholders `HOMEPAGE_VAR_*` (entre chaves duplas), que a Homepage substitui pelo seu ambiente (`monitoring.env`, gerado do vault). O Traefik fica sem widget: a API dele só existe atrás do Authelia.
 
@@ -168,7 +168,7 @@ Sonarr, Radarr, Lidarr, Prowlarr, Seerr e Jellyfin ([Mídia](10-midia.md#notific
 5. Importe e ative o workflow (na `core-services-vm`):
    ```bash
    sudo docker exec n8n_app n8n import:workflow --input=/home/node/.n8n/workflows/notificar.json
-   sudo docker exec n8n_app n8n update:workflow --id=HsNotificar00001 --active=true
+   sudo docker exec n8n_app n8n publish:workflow --id=HsNotificar00001
    sudo docker restart n8n_app
    ```
    Ao mudar o arquivo no repositório, repita os três comandos.

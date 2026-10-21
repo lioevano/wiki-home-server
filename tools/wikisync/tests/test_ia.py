@@ -65,10 +65,10 @@ SEGREDOS_PROVEDOR = ("${LITELLM_MASTER_KEY}", "${ANTHROPIC_API_KEY}", "${OPENAI_
 
 def test_ai_servicos():
     s = _svc(AI)
-    assert set(s) == {"litellm", "litellm_db", "ollama", "open-webui", "diun_ai"}
+    assert set(s) == {"litellm", "litellm_db", "ollama", "open-webui", "diun_ai", "docker-socket-proxy-ai"}
     for nome, svc in s.items():
-        if nome == "diun_ai":
-            continue  # o Diun observa as outras; segue a política dele
+        if nome in ("diun_ai", "docker-socket-proxy-ai"):
+            continue  # o Diun e o proxy dele seguem a política do Diun
         img = svc["image"]
         assert not img.endswith((":latest", ":main", ":main-latest", ":rocm")), (nome, img)
     assert s["ollama"]["image"] == "${OLLAMA_IMAGE}"

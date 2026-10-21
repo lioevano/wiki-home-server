@@ -34,7 +34,7 @@
           "conditions": [
             {
               "id": "b1f1c0de-0002-4000-8000-000000000001",
-              "leftValue": "={{ (($json.headers || {}).authorization || '') === 'Bearer ' + $env.NOTIFICACOES_WEBHOOK_TOKEN }}",
+              "leftValue": "={{ !!$env.NOTIFICACOES_WEBHOOK_TOKEN && (($json.headers || {}).authorization || '') === 'Bearer ' + $env.NOTIFICACOES_WEBHOOK_TOKEN }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",

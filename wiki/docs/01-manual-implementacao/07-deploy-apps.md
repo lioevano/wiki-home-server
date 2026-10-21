@@ -44,10 +44,10 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
    done
    # sem erros? repita o laço sem --check
    ```
-   Depois junte os arquivos num só `apps.env` para o Portainer (contém segredos: `0600`):
+   Depois junte os arquivos num só `apps.env` para o Portainer (contém segredos: `0600`). Os quatro repetem as variáveis comuns e as do Telegram com o mesmo valor; o `awk` mantém só a primeira de cada nome e tira os comentários:
    ```bash
    # na core-services-vm
-   sudo sh -c 'umask 077; cd /opt/portainer_stack_envs && cat productivity.env automation.env n8n.env monitoring.env > apps.env && chmod 600 apps.env'
+   sudo sh -c 'umask 077; cd /opt/portainer_stack_envs && cat productivity.env automation.env n8n.env monitoring.env | awk -F= "/^[A-Za-z_]/ && !visto[\$1]++" > apps.env && chmod 600 apps.env'
    ```
 3. No Portainer, abra a stack `apps`, recarregue `apps.env` em **Env** e clique em **Update the stack**.
 

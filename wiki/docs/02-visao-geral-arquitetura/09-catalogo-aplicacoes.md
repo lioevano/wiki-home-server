@@ -42,7 +42,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `cloudflared` | infra | core / core-services-vm | `cloudflared` | interna | — | nenhum | sim | `acesso-externo` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
 | `collabora` | produtividade | cloud / core-services-vm | `collabora` | publica | `office` | nenhum | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `diun` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `diun`, `diun_ai` | interna | — | nfs | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
-| `docker-socket-proxy` | infra | apps / core-services-vm | `docker-socket-proxy` | interna | — | nenhum | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
+| `docker-socket-proxy` | infra | apps / core-services-vm; ai / ai-desktop-vm | `docker-socket-proxy`, `docker-socket-proxy-ai` | interna | — | nenhum | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `flaresolverr` | mídia | media / core-services-vm | `flaresolverr` | interna | — | nenhum | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `gluetun` | mídia | media / core-services-vm | `gluetun` | interna | — | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `grafana` | monitoramento | apps / core-services-vm | `grafana`, `grafana_db` | protegida | `grafana` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |

@@ -32,7 +32,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `cloudflared` | core / core-services-vm | metricas, logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/05-rede-segura.md` |
 | `collabora` | cloud / core-services-vm | roteamento, autenticacao, acesso-externo, logs, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `diun` | apps / core-services-vm; ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
-| `docker-socket-proxy` | apps / core-services-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
+| `docker-socket-proxy` | apps / core-services-vm; ai / ai-desktop-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `flaresolverr` | media / core-services-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/10-midia.md` |
 | `gluetun` | media / core-services-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/10-midia.md` |
 | `grafana` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |

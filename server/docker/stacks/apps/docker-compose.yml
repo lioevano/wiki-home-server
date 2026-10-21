@@ -125,14 +125,15 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+      - internal_services # docker-socket-proxy
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "${MONITORING_DIUN_DATA_PATH}:/data"
     environment:
       # Integração notificacoes (NTF-2): avisa quando sai imagem nova de qualquer container desta VM
       - TZ=${SYSTEM_TIMEZONE}
       - DIUN_WATCH_SCHEDULE=0 9 * * *
       - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy:2375 # só leitura, sem o socket no container
       - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
       - DIUN_NOTIF_WEBHOOK_ENDPOINT=http://n8n:5678/webhook/notificar
       - DIUN_NOTIF_WEBHOOK_METHOD=POST
@@ -148,8 +149,9 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     environment:
-      # Só leitura: a Homepage lista containers; nada de POST, exec, imagens ou volumes
+      # Só leitura: a Homepage lista containers e o Diun lê as imagens; nada de POST, exec ou volumes
       - CONTAINERS=1
+      - IMAGES=1
       - POST=0
 
   homepage:

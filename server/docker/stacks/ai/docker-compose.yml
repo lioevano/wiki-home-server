@@ -138,15 +138,29 @@ services:
     networks:
       - ai_network
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "${AI_STACK_DIUN_DATA_PATH}:/data"
     environment:
       # Integração notificacoes (NTF-2): avisa quando sai imagem nova de qualquer container desta VM
       - TZ=${SYSTEM_TIMEZONE}
       - DIUN_WATCH_SCHEDULE=0 9 * * *
       - DIUN_PROVIDERS_DOCKER=true
+      - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy-ai:2375 # só leitura, sem o socket no container
       - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
       - DIUN_NOTIF_WEBHOOK_ENDPOINT=https://n8n.${BASE_DOMAIN_FROM_VAULT}/webhook/notificar
       - DIUN_NOTIF_WEBHOOK_METHOD=POST
       - DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION=Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}
       - DIUN_NOTIF_WEBHOOK_HEADERS_CONTENT-TYPE=application/json
+
+  # Acesso só de leitura ao Docker desta VM para o Diun (listar containers e ler imagens), sem porta publicada.
+  docker-socket-proxy-ai:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: docker_socket_proxy_ai
+    restart: unless-stopped
+    networks:
+      - ai_network
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    environment:
+      - CONTAINERS=1
+      - IMAGES=1
+      - POST=0
