@@ -124,7 +124,7 @@ O `dev.py lint` roda `docker compose config -q` em cada stack **sem variáveis**
 
 ## 4. A conferir no primeiro deploy (consolidado)
 
-As listas "a conferir" de cada sub-projeto ficam numa seção única da página de reconstrução (`04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`), para o Léo ter um roteiro do primeiro deploy:
+As listas "a conferir" de cada sub-projeto ficam numa seção única do índice do manual (`01-manual-implementacao/index.md`, "A conferir no primeiro deploy"), para o Léo ter um roteiro do primeiro deploy. Os itens novos desta rodada (políticas do Authelia, Diun pelo proxy, `timer-falhou`, login OIDC pela LAN, `read_only` da escrita) entram junto:
 
 - **4c1:** agentgateway (lista de leitura, chaves, tokens em arquivo, traces no Langfuse, campo `cliente` nos logs), `PUT /api/stacks` do Portainer 2.19, alerta `ops-acao-falhou` com o formato do Loki.
 - **4b:** módulos nativos do qmd no `node:22-bookworm-slim`, `HOME` gravável do markitdown com `--user`, "Default Folder" criada pelo `generate` do Syncthing.
