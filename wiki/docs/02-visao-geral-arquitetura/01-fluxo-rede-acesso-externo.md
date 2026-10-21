@@ -102,6 +102,10 @@ Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e o
 *   **Políticas de Acesso:** Authelia permite definir políticas granulares em seu arquivo `configuration.yml` para determinar qual nível de autenticação é necessário para diferentes domínios ou redes.
 *   **Single Sign-On (SSO) Básico:** Uma vez que o usuário está logado no Authelia, ele pode acessar outros serviços protegidos pelo mesmo Authelia sem precisar logar novamente (dentro da validade da sessão Authelia).
 
+### 5. VPN (Tailscale): o caminho privado
+
+Além do túnel, os mesmos endereços funcionam pela **VPN** ([seção 14](../01-manual-implementacao/14-vpn-tailscale.md)). Com o Tailscale ligado, o aparelho resolve `<app>.seudominio.com` no CoreDNS de casa (split DNS) e fala direto com o Traefik pela VPN, sem passar pela Cloudflare e sem o limite de 100 MB por requisição. O Authelia continua na frente das mesmas aplicações. A rota de controle do hub de MCPs só existe por esse caminho.
+
 ## Vantagens desta Abordagem
 
 *   **Segurança Aprimorada:**

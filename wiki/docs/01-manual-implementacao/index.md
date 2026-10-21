@@ -22,6 +22,7 @@ Guia passo a passo para implementar o servidor doméstico. Siga na ordem.
 12. **[Fotos e Arquivos](11-fotos-arquivos.md):** Immich, Nextcloud e Collabora, com login OIDC do Authelia.
 13. **[Segundo Cérebro](12-segundo-cerebro.md):** vaults do Obsidian pelo Syncthing, busca local (qmd) e MCP para o Claude com escopo por vault.
 14. **[Agentes: Base](13-agentes-base.md):** hub de MCPs com leitura pública e controle na LAN, operações (containers, stacks, Ansible) e rastreio no Langfuse.
+15. **[VPN (Tailscale)](14-vpn-tailscale.md):** acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker.
 
 A lista completa de aplicações, com stack, exposição e dados de cada uma, está no [Catálogo de Aplicações](../02-visao-geral-arquitetura/09-catalogo-aplicacoes.md); as integrações entre elas, no [Índice de Integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md).
 

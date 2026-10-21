@@ -388,8 +388,8 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
   when: docker_portainer_mode == 'server'
 
 # Nas demais VMs (ai-desktop-vm), o Portainer Agent: o Portainer central gerencia as stacks dela por aqui.
-# Porta só no IP da LAN. Portas publicadas pelo Docker não passam pelo UFW, então a proteção é o
-# AGENT_SECRET (o mesmo do Portainer server): sem ele, o agente recusa a conexão.
+# Porta só no IP da LAN, aceita só da core (firewall_docker_portas, abaixo) e protegida pelo AGENT_SECRET
+# (o mesmo do Portainer server): sem ele, o agente recusa a conexão.
 - name: "Deploy Portainer Agent container"
   community.docker.docker_container:
     name: portainer_agent
@@ -404,6 +404,46 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/var/lib/docker/volumes:/var/lib/docker/volumes"
   when: docker_portainer_mode == 'agent'
+
+# Firewall das portas publicadas pelo Docker (página 14): o UFW não vê esse tráfego. As regras ficam na cadeia
+# DOCKER-USER e são refeitas a cada início do Docker (PartOf=docker.service).
+- name: "Script do firewall das portas publicadas pelo Docker"
+  ansible.builtin.template:
+    src: firewall-docker.sh.j2
+    dest: /usr/local/sbin/firewall-docker.sh
+    owner: root
+    group: root
+    mode: '0750'
+  notify: Aplicar firewall do Docker
+
+- name: "Unit do firewall das portas publicadas pelo Docker"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/firewall-docker.service
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Regras da cadeia DOCKER-USER (portas publicadas pelo Docker; página 14)
+      After=docker.service
+      PartOf=docker.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=true
+      ExecStart=/usr/local/sbin/firewall-docker.sh
+
+      [Install]
+      WantedBy=docker.service
+  notify: Aplicar firewall do Docker
+
+- name: "Habilitar o firewall das portas publicadas pelo Docker"
+  ansible.builtin.systemd_service:
+    name: firewall-docker.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode # no --check a unit só foi simulada
 ```
 
 ### `handlers/main.yml`
@@ -418,6 +458,15 @@ Handler para o role `docker`.
     name: docker
     state: restarted
     daemon_reload: true
+  when: not ansible_check_mode # numa VM nova, no --check, o Docker ainda não existe
+
+# Regras novas em firewall_docker_portas (página 14).
+- name: Aplicar firewall do Docker
+  ansible.builtin.systemd_service:
+    name: firewall-docker.service
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
 
 - name: Reiniciar VM para aplicar mudanças de grupo Docker
   ansible.builtin.reboot:

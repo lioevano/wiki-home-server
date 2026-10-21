@@ -1,11 +1,12 @@
 # ansible/playbooks/full-deploy.yml
 # Orquestra a configuração completa da infraestrutura (sem criar VMs e sem implantar as stacks).
-# Ordem: host e VMs, rede core, depois os volumes e .env de cada stack. O setup-ai-keys.yml fica de fora:
+# Ordem: host e VMs, rede core e VPN, depois os volumes e .env de cada stack. O setup-ai-keys.yml fica de fora:
 # ele só funciona com a stack ai no ar (rode-o depois do deploy dela, página 08).
 
 - import_playbook: setup-proxmox-host.yml
 - import_playbook: setup-base-ubuntu.yml
 - import_playbook: setup-core-networking.yml
+- import_playbook: setup-vpn.yml
 - import_playbook: setup-productivity-automation-volumes.yml
 - import_playbook: setup-n8n-volumes.yml
 - import_playbook: setup-monitoring-stack-volumes.yml

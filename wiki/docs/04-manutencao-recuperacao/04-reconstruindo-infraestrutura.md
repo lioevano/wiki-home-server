@@ -54,7 +54,7 @@ Siga estes passos metodicamente:
         O estado deve ser `ONLINE`, e seus datasets (`docker-volumes`, `media`, `backups`, etc.) devem agora estar acessíveis nos seus pontos de montagem usuais (e.g., `/data/docker-volumes`).
     *   **Se os HDDs do pool `/data` foram perdidos e você precisa restaurar do backup:**
         1.  Crie um novo pool ZFS `data` e os datasets seguindo a [Seção 2.2](../01-manual-implementacao/02-proxmox-ve-host.md#22-configuração-do-pool-zfs-data-e-datasets) (mesmos nomes e cotas).
-        2.  Instale o restic (`apt install restic`), carregue o repositório (disco externo, se ele sobreviveu, ou a nuvem) e restaure cada dataset de `restic_datasets` como em [Um dataset inteiro](02-backup-restore-estrategia.md#um-dataset-inteiro). A mídia não está no backup: as *arr baixam de novo o que estiver na biblioteca.
+        2.  Instale o restic (`apt install restic`). O host novo ainda não tem os arquivos de `/etc/restic`: na máquina de controle, `ansible-vault view inventories/home/group_vars/all/vault.yml` mostra `restic_senha` e `restic_repositorios`; no host, exporte `RESTIC_REPOSITORY`, `RESTIC_PASSWORD` e, para a nuvem, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` (ou rode o `setup-proxmox-host.yml`, que grava tudo). Use o disco externo, se ele sobreviveu, ou a nuvem, e restaure cada dataset de `restic_datasets` como em [Um dataset inteiro](02-backup-restore-estrategia.md#um-dataset-inteiro). A mídia não está no backup: as *arr baixam de novo o que estiver na biblioteca.
         3.  Este é o passo mais demorado (da nuvem, pode levar dias). Comece por `docker-volumes`, que é pequeno e destrava o resto.
 
 4.  **Recriar as VMs:**

@@ -263,7 +263,7 @@ USER node
 
 ## Sincronização (Syncthing)
 
-O servidor é um nó sempre ligado do Syncthing. Cada vault é uma pasta do Syncthing, compartilhada entre o servidor, o PC (Syncthing) e o celular (**Syncthing-Fork**, do F-Droid). Fora de casa, os aparelhos se encontram pelos relays públicos do Syncthing: o tráfego é criptografado de ponta a ponta e o relay não lê nada. Quando o Tailscale existir, a conexão passa a ser direta.
+O servidor é um nó sempre ligado do Syncthing. Cada vault é uma pasta do Syncthing, compartilhada entre o servidor, o PC (Syncthing) e o celular (**Syncthing-Fork**, do F-Droid). Fora de casa, os aparelhos se encontram pelos relays públicos do Syncthing: o tráfego é criptografado de ponta a ponta e o relay não lê nada. Com o Tailscale ligado ([seção 14](14-vpn-tailscale.md)), o endereço fixo `tcp://<IP da ai-desktop-vm>:22000` funciona também fora de casa e a conexão é direta, sem relay.
 
 O `setup-notes-volumes.yml` gera as chaves e o `config.xml` antes do primeiro deploy, com o usuário `syncthing_gui_user` e a senha `syncthing_gui_password` do vault no painel. O painel fica em `https://sync.<domínio>` (atrás do Authelia) e em `http://<IP da ai-desktop-vm>:8384` na rede de casa.
 

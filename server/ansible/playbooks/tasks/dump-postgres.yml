@@ -66,3 +66,4 @@
     enabled: true
     state: started
     daemon_reload: true
+  when: not ansible_check_mode # no --check a unit só foi simulada: o módulo falharia por ela não existir

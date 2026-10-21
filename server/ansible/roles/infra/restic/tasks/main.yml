@@ -40,7 +40,7 @@
       {% for chave, valor in (item.ambiente | default({})).items() %}
       {{ chave }}={{ valor | quote }}
       {% endfor %}
-  loop: "{{ restic_repositorios }}"
+  loop: "{{ restic_repositorios | default([]) }}"
   loop_control:
     label: "{{ item.nome }}"
   no_log: true # senha e credenciais
@@ -58,7 +58,7 @@
   loop: "{{ restic_envs.files }}"
   loop_control:
     label: "{{ item.path }}"
-  when: (item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | map(attribute='nome') | list)
+  when: (item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | default([]) | map(attribute='nome') | list)
 
 - name: "Script do backup"
   ansible.builtin.template:
@@ -83,9 +83,11 @@
       [Service]
       Type=oneshot
       ExecStart=/usr/local/sbin/backup-restic.sh
-      # Não disputa disco e CPU com as VMs.
+      # Cache dos índices do restic: sem ele, cada rodada baixa de novo os índices da nuvem.
+      CacheDirectory=restic
+      Environment=RESTIC_CACHE_DIR=/var/cache/restic
+      # Prioridade baixa de CPU: não disputa com as VMs.
       Nice=10
-      IOSchedulingClass=idle
 
 - name: "Timer systemd do backup"
   ansible.builtin.copy:
@@ -110,3 +112,4 @@
     enabled: true
     state: started
     daemon_reload: true
+  when: not ansible_check_mode # no --check a unit só foi simulada: o módulo falharia por ela não existir

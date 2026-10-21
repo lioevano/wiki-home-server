@@ -391,6 +391,9 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
       public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
       secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"
+    # VPN (página 14): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
+    # Painel do Tailscale → Settings → Keys → Generate auth key (não reutilizável, pré-aprovada).
+    tailscale_auth_key: "tskey-auth-CHAVE_DE_USO_UNICO"
     # Backup com restic (página 04/02). A senha cifra os repositórios: sem ela, nenhum backup se restaura.
     # Gere com openssl rand -base64 32 e guarde uma cópia FORA do servidor (gerenciador de senhas).
     restic_senha: "SENHA_LONGA_DOS_REPOSITORIOS_DO_RESTIC"
@@ -541,6 +544,24 @@ zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo céreb
 # ZFS; o backup deles são os dumps diários gravados no NFS (página 04/02).
 vm_local_data_path: "/opt/local-data"
 
+# --- VPN e firewall das portas do Docker (página 14) ---
+# Rotas que a core-services-vm anuncia na VPN: só as duas VMs (/32). O host Proxmox fica de fora de propósito:
+# se a core cair, ele continua alcançável pela LAN.
+tailscale_rotas: ["{{ core_services_vm_ip_var }}/32", "{{ ai_desktop_vm_ip_var }}/32"]
+tailscale_hostname: "homeserver"
+# DNS da VPN (split DNS no painel do Tailscale): *.<domínio> → Traefik na core.
+coredns_version: "1.15.0"
+# Portas publicadas pelo Docker que a LAN só alcança a partir destas origens (lista vazia: só pela VPN).
+# O UFW não vê esse tráfego; as regras vão para a cadeia DOCKER-USER (role infra/docker).
+firewall_docker_portas:
+  core-services-vm:
+    - { porta: 9090, origens: ["{{ proxmox_host_ip_var }}", "{{ ai_desktop_vm_ip_var }}"], motivo: "Prometheus: remote write dos Alloys" }
+    - { porta: 3100, origens: ["{{ proxmox_host_ip_var }}", "{{ ai_desktop_vm_ip_var }}"], motivo: "Loki: logs dos Alloys" }
+    - { porta: 4100, origens: [], motivo: "rota de controle do hub de MCPs: só pela VPN" }
+  ai-desktop-vm:
+    - { porta: 9001, origens: ["{{ core_services_vm_ip_var }}"], motivo: "Portainer Agent: só o Portainer da core" }
+    - { porta: 3100, origens: ["{{ core_services_vm_ip_var }}"], motivo: "Langfuse: Traefik e hub, na core" }
+
 # --- Backup com restic no host Proxmox (página 04/02) ---
 # Datasets copiados (a mídia fica de fora: dá para baixar de novo e não cabe na nuvem).
 restic_datasets:
@@ -548,10 +569,14 @@ restic_datasets:
   - "{{ zfs_photos_dataset_name }}"
   - "{{ zfs_files_dataset_name }}"
   - "{{ zfs_notes_dataset_name }}"
-# Caminhos (dataset/pasta) que não entram: métricas e logs mudam o tempo todo e não valem o espaço.
+# Caminhos (dataset/pasta) que não entram: métricas e logs (mudam o tempo todo e não valem o espaço) e o que
+# se refaz sozinho: modelos do Ollama (baixados de novo) e miniaturas e vídeos convertidos do Immich (regerados).
 restic_excluir:
   - "{{ zfs_docker_volumes_dataset_name }}/prometheus/data"
   - "{{ zfs_docker_volumes_dataset_name }}/loki/data"
+  - "{{ zfs_docker_volumes_dataset_name }}/ollama/models"
+  - "{{ zfs_photos_dataset_name }}/thumbs"
+  - "{{ zfs_photos_dataset_name }}/encoded-video"
 # Arquivos do host Proxmox que vão junto (rede, GRUB/IOMMU, definição das VMs em /etc/pve).
 restic_host_caminhos: ["/etc"]
 # Todo dia, depois dos dumps dos bancos (o último às 03:45).

@@ -41,6 +41,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `blackbox-exporter` | monitoramento | apps / core-services-vm | `blackbox-exporter` | interna | — | nfs | sim | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `cloudflared` | infra | core / core-services-vm | `cloudflared` | interna | — | nenhum | sim | `acesso-externo` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
 | `collabora` | produtividade | cloud / core-services-vm | `collabora` | publica | `office` | nenhum | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
+| `coredns` | infra | ansible:infra/tailscale / core-services-vm | `coredns` | interna | — | nenhum | não | — | — | [VPN (Tailscale)](../01-manual-implementacao/14-vpn-tailscale.md) |
 | `diun` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `diun`, `diun_ai` | interna | — | nfs | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `docker-socket-proxy` | infra | apps / core-services-vm; ai / ai-desktop-vm | `docker-socket-proxy`, `docker-socket-proxy-ai` | interna | — | nenhum | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `flaresolverr` | mídia | media / core-services-vm | `flaresolverr` | interna | — | nenhum | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
@@ -69,4 +70,5 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `seerr` | mídia | media / core-services-vm | `seerr` | publica | `pedidos` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `sonarr` | mídia | media / core-services-vm | `sonarr` | protegida | `sonarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `syncthing` | produtividade | notes / ai-desktop-vm | `syncthing` | protegida | `sync` | nfs | não | — | — | [Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md) |
+| `tailscale` | infra | ansible:infra/tailscale / core-services-vm | `tailscaled` | interna | — | nenhum | não | — | — | [VPN (Tailscale)](../01-manual-implementacao/14-vpn-tailscale.md) |
 | `traefik` | infra | core / core-services-vm | `traefik` | protegida | `traefik` | nfs | não | `roteamento` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |

@@ -5,6 +5,15 @@
     name: docker
     state: restarted
     daemon_reload: true
+  when: not ansible_check_mode # numa VM nova, no --check, o Docker ainda não existe
+
+# Regras novas em firewall_docker_portas (página 14).
+- name: Aplicar firewall do Docker
+  ansible.builtin.systemd_service:
+    name: firewall-docker.service
+    state: restarted
+    daemon_reload: true
+  when: not ansible_check_mode
 
 - name: Reiniciar VM para aplicar mudanças de grupo Docker
   ansible.builtin.reboot:

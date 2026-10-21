@@ -1,0 +1,4 @@
+# ansible/roles/infra/tailscale/handlers/main.yml
+- name: Aplicar sysctl
+  ansible.builtin.command: sysctl --system
+  changed_when: true

@@ -1,0 +1,11 @@
+# ansible/playbooks/setup-vpn.yml
+# VPN (página 14): Tailscale como subnet router e o DNS da VPN, na core-services-vm.
+- name: VPN (Tailscale) e DNS da VPN
+  hosts: core_services
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  roles:
+    - role: infra/tailscale

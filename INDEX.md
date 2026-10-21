@@ -31,6 +31,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `blackbox-exporter` | apps / core-services-vm | metricas, logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `cloudflared` | core / core-services-vm | metricas, logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/05-rede-segura.md` |
 | `collabora` | cloud / core-services-vm | roteamento, autenticacao, acesso-externo, logs, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
+| `coredns` | ansible:infra/tailscale / core-services-vm | logs, documentacao, notificacoes | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `diun` | apps / core-services-vm; ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `docker-socket-proxy` | apps / core-services-vm; ai / ai-desktop-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `flaresolverr` | media / core-services-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/10-midia.md` |
@@ -59,6 +60,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `seerr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `sonarr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `syncthing` | notes / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `tailscale` | ansible:infra/tailscale / core-services-vm | logs, documentacao, notificacoes | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `traefik` | core / core-services-vm | autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/05-rede-segura.md` |
 
 ## Integrações
@@ -95,7 +97,8 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/10-midia.md` | Seção 10: Mídia (Jellyfin, *arr, Seerr e VPN) | Stack media: Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Recyclarr e qBittorrent atrás da ProtonVPN (gluetun), com /data único e importação por hardlink. |
 | `01-manual-implementacao/11-fotos-arquivos.md` | Seção 11: Fotos e Arquivos (Immich, Nextcloud e Collabora) | Stacks photos (Immich) e cloud (Nextcloud, cron e Collabora), públicas pelo túnel com login OIDC do Authelia, datasets com cota e bancos no disco local. |
 | `01-manual-implementacao/12-segundo-cerebro.md` | Seção 12: Segundo cérebro (Obsidian, Syncthing, busca local e MCP) | Stack notes na VM de IA: vaults do Obsidian sincronizados pelo Syncthing, busca local com qmd sobre as notas e os documentos do Nextcloud, e MCP para o Claude com escopo por vault. |
-| `01-manual-implementacao/13-agentes-base.md` | Seção 13: Agentes — base (hub de MCPs, operações e rastreio) | Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle na LAN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas. |
+| `01-manual-implementacao/13-agentes-base.md` | Seção 13: Agentes — base (hub de MCPs, operações e rastreio) | Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle só pela VPN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas. |
+| `01-manual-implementacao/14-vpn-tailscale.md` | Seção 14: VPN (Tailscale) e firewall das portas do Docker | VPN com Tailscale na core-services-vm: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -152,8 +155,9 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/playbooks/setup-photos-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/playbooks/setup-productivity-automation-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/setup-proxmox-host.yml` | playbook | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
+| `ansible/playbooks/setup-vpn.yml` | playbook | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/playbooks/tasks/apps-env.yml` | outro | `01-manual-implementacao/07-deploy-apps.md` |
-| `ansible/playbooks/tasks/dump-postgres.yml` | outro | `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
+| `ansible/playbooks/tasks/dump-postgres.yml` | outro | `01-manual-implementacao/05-rede-segura.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/playbooks/vm-deploy.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `03-guias-sustentacao/06-gerenciando-recursos-vms.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `ansible/requirements.yml` | outro | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/roles/apps/desktop-environment/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
@@ -170,9 +174,10 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/authelia-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/roles/infra/authelia-config/templates/users_database.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
-| `ansible/roles/infra/docker/defaults/main.yml` | role-defaults | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
-| `ansible/roles/infra/docker/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
-| `ansible/roles/infra/docker/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/docker/defaults/main.yml` | role-defaults | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/14-vpn-tailscale.md` |
+| `ansible/roles/infra/docker/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/14-vpn-tailscale.md` |
+| `ansible/roles/infra/docker/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/14-vpn-tailscale.md` |
+| `ansible/roles/infra/docker/templates/firewall-docker.sh.j2` | role-template | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/proxmox-host-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/02-proxmox-ve-host.md` |
 | `ansible/roles/infra/proxmox-host-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md` |
 | `ansible/roles/infra/proxmox-host-config/templates/etc_exports.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md` |
@@ -181,6 +186,9 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/proxmox-vm/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/infra/restic/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/roles/infra/restic/templates/backup-restic.sh.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
+| `ansible/roles/infra/tailscale/handlers/main.yml` | role-handlers | `01-manual-implementacao/14-vpn-tailscale.md` |
+| `ansible/roles/infra/tailscale/tasks/main.yml` | role-tasks | `01-manual-implementacao/14-vpn-tailscale.md` |
+| `ansible/roles/infra/tailscale/templates/Corefile.j2` | role-template | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/traefik-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |

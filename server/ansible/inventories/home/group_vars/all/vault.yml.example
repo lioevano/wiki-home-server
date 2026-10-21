@@ -202,6 +202,9 @@ langfuse_secrets:
   minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
   public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
   secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"
+# VPN (página 14): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
+# Painel do Tailscale → Settings → Keys → Generate auth key (não reutilizável, pré-aprovada).
+tailscale_auth_key: "tskey-auth-CHAVE_DE_USO_UNICO"
 # Backup com restic (página 04/02). A senha cifra os repositórios: sem ela, nenhum backup se restaura.
 # Gere com openssl rand -base64 32 e guarde uma cópia FORA do servidor (gerenciador de senhas).
 restic_senha: "SENHA_LONGA_DOS_REPOSITORIOS_DO_RESTIC"

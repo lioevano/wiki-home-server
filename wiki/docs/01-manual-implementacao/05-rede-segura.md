@@ -147,7 +147,7 @@ services:
 ```
 
 !!! note "Variáveis de Ambiente no Docker Compose"
-    Variáveis como `${CORE_SERVICES_VM_IP_VAR}`, `${VM_NFS_MOUNT_BASE_PATH}`, `${ZFS_DOCKER_VOLUMES_DATASET_NAME}`, `${CLOUDFLARE_API_TOKEN_FROM_VAULT}`, `${BASE_DOMAIN_FROM_VAULT}`, e `${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}` são placeholders que serão substituídos:
+    Variáveis como `${CORE_SERVICES_VM_IP_VAR}`, `${VM_NFS_MOUNT_BASE_PATH}`, `${AUTHELIA_DB_PATH}`, `${ZFS_DOCKER_VOLUMES_DATASET_NAME}`, `${CLOUDFLARE_API_TOKEN_FROM_VAULT}`, `${BASE_DOMAIN_FROM_VAULT}`, e `${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}` são placeholders que serão substituídos:
     pelos valores que o playbook `setup-core-networking.yml` passa no bloco `environment:` da tarefa de deploy (vault, inventário e `group_vars`). A stack `core` não tem `.env` em disco nem é criada no Portainer.
 
 ## 5.3. Authelia (parte de `docker/stacks/core/docker-compose.yml`)
@@ -245,11 +245,12 @@ Este playbook Ansible prepara os arquivos de configuração e faz o deploy da st
       * Copia os arquivos de configuração dinâmica (middlewares como `security_headers.yml`, `nextcloud_middleware.yml`, e o roteamento para os serviços da VM de IA em `ai_services.yml`) para o diretório apropriado.
       * Garante que o arquivo `acme.json` (para certificados SSL) exista com as permissões corretas.
   3. **Executa Role `infra/authelia-config`:**
-      * Cria os diretórios de configuração e do banco do Authelia no volume NFS.
+      * Cria o diretório de configuração do Authelia no volume NFS e o do banco no disco local da VM (`/opt/local-data/authelia-db`).
       * Copia o `configuration.yml` e o `users_database.yml` (base de usuários do backend `file`) templateados.
   4. **Copia o compose para a VM:** o módulo de deploy roda na `core-services-vm`, então o `docker/stacks/core/docker-compose.yml` do repositório é copiado para `/opt/stacks/core/` na VM.
   5. **Deploy da Stack `core`:** Usa o módulo `community.docker.docker_compose_v2` sobre `/opt/stacks/core/`, injetando as variáveis de ambiente do Ansible Vault, do inventário e de `group_vars`.
   6. **Aguarda Traefik:** Espera o healthcheck do Traefik passar.
+  7. **Dump diário do banco do Authelia:** instala o `backup-authelia-db` (03:15) pelo `ansible/playbooks/tasks/dump-postgres.yml` ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#bancos-de-dados-dumps-diários)).
 
 ### Ações Preparatórias: Roles Ansible para Configuração
 

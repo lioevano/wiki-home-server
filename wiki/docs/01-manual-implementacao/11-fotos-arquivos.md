@@ -98,7 +98,7 @@ Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-v
 
 ## Clientes
 
-* **Immich (Android):** servidor `https://fotos.seudominio.com`, **Entrar com Authelia**. Em *Configurações → Rede*, ligue a **troca automática de URL**: o Wi-Fi de casa usa `http://<IP da core-services-vm>:2283`, e fora dele o app usa `https://fotos.seudominio.com`. Ative o backup das pastas da câmera. O túnel da Cloudflare recusa requisições acima de 100 MB, então vídeos maiores só sobem em casa (o app tenta de novo sozinho); deixe desligado o uso de dados móveis para vídeos.
+* **Immich (Android):** servidor `https://fotos.seudominio.com`, **Entrar com Authelia**. Em *Configurações → Rede*, ligue a **troca automática de URL**: o Wi-Fi de casa usa `http://<IP da core-services-vm>:2283`, e fora dele o app usa `https://fotos.seudominio.com`. Ative o backup das pastas da câmera. O túnel da Cloudflare recusa requisições acima de 100 MB, então vídeos maiores só sobem em casa (o app tenta de novo sozinho); deixe desligado o uso de dados móveis para vídeos. Com o **Tailscale** ligado no celular ([seção 14](14-vpn-tailscale.md)), `https://fotos.seudominio.com` vai direto ao Traefik de casa, sem esse limite, e a troca de URL vira opcional.
 * **Nextcloud (desktop Linux/macOS):** servidor `https://nextcloud.seudominio.com`; o login abre o navegador, que passa pelo Authelia. Para os arquivos grandes passarem pelo túnel, feche o cliente e acrescente, na seção `[General]` de `~/.config/Nextcloud/nextcloud.cfg` (Linux) ou `~/Library/Preferences/Nextcloud/nextcloud.cfg` (macOS):
   ```ini
   maxChunkSize=50000000

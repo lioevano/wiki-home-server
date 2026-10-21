@@ -23,7 +23,7 @@ Antes de iniciar qualquer atualização em um componente fundamental, siga estes
 
 2.  **FAÇA BACKUP COMPLETO PRIMEIRO:**
     Não se pode enfatizar o suficiente. Antes de tocar em qualquer componente crítico:
-    *   **Host Proxmox VE:** Faça um backup completo da [configuração do host Proxmox](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#o-host-proxmox-e-as-vms) e, mais crucialmente, **backups atualizados de TODAS as suas máquinas virtuais (VMs)** usando o sistema de backup do Proxmox.
+    *   **Backup do dia:** confira que o `backup-restic` da última noite terminou sem erro ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)), ou rode-o agora (`systemctl start --no-block backup-restic.service` no host). As VMs não têm backup de imagem: elas são recriadas pelo Ansible, e os bancos voltam pelos dumps. Antes de mexer numa VM, um snapshot dela pelo Proxmox (*Snapshots → Take Snapshot*) dá um ponto de volta rápido; apague-o depois.
     *   **Volumes Docker (Dados Persistentes):** Para os datasets ZFS que contêm os volumes dos seus containers (e.g., `data/docker-volumes`, `data/media`), crie **snapshots ZFS** no host Proxmox antes de atualizar o Docker Engine, Traefik, Authelia, ou qualquer container que gerencie dados críticos. Veja o [Guia de Snapshots ZFS](11-guia-snapshots-zfs.md).
     *   **Arquivos de Configuração Específicos:** Faça uma cópia manual dos arquivos de configuração relevantes que podem ser afetados (e.g., `traefik.yml`, `authelia/configuration.yml`, `prometheus.yml`) antes de uma atualização que possa alterá-los ou introduzir um novo formato. (Seus arquivos Ansible já estão no Git, o que é um backup da *definição* da configuração).
 

@@ -44,7 +44,9 @@ def test_variaveis_do_backup():
                                     "{{ zfs_files_dataset_name }}", "{{ zfs_notes_dataset_name }}"]
     assert "{{ zfs_media_dataset_name }}" not in m["restic_datasets"]  # rebaixável e grande demais
     assert m["restic_excluir"] == ["{{ zfs_docker_volumes_dataset_name }}/prometheus/data",
-                                   "{{ zfs_docker_volumes_dataset_name }}/loki/data"]
+                                   "{{ zfs_docker_volumes_dataset_name }}/loki/data",
+                                   "{{ zfs_docker_volumes_dataset_name }}/ollama/models",
+                                   "{{ zfs_photos_dataset_name }}/thumbs", "{{ zfs_photos_dataset_name }}/encoded-video"]
     assert m["restic_horario"] == "*-*-* 04:30:00"  # depois de todos os dumps (o último às 03:45)
     assert m["restic_retencao"] == "--keep-daily 7 --keep-weekly 4 --keep-monthly 12"
     v = yaml.safe_load(VAULT_EX.read_text(encoding="utf-8"))
@@ -81,7 +83,7 @@ def test_unit_e_timer():
               for x in t if "ansible.builtin.copy" in x and "content" in x["ansible.builtin.copy"]}
     svc = copias["/etc/systemd/system/backup-restic.service"]
     assert "Type=oneshot" in svc and "ExecStart=/usr/local/sbin/backup-restic.sh" in svc
-    assert "IOSchedulingClass=idle" in svc
+    assert "Nice=10" in svc
     timer = copias["/etc/systemd/system/backup-restic.timer"]
     assert "OnCalendar={{ restic_horario }}" in timer and "Persistent=true" in timer
     # o nome backup-* entra no coletor systemd do Alloy do host e no alerta timer-falhou
@@ -138,7 +140,7 @@ def test_backup_completo(tmp_path):
     assert f"--exclude {mnt}/docker-volumes/loki/data" in backup
     assert "media" not in backup
     assert backup.endswith(" /etc")  # configuração do host vai junto
-    assert any("forget --prune --host homeserver --keep-daily 7" in l for l in log)
+    assert any("forget --prune --host homeserver --group-by host --keep-daily 7" in l for l in log)
     assert not any(" check " in l for l in log)  # só aos domingos
 
 
@@ -231,3 +233,49 @@ def test_bancos_do_authelia_e_do_grafana_no_disco_local():
     assert cfg["MONITORING_GRAFANA_DB_PATH"] == "{{ vm_local_data_path }}/grafana-db"
     texto = "".join(p.read_text(encoding="utf-8") for p in (ANS / "playbooks").glob("*.yml"))
     assert "db_pg" not in texto
+
+
+# --- Revisão final ---
+
+def test_arquivo_do_repositorio_com_senha_dificil(tmp_path):
+    """O content do role, renderizado com o filtro quote do Ansible, volta intacto pelo 'set -a; . arquivo'."""
+    import shlex
+    import jinja2
+    t = yaml.safe_load((ROLE / "tasks/main.yml").read_text(encoding="utf-8"))
+    env_task = next(x for x in t if "/etc/restic/repositorios/" in str(x.get("ansible.builtin.copy", {}).get("dest", "")))
+    j = jinja2.Environment(trim_blocks=True)
+    j.filters["quote"] = shlex.quote
+    senha = "a b'c$d\"e"
+    conteudo = j.from_string(env_task["ansible.builtin.copy"]["content"]).render(
+        item={"nome": "nuvem", "repositorio": "s3:https://x/y", "ambiente": {"AWS_SECRET_ACCESS_KEY": "k$1 2"}},
+        restic_senha=senha)
+    arq = tmp_path / "nuvem.env"
+    arq.write_text(conteudo)
+    r = subprocess.run(["bash", "-c", f'set -a; . {arq}; printf "%s|%s|%s" "$RESTIC_PASSWORD" "$RESTIC_REPOSITORY" "$AWS_SECRET_ACCESS_KEY"'],
+                       capture_output=True, text=True)
+    assert r.stdout == f"{senha}|s3:https://x/y|k$1 2"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="bash")
+def test_dataset_que_falha_deixa_codigo_1_mas_copia_os_outros(tmp_path):
+    FALSOS["zfs"] = 'echo "zfs $*" >> "$LOG"; [ "$1 $2" != "snapshot data/photos@restic" ]'
+    try:
+        r, log = _rodar(tmp_path, {"nuvem": "RESTIC_REPOSITORY=s3:x\nRESTIC_PASSWORD=x\n"})
+    finally:
+        FALSOS["zfs"] = 'echo "zfs $*" >> "$LOG"'
+    assert r.returncode == 1 and "data/photos" in r.stderr
+    backup = next(l for l in log if " backup " in l)
+    caminhos = backup.split()
+    assert any(c.endswith("/mnt/files") for c in caminhos) and not any(c.endswith("/mnt/photos") for c in caminhos)
+    assert any("forget --prune --host homeserver --group-by host" in l for l in log)
+
+
+def test_cache_do_restic_e_verificacao_sem_check_mode():
+    t = _tarefas()
+    svc = next(x for x in t if x.get("ansible.builtin.copy", {}).get("dest") == "/etc/systemd/system/backup-restic.service")
+    assert "Environment=RESTIC_CACHE_DIR=/var/cache/restic" in svc["ansible.builtin.copy"]["content"]
+    timer = next(x for x in t if x.get("ansible.builtin.systemd_service", {}).get("name") == "backup-restic.timer")
+    assert timer["when"] == "not ansible_check_mode"
+    dump = yaml.safe_load(DUMP_TASKS.read_text(encoding="utf-8"))
+    assert next(x for x in dump if "ansible.builtin.systemd" in x)["when"] == "not ansible_check_mode"
+    assert "ollama/models" in str(_main()["restic_excluir"])

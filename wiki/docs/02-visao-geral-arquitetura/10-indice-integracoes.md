@@ -334,7 +334,7 @@ Entrada única: `POST /webhook/notificar` no n8n com `Authorization: Bearer <NOT
 
 ### Regras
 - **NTF-1** — disponibilidade: aplicação com Exposição `publica`/`protegida` tem alvo pela **URL interna** do serviço principal (ex.: `http://n8n:5678/healthz`; a URL pública passa pelo Authelia e não mede a aplicação) com `labels: {app: <id>}` no job `blackbox_http`; o alvo do `traefik` usa o módulo `tls_traefik` (mede também o certificado). Das `interna`, só `litellm` (`http://<ai_desktop_vm_ip_var>:4000/health/liveliness`) e `loki` (`http://loki:3100/ready`) têm alvo — as demais `interna` → `—`. *Evidência:* `prometheus.yml.j2`.
-- **NTF-2** — atualizações: existe um serviço do `diun` na mesma VM da aplicação (Stack/VM do `diun` × da aplicação). Aplicações sem container, instaladas como pacote do sistema (hoje o `alloy`), ficam fora: o Diun só observa imagens, e a versão do pacote é fixada no `group_vars` (`alloy_version`). *Evidência:* catálogo e composes.
+- **NTF-2** — atualizações: existe um serviço do `diun` na mesma VM da aplicação (Stack/VM do `diun` × da aplicação). Aplicações sem container, instaladas como pacote do sistema (hoje o `alloy` e o `tailscale`), ficam fora: o Diun só observa imagens, e a versão do pacote é fixada no `group_vars` (`alloy_version`). *Evidência:* catálogo e composes.
 - **NTF-3** — eventos: aplicação com webhook nativo (`radarr`, `sonarr`, `lidarr`, `prowlarr`, `seerr`, `homeassistant`, `jellyfin` via plugin) tem na sua página o passo "apontar o webhook para o n8n"; sem o passo documentado → `✋`. Demais → `—`.
 - **NTF-4 (sobra)** — nenhum alvo do `blackbox_http` nem regra de alerta com `app` que não exista no catálogo. *Evidência:* `prometheus.yml.j2` e `rules.yml.j2`.
 

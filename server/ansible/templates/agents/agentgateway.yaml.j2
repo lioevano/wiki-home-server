@@ -85,7 +85,8 @@ binds:
           prefixMode: always
           failureMode: failOpen
 {{ alvos('leitura') }}
-# Rota de controle: só na LAN (porta publicada no IP da core-services-vm), com a chave de cada cliente.
+# Rota de controle: porta publicada no IP da core-services-vm, que a LAN não alcança (firewall_docker_portas):
+# só pela VPN (página 14), com a chave de cada cliente.
 - port: 4100
   listeners:
   - name: controle

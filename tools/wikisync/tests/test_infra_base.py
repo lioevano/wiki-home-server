@@ -157,3 +157,4 @@ def test_docker_reinicia_quando_a_configuracao_muda():
         assert _tarefa(tarefas, trecho)["notify"] == "Reiniciar Docker", trecho
     h = next(h for h in _yaml(ANS / "roles/infra/docker/handlers/main.yml") if h["name"] == "Reiniciar Docker")
     assert h["ansible.builtin.systemd_service"] == {"name": "docker", "state": "restarted", "daemon_reload": True}
+    assert h["when"] == "not ansible_check_mode"

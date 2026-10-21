@@ -1,17 +1,17 @@
 ---
-description: "Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle na LAN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas."
+description: "Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle só pela VPN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas."
 ---
 
 # Seção 13: Agentes — base (hub de MCPs, operações e rastreio)
 
-A IA (Claude Code, app Claude, agentes) alcança o homeserver por um **hub de MCPs** na `core-services-vm`: **leitura de qualquer lugar** (métricas, logs, alertas, containers, a casa e as automações, pelo conector **Servidor**) e **ações só na LAN** (reiniciar containers, redeployar stacks, rodar playbooks Ansible, comandar a casa, executar workflows). Toda chamada de LLM e de ferramenta fica rastreada no **Langfuse**.
+A IA (Claude Code, app Claude, agentes) alcança o homeserver por um **hub de MCPs** na `core-services-vm`: **leitura de qualquer lugar** (métricas, logs, alertas, containers, a casa e as automações, pelo conector **Servidor**) e **ações só pela VPN** ([seção 14](14-vpn-tailscale.md): reiniciar containers, redeployar stacks, rodar playbooks Ansible, comandar a casa, executar workflows). Toda chamada de LLM e de ferramenta fica rastreada no **Langfuse**.
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
     claude[claude.ai / celular] -- OAuth + Authelia 2FA --> proxy[mcp_auth_servidor<br/>servidor.]
-    code[Claude Code / agentes<br/>na LAN] -- chave Bearer --> controle[agentgateway :4100<br/>rota controle]
+    code[Claude Code / agentes<br/>pela VPN] -- chave Bearer --> controle[agentgateway :4100<br/>rota controle]
     proxy --> leitura[agentgateway :4000<br/>rota leitura]
     leitura --> gl[mcp_grafana_leitura]
     leitura --> ol[ops_leitura]
@@ -28,9 +28,9 @@ flowchart LR
 | Rota | Onde | Quem usa | Alcança |
 |---|---|---|---|
 | `leitura` | `https://servidor.<domínio>/mcp` (túnel → Traefik → `mcp_auth_servidor`) | claude.ai, app do celular | Grafana (Prometheus, Loki, alertas, painéis) só leitura; containers, logs, stacks e playbooks (listar); estado da casa; lista de workflows |
-| `controle` | `http://<IP da core-services-vm>:4100/mcp` (só LAN; VPN quando existir) | Claude Code em casa, agentes (4c3) | tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (`ansible_check` → `ansible_aplicar`), comandar a casa, executar e editar workflows liberados |
+| `controle` | `http://<IP da core-services-vm>:4100/mcp` (só pela VPN: a LAN não alcança a 4100, [seção 14](14-vpn-tailscale.md)) | Claude Code com o Tailscale ligado (em casa ou fora), agentes (4c3) | tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (`ansible_check` → `ansible_aplicar`), comandar a casa, executar e editar workflows liberados |
 
-Por que duas rotas: a internet só alcança **código que não sabe escrever** (as instâncias `*_leitura` nem registram ferramentas de escrita) **e** uma lista fechada de ferramentas (`agents_leitura`); as ações ficam num endereço que só existe na rede de casa, com uma chave por cliente.
+Por que duas rotas: a internet só alcança **código que não sabe escrever** (as instâncias `*_leitura` nem registram ferramentas de escrita) **e** uma lista fechada de ferramentas (`agents_leitura`); as ações ficam num endereço que só a VPN alcança (cifrado pelo WireGuard), com uma chave por cliente.
 
 !!! warning "Fora dos snapshots ZFS"
     O config do hub, os segredos do runner, o clone do repositório e o estado OAuth do `mcp_auth_servidor` ficam no disco local da `core-services-vm` (`/opt/local-data/agentgateway`, `/opt/local-data/ops`, `/opt/local-data/mcp-auth-servidor`), e os dados do Langfuse no disco local da `ai-desktop-vm` (`/opt/local-data/langfuse`): **fora dos snapshots ZFS e sem backup**. Tudo é regerável pelos playbooks a partir do vault; os traces do Langfuse são descartáveis.
@@ -158,7 +158,8 @@ binds:
           prefixMode: always
           failureMode: failOpen
 {{ alvos('leitura') }}
-# Rota de controle: só na LAN (porta publicada no IP da core-services-vm), com a chave de cada cliente.
+# Rota de controle: porta publicada no IP da core-services-vm, que a LAN não alcança (firewall_docker_portas):
+# só pela VPN (página 14), com a chave de cada cliente.
 - port: 4100
   listeners:
   - name: controle
@@ -222,7 +223,7 @@ Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):
 | Cliente | Como |
 |---|---|
 | claude.ai (navegador e celular) | **Configurações → Conectores → Adicionar conector personalizado** com `https://servidor.<domínio>/mcp` (nome `Servidor`). **Conectar** abre o login do Authelia (2FA, só o grupo `admins`). Só leitura. |
-| Claude Code (PC, na LAN) | `claude mcp add --transport http servidor http://<IP da core-services-vm>:4100/mcp --header "Authorization: Bearer <agents_api_keys.claude_code>"`. A chave fica no `~/.claude.json` do seu usuário, nunca em repositório. Fora de casa, use a rota de leitura (`https://servidor.<domínio>/mcp`) até a VPN existir. |
+| Claude Code (PC, com o Tailscale ligado) | `claude mcp add --transport http servidor http://<IP da core-services-vm>:4100/mcp --header "Authorization: Bearer <agents_api_keys.claude_code>"`. A chave fica no `~/.claude.json` do seu usuário, nunca em repositório. Sem o Tailscale, a 4100 não responde (nem em casa): use a rota de leitura (`https://servidor.<domínio>/mcp`). |
 | Agentes (4c3) | Mesma rota de controle, com a chave `agents_api_keys.agentes`. |
 
 As ferramentas aparecem com o prefixo do alvo: `grafana_…`, `ops_…`, `homeassistant_…`, `n8n_…`.
@@ -254,7 +255,7 @@ As ferramentas aparecem com o prefixo do alvo: `grafana_…`, `ops_…`, `homeas
 
 ## Teste de ponta a ponta
 
-1. `curl -s http://<IP da core>:4100/mcp` sem cabeçalho → `401`; com `-H "Authorization: Bearer <chave>"` e um `initialize` MCP → resposta do hub.
+1. Com o Tailscale ligado, `curl -s http://<IP da core>:4100/mcp` sem cabeçalho → `401` (sem o Tailscale, não conecta); com `-H "Authorization: Bearer <chave>"` e um `initialize` MCP → resposta do hub.
 2. No Claude Code: "liste os containers da VM de IA" (`ops_containers_listar`) e "quais alertas estão disparando?" (`grafana_…`).
 3. "Simule o playbook setup-media-stack-volumes.yml" → diff e `plano_id`; "aplique" → aprovação pedida, execução, aviso no Telegram.
 4. "Reinicie o traefik" → recusado (protegido), aviso no Telegram.

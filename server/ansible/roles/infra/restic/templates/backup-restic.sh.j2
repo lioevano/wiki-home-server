@@ -65,7 +65,9 @@ for env in "${repositorios[@]}"; do
         fi
         restic cat config >/dev/null 2>&1 || restic init || exit 1
         restic backup --host homeserver --tag zfs "${EXCLUIR[@]}" "${caminhos[@]}" "${HOST[@]}" || exit 1
-        restic forget --prune --host homeserver "${RETENCAO[@]}" || exit 1
+        # --group-by host: um dia com um dataset a menos (ou uma mudança em restic_datasets) não cria um grupo
+        # de snapshots que nunca expira.
+        restic forget --prune --host homeserver --group-by host "${RETENCAO[@]}" || exit 1
         if [ "$(date +%u)" = "7" ]; then
             restic check --read-data-subset "$CHECK_PARCIAL" || exit 1
         fi

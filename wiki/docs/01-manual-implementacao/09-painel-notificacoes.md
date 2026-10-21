@@ -143,7 +143,7 @@ NOTIFICACOES_WEBHOOK_URL=https://n8n.seudominio.com/webhook/notificar
 NOTIFICACOES_WEBHOOK_TOKEN=<notificacoes_webhook_token do vault>
 ```
 
-**Notificações do próprio Proxmox** (tarefas, replicação, um backup pontual de VM): em **Datacenter → Notifications → Add → Webhook** (PVE 8.3+), aponte para a mesma URL, método `POST`, cabeçalho `Authorization: Bearer <token>` e corpo JSON `{"titulo": "{{ title }}", "mensagem": "{{ message }}", "gravidade": "{{ severity }}", "app": "proxmox"}`; associe o destino ao *matcher* dos jobs de backup. Confira na documentação do PVE da sua versão a sintaxe de escape das variáveis de template no corpo JSON.
+**Notificações do próprio Proxmox** (tarefas, replicação, um backup pontual de VM): em **Datacenter → Notifications → Add → Webhook** (PVE 8.3+), aponte para a mesma URL, método `POST`, cabeçalho `Authorization: Bearer <token>` e corpo JSON `{"titulo": "{{ title }}", "mensagem": "{{ message }}", "gravidade": "{{ severity }}", "app": "proxmox"}`; associe o destino a um *matcher* (por exemplo, severidade `warning` ou acima). Confira na documentação do PVE da sua versão a sintaxe de escape das variáveis de template no corpo JSON.
 
 ### Limitações conhecidas
 

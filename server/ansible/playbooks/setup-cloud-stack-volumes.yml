@@ -27,7 +27,6 @@
         mode: '0775'
       loop:
         - hooks
-        - db-dumps
 
     # O Nextcloud recusa um diretório de dados com permissão diferente de 0770.
     - name: Preparar a raiz do dataset files (diretório de dados do Nextcloud)

@@ -31,6 +31,7 @@ Além disso:
 | `/etc` do host Proxmox (rede, GRUB/IOMMU, `/etc/pve` com a definição das VMs) | restic | Atalho para reinstalar o host igual |
 | `media` (filmes, séries, músicas, torrents) | **não** | Pode ser baixada de novo e não cabe na nuvem. Para mudar, inclua o dataset em `restic_datasets` |
 | `docker-volumes/prometheus/data` e `loki/data` | **não** (`restic_excluir`) | Métricas e logs mudam o tempo todo; perder o histórico não para nada |
+| `docker-volumes/ollama/models`, `photos/thumbs` e `photos/encoded-video` | **não** (`restic_excluir`) | Modelos se baixam de novo; miniaturas e vídeos convertidos o Immich regera (*Administração → Tarefas*) |
 | Disco local das VMs (`/opt/local-data`): bancos, índice do qmd, documentos convertidos, banco do Syncthing, estado dos mcp-auth-proxy, base dos agentes (config do hub `agentgateway`, clone e segredos do runner do `ops`; [seção 13](../01-manual-implementacao/13-agentes-base.md)), Langfuse | só os **bancos**, pelos dumps | O resto é regerável pelos playbooks a partir do vault, ou é descartável (traces do Langfuse) |
 | Discos das VMs | **não** | As VMs são recriadas pelo `vm-deploy.yml` e pelos playbooks ([reconstrução](04-reconstruindo-infraestrutura.md)) |
 
@@ -59,7 +60,7 @@ O role `ansible/roles/infra/restic/` (aplicado pelo `setup-proxmox-host.yml`) in
 5. Aos domingos, relê 5% dos dados de cada repositório (`restic check --read-data-subset`) para achar corrupção.
 6. Desmonta e apaga o snapshot, também em caso de erro.
 
-Qualquer falha deixa a unit em `failed` e dispara o alerta `timer-falhou`: o Alloy do host vê as units `backup-*`. A unit roda com prioridade baixa de disco e CPU, para não atrapalhar as VMs.
+Qualquer falha deixa a unit em `failed` e dispara o alerta `timer-falhou`: o Alloy do host vê as units `backup-*`. A unit roda com prioridade baixa de CPU (`Nice=10`) e guarda o cache dos índices em `/var/cache/restic`, para não baixar tudo da nuvem a cada rodada. Os backups são agrupados só pelo host (`--group-by host`): um dia em que um dataset falhou não cria um grupo que nunca expira.
 
 ### Preparar os destinos
 
@@ -71,7 +72,7 @@ Qualquer falha deixa a unit em `failed` e dispara o alerta `timer-falhou`: o All
 2. **Nuvem:** crie um bucket privado no Backblaze B2 (ou outro S3) e uma *application key* só para ele. O endereço no formato `s3:https://<endpoint>/<bucket>/homeserver` e as chaves vão para `restic_repositorios` (página 01). O restic cifra tudo antes de enviar.
 3. **Vault:** `restic_senha` (`openssl rand -base64 32`) e `restic_repositorios`, conforme o `vault.yml.example` (página 01).
 4. Aplique: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass --check`, depois sem `--check`.
-5. **Primeira rodada,** pelo shell do host Proxmox: `systemctl start backup-restic.service` e acompanhe com `journalctl -fu backup-restic`. Na primeira vez, o script cria os repositórios (`restic init`). A primeira cópia para a nuvem pode levar dias; as seguintes só mandam o que mudou.
+5. **Primeira rodada,** pelo shell do host Proxmox: `systemctl start --no-block backup-restic.service` (sem o `--no-block`, o comando só volta quando o backup terminar) e acompanhe com `journalctl -fu backup-restic`. Na primeira vez, o script cria os repositórios (`restic init`). A primeira cópia para a nuvem pode levar dias; as seguintes só mandam o que mudou.
 
 Para ver o que existe num repositório, carregue as variáveis dele e use o restic:
 
@@ -127,7 +128,7 @@ restic stats latest
       {% for chave, valor in (item.ambiente | default({})).items() %}
       {{ chave }}={{ valor | quote }}
       {% endfor %}
-  loop: "{{ restic_repositorios }}"
+  loop: "{{ restic_repositorios | default([]) }}"
   loop_control:
     label: "{{ item.nome }}"
   no_log: true # senha e credenciais
@@ -145,7 +146,7 @@ restic stats latest
   loop: "{{ restic_envs.files }}"
   loop_control:
     label: "{{ item.path }}"
-  when: (item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | map(attribute='nome') | list)
+  when: (item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | default([]) | map(attribute='nome') | list)
 
 - name: "Script do backup"
   ansible.builtin.template:
@@ -170,9 +171,11 @@ restic stats latest
       [Service]
       Type=oneshot
       ExecStart=/usr/local/sbin/backup-restic.sh
-      # Não disputa disco e CPU com as VMs.
+      # Cache dos índices do restic: sem ele, cada rodada baixa de novo os índices da nuvem.
+      CacheDirectory=restic
+      Environment=RESTIC_CACHE_DIR=/var/cache/restic
+      # Prioridade baixa de CPU: não disputa com as VMs.
       Nice=10
-      IOSchedulingClass=idle
 
 - name: "Timer systemd do backup"
   ansible.builtin.copy:
@@ -197,6 +200,7 @@ restic stats latest
     enabled: true
     state: started
     daemon_reload: true
+  when: not ansible_check_mode # no --check a unit só foi simulada: o módulo falharia por ela não existir
 ```
 
 ```bash title="ansible/roles/infra/restic/templates/backup-restic.sh.j2"
@@ -267,7 +271,9 @@ for env in "${repositorios[@]}"; do
         fi
         restic cat config >/dev/null 2>&1 || restic init || exit 1
         restic backup --host homeserver --tag zfs "${EXCLUIR[@]}" "${caminhos[@]}" "${HOST[@]}" || exit 1
-        restic forget --prune --host homeserver "${RETENCAO[@]}" || exit 1
+        # --group-by host: um dia com um dataset a menos (ou uma mudança em restic_datasets) não cria um grupo
+        # de snapshots que nunca expira.
+        restic forget --prune --host homeserver --group-by host "${RETENCAO[@]}" || exit 1
         if [ "$(date +%u)" = "7" ]; then
             restic check --read-data-subset "$CHECK_PARCIAL" || exit 1
         fi
@@ -290,14 +296,19 @@ restic ls latest /mnt/restic/files/leo/files/Documentos
 restic restore latest --include /mnt/restic/files/leo/files/Documentos/contrato.pdf --target /tmp/restaurado
 ```
 
-Ou navegue com `restic mount /mnt/restic-navegar` (em outro terminal) e copie o que precisar. Arquivos do Nextcloud restaurados direto em `/data/files` só aparecem na interface depois de `docker exec -u www-data nextcloud_app php occ files:scan --all`.
+Ou navegue com `mkdir -p /mnt/restic-navegar && restic mount /mnt/restic-navegar` (em outro terminal) e copie o que precisar. Arquivos do Nextcloud restaurados direto em `/data/files` só aparecem na interface depois de `docker exec -u www-data nextcloud_app php occ files:scan --all`.
 
 ### Um dataset inteiro
 
 1. Pare no Portainer as stacks que usam o dataset (ex.: `photos` para `/data/photos`).
-2. `restic restore latest --include /mnt/restic/photos --target /tmp/restauro` (o conteúdo fica em `/tmp/restauro/mnt/restic/photos`; use um disco com espaço).
-3. `rsync -aHAX --delete /tmp/restauro/mnt/restic/photos/ /data/photos/` e `chown -R <docker_puid>:<docker_pgid> /data/photos` se o dono mudou.
-4. Suba as stacks de novo.
+2. Monte o dataset no caminho em que ele foi copiado e restaure por cima, sem cópia intermediária:
+   ```bash
+   mkdir -p /mnt/restic/photos && mount --bind /data/photos /mnt/restic/photos
+   restic restore latest --include /mnt/restic/photos --target /
+   umount /mnt/restic/photos
+   ```
+   Para comparar antes, restaure num disco com espaço (`--target /caminho/com/espaço`) e use `rsync -aHAX --delete` de lá.
+3. `chown -R <docker_puid>:<docker_pgid> /data/photos` se o dono mudou, e suba as stacks de novo.
 
 ### Bancos de dados
 
@@ -336,6 +347,6 @@ zfs destroy data/docker-volumes@antes-da-mudanca
 Um backup que nunca foi restaurado não é confiável. **A cada três meses:**
 
 1. Escolha um arquivo de cada dataset (`docker-volumes`, `photos`, `files`, `notes`) e restaure-o do repositório **da nuvem** em `/tmp/teste-restauro`. Compare com o original: `sha256sum`.
-2. Restaure o dump mais recente de um banco num Postgres descartável (`docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:16-alpine`; `pg_restore`; uma consulta qualquer) e apague o container.
+2. Restaure o dump mais recente de um banco num Postgres descartável e apague o container: `docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:16-alpine`, espere o `docker exec pg-teste pg_isready`, rode `docker exec -i pg-teste pg_restore -U postgres -d postgres --no-owner --no-acl < <app>-<data>.dump` e faça uma consulta qualquer (`docker exec pg-teste psql -U postgres -c '\dt'`).
 3. Confira que `restic snapshots` mostra backups diários recentes nos dois repositórios, e que o `journalctl -u backup-restic` do último domingo tem o `check` sem erro.
 4. Anote a data do teste e qualquer passo que tenha faltado nesta página, e corrija a página.
