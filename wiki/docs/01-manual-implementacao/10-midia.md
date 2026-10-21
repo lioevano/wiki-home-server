@@ -53,6 +53,9 @@ O dataset `media` (montado na VM em `<vm_nfs_mount_base_path>/<zfs_media_dataset
 
 Como torrents e biblioteca estão no mesmo sistema de arquivos, a importação é um **hardlink**: o arquivo não é copiado e não ocupa o dobro do espaço enquanto o torrent semeia. Toda montagem de `/data` vem da mesma variável `MEDIA_STACK_DATA_PATH` (regra DAD-4 do [índice de integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md#dados)).
 
+!!! info "Transcodificação por hardware"
+    O Jellyfin transcodifica na CPU: a `core-services-vm` não tem GPU (a RX 5600 XT está na `ai-desktop-vm`, com o Ollama). Quando houver uma iGPU ou outra GPU passada para a core, acrescente ao serviço `jellyfin` `devices: ["/dev/dri:/dev/dri"]` e `group_add` com o GID do grupo `render` da VM, e ligue a aceleração em *Dashboard → Playback*. Sem o dispositivo na VM, essa linha impediria a stack de subir, por isso ela não vem pronta.
+
 ## Deploy
 
 1. No vault (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`): `arr_api_keys` (uma chave de 32 caracteres hexadecimais por aplicação: `openssl rand -hex 16`) e `protonvpn_wireguard_private_key` (passo 1 da primeira configuração).
@@ -63,6 +66,7 @@ Como torrents e biblioteca estão no mesmo sistema de arquivos, a importação �
    ```
    O playbook `ansible/playbooks/setup-media-stack-volumes.yml` gera `<NFS>/recyclarr/config/recyclarr.yml` a partir de `ansible/templates/recyclarr.yml.j2` e o `/opt/portainer_stack_envs/media.env` (`0600`, contém as chaves).
 3. Portainer → **Stacks** → **Add Stack** → nome `media` → **Web editor** com `docker/stacks/media/docker-compose.yml` → em **Env**, carregue `/opt/portainer_stack_envs/media.env` → **Deploy the stack**.
+4. Rode de novo o `setup-monitoring-stack-volumes.yml` ([seção 9](09-painel-notificacoes.md)): ele já traz as sondas e os alertas da mídia (`qbittorrent-ou-vpn-fora`, `servico-fora-do-ar`), mas o Prometheus e o Grafana só os carregam depois de reiniciados com a stack `media` no ar. Na primeira instalação, a seção 9 vem antes desta; os alertas da mídia ficam em "sem dados" (`OK`) até aqui.
 
 ### Variáveis da stack
 
@@ -95,7 +99,8 @@ Estes passos ficam no banco de cada aplicação e são feitos na interface, uma 
 
 Webhook para `http://n8n:5678/webhook/notificar`, com o cabeçalho `Authorization: Bearer <notificacoes_webhook_token>`:
 
-- **Sonarr, Radarr, Lidarr e Prowlarr:** *Settings → Connect → + → Webhook*, método `POST`; eventos como *On Import* e *On Health Issue*. O n8n reconhece o formato nativo (`eventType`).
+- **Sonarr, Radarr e Lidarr:** *Settings → Connect → + → Webhook*, método `POST`; eventos como *On Import* e *On Health Issue*. O n8n reconhece o formato nativo (`eventType`).
+- **Prowlarr:** o mesmo webhook, mas ele não importa nada: os eventos são *On Health Issue*, *On Application Update* e *On Grab*.
 - **Seerr:** *Settings → Notifications → Webhook*, com o *JSON Payload* `{"titulo": "{{event}}", "mensagem": "{{subject}}", "gravidade": "info", "app": "seerr"}` e os eventos de pedido.
 - **Jellyfin:** plugin **Webhook** (*Painel → Plugins → Catálogo*), *Generic Destination* para a mesma URL com o modelo `{"titulo": "{{NotificationType}}", "mensagem": "{{Name}}", "gravidade": "info", "app": "jellyfin"}`.
 

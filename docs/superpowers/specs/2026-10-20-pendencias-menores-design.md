@@ -94,11 +94,11 @@ O `dev.py lint` roda `docker compose config -q` em cada stack **sem variáveis**
 |---|---|---|---|
 | 37 | Widget `seerr` nativo na Homepage | conferir | A Homepage 2.x mantém o widget `jellyseerr` com a mesma API. Mantido; troca quando a imagem fixada tiver o `seerr`. |
 | 38 | `init: true` no Seerr | corrigir | `init: true` (o Node como PID 1 não repassa sinais). |
-| 39 | Recyclarr com `api_key` entre aspas e imagem `:8` | corrigir | Imagem `ghcr.io/recyclarr/recyclarr:8.8.0` e `api_key` sem aspas, conforme o modelo do Recyclarr. |
+| 39 | Recyclarr com `api_key` entre aspas e imagem `:8` | corrigir | Imagem `ghcr.io/recyclarr/recyclarr:8.8.0` e `api_key` **entre aspas** no template: uma chave hexadecimal como `123e45` viraria número no YAML. |
 | 40 | `/dev/dri` do Jellyfin como `devices:` | adiar | A `core-services-vm` não tem GPU (a RX 5600 XT está na `ai-desktop-vm`). Fica para quando houver iGPU ou outra GPU em passthrough. Documentado como opcional na página 10. |
 | 41 | `FIREWALL_INPUT_PORTS` redundante | aceitar | Sem efeito colateral e deixa explícita a porta da WebUI. Mantido. |
 | 42 | Alertas entre as páginas 09 e 10 na instalação | corrigir | A página 10 manda rodar o `setup-monitoring-stack-volumes.yml` depois da stack `media` (sondas e alerta da VPN). |
-| 43 | Guia 03/09 pode citar variáveis removidas | corrigir | Revisar as variáveis citadas no guia contra o `main.yml`. |
+| 43 | Guia 03/09 pode citar variáveis removidas | corrigir | Conferido contra o `.env.template`: o exemplo do Bazarr usava `MEDIA_STACK_MOVIES_PATH`/`TVSHOWS_PATH` (saíram com o `/data` único) e o compose da stack `apps`. Passa a montar `${MEDIA_STACK_DATA_PATH}/media` (DAD-4) no compose da `media`. |
 | 44 | Prowlarr sem evento On Import | corrigir | Página 10: o Prowlarr só tem *On Health Issue*/*On Application Update*. |
 
 ### 1 — coleta (Alloy)

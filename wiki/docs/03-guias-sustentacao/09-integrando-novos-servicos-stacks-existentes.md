@@ -143,7 +143,7 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `med
         ```
     *   Execute o playbook `setup-media-stack-volumes.yml` atualizado.
 
-3.  **Modificar `docker/stacks/apps/docker-compose.yml`:**
+3.  **Modificar `docker/stacks/media/docker-compose.yml`:**
     Adicione o serviço `bazarr`:
     ```yaml
     # ... (serviços Jellyfin, Sonarr, Radarr, qBittorrent) ...
@@ -157,16 +157,16 @@ Suponha que você já tem Sonarr, Radarr e qBittorrent rodando na sua stack `med
           - internal_services
         volumes:
           - "${MEDIA_STACK_BAZARR_CONFIG_PATH}:/config"
-          # Bazarr precisa de acesso de LEITURA às pastas de mídia para encontrar os arquivos de vídeo
-          - "${MEDIA_STACK_MOVIES_PATH}:/movies:ro"
-          - "${MEDIA_STACK_TVSHOWS_PATH}:/tv:ro"
+          # O Bazarr grava a legenda ao lado do vídeo: monta /data/media a partir da mesma variável das
+          # outras aplicações de mídia (regra DAD-4), nunca de uma variável própria.
+          - "${MEDIA_STACK_DATA_PATH}/media:/data/media"
         environment:
           - PUID=${DOCKER_PUID}
           - PGID=${DOCKER_PGID}
           - TZ=${SYSTEM_TIMEZONE}
         labels:
           traefik.enable: "true"
-          traefik.http.routers.bazarr.rule: "Host(`bazarr.{{ base_domain }}`)"
+          traefik.http.routers.bazarr.rule: "Host(`bazarr.${BASE_DOMAIN_FROM_VAULT}`)"
           traefik.http.routers.bazarr.entrypoints: "websecure"
           traefik.http.routers.bazarr.tls.certresolver: "letsencrypt"
           traefik.http.routers.bazarr.middlewares: "authelia-forwardauth@docker"

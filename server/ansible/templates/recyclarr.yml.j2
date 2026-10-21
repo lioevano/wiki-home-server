@@ -5,7 +5,7 @@
 sonarr:
   web-1080p:
     base_url: http://sonarr:8989
-    api_key: {{ arr_api_keys.sonarr }}
+    api_key: "{{ arr_api_keys.sonarr }}" # entre aspas: uma chave hexadecimal como 123e45 viraria número
     quality_definition:
       type: series
     quality_profiles:
@@ -22,7 +22,7 @@ sonarr:
 radarr:
   hd-bluray-web:
     base_url: http://radarr:7878
-    api_key: {{ arr_api_keys.radarr }}
+    api_key: "{{ arr_api_keys.radarr }}"
     quality_definition:
       type: movie
     quality_profiles:

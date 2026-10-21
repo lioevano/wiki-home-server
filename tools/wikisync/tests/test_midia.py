@@ -225,3 +225,21 @@ def test_assistentes_publicos_logo_apos_o_deploy():
     passos = texto[primeira:]
     assert passos.index("**Jellyfin") < passos.index("**ProtonVPN")
     assert passos.index("**Seerr") < passos.index("**ProtonVPN")
+
+
+# --- Pendências menores (#38, #39) ---
+
+def test_seerr_com_init():
+    """#38: o Node como PID 1 não repassa sinais; o init do Docker encerra o Seerr direito."""
+    assert _svc(MEDIA)["seerr"]["init"] is True
+
+
+def test_recyclarr_fixado_e_chave_entre_aspas():
+    """#39: chave hexadecimal sem aspas pode virar número no YAML (ex.: 123e45)."""
+    assert _svc(MEDIA)["recyclarr"]["image"] == "ghcr.io/recyclarr/recyclarr:8.8.0"
+    tpl = (ROOT / "server/ansible/templates/recyclarr.yml.j2").read_text(encoding="utf-8")
+    assert 'api_key: "{{ arr_api_keys.sonarr }}"' in tpl and 'api_key: "{{ arr_api_keys.radarr }}"' in tpl
+    out = render("templates/recyclarr.yml.j2", arr_api_keys={"sonarr": "123e45", "radarr": "0" * 32})
+    cfg = yaml.safe_load(out)
+    assert cfg["sonarr"]["web-1080p"]["api_key"] == "123e45"
+    assert cfg["radarr"]["hd-bluray-web"]["api_key"] == "0" * 32
