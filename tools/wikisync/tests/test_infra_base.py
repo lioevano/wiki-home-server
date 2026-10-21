@@ -148,3 +148,12 @@ def test_prometheus_sem_api_de_ciclo_de_vida():
     """#46: com a 9090 na LAN (remote write), /-/quit e /-/reload ficam desligados."""
     svc = _yaml(ROOT / "server/docker/stacks/apps/docker-compose.yml")["services"]["prometheus"]
     assert "--web.enable-lifecycle" not in svc["command"]
+
+
+def test_docker_reinicia_quando_a_configuracao_muda():
+    """Revisão final: daemon.json e drop-in novos só valem com o daemon reiniciado."""
+    tarefas = _yaml(DOCKER_TASKS)
+    for trecho in ("daemon do Docker", "Docker depois das montagens"):
+        assert _tarefa(tarefas, trecho)["notify"] == "Reiniciar Docker", trecho
+    h = next(h for h in _yaml(ANS / "roles/infra/docker/handlers/main.yml") if h["name"] == "Reiniciar Docker")
+    assert h["ansible.builtin.systemd_service"] == {"name": "docker", "state": "restarted", "daemon_reload": True}

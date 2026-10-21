@@ -1,4 +1,11 @@
 # ansible/roles/infra/docker/handlers/main.yml
+# daemon.json ou drop-in mudados numa VM já instalada. Os containers com restart policy voltam sozinhos.
+- name: Reiniciar Docker
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
+    daemon_reload: true
+
 - name: Reiniciar VM para aplicar mudanças de grupo Docker
   ansible.builtin.reboot:
     msg: "Reiniciando a VM para que as mudanças de associação ao grupo 'docker' tenham efeito para os usuários."

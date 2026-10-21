@@ -40,6 +40,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Reiniciar Docker # numa VM já instalada, a configuração nova só vale com o daemon reiniciado
 
 # Ordem de boot: o Docker sobe depois das montagens NFS (remote-fs.target), para nenhum container nascer com a
 # pasta vazia por baixo. Wants (e não Requires): com o NFS fora, a core ainda sobe Traefik e Authelia.
@@ -59,6 +60,7 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Reiniciar Docker
 
 - name: "Instalar Docker Engine, CLI, Containerd e plugins Compose/Buildx"
   ansible.builtin.apt:

@@ -546,7 +546,8 @@ vm_nfs_allowed_clients_cidr: "192.168.15.0/24"
 portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
 
 # --- Subdomínios de serviços ---
-# Subdomínio do n8n (resulta em n8n.<base_domain>).
+# Subdomínio do n8n (resulta em n8n.<base_domain>). Se mudar, troque também 'n8n' em authelia_dominios_admins
+# e na regra de bypass do /webhook/ do Authelia (página 05).
 n8n_subdomain: "n8n"
 # Painéis de administração: o Authelia só deixa entrar quem está no grupo admins (página 05). Os demais
 # subdomínios protegidos (home., hass.) aceitam qualquer usuário com 2FA.

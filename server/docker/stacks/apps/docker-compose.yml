@@ -10,6 +10,11 @@ networks:
   internal_services:
     name: internal_services
     external: true
+  # Só o Diun e a Homepage alcançam o docker-socket-proxy: com CONTAINERS=1 ele mostra o Env de qualquer
+  # container (segredos), então nenhuma rede de aplicações (n8n, Grafana...) pode enxergá-lo. internal: sem saída.
+  docker_socket:
+    name: docker_socket
+    internal: true
 
 services:
   # ===================== MONITORAMENTO =====================
@@ -125,7 +130,7 @@ services:
     restart: unless-stopped
     networks:
       - proxy
-      - internal_services # docker-socket-proxy
+      - docker_socket # docker-socket-proxy
     volumes:
       - "${MONITORING_DIUN_DATA_PATH}:/data"
     environment:
@@ -145,7 +150,7 @@ services:
     container_name: docker-socket-proxy
     restart: unless-stopped
     networks:
-      - internal_services
+      - docker_socket # rede interna só com o Diun e a Homepage
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     environment:
@@ -161,6 +166,7 @@ services:
     networks:
       - proxy
       - internal_services
+      - docker_socket # docker-socket-proxy (status dos containers)
     volumes:
       - "${MONITORING_HOMEPAGE_CONFIG_PATH}:/app/config"
     environment:

@@ -57,11 +57,11 @@ O `dev.py lint` roda `docker compose config -q` em cada stack **sem variáveis**
 | 14 | Cabeçalho `origem` do conversor sem escape de `"`/`\` | corrigir | Escapar `\` e `"` (YAML entre aspas duplas), com teste. |
 | 15 | `quota` do `notes` conta snapshots | corrigir | `refquota=20G` no dataset `notes`, no lugar da `quota`. Os snapshots não roubam espaço de escrita. |
 | 16 | Alerta `notes-timer-falhou` com `for: 0s` pode repetir | corrigir | A expressão passa a `max_over_time(...[30m])`: a falha que se repete a cada rodada (a unit volta a `activating` e cai de novo) mantém o alerta disparado em vez de resolver e disparar de novo a cada 10 min. Junto com o #34. |
-| 17 | `notes-documentos` sem `RequiresMountsFor=` | corrigir | `RequiresMountsFor=` com a montagem do dataset `files` e a do `notes`. |
+| 17 | `notes-documentos` sem `RequiresMountsFor=` | corrigir | Mudou na revisão final: `ExecStartPre=/usr/bin/mountpoint -q <montagem>` nas duas units. O `RequiresMountsFor=` dispararia a montagem, e quando ela falha a unit fica inativa por dependência, sem `failed` e sem alerta. |
 | 18 | Catálogo marca Dados de `notas` como `nfs` | aceitar | Conferido na execução: o `index.yml` do qmd (a configuração) fica no NFS (`docker-volumes/qmd/config`), e o índice e os documentos convertidos são cache regerável no disco local, como o cache de modelos do Immich. `nfs` está certo pela DAD-1. |
 | 19 | `21027/udp` não publicado e `STGUIADDRESS` pelo padrão da imagem | corrigir / aceitar | `STGUIADDRESS=0.0.0.0:8384` explícito. A `21027/udp` (descoberta local por broadcast) não atravessa a ponte do Docker. Aceito e documentado: o PC e o celular usam o endereço fixo `tcp://<IP da ai-desktop-vm>:22000`. |
 | 20 | Roots do cliente MCP podem trocar as pastas do server-filesystem | corrigir | `read_only: true` no container `notes_escrita` (com `tmpfs` em `/tmp`): mesmo que o cliente troque as roots, só `trabalho/` e `estudos/` aceitam escrita. Os outros caminhos do container são do sistema, sem dados. |
-| 21 | Ordem de boot Docker × NFS | corrigir | Drop-in do `docker.service` com `After=remote-fs.target` e `Wants=remote-fs.target` (role `infra/docker`). Ordena sem exigir: o NFS fora não impede a core de subir. |
+| 21 | Ordem de boot Docker × NFS | corrigir | Drop-in do `docker.service` com `After=remote-fs.target` e `Wants=remote-fs.target` (role `infra/docker`), com handler que reinicia o Docker. Na revisão final, as montagens trocaram `bg` (o systemd o trata como `nofail`, que não ordena o `remote-fs.target`) por `_netdev,x-systemd.mount-timeout=60s`. A ordenação passa a valer, e o NFS fora não impede a core de subir. |
 
 ### 4a — fundação de IA
 
@@ -86,7 +86,7 @@ O `dev.py lint` roda `docker compose config -q` em cada stack **sem variáveis**
 | 33 | Nextcloud cria conta para qualquer usuário do Authelia | corrigir | Política OIDC por cliente (`authorization_policies`, Authelia 4.38): `so_admins` (grupo `admins`) para Open WebUI, MCP e Langfuse; `familia` (grupo `users`) para Immich e Nextcloud. |
 | 34 | Dump sem notificação de falha | corrigir | O coletor `systemd` do Alloy passa a incluir as units de dump (`backup-*`), e o alerta `notes-timer-falhou` vira `timer-falhou`, genérico, para qualquer unit monitorada que falhe. |
 | 35 | `collabora/code:latest` sem versão | corrigir | `collabora/code:26.04.5.1.1`. |
-| 36 | X-Frame-Options global no `office.` | conferir | O Collabora manda `Content-Security-Policy: frame-ancestors`, que nos navegadores atuais prevalece sobre o `X-Frame-Options`. Se o editor não abrir dentro do Nextcloud, a página 11 indica a saída: um middleware próprio para `office.`. |
+| 36 | X-Frame-Options global no `office.` | conferir | O Collabora manda `Content-Security-Policy: frame-ancestors`, que nos navegadores atuais prevalece sobre o `X-Frame-Options`. Se o editor não abrir dentro do Nextcloud, a página 11 indica a saída: tirar o `customFrameOptionsValue` do `securityHeaders` global. O middleware fica no entrypoint e não sai por router. |
 
 ### 2 — mídia
 
@@ -120,7 +120,7 @@ O `dev.py lint` roda `docker compose config -q` em cada stack **sem variáveis**
 | 52 | Autenticação do webhook quando a variável do token está ausente | corrigir | O workflow `notificar` recusa (401) quando `NOTIFICACOES_WEBHOOK_TOKEN` está vazio. |
 | 53 | `n8n update:workflow --active` talvez obsoleto no n8n 2.x | corrigir | Usar `n8n publish:workflow --id=…` (n8n 2.x). |
 | 54 | Variáveis do Telegram duplicadas no `apps.env` | corrigir | Na hora de executar se viu que cada `.env` precisa das duas variáveis e que a duplicação vem da junção manual. O nome repetido sai, e o fluxo do `apps.env` continua como item adiado. |
-| 55 | Diun pelo socket proxy | corrigir | O `diun` da core usa o `docker-socket-proxy` (`DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy:2375`, que ganha `IMAGES=1`), e o socket sai do container. O `diun_ai` ganha um proxy próprio na stack `ai`. |
+| 55 | Diun pelo socket proxy (cada proxy numa rede `internal` só com quem precisa: `CONTAINERS=1` mostra o Env dos containers) | corrigir | O `diun` da core usa o `docker-socket-proxy` (`DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy:2375`, que ganha `IMAGES=1`), e o socket sai do container. O `diun_ai` ganha um proxy próprio na stack `ai`. |
 
 ## 4. A conferir no primeiro deploy (consolidado)
 
@@ -140,3 +140,5 @@ Commits temáticos, um por grupo: CI/lint, 4c1, 4b, 4a, 3, 2, 1, B, roteiro de d
 - **Política de versões:** dezenas de imagens ainda em `:latest`, contra a regra do `server/AGENTS.md`. Fixar tudo exige configurar o Diun com `watch_repo` + `include_tags` (senão ele deixa de avisar). Merece um sub-projeto curto.
 - **GitHub App do Claude** no repositório: permite que as sessões façam o push sozinhas e acompanhem o CI.
 - **Pre-commit local** com `dev.py check` e `lint`: o CI ficou vermelho dois dias sem ninguém notar.
+- **`docker-socket-proxy` em `:latest`** (as duas instâncias): entra na política de versões.
+- **Subdomínio do n8n:** `authelia_dominios_admins` e a regra de bypass do webhook usam o literal `n8n`. Se `n8n_subdomain` mudar, ajuste os dois (há um aviso no `main.yml`).

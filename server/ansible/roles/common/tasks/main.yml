@@ -51,13 +51,16 @@
     # Opções de montagem NFS otimizadas. vers=4.2 é recomendado se suportado pelo host Proxmox.
     # rsize e wsize maiores podem melhorar a performance em redes gigabit.
     # Um item pode trocar as opções (ex.: 'files' só leitura na VM de IA).
-    opts: "{{ item.opts | default('rw,sync,hard,intr,bg,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2') }}"
+    # _netdev + x-systemd.mount-timeout (e não 'bg', que o systemd trata como nofail): a montagem fica ordenada
+    # antes do remote-fs.target, então o Docker (After=remote-fs.target) espera o NFS; com o NFS fora, ela
+    # desiste em 60 s e o boot segue.
+    opts: "{{ item.opts | default('rw,sync,hard,intr,_netdev,x-systemd.mount-timeout=60s,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2') }}"
     state: mounted # Garante que está montado e adiciona a entrada correspondente ao /etc/fstab
   loop: # Itera sobre os datasets ZFS definidos em group_vars/all/main.yml
     - { dataset_name: "{{ zfs_docker_volumes_dataset_name }}" }
     - { dataset_name: "{{ zfs_media_dataset_name }}" }
     # Arquivos do Nextcloud também na VM de IA, só leitura: origem do conversor de documentos (página 12).
-    - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'ai_desktop' in group_names", opts: "ro,hard,intr,bg,noatime,nodiratime,rsize=1048576,vers=4.2" }
+    - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'ai_desktop' in group_names", opts: "ro,hard,intr,_netdev,x-systemd.mount-timeout=60s,noatime,nodiratime,rsize=1048576,vers=4.2" }
     # Fotos (Immich) e arquivos (Nextcloud) na core-services-vm, onde rodam as stacks photos e cloud.
     - { dataset_name: "{{ zfs_photos_dataset_name }}", when_condition: "'core_services' in group_names" }
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'core_services' in group_names" }

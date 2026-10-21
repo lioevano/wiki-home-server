@@ -12,6 +12,11 @@ networks:
   # Rede dos MCPs do segundo cérebro (criada pela stack notes, página 12): suba a stack notes antes desta.
   notes_mcp:
     external: true
+  # Só o diun_ai alcança o proxy do socket: com CONTAINERS=1 ele mostra o Env de qualquer container (as chaves
+  # de provedor do LiteLLM), e o Open WebUI roda código Python na ai_network. internal: sem saída.
+  diun_ai_socket:
+    name: diun_ai_socket
+    internal: true
 
 services:
   # Gateway único: API OpenAI e Anthropic (/v1/messages, usada pelo Claude Code) e passagem do Jev (/typesafe).
@@ -136,7 +141,8 @@ services:
     command: serve
     restart: unless-stopped
     networks:
-      - ai_network
+      - ai_network # registries e n8n
+      - diun_ai_socket # docker-socket-proxy-ai
     volumes:
       - "${AI_STACK_DIUN_DATA_PATH}:/data"
     environment:
@@ -157,7 +163,7 @@ services:
     container_name: docker_socket_proxy_ai
     restart: unless-stopped
     networks:
-      - ai_network
+      - diun_ai_socket
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     environment:

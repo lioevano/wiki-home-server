@@ -32,7 +32,7 @@ O dataset `data/notes` (cota de 20G, [seção 2](02-proxmox-ve-host.md)) é expo
 
 ## Deploy
 
-1. **Host Proxmox:** crie o dataset (`zfs create -o quota=20G data/notes` e o `chown`, [seção 2](02-proxmox-ve-host.md)) e rode o `setup-proxmox-host.yml` (export do `notes` para a VM de IA, `zfs-auto-snapshot` e a propriedade por dataset). Depois, `setup-base-ubuntu.yml` para montar `notes` e `files` (só leitura) na `ai-desktop-vm`.
+1. **Host Proxmox:** crie o dataset (`zfs create -o refquota=20G data/notes` e o `chown`, [seção 2](02-proxmox-ve-host.md)) e rode o `setup-proxmox-host.yml` (export do `notes` para a VM de IA, `zfs-auto-snapshot` e a propriedade por dataset). Depois, `setup-base-ubuntu.yml` para montar `notes` e `files` (só leitura) na `ai-desktop-vm`.
 2. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`): `syncthing_gui_password`, `syncthing_api_key` (`openssl rand -hex 24`), `mcp_auth_hmac_secret` (`openssl rand -base64 32`) e `oidc_clients.mcp` — `secret` (`openssl rand -hex 32`) e `secret_digest` gerado como os outros clientes ([seção 11](11-fotos-arquivos.md#deploy)). No `group_vars`, `notes_nextcloud_usuario` = o seu id no Nextcloud (`docker exec -u www-data nextcloud_app php occ user:list`).
 3. **Authelia e Traefik:** rode o `setup-core-networking.yml` (cliente `mcp`, regras `bypass` de `notas.` e `escrita.`, routers `notas.`, `escrita.` e `sync.`) e `docker restart authelia`.
 4. **Volumes, imagens e `.env`** (primeiro com `--check`; o build das três imagens leva alguns minutos):
@@ -49,7 +49,7 @@ O dataset `data/notes` (cota de 20G, [seção 2](02-proxmox-ve-host.md)) é expo
 
 Todos os seus arquivos do Nextcloud (`<files>/<notes_nextcloud_usuario>/files`), exceto imagem, vídeo e áudio, são convertidos para Markdown pelo **markitdown** e indexados como a coleção `documentos`. A conversão roda a cada 10 minutos (timer `notes-documentos`) e é incremental: só converte o que mudou (tamanho ou data) e remove a cópia do que você apagou ou moveu. O resultado fica no disco local da VM (`/opt/local-data/notes-documentos`), porque pode ser regerado a qualquer momento. Arquivos ocultos, links simbólicos e arquivos acima de `notes_documentos_max_mb` ficam de fora; um arquivo que o markitdown não consegue ler aparece no log (`journalctl -u notes-documentos`) e é tentado de novo na próxima rodada.
 
-Se a origem estiver vazia ou não existir (por exemplo, o NFS do `files` não montou), o conversor **não apaga nada** e termina com código 2 — o alerta `timer-falhou` avisa. Com o NFS desmontado, a unit nem começa (`RequiresMountsFor=`). Para recomeçar do zero, apague `/opt/local-data/notes-documentos` inteiro.
+Se a origem estiver vazia ou não existir (por exemplo, o NFS do `files` não montou), o conversor **não apaga nada** e termina com código 2 — o alerta `timer-falhou` avisa. Com o NFS desmontado, a unit falha já no `ExecStartPre` (`mountpoint -q`), e o mesmo alerta avisa. Para recomeçar do zero, apague `/opt/local-data/notes-documentos` inteiro.
 
 ```python title="ansible/templates/notes/conversor.py"
 """Converte os documentos do Nextcloud para Markdown, de forma incremental (segundo cérebro, página 12).
@@ -305,14 +305,14 @@ Dois timers systemd na `ai-desktop-vm`, instalados pelo `setup-notes-volumes.yml
 Description=Converte os documentos do Nextcloud para Markdown (segundo cérebro)
 Requires=docker.service
 After=docker.service remote-fs.target
-# Sem o NFS do files montado, a unit nem começa (o conversor também se recusa a apagar com a origem vazia).
-RequiresMountsFor={{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}
 
 [Service]
 Type=oneshot
 # Um PDF que trave a conversão não para tudo: depois de 4 h a rodada é encerrada (a próxima retoma pelo manifesto).
 # O timeout mata o cliente docker, não o container; por isso o rm -f antes e depois.
 TimeoutStartSec=4h
+# Sem o NFS do files montado, falha logo e o alerta timer-falhou avisa (o conversor também não apagaria nada).
+ExecStartPre=/usr/bin/mountpoint -q {{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}
 ExecStartPre=-/usr/bin/docker rm -f notes_conversor
 ExecStopPost=-/usr/bin/docker rm -f notes_conversor
 ExecStart=/usr/bin/flock -E 0 -n /run/notes-documentos.lock /usr/bin/docker run --rm --name notes_conversor --user {{ docker_puid }}:{{ docker_pgid }} -v {{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}/{{ notes_nextcloud_usuario }}/files:/origem:ro -v {{ vm_local_data_path }}/notes-documentos:/destino localhost/homeserver/notes-conversor:{{ markitdown_version }} --origem /origem --destino /destino --extensoes {{ notes_documentos_extensoes | join(',') }} --max-mb {{ notes_documentos_max_mb }}
@@ -336,11 +336,11 @@ WantedBy=timers.target
 Description=Atualiza o índice do qmd (segundo cérebro)
 Requires=docker.service
 After=docker.service notes-documentos.service
-# Sem os vaults montados, o qmd veria as pastas vazias e tiraria tudo do índice.
-RequiresMountsFor={{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}
 
 [Service]
 Type=oneshot
+# Sem os vaults montados, o qmd veria as pastas vazias e tiraria tudo do índice: falha e avisa.
+ExecStartPre=/usr/bin/mountpoint -q {{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}
 ExecStart=/usr/bin/flock -E 0 -n /run/notes-indice.lock /usr/bin/docker exec qmd sh -c 'qmd update && qmd embed'
 ```
 

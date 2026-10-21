@@ -81,3 +81,16 @@ def test_diun_pelo_socket_proxy():
         assert p["CONTAINERS"] == "1" and p["IMAGES"] == "1" and p["POST"] == "0"
         assert set(d["networks"]) & set(s[proxy]["networks"]), diun
         assert "ports" not in s[proxy]
+
+
+def test_socket_proxy_em_rede_isolada():
+    """Revisão final: CONTAINERS=1 mostra o Env de qualquer container (ex.: chaves do LiteLLM). Só quem precisa
+    (Diun, Homepage) alcança o proxy, por uma rede interna própria; nenhuma rede de aplicações o enxerga."""
+    for compose, proxy, rede, clientes in ((APPS, "docker-socket-proxy", "docker_socket", {"diun", "homepage"}),
+                                           (AI, "docker-socket-proxy-ai", "diun_ai_socket", {"diun_ai"})):
+        doc = yaml.safe_load(compose.read_text(encoding="utf-8"))
+        assert doc["networks"][rede] == {"name": rede, "internal": True}, rede
+        s = doc["services"]
+        assert s[proxy]["networks"] == [rede], proxy
+        com_acesso = {n for n, v in s.items() if rede in (v.get("networks") or [])} - {proxy}
+        assert com_acesso == clientes, compose.name

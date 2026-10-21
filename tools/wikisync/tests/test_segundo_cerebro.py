@@ -540,12 +540,24 @@ def test_origem_com_aspas_e_barra_vira_yaml_valido(tmp_path):
     assert cabecalho["origem"] == 'Nextcloud/rel "final" \\ v2.pdf'
 
 
-def test_units_exigem_as_montagens():
-    """#17: sem o NFS montado, a unit nem começa (em vez de ler uma pasta vazia)."""
-    doc = _unit("notes-documentos.service")
-    assert "RequiresMountsFor=/mnt/pve_data_zfs/files" in doc
-    idx = _unit("notes-indice.service")
-    assert "RequiresMountsFor=/mnt/pve_data_zfs/notes" in idx
+def test_units_falham_sem_as_montagens():
+    """#17 (com a revisão final): sem o NFS montado, a unit falha logo (e o alerta timer-falhou avisa).
+    RequiresMountsFor= não serve: dispararia a montagem e a falha dela deixa a unit inativa, sem alerta."""
+    for nome, caminho in (("notes-documentos.service", "/mnt/pve_data_zfs/files"),
+                          ("notes-indice.service", "/mnt/pve_data_zfs/notes")):
+        u = _unit(nome)
+        assert f"ExecStartPre=/usr/bin/mountpoint -q {caminho}" in u, nome
+        assert "RequiresMountsFor" not in u, nome
+
+
+def test_montagens_nfs_ordenam_antes_do_remote_fs():
+    """#21 (com a revisão final): 'bg' vira nofail no systemd, e montagem nofail não ordena o remote-fs.target."""
+    tarefas = yaml.safe_load((ROOT / "server/ansible/roles/common/tasks/main.yml").read_text(encoding="utf-8"))
+    m = next(t for t in tarefas if "ansible.posix.mount" in t)
+    opcoes = [m["ansible.posix.mount"]["opts"]] + [i["opts"] for i in m["loop"] if "opts" in i]
+    for o in opcoes:
+        assert ",bg," not in o and "nofail" not in o, o
+        assert "_netdev" in o and "x-systemd.mount-timeout=60s" in o, o
 
 
 def test_escrita_com_sistema_de_arquivos_so_leitura():

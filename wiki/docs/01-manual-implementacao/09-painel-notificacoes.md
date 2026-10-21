@@ -64,7 +64,7 @@ Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCH
 | `diun` | `apps` / `core-services-vm` | `http://n8n:5678/webhook/notificar` (rede `proxy`) |
 | `diun_ai` | `ai` / `ai-desktop-vm` | `https://n8n.seudominio.com/webhook/notificar` |
 
-Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`). Nenhum dos dois monta o socket do Docker: o `diun` lê pelo `docker-socket-proxy` da stack `apps` e o `diun_ai` pelo `docker-socket-proxy-ai` da stack `ai` (`DIUN_PROVIDERS_DOCKER_ENDPOINT`), ambos só de leitura (`CONTAINERS=1`, `IMAGES=1`, `POST=0`). O workflow recusa (401) qualquer chamada se a variável do token estiver vazia no n8n.
+Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`). Nenhum dos dois monta o socket do Docker: o `diun` lê pelo `docker-socket-proxy` da stack `apps` e o `diun_ai` pelo `docker-socket-proxy-ai` da stack `ai` (`DIUN_PROVIDERS_DOCKER_ENDPOINT`), ambos só de leitura (`CONTAINERS=1`, `IMAGES=1`, `POST=0`). Cada proxy fica numa rede `internal` própria (`docker_socket` na core, com o Diun e a Homepage; `diun_ai_socket` na VM de IA, só com o `diun_ai`): só de leitura não quer dizer inofensivo, porque `CONTAINERS=1` mostra as variáveis de ambiente de qualquer container, inclusive as chaves de provedor do LiteLLM, e o n8n e o Open WebUI executam código. O workflow recusa (401) qualquer chamada se a variável do token estiver vazia no n8n.
 
 ### Painel (Homepage)
 
@@ -164,7 +164,7 @@ Sonarr, Radarr, Lidarr, Prowlarr, Seerr e Jellyfin ([Mídia](10-midia.md#notific
    - `setup-core-networking.yml` — regra do Authelia que libera `/webhook/` (reinicie o Authelia: `sudo docker restart authelia`);
    - `setup-n8n-volumes.yml` e `setup-monitoring-stack-volumes.yml` — workflow, alertas, blackbox, Diun e Homepage; depois atualize a stack `apps` no Portainer (página 07);
    - `setup-ai-volumes.yml` — `diun_ai`; depois atualize a stack `ai`.
-   As variáveis `TELEGRAM_*` e `NOTIFICACOES_WEBHOOK_TOKEN` saem iguais no `n8n.env` e no `monitoring.env`; ao juntar no `apps.env` elas aparecem duas vezes com o mesmo valor, o que é esperado.
+   As variáveis `TELEGRAM_*` e `NOTIFICACOES_WEBHOOK_TOKEN` saem iguais no `n8n.env` e no `monitoring.env`; a junção no `apps.env` (página 07) mantém só a primeira de cada nome.
 5. Importe e ative o workflow (na `core-services-vm`):
    ```bash
    sudo docker exec n8n_app n8n import:workflow --input=/home/node/.n8n/workflows/notificar.json
