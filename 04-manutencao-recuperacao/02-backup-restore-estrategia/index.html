@@ -3,7 +3,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Estratégia de backup 3-2-1 e procedimentos de restauração de VMs, volumes e configurações.">
+        <meta name="description" content="Backup 3-2-1 do homeserver: dumps diários dos bancos, restic no host Proxmox (disco externo e nuvem), restauração e testes.">
       
       
         <meta name="author" content="Léo Ivan">
@@ -1819,10 +1819,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#a-regra-de-ouro-dos-backups-3-2-1" class="md-nav__link">
+  <a href="#o-que-é-copiado-e-o-que-não-é" class="md-nav__link">
     <span class="md-ellipsis">
       
-        A Regra de Ouro dos Backups: 3-2-1
+        O que é copiado e o que não é
       
     </span>
   </a>
@@ -1830,22 +1830,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#o-que-fazer-backup-e-como-implementar" class="md-nav__link">
+  <a href="#bancos-de-dados-dumps-diários" class="md-nav__link">
     <span class="md-ellipsis">
       
-        O Que Fazer Backup e Como Implementar
+        Bancos de dados: dumps diários
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="O Que Fazer Backup e Como Implementar">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restic-no-host-proxmox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restic no host Proxmox
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Restic no host Proxmox">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-configuração-do-host-proxmox-ve" class="md-nav__link">
+  <a href="#preparar-os-destinos" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Configuração do Host Proxmox VE
+        Preparar os destinos
       
     </span>
   </a>
@@ -1853,54 +1864,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-máquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm" class="md-nav__link">
+  <a href="#arquivos-do-role" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Máquinas Virtuais (VMs) do Proxmox (core-services-vm, ai-desktop-vm)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Dados Persistentes dos Containers Docker (Volumes NFS)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-zfs-snapshots-proteção-local-rápida-no-host-proxmox" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-repositório-git-do-projeto-wiki-home-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Repositório Git do Projeto (wiki-home-server)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-cópia-off-site-essencial-para-cumprir-a-regra-3-2-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Cópia Off-site (Essencial para Cumprir a Regra 3-2-1)
+        Arquivos do role
       
     </span>
   </a>
@@ -1913,10 +1880,93 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testando-seus-backups-e-procedimentos-de-restauração" class="md-nav__link">
+  <a href="#restaurar" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testando Seus Backups e Procedimentos de Restauração
+        Restaurar
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Restaurar">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#um-arquivo-ou-uma-pasta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Um arquivo ou uma pasta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#um-dataset-inteiro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Um dataset inteiro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bancos-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bancos de dados
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#o-host-proxmox-e-as-vms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O host Proxmox e as VMs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#snapshots-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Snapshots ZFS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositório-e-segredos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repositório e segredos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testes-de-restauração" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testes de restauração
       
     </span>
   </a>
@@ -2077,10 +2127,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
       
         <li class="md-nav__item">
-  <a href="#a-regra-de-ouro-dos-backups-3-2-1" class="md-nav__link">
+  <a href="#o-que-é-copiado-e-o-que-não-é" class="md-nav__link">
     <span class="md-ellipsis">
       
-        A Regra de Ouro dos Backups: 3-2-1
+        O que é copiado e o que não é
       
     </span>
   </a>
@@ -2088,22 +2138,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#o-que-fazer-backup-e-como-implementar" class="md-nav__link">
+  <a href="#bancos-de-dados-dumps-diários" class="md-nav__link">
     <span class="md-ellipsis">
       
-        O Que Fazer Backup e Como Implementar
+        Bancos de dados: dumps diários
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="O Que Fazer Backup e Como Implementar">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#restic-no-host-proxmox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Restic no host Proxmox
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Restic no host Proxmox">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-configuração-do-host-proxmox-ve" class="md-nav__link">
+  <a href="#preparar-os-destinos" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Configuração do Host Proxmox VE
+        Preparar os destinos
       
     </span>
   </a>
@@ -2111,54 +2172,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-máquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm" class="md-nav__link">
+  <a href="#arquivos-do-role" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Máquinas Virtuais (VMs) do Proxmox (core-services-vm, ai-desktop-vm)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Dados Persistentes dos Containers Docker (Volumes NFS)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-zfs-snapshots-proteção-local-rápida-no-host-proxmox" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-repositório-git-do-projeto-wiki-home-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Repositório Git do Projeto (wiki-home-server)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#6-cópia-off-site-essencial-para-cumprir-a-regra-3-2-1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        6. Cópia Off-site (Essencial para Cumprir a Regra 3-2-1)
+        Arquivos do role
       
     </span>
   </a>
@@ -2171,10 +2188,93 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#testando-seus-backups-e-procedimentos-de-restauração" class="md-nav__link">
+  <a href="#restaurar" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Testando Seus Backups e Procedimentos de Restauração
+        Restaurar
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Restaurar">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#um-arquivo-ou-uma-pasta" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Um arquivo ou uma pasta
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#um-dataset-inteiro" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Um dataset inteiro
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bancos-de-dados" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bancos de dados
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#o-host-proxmox-e-as-vms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        O host Proxmox e as VMs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#snapshots-zfs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Snapshots ZFS
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#repositório-e-segredos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repositório e segredos
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testes-de-restauração" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testes de restauração
       
     </span>
   </a>
@@ -2202,464 +2302,412 @@
 
 
 <h1 id="estratégia-de-backup-e-procedimentos-de-restauração">Estratégia de Backup e Procedimentos de Restauração<a class="headerlink" href="#estratégia-de-backup-e-procedimentos-de-restauração" title="Permanent link">¶</a></h1>
-<p>Uma estratégia de backup abrangente, bem planejada e regularmente testada é a sua apólice de seguro mais valiosa contra a perda de dados. Falhas de hardware, corrupção de software, erros humanos, ou até mesmo eventos maliciosos como ransomware podem ocorrer, e ter backups confiáveis é o que determinará se você pode se recuperar completamente ou se enfrentará uma perda de dados catastrófica.</p>
-<p>Este guia detalha o que fazer backup em nossa arquitetura de servidor doméstico, como implementar os backups para cada componente, e, crucialmente, os procedimentos para restaurar a partir desses backups.</p>
-<h2 id="a-regra-de-ouro-dos-backups-3-2-1">A Regra de Ouro dos Backups: 3-2-1<a class="headerlink" href="#a-regra-de-ouro-dos-backups-3-2-1" title="Permanent link">¶</a></h2>
-<p>Lembre-se sempre da <strong>regra 3-2-1</strong> para backups, um princípio fundamental na proteção de dados:</p>
+<p>O backup é automático e segue a regra <strong>3-2-1</strong>: três cópias, em duas mídias, uma delas fora de casa. Nada aqui depende de lembrar de rodar um comando. Quando algo falha, chega o alerta <code>timer-falhou</code> no Telegram (<a href="../../01-manual-implementacao/09-painel-notificacoes/">seção 9</a>).</p>
+<table>
+<thead>
+<tr>
+<th>Cópia</th>
+<th>Onde</th>
+<th>O que tem</th>
+<th>Quem faz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Pool ZFS <code>data</code> (produção)</td>
+<td>Tudo</td>
+<td>—</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Disco externo no host Proxmox</td>
+<td><code>docker-volumes</code> (configs e dumps dos bancos), <code>photos</code>, <code>files</code>, <code>notes</code> e o <code>/etc</code> do host</td>
+<td>restic, todo dia às 04:30</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Nuvem compatível com S3 (ex.: Backblaze B2)</td>
+<td>O mesmo, cifrado antes de sair de casa</td>
+<td>restic, na mesma rodada</td>
+</tr>
+</tbody>
+</table>
+<p>Além disso:</p>
 <ul>
-<li><strong>3 Cópias dos Dados:</strong> Mantenha pelo menos <strong>TRÊS</strong> cópias de qualquer dado importante. Isso inclui o dado original (em produção) e pelo menos dois backups.</li>
-<li><strong>2 Mídias Diferentes:</strong> Armazene essas cópias em pelo menos <strong>DOIS</strong> tipos diferentes de mídia de armazenamento. Por exemplo:<ul>
-<li>HD interno do servidor (para o original).</li>
-<li>HDs do pool ZFS <code>/data</code> (para backups locais de VMs, snapshots ZFS).</li>
-<li>Um HD externo USB.</li>
-<li>Armazenamento em nuvem.</li>
-<li>Outro servidor NAS na sua rede.</li>
-</ul>
-</li>
-<li><strong>1 Cópia Off-site:</strong> Mantenha pelo menos <strong>UMA</strong> cópia do backup fisicamente separada do local original do seu servidor (e.g., na nuvem, na casa de um amigo ou familiar de confiança, em um cofre à prova de fogo em outro local). Isso protege contra desastres locais como incêndio, roubo ou inundação.</li>
+<li><strong><code>data/notes</code>:</strong> snapshots automáticos para desfazer edições da IA (<a href="../../01-manual-implementacao/12-segundo-cerebro/#desfazer-uma-edição">seção 12</a>).</li>
+<li><strong>Vaults do Obsidian:</strong> cópia completa no PC e no celular (Syncthing).</li>
+<li><strong>Repositório:</strong> fica no GitHub. O <code>vault.yml</code> vai criptografado.</li>
 </ul>
 <div class="admonition critical">
-<p class="admonition-title">Backups Não Testados São Backups Que Podem Falhar!</p>
-<p>Um backup só é útil se você sabe que pode restaurá-lo com sucesso. <strong>TESTE SEUS PROCEDIMENTOS DE RESTAURAÇÃO REGULARMENTE!</strong> Não espere um desastre real para descobrir que seus backups estão corrompidos ou que você não sabe como usá-los. Consulte a seção <a href="../01-rotinas-manutencao/#6-verificação-e-teste-de-backups">Rotinas de Manutenção Essenciais</a> para dicas sobre testes.</p>
+<p class="admonition-title">Guarde a senha do restic fora do servidor</p>
+<p>Os repositórios são cifrados com <code>restic_senha</code> (vault). Sem ela, <strong>nenhum backup se restaura</strong>. Ela também fica no <code>vault.yml</code>, que só abre com a senha do Ansible Vault. Guarde as duas num gerenciador de senhas, fora do servidor e fora deste repositório.</p>
 </div>
-<h2 id="o-que-fazer-backup-e-como-implementar">O Que Fazer Backup e Como Implementar<a class="headerlink" href="#o-que-fazer-backup-e-como-implementar" title="Permanent link">¶</a></h2>
-<p>Vamos detalhar a estratégia de backup para cada componente crítico da nossa infraestrutura:</p>
-<h3 id="1-configuração-do-host-proxmox-ve">1. Configuração do Host Proxmox VE<a class="headerlink" href="#1-configuração-do-host-proxmox-ve" title="Permanent link">¶</a></h3>
-<p>Isto inclui as configurações do próprio hypervisor Proxmox VE, definições de rede do host, configurações ZFS, NFS, e outros arquivos de sistema importantes.</p>
-<ul>
-<li><strong>O Que Fazer Backup (Arquivos e Diretórios Chave no Host Proxmox):</strong><ul>
-<li><code>/etc/pve/</code> (Contém a configuração do cluster Proxmox, definições de VMs, storage, etc. <strong>MUITO IMPORTANTE!</strong>)</li>
-<li><code>/etc/hostname</code></li>
-<li><code>/etc/hosts</code></li>
-<li><code>/etc/network/interfaces</code> (Configuração de rede do host)</li>
-<li><code>/etc/resolv.conf</code> (Se não for gerenciado dinamicamente)</li>
-<li><code>/etc/default/grub</code> (Opções de boot do kernel, importantes para IOMMU)</li>
-<li><code>/etc/kernel/cmdline</code> (Se usado para opções de kernel)</li>
-<li><code>/etc/modules</code> e <code>/etc/modprobe.d/</code> (Módulos do kernel e blacklists, importantes para passthrough)</li>
-<li><code>/etc/cron*</code> (Tarefas agendadas do host)</li>
-<li><code>/etc/ssh/sshd_config</code> (Configuração do servidor SSH do host)</li>
-<li><code>/etc/smartd.conf</code> (Configuração do monitoramento S.M.A.R.T. de discos)</li>
-<li><code>/etc/zfs/</code> (Configuração do ZFS, embora os metadados do pool estejam nos discos)</li>
-<li><code>/etc/exports</code> (Configuração do servidor NFS, gerada por Ansible)</li>
-<li>Quaisquer outros arquivos de configuração importantes que você tenha modificado manualmente no host.</li>
-</ul>
-</li>
-<li><strong>Como Fazer Backup (Script Agendado no Host Proxmox):</strong><ul>
-<li>Use um script para arquivar esses arquivos e diretórios importantes em um arquivo <code>.tar.gz</code> e salvá-lo no seu dataset de backups ZFS (e.g., <code>/data/backups/proxmox_host_config/</code>).</li>
-<li><strong>Exemplo de Script (<code>/usr/local/sbin/backup_proxmox_host_config.sh</code> no host Proxmox):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># /usr/local/sbin/backup_proxmox_host_config.sh</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Destino do backup (no pool ZFS /data/backups, que deve ser um dataset separado)</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># As variáveis {{ zfs_base_pool_path }} e {{ zfs_backups_dataset_name }} são do Ansible,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># aqui usamos os valores literais ou definimos variáveis no script.</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nv">ZFS_BASE_POOL_PATH</span><span class="o">=</span><span class="s2">"/data"</span><span class="w"> </span><span class="c1"># Ou o que você definiu</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nv">ZFS_BACKUPS_DATASET_NAME</span><span class="o">=</span><span class="s2">"backups"</span><span class="w"> </span><span class="c1"># Ou o que você definiu</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nv">BACKUP_DEST_PARENT</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">ZFS_BASE_POOL_PATH</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">ZFS_BACKUPS_DATASET_NAME</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="nv">BACKUP_DEST</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">BACKUP_DEST_PARENT</span><span class="si">}</span><span class="s2">/proxmox_host_config"</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nv">TIMESTAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="nv">FILENAME</span><span class="o">=</span><span class="s2">"proxmox_etc_backup_</span><span class="si">${</span><span class="nv">TIMESTAMP</span><span class="si">}</span><span class="s2">.tar.gz"</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Garante que o diretório de destino exista</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_DEST</span><span class="s2">"</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Iniciando backup da configuração do host Proxmox para </span><span class="si">${</span><span class="nv">BACKUP_DEST</span><span class="si">}</span><span class="s2">/</span><span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="s2">..."</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Lista de arquivos e diretórios a serem backupeados</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># O -P no tar preserva os caminhos absolutos, mas ao restaurar é melhor</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1"># extrair para um local temporário e copiar seletivamente.</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="c1"># Usar --transform='s,^etc,etc_backup,' pode ser mais seguro para extração.</span>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1"># Para simplicidade aqui, vamos usar caminhos relativos a /etc ou absolutos com cuidado.</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1"># É mais seguro fazer backup de /etc e depois selecionar o que restaurar.</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="c1"># Ou listar explicitamente:</span>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="nv">PATHS_TO_BACKUP</span><span class="o">=</span><span class="s2">"</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="s2">/etc/pve</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="s2">/etc/hostname</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="s2">/etc/hosts</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="s2">/etc/network/interfaces</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="s2">/etc/resolv.conf</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="s2">/etc/default/grub</span>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="s2">/etc/kernel/cmdline</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="s2">/etc/modules</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="s2">/etc/modprobe.d</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="s2">/etc/cron.allow</span>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="s2">/etc/cron.deny</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="s2">/etc/cron.d</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="s2">/etc/cron.daily</span>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="s2">/etc/cron.hourly</span>
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="s2">/etc/cron.monthly</span>
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="s2">/etc/cron.weekly</span>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="s2">/etc/crontab</span>
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="s2">/etc/issue</span>
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="s2">/etc/issue.net</span>
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="s2">/etc/ssh/sshd_config</span>
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="s2">/etc/smartd.conf</span>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="s2">/etc/zfs</span>
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="s2">/etc/exports</span>
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="s2">"</span>
-</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="c1"># Outros locais importantes podem incluir /root (para scripts), /usr/local/sbin (para scripts customizados)</span>
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>
-</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>tar<span class="w"> </span>czfP<span class="w"> </span><span class="si">${</span><span class="nv">BACKUP_DEST</span><span class="si">}</span>/<span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">PATHS_TO_BACKUP</span><span class="si">}</span>
-</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="c1"># Alternativa mais segura para restauração: cd / &amp;&amp; tar czf ${BACKUP_DEST}/${FILENAME} etc/pve etc/hostname ...</span>
-</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a>
-</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup da configuração do host Proxmox concluído com sucesso: </span><span class="si">${</span><span class="nv">FILENAME</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a><span class="w">  </span><span class="c1"># Opcional: Remover backups antigos deste tipo (e.g., manter os últimos 7)</span>
-</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a><span class="w">  </span>find<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_DEST</span><span class="s2">"</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">"proxmox_etc_backup_*.tar.gz"</span><span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete
-</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a><span class="k">else</span>
-</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup da configuração do host Proxmox falhou."</span>
-</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a><span class="w">  </span><span class="c1"># Adicione aqui uma notificação por email ou outro método, se desejar.</span>
-</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a><span class="k">fi</span>
-</span></code></pre></div></li>
-<li><strong>Agendamento:</strong> Torne o script executável (<code>sudo chmod +x ...</code>) e agende-o com <code>cron</code> para rodar diariamente (e.g., <code>sudo crontab -e</code> e adicione <code>0 3 * * * /usr/local/sbin/backup_proxmox_host_config.sh</code>).</li>
-</ul>
-</li>
-<li><strong>Como Restaurar a Configuração do Host Proxmox:</strong><ol>
-<li>Este é um cenário de recuperação de desastre, geralmente após uma reinstalação limpa do Proxmox VE no mesmo hardware ou em um novo (consulte <a href="../04-reconstruindo-infraestrutura/">Reconstruindo a Infraestrutura</a>).</li>
-<li>Copie o arquivo <code>.tar.gz</code> de backup mais recente para o novo host Proxmox (e.g., para <code>/tmp</code>).</li>
-<li><strong>Com MUITO CUIDADO</strong>, extraia seletivamente os arquivos e diretórios necessários. <strong>Não sobrescreva tudo cegamente</strong>, especialmente se o hardware ou a versão do Proxmox mudaram.
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cd</span><span class="w"> </span>/tmp
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>tar<span class="w"> </span>xzf<span class="w"> </span>proxmox_etc_backup_YYYYMMDD-HHMMSS.tar.gz
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Agora você terá uma estrutura como etc/pve, etc/network, etc. em /tmp</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Copie seletivamente para os locais corretos, e.g.:</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># sudo cp -ar /tmp/etc/pve/* /etc/pve/  (MUITO CUIDADO com este, pode ser melhor restaurar VMs de seus backups)</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># sudo cp /tmp/etc/network/interfaces /etc/network/interfaces (Verifique se os nomes das interfaces são os mesmos)</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># sudo cp /tmp/etc/exports /etc/exports</span>
-</span></code></pre></div></li>
-<li>Pode ser necessário ajustar configurações (e.g., nomes de interface de rede em <code>/etc/network/interfaces</code> se o hardware mudou) antes de reiniciar serviços ou o host.</li>
-<li>Reboot o host Proxmox após restaurar arquivos críticos do sistema.</li>
+<h2 id="o-que-é-copiado-e-o-que-não-é">O que é copiado e o que não é<a class="headerlink" href="#o-que-é-copiado-e-o-que-não-é" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Dados</th>
+<th>Backup</th>
+<th>Por quê</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docker-volumes</code>: configurações das aplicações, hooks, <code>immich.json</code> regerável, <strong>dumps dos bancos</strong></td>
+<td>restic</td>
+<td>É o estado das aplicações</td>
+</tr>
+<tr>
+<td><code>photos</code> (Immich, com os dumps do banco dele em <code>photos/backups/</code>) e <code>files</code> (Nextcloud)</td>
+<td>restic</td>
+<td>Insubstituíveis</td>
+</tr>
+<tr>
+<td><code>notes</code> (vaults do Obsidian)</td>
+<td>restic + snapshots + Syncthing</td>
+<td>Insubstituíveis</td>
+</tr>
+<tr>
+<td><code>/etc</code> do host Proxmox (rede, GRUB/IOMMU, <code>/etc/pve</code> com a definição das VMs)</td>
+<td>restic</td>
+<td>Atalho para reinstalar o host igual</td>
+</tr>
+<tr>
+<td><code>media</code> (filmes, séries, músicas, torrents)</td>
+<td><strong>não</strong></td>
+<td>Pode ser baixada de novo e não cabe na nuvem. Para mudar, inclua o dataset em <code>restic_datasets</code></td>
+</tr>
+<tr>
+<td><code>docker-volumes/prometheus/data</code> e <code>loki/data</code></td>
+<td><strong>não</strong> (<code>restic_excluir</code>)</td>
+<td>Métricas e logs mudam o tempo todo; perder o histórico não para nada</td>
+</tr>
+<tr>
+<td>Disco local das VMs (<code>/opt/local-data</code>): bancos, índice do qmd, documentos convertidos, banco do Syncthing, estado dos mcp-auth-proxy, base dos agentes (config do hub <code>agentgateway</code>, clone e segredos do runner do <code>ops</code>; <a href="../../01-manual-implementacao/13-agentes-base/">seção 13</a>), Langfuse</td>
+<td>só os <strong>bancos</strong>, pelos dumps</td>
+<td>O resto é regerável pelos playbooks a partir do vault, ou é descartável (traces do Langfuse)</td>
+</tr>
+<tr>
+<td>Discos das VMs</td>
+<td><strong>não</strong></td>
+<td>As VMs são recriadas pelo <code>vm-deploy.yml</code> e pelos playbooks (<a href="../04-reconstruindo-infraestrutura/">reconstrução</a>)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="bancos-de-dados-dumps-diários">Bancos de dados: dumps diários<a class="headerlink" href="#bancos-de-dados-dumps-diários" title="Permanent link">¶</a></h2>
+<p>Todo Postgres roda no disco local da sua VM (o Postgres exige ser dono dos arquivos, o que o NFS com <code>all_squash</code> não permite; regra DAD-5). Um dump diário vai para o NFS, onde o restic o pega às 04:30. Todos usam o mesmo <code>ansible/playbooks/tasks/dump-postgres.yml</code> (script <code>ansible/templates/backup-postgres.sh.j2</code>, unit e timer <code>backup-&lt;nome&gt;-db</code>), que guarda duas semanas:</p>
+<table>
+<thead>
+<tr>
+<th>Banco</th>
+<th>VM</th>
+<th>Horário</th>
+<th>Destino (em <code>/data/docker-volumes</code>)</th>
+<th>Instalado por</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authelia (2FA, sessões, consentimentos OIDC)</td>
+<td>core</td>
+<td>03:15</td>
+<td><code>authelia/db-dumps/</code></td>
+<td><code>setup-core-networking.yml</code></td>
+</tr>
+<tr>
+<td>Grafana (usuários, service accounts, painéis da tela)</td>
+<td>core</td>
+<td>03:20</td>
+<td><code>grafana/db-dumps/</code></td>
+<td><code>setup-monitoring-stack-volumes.yml</code></td>
+</tr>
+<tr>
+<td>Nextcloud (banco e o <code>config/</code>)</td>
+<td>core</td>
+<td>03:30</td>
+<td><code>nextcloud/db-dumps/</code></td>
+<td><code>setup-cloud-stack-volumes.yml</code></td>
+</tr>
+<tr>
+<td>LiteLLM (chaves, orçamentos, uso)</td>
+<td>ai</td>
+<td>03:45</td>
+<td><code>litellm/db-dumps/</code></td>
+<td><code>setup-ai-volumes.yml</code></td>
+</tr>
+<tr>
+<td>Immich</td>
+<td>core</td>
+<td>02:00</td>
+<td><code>/data/photos/backups/</code> (o próprio Immich)</td>
+<td><code>immich.json</code></td>
+</tr>
+</tbody>
+</table>
+<p>Antes do deploy da stack, sem o container do banco, o dump só registra um aviso no journal e não falha. Depois do deploy, uma falha deixa a unit em <code>failed</code> e o alerta <code>timer-falhou</code> avisa.</p>
+<h2 id="restic-no-host-proxmox">Restic no host Proxmox<a class="headerlink" href="#restic-no-host-proxmox" title="Permanent link">¶</a></h2>
+<p>O role <code>ansible/roles/infra/restic/</code> (aplicado pelo <code>setup-proxmox-host.yml</code>) instala o restic do Debian e roda o <code>backup-restic</code> todo dia às <code>restic_horario</code> (04:30). Para cada dataset de <code>restic_datasets</code>, ele:</p>
+<ol>
+<li>Tira um snapshot ZFS (<code>data/&lt;dataset&gt;@restic</code>), para copiar um estado consistente mesmo com as aplicações gravando.</li>
+<li>Monta o snapshot só leitura em <code>/mnt/restic/&lt;dataset&gt;</code>. O caminho é sempre o mesmo, então o restic deduplica contra o backup anterior.</li>
+<li>Copia para <strong>cada</strong> repositório de <code>restic_repositorios</code>. Um repositório que falha (nuvem fora, disco desligado) não impede o outro.</li>
+<li>Apaga os backups antigos (<code>restic_retencao</code>: 7 diários, 4 semanais, 12 mensais).</li>
+<li>Aos domingos, relê 5% dos dados de cada repositório (<code>restic check --read-data-subset</code>) para achar corrupção.</li>
+<li>Desmonta e apaga o snapshot, também em caso de erro.</li>
 </ol>
-</li>
-</ul>
-<h3 id="2-máquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm">2. Máquinas Virtuais (VMs) do Proxmox (<code>core-services-vm</code>, <code>ai-desktop-vm</code>)<a class="headerlink" href="#2-máquinas-virtuais-vms-do-proxmox-core-services-vm-ai-desktop-vm" title="Permanent link">¶</a></h3>
-<p>Proxmox VE tem um sistema de backup integrado robusto para VMs.</p>
-<ul>
-<li><strong>Como Fazer Backup (Recomendado: via UI Proxmox para Agendamento):</strong><ol>
-<li><strong>Configure um Storage de Backup no Proxmox:</strong><ul>
-<li>Na UI web do Proxmox: Datacenter -&gt; Storage -&gt; Add -&gt; Directory.</li>
-<li><strong>ID:</strong> Dê um nome (e.g., <code>local_zfs_backups</code>).</li>
-<li><strong>Directory:</strong> Especifique o caminho no host Proxmox para o seu dataset ZFS de backups (e.g., <code>{{ zfs_base_pool_path }}/{{ zfs_backups_dataset_name }}/vms</code> que seria <code>/data/backups/vms</code>). Crie este subdiretório <code>vms</code> se não existir.</li>
-<li><strong>Content:</strong> Selecione <strong>APENAS "VZDump backup file"</strong>.</li>
-<li><strong>Max Backups:</strong> Você pode definir uma retenção aqui, mas é melhor gerenciar a retenção no próprio job de backup.</li>
-</ul>
-</li>
-<li><strong>Crie um Job de Backup Agendado:</strong><ul>
-<li>Na UI web do Proxmox: Datacenter -&gt; Backup -&gt; Add.</li>
-<li><strong>Node:</strong> Selecione seu nó Proxmox (<code>pve</code>).</li>
-<li><strong>Storage:</strong> Escolha o storage de backup que você acabou de configurar (e.g., <code>local_zfs_backups</code>).</li>
-<li><strong>Schedule:</strong> Defina a frequência (e.g., <code>Diariamente às 02:00</code>).</li>
-<li><strong>Selection mode:</strong> "Include selected VMs". Selecione suas VMs (<code>core-services-vm</code>, <code>ai-desktop-vm</code>).</li>
-<li><strong>Mode:</strong><ul>
-<li><code>Snapshot</code>: Recomendado. Cria um snapshot da VM em execução e faz o backup a partir dele. Consistente para a maioria das cargas de trabalho. Mínimo downtime.</li>
-<li><code>Suspend</code>: Suspende a VM, faz o backup e depois retoma. Mais consistente, mas causa um breve downtime.</li>
-<li><code>Stop</code>: Desliga a VM, faz o backup e depois religa (se configurado). Máxima consistência, maior downtime.</li>
-</ul>
-</li>
-<li><strong>Compression:</strong> <code>ZSTD (good)</code> é geralmente uma boa escolha, oferecendo boa compressão com velocidade razoável.</li>
-<li><strong>Retention:</strong> Configure quantas cópias de backup manter (e.g., Keep last: 7 diárias, Keep weekly: 4, Keep monthly: 3). Proxmox podará os backups antigos automaticamente.</li>
-<li><strong>Email Notification:</strong> Configure para receber emails sobre o status dos backups.</li>
-</ul>
-</li>
-</ol>
-</li>
-<li><strong>Como Restaurar uma VM:</strong><ol>
-<li>Na UI web do Proxmox:<ul>
-<li>Selecione o <strong>storage de backup</strong> na árvore à esquerda (e.g., <code>local_zfs_backups</code>).</li>
-<li>A aba "Backups" listará os arquivos de backup disponíveis.</li>
-<li>Selecione o arquivo de backup da VM que você deseja restaurar.</li>
-<li>Clique no botão "<strong>Restore</strong>".</li>
-</ul>
-</li>
-<li>No diálogo "Restore":<ul>
-<li><strong>VM ID:</strong> Você pode restaurar para o VM ID original (sobrescrevendo a VM existente, se houver e estiver desligada) ou para um <strong>novo VM ID</strong> (criando uma nova VM a partir do backup).</li>
-<li><strong>Storage:</strong> Escolha onde o disco da VM restaurada será armazenado (e.g., <code>local-lvm</code>).</li>
-<li>Outras opções como <code>MAC address</code> (gerar novo ou usar o do backup), <code>Start after restore</code>.</li>
-</ul>
-</li>
-<li>Clique em "Restore". Monitore a tarefa na parte inferior da UI.</li>
-</ol>
-</li>
-</ul>
-<h3 id="3-dados-persistentes-dos-containers-docker-volumes-nfs">3. Dados Persistentes dos Containers Docker (Volumes NFS)<a class="headerlink" href="#3-dados-persistentes-dos-containers-docker-volumes-nfs" title="Permanent link">¶</a></h3>
-<p>Estes são os dados críticos que residem nos seus datasets ZFS (e.g., <code>/data/docker-volumes</code>, <code>/data/media</code>, <code>/data/photos</code>, <code>/data/files</code>, <code>/data/rag_sources</code>) e são montados nas VMs via NFS para os containers Docker.</p>
-<h4 id="a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana">A. Bancos de Dados das Aplicações (PostgreSQL para Authelia, Nextcloud, Grafana)<a class="headerlink" href="#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana" title="Permanent link">¶</a></h4>
-<div class="admonition warning">
-<p class="admonition-title">Immich e Nextcloud: bancos no disco local da VM</p>
-<p>Os bancos do Immich (<code>immich_db</code>) e do Nextcloud (<code>nextcloud_db</code>) ficam em <code>/opt/local-data</code> na <code>core-services-vm</code>, <strong>fora dos snapshots ZFS</strong>. O backup deles são os dumps diários, já automatizados (<a href="../../01-manual-implementacao/11-fotos-arquivos/">Fotos e Arquivos</a>):</p>
-<ul>
-<li><strong>Immich:</strong> o próprio Immich grava um dump por dia em <code>/data/photos/backups/</code> (14 últimos);</li>
-<li>
-<p><strong>Nextcloud:</strong> o timer <code>backup-nextcloud-db.timer</code> grava <code>nextcloud-&lt;data&gt;.dump</code> e <code>nextcloud-config-&lt;data&gt;.tar.gz</code> (o <code>config/</code> do Nextcloud, que também fica no disco local) em <code>/data/docker-volumes/nextcloud/db-dumps/</code> (duas semanas).</p>
-</li>
-<li>
-<p><strong>LiteLLM</strong> (na <code>ai-desktop-vm</code>): o timer <code>backup-litellm-db.timer</code> grava <code>litellm-&lt;data&gt;.dump</code> (chaves, orçamentos e histórico de uso) em <code>/data/docker-volumes/litellm/db-dumps/</code> (duas semanas); as chaves também podem ser recriadas pelo <code>setup-ai-keys.yml</code> a partir do vault (<a href="../../01-manual-implementacao/08-stack-ia/">seção 8</a>).</p>
-</li>
-</ul>
-<p>Todos ficam em datasets ZFS (snapshots, Borg e cópia off-site). A restauração de cada um está na página 11. O script de exemplo abaixo vale para os bancos que ainda não têm dump automático (Authelia e Grafana).</p>
-</div>
-<p>É <strong>altamente recomendado</strong> fazer dumps lógicos dos seus bancos de dados, além do backup do volume ZFS onde os arquivos do banco de dados residem. Dumps lógicos são mais portáteis e podem ser mais fáceis de restaurar para diferentes versões do PostgreSQL.</p>
-<ul>
-<li><strong>Como Fazer Backup (Scripts Agendados na <code>core-services-vm</code>):</strong><ul>
-<li>Para cada banco de dados (Authelia, Nextcloud, Grafana), crie um script shell na <code>core-services-vm</code> que use <code>docker exec</code> para executar o comando <code>pg_dump</code> dentro do container Docker do respectivo banco de dados.</li>
-<li>Salve os arquivos de dump (<code>.sql.gz</code>) em um subdiretório do seu montado NFS de backups (e.g., <code>/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/nextcloud/</code>, <code>/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/authelia/</code>, etc.).</li>
-<li><strong>Exemplo de Script para Nextcloud DB (backup lógico do PostgreSQL; ver também as <a href="../01-rotinas-manutencao/">rotinas de manutenção</a>):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># /opt/homelab_scripts/backup_postgres_nextcloud.sh (na core-services-vm)</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="nv">DB_CONTAINER_NAME</span><span class="o">=</span><span class="s2">"nextcloud_db"</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nv">DB_USER</span><span class="o">=</span><span class="s2">"nextcloud"</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nv">DB_NAME</span><span class="o">=</span><span class="s2">"nextcloud"</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nv">BACKUP_DEST_PARENT</span><span class="o">=</span><span class="s2">"/mnt/pve_data_zfs/backups/db_dumps"</span><span class="w"> </span><span class="c1"># Ajuste se seu dataset de backup for diferente</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="nv">APP_BACKUP_DIR</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">BACKUP_DEST_PARENT</span><span class="si">}</span><span class="s2">/nextcloud"</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nv">TIMESTAMP</span><span class="o">=</span><span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nv">BACKUP_FILE</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">APP_BACKUP_DIR</span><span class="si">}</span><span class="s2">/nextcloud_db_</span><span class="si">${</span><span class="nv">TIMESTAMP</span><span class="si">}</span><span class="s2">.sql.gz"</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$APP_BACKUP_DIR</span><span class="s2">"</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Fazendo backup do Nextcloud DB (</span><span class="nv">$DB_NAME</span><span class="s2">) para </span><span class="nv">$BACKUP_FILE</span><span class="s2">..."</span>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1"># Assumindo que a senha está em uma variável de ambiente ou .pgpass dentro do container</span>
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="c1"># ou que o usuário pode dumpar localmente sem senha.</span>
-</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># Se NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV foi usado para criar o usuário no DB,</span>
-</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="c1"># essa senha é necessária aqui. Uma forma é passá-la para o script de forma segura,</span>
-</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1"># ou usar .pgpass no container (mais complexo de automatizar com Ansible).</span>
-</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="c1"># Exemplo tentando usar PGPASSWORD (verifique se sua imagem postgres suporta isso para pg_dump):</span>
-</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="c1"># docker exec -e PGPASSWORD="${NEXTCLOUD_DB_PASSWORD_PLAIN}" \</span>
-</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1">#   -t "$DB_CONTAINER_NAME" pg_dump -U "$DB_USER" -d "$DB_NAME" -h localhost | gzip &gt; "$BACKUP_FILE"</span>
-</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="c1"># Simplificando, assumindo que a conexão local do usuário funciona:</span>
-</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-t<span class="w"> </span><span class="s2">"</span><span class="nv">$DB_CONTAINER_NAME</span><span class="s2">"</span><span class="w"> </span>pg_dump<span class="w"> </span>-U<span class="w"> </span><span class="s2">"</span><span class="nv">$DB_USER</span><span class="s2">"</span><span class="w"> </span>-d<span class="w"> </span><span class="s2">"</span><span class="nv">$DB_NAME</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>gzip<span class="w"> </span>&gt;<span class="w"> </span><span class="s2">"</span><span class="nv">$BACKUP_FILE</span><span class="s2">"</span>
-</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>
-</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup do Nextcloud DB concluído: </span><span class="si">${</span><span class="nv">BACKUP_FILE</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="w">  </span>find<span class="w"> </span><span class="s2">"</span><span class="nv">$APP_BACKUP_DIR</span><span class="s2">"</span><span class="w"> </span>-name<span class="w"> </span><span class="s2">"nextcloud_db_*.sql.gz"</span><span class="w"> </span>-type<span class="w"> </span>f<span class="w"> </span>-mtime<span class="w"> </span>+7<span class="w"> </span>-delete<span class="w"> </span><span class="c1"># Retenção de 7 dias</span>
-</span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="k">else</span>
-</span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup do Nextcloud DB falhou."</span>
-</span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="k">fi</span>
+<p>Qualquer falha deixa a unit em <code>failed</code> e dispara o alerta <code>timer-falhou</code>: o Alloy do host vê as units <code>backup-*</code>. A unit roda com prioridade baixa de disco e CPU, para não atrapalhar as VMs.</p>
+<h3 id="preparar-os-destinos">Preparar os destinos<a class="headerlink" href="#preparar-os-destinos" title="Permanent link">¶</a></h3>
+<ol>
+<li><strong>Disco externo:</strong> formate um HD USB (ext4 serve), descubra o UUID (<code>blkid</code>) e monte-o pelo <code>/etc/fstab</code> do host em <code>/mnt/backup-externo</code>, com <code>nofail</code> para o host subir sem ele:
+   <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>UUID=&lt;uuid-do-disco&gt;  /mnt/backup-externo  ext4  defaults,nofail,x-systemd.device-timeout=10s  0  2
 </span></code></pre></div>
-    Adapte e crie scripts similares para <code>authelia_db</code> e <code>grafana_db</code>.</li>
-<li>Agende esses scripts com <code>cron</code> na <code>core-services-vm</code> para rodarem diariamente.</li>
-</ul>
-</li>
-<li><strong>Como Restaurar um Banco de Dados PostgreSQL de um Dump:</strong><ol>
-<li>Certifique-se de que o container do banco de dados e o usuário/banco de dados vazios existem na stack Docker (o <code>docker-compose.yml</code> deve criá-los se não existirem ao iniciar).</li>
-<li>Copie o arquivo de dump <code>.sql.gz</code> mais recente para a <code>core-services-vm</code> (e.g., para <code>/tmp</code>).</li>
-<li>Execute o comando de restauração (exemplo para Nextcloud):
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Na core-services-vm</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>gunzip<span class="w"> </span>&lt;<span class="w"> </span>/tmp/nextcloud_db_YYYYMMDD-HHMMSS.sql.gz<span class="w"> </span><span class="p">|</span><span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>nextcloud_db<span class="w"> </span>psql<span class="w"> </span>-U<span class="w"> </span>nextcloud<span class="w"> </span>-d<span class="w"> </span>nextcloud
+   O backup confere a <code>montagem</code> antes de gravar. Com o disco desligado, aquele repositório falha (e você é avisado), em vez de encher o disco do sistema.</li>
+<li><strong>Nuvem:</strong> crie um bucket privado no Backblaze B2 (ou outro S3) e uma <em>application key</em> só para ele. O endereço no formato <code>s3:https://&lt;endpoint&gt;/&lt;bucket&gt;/homeserver</code> e as chaves vão para <code>restic_repositorios</code> (página 01). O restic cifra tudo antes de enviar.</li>
+<li><strong>Vault:</strong> <code>restic_senha</code> (<code>openssl rand -base64 32</code>) e <code>restic_repositorios</code>, conforme o <code>vault.yml.example</code> (página 01).</li>
+<li>Aplique: <code>ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass --check</code>, depois sem <code>--check</code>.</li>
+<li><strong>Primeira rodada,</strong> pelo shell do host Proxmox: <code>systemctl start backup-restic.service</code> e acompanhe com <code>journalctl -fu backup-restic</code>. Na primeira vez, o script cria os repositórios (<code>restic init</code>). A primeira cópia para a nuvem pode levar dias; as seguintes só mandam o que mudou.</li>
+</ol>
+<p>Para ver o que existe num repositório, carregue as variáveis dele e use o restic:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sudo<span class="w"> </span>-i
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">set</span><span class="w"> </span>-a<span class="p">;</span><span class="w"> </span>.<span class="w"> </span>/etc/restic/repositorios/nuvem.env<span class="p">;</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span>+a
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>restic<span class="w"> </span>snapshots
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>restic<span class="w"> </span>stats<span class="w"> </span>latest
 </span></code></pre></div>
-    (Substitua os nomes e usuários conforme o banco de dados que está restaurando).</li>
+<h3 id="arquivos-do-role">Arquivos do role<a class="headerlink" href="#arquivos-do-role" title="Permanent link">¶</a></h3>
+<div class="language-yaml highlight"><span class="filename">ansible/roles/infra/restic/tasks/main.yml</span><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># ansible/roles/infra/restic/tasks/main.yml</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Backup automatizado no host Proxmox (página 04/02): restic copia os datasets de restic_datasets, a partir de</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># snapshots ZFS, para cada repositório de restic_repositorios (vault), todo dia às restic_horario.</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Instalar</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">restic"</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nt">ansible.builtin.apt</span><span class="p">:</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">restic</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">present</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="nt">update_cache</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">cache_valid_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3600</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Diretório</span><span class="nv"> </span><span class="s">dos</span><span class="nv"> </span><span class="s">repositórios</span><span class="nv"> </span><span class="s">(só</span><span class="nv"> </span><span class="s">root:</span><span class="nv"> </span><span class="s">senha</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">credenciais)"</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">  </span><span class="nt">ansible.builtin.file</span><span class="p">:</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/restic/repositorios</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0700'</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Ponto</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">montagem</span><span class="nv"> </span><span class="s">dos</span><span class="nv"> </span><span class="s">snapshots"</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">  </span><span class="nt">ansible.builtin.file</span><span class="p">:</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/mnt/restic</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0700'</span>
+</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>
+</span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Variáveis</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">cada</span><span class="nv"> </span><span class="s">repositório"</span>
+</span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">  </span><span class="nt">ansible.builtin.copy</span><span class="p">:</span>
+</span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="s">"/etc/restic/repositorios/{{</span><span class="nv"> </span><span class="s">item.nome</span><span class="nv"> </span><span class="s">}}.env"</span>
+</span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0600'</span>
+</span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-2-35"><a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">      </span><span class="no">RESTIC_REPOSITORY={{ item.repositorio | quote }}</span>
+</span><span id="__span-2-36"><a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="w">      </span><span class="no">RESTIC_PASSWORD={{ restic_senha | quote }}</span>
+</span><span id="__span-2-37"><a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="w">      </span><span class="no">{% if item.montagem | default('') %}</span>
+</span><span id="__span-2-38"><a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="w">      </span><span class="no">RESTIC_MONTAGEM={{ item.montagem | quote }}</span>
+</span><span id="__span-2-39"><a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="w">      </span><span class="no">{% endif %}</span>
+</span><span id="__span-2-40"><a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="w">      </span><span class="no">{% for chave, valor in (item.ambiente | default({})).items() %}</span>
+</span><span id="__span-2-41"><a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="w">      </span><span class="no">{{ chave }}={{ valor | quote }}</span>
+</span><span id="__span-2-42"><a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="w">      </span><span class="no">{% endfor %}</span>
+</span><span id="__span-2-43"><a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">  </span><span class="nt">loop</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">restic_repositorios</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-44"><a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">  </span><span class="nt">loop_control</span><span class="p">:</span>
+</span><span id="__span-2-45"><a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="w">    </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">item.nome</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="w">  </span><span class="nt">no_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># senha e credenciais</span>
+</span><span id="__span-2-47"><a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a>
+</span><span id="__span-2-48"><a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Listar</span><span class="nv"> </span><span class="s">os</span><span class="nv"> </span><span class="s">arquivos</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">repositório</span><span class="nv"> </span><span class="s">existentes"</span>
+</span><span id="__span-2-49"><a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a><span class="w">  </span><span class="nt">ansible.builtin.find</span><span class="p">:</span>
+</span><span id="__span-2-50"><a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a><span class="w">    </span><span class="nt">paths</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/restic/repositorios</span>
+</span><span id="__span-2-51"><a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a><span class="w">    </span><span class="nt">patterns</span><span class="p">:</span><span class="w"> </span><span class="s">"*.env"</span>
+</span><span id="__span-2-52"><a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a><span class="w">  </span><span class="nt">register</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">restic_envs</span>
+</span><span id="__span-2-53"><a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a>
+</span><span id="__span-2-54"><a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Apagar</span><span class="nv"> </span><span class="s">repositórios</span><span class="nv"> </span><span class="s">que</span><span class="nv"> </span><span class="s">saíram</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">restic_repositorios"</span>
+</span><span id="__span-2-55"><a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a><span class="w">  </span><span class="nt">ansible.builtin.file</span><span class="p">:</span>
+</span><span id="__span-2-56"><a id="__codelineno-2-56" name="__codelineno-2-56" href="#__codelineno-2-56"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">item.path</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-57"><a id="__codelineno-2-57" name="__codelineno-2-57" href="#__codelineno-2-57"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">absent</span>
+</span><span id="__span-2-58"><a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a><span class="w">  </span><span class="nt">loop</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">restic_envs.files</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-59"><a id="__codelineno-2-59" name="__codelineno-2-59" href="#__codelineno-2-59"></a><span class="w">  </span><span class="nt">loop_control</span><span class="p">:</span>
+</span><span id="__span-2-60"><a id="__codelineno-2-60" name="__codelineno-2-60" href="#__codelineno-2-60"></a><span class="w">    </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">item.path</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-61"><a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">(item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | map(attribute='nome') | list)</span>
+</span><span id="__span-2-62"><a id="__codelineno-2-62" name="__codelineno-2-62" href="#__codelineno-2-62"></a>
+</span><span id="__span-2-63"><a id="__codelineno-2-63" name="__codelineno-2-63" href="#__codelineno-2-63"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Script</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
+</span><span id="__span-2-64"><a id="__codelineno-2-64" name="__codelineno-2-64" href="#__codelineno-2-64"></a><span class="w">  </span><span class="nt">ansible.builtin.template</span><span class="p">:</span>
+</span><span id="__span-2-65"><a id="__codelineno-2-65" name="__codelineno-2-65" href="#__codelineno-2-65"></a><span class="w">    </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-restic.sh.j2</span>
+</span><span id="__span-2-66"><a id="__codelineno-2-66" name="__codelineno-2-66" href="#__codelineno-2-66"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/usr/local/sbin/backup-restic.sh</span>
+</span><span id="__span-2-67"><a id="__codelineno-2-67" name="__codelineno-2-67" href="#__codelineno-2-67"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-68"><a id="__codelineno-2-68" name="__codelineno-2-68" href="#__codelineno-2-68"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-69"><a id="__codelineno-2-69" name="__codelineno-2-69" href="#__codelineno-2-69"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0750'</span>
+</span><span id="__span-2-70"><a id="__codelineno-2-70" name="__codelineno-2-70" href="#__codelineno-2-70"></a>
+</span><span id="__span-2-71"><a id="__codelineno-2-71" name="__codelineno-2-71" href="#__codelineno-2-71"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Serviço</span><span class="nv"> </span><span class="s">systemd</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
+</span><span id="__span-2-72"><a id="__codelineno-2-72" name="__codelineno-2-72" href="#__codelineno-2-72"></a><span class="w">  </span><span class="nt">ansible.builtin.copy</span><span class="p">:</span>
+</span><span id="__span-2-73"><a id="__codelineno-2-73" name="__codelineno-2-73" href="#__codelineno-2-73"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/systemd/system/backup-restic.service</span>
+</span><span id="__span-2-74"><a id="__codelineno-2-74" name="__codelineno-2-74" href="#__codelineno-2-74"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-75"><a id="__codelineno-2-75" name="__codelineno-2-75" href="#__codelineno-2-75"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-76"><a id="__codelineno-2-76" name="__codelineno-2-76" href="#__codelineno-2-76"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0644'</span>
+</span><span id="__span-2-77"><a id="__codelineno-2-77" name="__codelineno-2-77" href="#__codelineno-2-77"></a><span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-2-78"><a id="__codelineno-2-78" name="__codelineno-2-78" href="#__codelineno-2-78"></a><span class="w">      </span><span class="no">[Unit]</span>
+</span><span id="__span-2-79"><a id="__codelineno-2-79" name="__codelineno-2-79" href="#__codelineno-2-79"></a><span class="w">      </span><span class="no">Description=Backup dos datasets ZFS com restic (página 04/02)</span>
+</span><span id="__span-2-80"><a id="__codelineno-2-80" name="__codelineno-2-80" href="#__codelineno-2-80"></a><span class="w">      </span><span class="no">After=zfs-mount.service network-online.target</span>
+</span><span id="__span-2-81"><a id="__codelineno-2-81" name="__codelineno-2-81" href="#__codelineno-2-81"></a><span class="w">      </span><span class="no">Wants=network-online.target</span>
+</span><span id="__span-2-82"><a id="__codelineno-2-82" name="__codelineno-2-82" href="#__codelineno-2-82"></a>
+</span><span id="__span-2-83"><a id="__codelineno-2-83" name="__codelineno-2-83" href="#__codelineno-2-83"></a><span class="w">      </span><span class="no">[Service]</span>
+</span><span id="__span-2-84"><a id="__codelineno-2-84" name="__codelineno-2-84" href="#__codelineno-2-84"></a><span class="w">      </span><span class="no">Type=oneshot</span>
+</span><span id="__span-2-85"><a id="__codelineno-2-85" name="__codelineno-2-85" href="#__codelineno-2-85"></a><span class="w">      </span><span class="no">ExecStart=/usr/local/sbin/backup-restic.sh</span>
+</span><span id="__span-2-86"><a id="__codelineno-2-86" name="__codelineno-2-86" href="#__codelineno-2-86"></a><span class="w">      </span><span class="no"># Não disputa disco e CPU com as VMs.</span>
+</span><span id="__span-2-87"><a id="__codelineno-2-87" name="__codelineno-2-87" href="#__codelineno-2-87"></a><span class="w">      </span><span class="no">Nice=10</span>
+</span><span id="__span-2-88"><a id="__codelineno-2-88" name="__codelineno-2-88" href="#__codelineno-2-88"></a><span class="w">      </span><span class="no">IOSchedulingClass=idle</span>
+</span><span id="__span-2-89"><a id="__codelineno-2-89" name="__codelineno-2-89" href="#__codelineno-2-89"></a>
+</span><span id="__span-2-90"><a id="__codelineno-2-90" name="__codelineno-2-90" href="#__codelineno-2-90"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Timer</span><span class="nv"> </span><span class="s">systemd</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
+</span><span id="__span-2-91"><a id="__codelineno-2-91" name="__codelineno-2-91" href="#__codelineno-2-91"></a><span class="w">  </span><span class="nt">ansible.builtin.copy</span><span class="p">:</span>
+</span><span id="__span-2-92"><a id="__codelineno-2-92" name="__codelineno-2-92" href="#__codelineno-2-92"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/systemd/system/backup-restic.timer</span>
+</span><span id="__span-2-93"><a id="__codelineno-2-93" name="__codelineno-2-93" href="#__codelineno-2-93"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-94"><a id="__codelineno-2-94" name="__codelineno-2-94" href="#__codelineno-2-94"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-95"><a id="__codelineno-2-95" name="__codelineno-2-95" href="#__codelineno-2-95"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0644'</span>
+</span><span id="__span-2-96"><a id="__codelineno-2-96" name="__codelineno-2-96" href="#__codelineno-2-96"></a><span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-2-97"><a id="__codelineno-2-97" name="__codelineno-2-97" href="#__codelineno-2-97"></a><span class="w">      </span><span class="no">[Unit]</span>
+</span><span id="__span-2-98"><a id="__codelineno-2-98" name="__codelineno-2-98" href="#__codelineno-2-98"></a><span class="w">      </span><span class="no">Description=Agenda o backup diário com restic</span>
+</span><span id="__span-2-99"><a id="__codelineno-2-99" name="__codelineno-2-99" href="#__codelineno-2-99"></a>
+</span><span id="__span-2-100"><a id="__codelineno-2-100" name="__codelineno-2-100" href="#__codelineno-2-100"></a><span class="w">      </span><span class="no">[Timer]</span>
+</span><span id="__span-2-101"><a id="__codelineno-2-101" name="__codelineno-2-101" href="#__codelineno-2-101"></a><span class="w">      </span><span class="no">OnCalendar={{ restic_horario }}</span>
+</span><span id="__span-2-102"><a id="__codelineno-2-102" name="__codelineno-2-102" href="#__codelineno-2-102"></a><span class="w">      </span><span class="no">Persistent=true</span>
+</span><span id="__span-2-103"><a id="__codelineno-2-103" name="__codelineno-2-103" href="#__codelineno-2-103"></a>
+</span><span id="__span-2-104"><a id="__codelineno-2-104" name="__codelineno-2-104" href="#__codelineno-2-104"></a><span class="w">      </span><span class="no">[Install]</span>
+</span><span id="__span-2-105"><a id="__codelineno-2-105" name="__codelineno-2-105" href="#__codelineno-2-105"></a><span class="w">      </span><span class="no">WantedBy=timers.target</span>
+</span><span id="__span-2-106"><a id="__codelineno-2-106" name="__codelineno-2-106" href="#__codelineno-2-106"></a>
+</span><span id="__span-2-107"><a id="__codelineno-2-107" name="__codelineno-2-107" href="#__codelineno-2-107"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Habilitar</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">timer</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
+</span><span id="__span-2-108"><a id="__codelineno-2-108" name="__codelineno-2-108" href="#__codelineno-2-108"></a><span class="w">  </span><span class="nt">ansible.builtin.systemd_service</span><span class="p">:</span>
+</span><span id="__span-2-109"><a id="__codelineno-2-109" name="__codelineno-2-109" href="#__codelineno-2-109"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-restic.timer</span>
+</span><span id="__span-2-110"><a id="__codelineno-2-110" name="__codelineno-2-110" href="#__codelineno-2-110"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-111"><a id="__codelineno-2-111" name="__codelineno-2-111" href="#__codelineno-2-111"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">started</span>
+</span><span id="__span-2-112"><a id="__codelineno-2-112" name="__codelineno-2-112" href="#__codelineno-2-112"></a><span class="w">    </span><span class="nt">daemon_reload</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span></code></pre></div>
+<div class="language-bash highlight"><span class="filename">ansible/roles/infra/restic/templates/backup-restic.sh.j2</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># ansible/roles/infra/restic/templates/backup-restic.sh.j2</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Backup diário dos datasets ZFS (restic_datasets) para cada repositório de restic_repositorios (página 04/02).</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Cada dataset sai de um snapshot (cópia consistente), montado só leitura sempre no mesmo caminho</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># (/mnt/restic/&lt;dataset&gt;): o restic deduplica contra o backup anterior e a restauração não depende do snapshot.</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Um repositório que falha não impede os outros; qualquer falha termina com código 1 (unit 'failed', alerta</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># timer-falhou). Gerado pelo role infra/restic.</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nb">set</span><span class="w"> </span>-uo<span class="w"> </span>pipefail
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="nv">POOL</span><span class="o">=</span><span class="s2">"{{ zfs_base_pool_path | basename }}"</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="nv">SNAP</span><span class="o">=</span><span class="s2">"restic"</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="nv">BASE</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">RESTIC_BASE</span><span class="k">:-</span><span class="p">/mnt/restic</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="nv">ENV_DIR</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">RESTIC_ENV_DIR</span><span class="k">:-</span><span class="p">/etc/restic/repositorios</span><span class="si">}</span><span class="s2">"</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="nv">DATASETS</span><span class="o">=({</span>%<span class="w"> </span><span class="k">for</span><span class="w"> </span>ds<span class="w"> </span><span class="k">in</span><span class="w"> </span>restic_datasets<span class="w"> </span>%<span class="o">}</span><span class="s2">"{{ ds }}"</span><span class="o">{{</span><span class="w"> </span><span class="s2">" "</span><span class="w"> </span><span class="k">if</span><span class="w"> </span>not<span class="w"> </span>loop.last<span class="w"> </span><span class="o">}}{</span>%<span class="w"> </span>endfor<span class="w"> </span>%<span class="o">})</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="nv">EXCLUIR</span><span class="o">=({</span>%<span class="w"> </span><span class="k">for</span><span class="w"> </span>ex<span class="w"> </span><span class="k">in</span><span class="w"> </span>restic_excluir<span class="w"> </span>%<span class="o">}</span>--exclude<span class="w"> </span><span class="s2">"</span><span class="nv">$BASE</span><span class="s2">/{{ ex }}"</span><span class="o">{{</span><span class="w"> </span><span class="s2">" "</span><span class="w"> </span><span class="k">if</span><span class="w"> </span>not<span class="w"> </span>loop.last<span class="w"> </span><span class="o">}}{</span>%<span class="w"> </span>endfor<span class="w"> </span>%<span class="o">})</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># Arquivos do próprio host (rede, GRUB/IOMMU, /etc/pve): pequenos, copiados direto, sem snapshot.</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="nv">HOST</span><span class="o">=({</span>%<span class="w"> </span><span class="k">for</span><span class="w"> </span>c<span class="w"> </span><span class="k">in</span><span class="w"> </span>restic_host_caminhos<span class="w"> </span>%<span class="o">}</span><span class="s2">"{{ c }}"</span><span class="o">{{</span><span class="w"> </span><span class="s2">" "</span><span class="w"> </span><span class="k">if</span><span class="w"> </span>not<span class="w"> </span>loop.last<span class="w"> </span><span class="o">}}{</span>%<span class="w"> </span>endfor<span class="w"> </span>%<span class="o">})</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="nb">read</span><span class="w"> </span>-r<span class="w"> </span>-a<span class="w"> </span>RETENCAO<span class="w"> </span><span class="o">&lt;&lt;&lt;</span><span class="w"> </span><span class="s2">"{{ restic_retencao }}"</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="nv">CHECK_PARCIAL</span><span class="o">=</span><span class="s2">"{{ restic_check_parcial }}"</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="o">{</span>%<span class="w"> </span>raw<span class="w"> </span>%<span class="o">}</span>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="nv">falhas</span><span class="o">=</span><span class="m">0</span>
+</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>
+</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>limpar<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">    </span><span class="k">for</span><span class="w"> </span>ds<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">DATASETS</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+</span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">        </span>umount<span class="w"> </span><span class="s2">"</span><span class="nv">$BASE</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">"</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+</span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">        </span>zfs<span class="w"> </span>destroy<span class="w"> </span><span class="s2">"</span><span class="nv">$POOL</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">@</span><span class="nv">$SNAP</span><span class="s2">"</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+</span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">    </span><span class="k">done</span>
+</span><span id="__span-3-28"><a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="o">}</span>
+</span><span id="__span-3-29"><a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="nb">trap</span><span class="w"> </span>limpar<span class="w"> </span>EXIT
+</span><span id="__span-3-30"><a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>limpar<span class="w"> </span><span class="c1"># sobra de uma execução interrompida</span>
+</span><span id="__span-3-31"><a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>
+</span><span id="__span-3-32"><a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="nv">caminhos</span><span class="o">=()</span>
+</span><span id="__span-3-33"><a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="k">for</span><span class="w"> </span>ds<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">DATASETS</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+</span><span id="__span-3-34"><a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="w">    </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="s2">"</span><span class="nv">$BASE</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">"</span>
+</span><span id="__span-3-35"><a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span><span class="s2">"</span><span class="nv">$POOL</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">@</span><span class="nv">$SNAP</span><span class="s2">"</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mount<span class="w"> </span>-t<span class="w"> </span>zfs<span class="w"> </span>-o<span class="w"> </span>ro<span class="w"> </span><span class="s2">"</span><span class="nv">$POOL</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">@</span><span class="nv">$SNAP</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="nv">$BASE</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-3-36"><a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">        </span><span class="nv">caminhos</span><span class="o">+=(</span><span class="s2">"</span><span class="nv">$BASE</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">"</span><span class="o">)</span>
+</span><span id="__span-3-37"><a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a><span class="w">    </span><span class="k">else</span>
+</span><span id="__span-3-38"><a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: não foi possível montar o snapshot de </span><span class="nv">$POOL</span><span class="s2">/</span><span class="nv">$ds</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+</span><span id="__span-3-39"><a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a><span class="w">        </span><span class="nv">falhas</span><span class="o">=</span><span class="m">1</span>
+</span><span id="__span-3-40"><a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a><span class="w">    </span><span class="k">fi</span>
+</span><span id="__span-3-41"><a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a><span class="k">done</span>
+</span><span id="__span-3-42"><a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="si">${#</span><span class="nv">caminhos</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-3-43"><a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: nenhum dataset para copiar"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+</span><span id="__span-3-44"><a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-45"><a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a><span class="k">fi</span>
+</span><span id="__span-3-46"><a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a>
+</span><span id="__span-3-47"><a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a><span class="nb">shopt</span><span class="w"> </span>-s<span class="w"> </span>nullglob
+</span><span id="__span-3-48"><a id="__codelineno-3-48" name="__codelineno-3-48" href="#__codelineno-3-48"></a><span class="nv">repositorios</span><span class="o">=(</span><span class="s2">"</span><span class="nv">$ENV_DIR</span><span class="s2">"</span>/*.env<span class="o">)</span>
+</span><span id="__span-3-49"><a id="__codelineno-3-49" name="__codelineno-3-49" href="#__codelineno-3-49"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="si">${#</span><span class="nv">repositorios</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-3-50"><a id="__codelineno-3-50" name="__codelineno-3-50" href="#__codelineno-3-50"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: nenhum repositório em </span><span class="nv">$ENV_DIR</span><span class="s2"> (restic_repositorios no vault)"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+</span><span id="__span-3-51"><a id="__codelineno-3-51" name="__codelineno-3-51" href="#__codelineno-3-51"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-52"><a id="__codelineno-3-52" name="__codelineno-3-52" href="#__codelineno-3-52"></a><span class="k">fi</span>
+</span><span id="__span-3-53"><a id="__codelineno-3-53" name="__codelineno-3-53" href="#__codelineno-3-53"></a>
+</span><span id="__span-3-54"><a id="__codelineno-3-54" name="__codelineno-3-54" href="#__codelineno-3-54"></a><span class="k">for</span><span class="w"> </span>env<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">repositorios</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+</span><span id="__span-3-55"><a id="__codelineno-3-55" name="__codelineno-3-55" href="#__codelineno-3-55"></a><span class="w">    </span><span class="nv">nome</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>basename<span class="w"> </span><span class="s2">"</span><span class="nv">$env</span><span class="s2">"</span><span class="w"> </span>.env<span class="k">)</span><span class="s2">"</span>
+</span><span id="__span-3-56"><a id="__codelineno-3-56" name="__codelineno-3-56" href="#__codelineno-3-56"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"== repositório </span><span class="nv">$nome</span><span class="s2">"</span>
+</span><span id="__span-3-57"><a id="__codelineno-3-57" name="__codelineno-3-57" href="#__codelineno-3-57"></a><span class="w">    </span><span class="o">(</span>
+</span><span id="__span-3-58"><a id="__codelineno-3-58" name="__codelineno-3-58" href="#__codelineno-3-58"></a><span class="w">        </span><span class="nb">set</span><span class="w"> </span>-a
+</span><span id="__span-3-59"><a id="__codelineno-3-59" name="__codelineno-3-59" href="#__codelineno-3-59"></a><span class="w">        </span><span class="c1"># shellcheck disable=SC1090</span>
+</span><span id="__span-3-60"><a id="__codelineno-3-60" name="__codelineno-3-60" href="#__codelineno-3-60"></a><span class="w">        </span>.<span class="w"> </span><span class="s2">"</span><span class="nv">$env</span><span class="s2">"</span>
+</span><span id="__span-3-61"><a id="__codelineno-3-61" name="__codelineno-3-61" href="#__codelineno-3-61"></a><span class="w">        </span><span class="nb">set</span><span class="w"> </span>+a
+</span><span id="__span-3-62"><a id="__codelineno-3-62" name="__codelineno-3-62" href="#__codelineno-3-62"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">RESTIC_MONTAGEM</span><span class="k">:-</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>!<span class="w"> </span>mountpoint<span class="w"> </span>-q<span class="w"> </span><span class="s2">"</span><span class="nv">$RESTIC_MONTAGEM</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-3-63"><a id="__codelineno-3-63" name="__codelineno-3-63" href="#__codelineno-3-63"></a><span class="w">            </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO [</span><span class="nv">$nome</span><span class="s2">]: </span><span class="nv">$RESTIC_MONTAGEM</span><span class="s2"> não está montado; nada gravado no disco do sistema"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span>
+</span><span id="__span-3-64"><a id="__codelineno-3-64" name="__codelineno-3-64" href="#__codelineno-3-64"></a><span class="w">            </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-65"><a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a><span class="w">        </span><span class="k">fi</span>
+</span><span id="__span-3-66"><a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a><span class="w">        </span>restic<span class="w"> </span>cat<span class="w"> </span>config<span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>restic<span class="w"> </span>init<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-67"><a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a><span class="w">        </span>restic<span class="w"> </span>backup<span class="w"> </span>--host<span class="w"> </span>homeserver<span class="w"> </span>--tag<span class="w"> </span>zfs<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">EXCLUIR</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">caminhos</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">HOST</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-68"><a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a><span class="w">        </span>restic<span class="w"> </span>forget<span class="w"> </span>--prune<span class="w"> </span>--host<span class="w"> </span>homeserver<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">RETENCAO</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-69"><a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>date<span class="w"> </span>+%u<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"7"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-3-70"><a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a><span class="w">            </span>restic<span class="w"> </span>check<span class="w"> </span>--read-data-subset<span class="w"> </span><span class="s2">"</span><span class="nv">$CHECK_PARCIAL</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-71"><a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a><span class="w">        </span><span class="k">fi</span>
+</span><span id="__span-3-72"><a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a><span class="w">    </span><span class="o">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: falha no repositório </span><span class="nv">$nome</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span><span class="w"> </span><span class="nv">falhas</span><span class="o">=</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
+</span><span id="__span-3-73"><a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a><span class="k">done</span>
+</span><span id="__span-3-74"><a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a>
+</span><span id="__span-3-75"><a id="__codelineno-3-75" name="__codelineno-3-75" href="#__codelineno-3-75"></a><span class="nb">exit</span><span class="w"> </span><span class="s2">"</span><span class="nv">$falhas</span><span class="s2">"</span>
+</span><span id="__span-3-76"><a id="__codelineno-3-76" name="__codelineno-3-76" href="#__codelineno-3-76"></a><span class="o">{</span>%<span class="w"> </span>endraw<span class="w"> </span>%<span class="o">}</span>
+</span></code></pre></div>
+<h2 id="restaurar">Restaurar<a class="headerlink" href="#restaurar" title="Permanent link">¶</a></h2>
+<p>Todos os comandos rodam como root no host Proxmox, com as variáveis do repositório carregadas (<code>set -a; . /etc/restic/repositorios/&lt;nome&gt;.env; set +a</code>). Prefira o disco externo, que é mais rápido; a nuvem fica para quando a casa inteira se perdeu.</p>
+<h3 id="um-arquivo-ou-uma-pasta">Um arquivo ou uma pasta<a class="headerlink" href="#um-arquivo-ou-uma-pasta" title="Permanent link">¶</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>restic<span class="w"> </span>snapshots<span class="w">                                   </span><span class="c1"># escolha o snapshot (ou use latest)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>restic<span class="w"> </span>ls<span class="w"> </span>latest<span class="w"> </span>/mnt/restic/files/leo/files/Documentos
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>restic<span class="w"> </span>restore<span class="w"> </span>latest<span class="w"> </span>--include<span class="w"> </span>/mnt/restic/files/leo/files/Documentos/contrato.pdf<span class="w"> </span>--target<span class="w"> </span>/tmp/restaurado
+</span></code></pre></div>
+<p>Ou navegue com <code>restic mount /mnt/restic-navegar</code> (em outro terminal) e copie o que precisar. Arquivos do Nextcloud restaurados direto em <code>/data/files</code> só aparecem na interface depois de <code>docker exec -u www-data nextcloud_app php occ files:scan --all</code>.</p>
+<h3 id="um-dataset-inteiro">Um dataset inteiro<a class="headerlink" href="#um-dataset-inteiro" title="Permanent link">¶</a></h3>
+<ol>
+<li>Pare no Portainer as stacks que usam o dataset (ex.: <code>photos</code> para <code>/data/photos</code>).</li>
+<li><code>restic restore latest --include /mnt/restic/photos --target /tmp/restauro</code> (o conteúdo fica em <code>/tmp/restauro/mnt/restic/photos</code>; use um disco com espaço).</li>
+<li><code>rsync -aHAX --delete /tmp/restauro/mnt/restic/photos/ /data/photos/</code> e <code>chown -R &lt;docker_puid&gt;:&lt;docker_pgid&gt; /data/photos</code> se o dono mudou.</li>
+<li>Suba as stacks de novo.</li>
 </ol>
-</li>
-</ul>
-<h4 id="b-volumes-de-arquivos-configs-docker-mídia-modelos-rag">B. Volumes de Arquivos (Configs Docker, Mídia, Modelos RAG)<a class="headerlink" href="#b-volumes-de-arquivos-configs-docker-mídia-modelos-rag" title="Permanent link">¶</a></h4>
-<p>Estes são os diretórios e arquivos dentro dos seus datasets ZFS (<code>/data/docker-volumes</code>, <code>/data/media</code>, etc.).</p>
+<h3 id="bancos-de-dados">Bancos de dados<a class="headerlink" href="#bancos-de-dados" title="Permanent link">¶</a></h3>
+<p>Restaure o <code>docker-volumes</code> (ou só a pasta <code>db-dumps</code> do banco) e use o dump mais recente:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># na VM do banco, com o container do banco no ar e vazio (stack recém-criada)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>&lt;container&gt;<span class="w"> </span>pg_restore<span class="w"> </span>-U<span class="w"> </span>&lt;usuário&gt;<span class="w"> </span>-d<span class="w"> </span>&lt;banco&gt;<span class="w"> </span>--clean<span class="w"> </span>--if-exists<span class="w"> </span>&lt;<span class="w"> </span>&lt;app&gt;-&lt;data&gt;.dump
+</span></code></pre></div>
+<p>Os detalhes de cada aplicação: Nextcloud e Immich na <a href="../../01-manual-implementacao/11-fotos-arquivos/">seção 11</a>, LiteLLM na <a href="../../01-manual-implementacao/08-stack-ia/">seção 8</a>. Para o Authelia e o Grafana, pare o container da aplicação (<code>authelia</code>, <code>grafana</code>), restaure no <code>authelia_db</code>/<code>grafana_db</code> e suba de novo.</p>
+<h3 id="o-host-proxmox-e-as-vms">O host Proxmox e as VMs<a class="headerlink" href="#o-host-proxmox-e-as-vms" title="Permanent link">¶</a></h3>
+<p>O host e as VMs são recriados, não restaurados: reinstale o Proxmox, rode o <code>setup-proxmox-host.yml</code>, o <code>vm-deploy.yml</code> e os playbooks das stacks (<a href="../04-reconstruindo-infraestrutura/">reconstrução</a>). O <code>/etc</code> do host no restic serve de consulta para o que foi feito à mão: interfaces de rede, GRUB e IOMMU para o passthrough da GPU, definições das VMs em <code>/etc/pve/qemu-server/</code>. Restaure-o num diretório temporário e copie só o que precisar. <strong>Nunca sobrescreva o <code>/etc</code> inteiro.</strong></p>
+<h2 id="snapshots-zfs">Snapshots ZFS<a class="headerlink" href="#snapshots-zfs" title="Permanent link">¶</a></h2>
+<p>Os snapshots automáticos (<code>zfs-auto-snapshot</code>, instalado pelo <code>setup-proxmox-host.yml</code>) valem <strong>só para <code>data/notes</code></strong>, pela propriedade <code>com.sun:auto-snapshot</code>. Eles servem para desfazer edições da IA nos vaults pelo <code>.zfs/snapshot</code> (<a href="../../01-manual-implementacao/12-segundo-cerebro/#desfazer-uma-edição">seção 12</a>). Snapshot no mesmo pool não é backup: se o pool se perde, ele vai junto. Nos datasets com <code>quota</code> (<code>photos</code>, <code>files</code>), os snapshots ainda consumiriam a cota.</p>
+<p>Para um ponto de volta antes de uma mudança arriscada, tire um à mão e apague depois (<a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/">guia de snapshots</a>):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>zfs<span class="w"> </span>snapshot<span class="w"> </span>data/docker-volumes@antes-da-mudanca
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>zfs<span class="w"> </span>destroy<span class="w"> </span>data/docker-volumes@antes-da-mudanca
+</span></code></pre></div>
+<h2 id="repositório-e-segredos">Repositório e segredos<a class="headerlink" href="#repositório-e-segredos" title="Permanent link">¶</a></h2>
 <ul>
-<li><strong>Como Fazer Backup (Ferramentas Executadas no Host Proxmox, que tem acesso direto aos datasets ZFS):</strong><ul>
-<li><strong>Opção 1: <code>borgbackup</code> (Altamente Recomendado para Eficiência e Criptografia):</strong><ul>
-<li><strong>Vantagens:</strong> Backups incrementais (apenas blocos alterados são enviados após o primeiro backup completo), deduplicação global (economiza muito espaço se houver dados repetidos entre os backups), compressão e criptografia do lado do cliente (seus dados são criptografados antes de saírem do seu servidor).</li>
-<li><strong>Setup Básico:</strong><ol>
-<li><strong>Instale Borg no host Proxmox:</strong> <code>sudo apt install borgbackup</code>.</li>
-<li><strong>Inicialize um Repositório Borg:</strong> Este repositório pode estar em um HD externo conectado ao Proxmox, em outro servidor na sua LAN com acesso SSH, ou em um storage remoto (como Backblaze B2 via <code>rclone</code> como backend para Borg, mais avançado).
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Exemplo para um HD externo montado em /mnt/borg_backup_repo</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># Use --encryption=repokey (requer passphrase na primeira vez e para cada acesso)</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># ou --encryption=keyfile (requer um arquivo de chave exportado). repokey é comum.</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_PASSPHRASE</span><span class="o">=</span><span class="s1">'SUA_PASSPHRASE_FORTE_E_UNICA_PARA_O_REPO_BORG'</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>borg<span class="w"> </span>init<span class="w"> </span>--encryption<span class="o">=</span>repokey<span class="w"> </span>/mnt/borg_backup_repo/meu_repo_borg_data
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nb">unset</span><span class="w"> </span>BORG_PASSPHRASE<span class="w"> </span><span class="c1"># Boa prática</span>
-</span></code></pre></div></li>
-<li><strong>Crie um Script de Backup com Borg (e.g., <code>/usr/local/sbin/backup_zfs_data_with_borg.sh</code>):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_REPO</span><span class="o">=</span><span class="s1">'/mnt/borg_backup_repo/meu_repo_borg_data'</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Para automação, é melhor usar BORG_PASSCOMMAND para buscar a passphrase de um local seguro,</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># ou uma chave SSH se o repo Borg for remoto. Para simplicidade aqui, assumimos BORG_PASSPHRASE.</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># CUIDADO: Não deixe a passphrase em texto plano em um script sem permissões restritas.</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nb">export</span><span class="w"> </span><span class="nv">BORG_PASSPHRASE</span><span class="o">=</span><span class="s1">'SUA_PASSPHRASE_FORTE_E_UNICA_PARA_O_REPO_BORG'</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># Nome do arquivo de backup (archive)</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nv">ARCHIVE_NAME</span><span class="o">=</span><span class="s2">"homelab_data-{now:%Y-%m-%d_%H-%M-%S}"</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Iniciando backup Borg para o repositório </span><span class="si">${</span><span class="nv">BORG_REPO</span><span class="si">}</span><span class="s2"> como </span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">..."</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>borg<span class="w"> </span>create<span class="w"> </span>--verbose<span class="w"> </span>--stats<span class="w"> </span>--list<span class="w"> </span>--progress<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">    </span>--compression<span class="w"> </span>lz4<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">    </span>::<span class="s2">"</span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/docker-volumes<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/media<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/photos<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/files<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">    </span><span class="o">{{</span><span class="w"> </span>zfs_base_pool_path<span class="w"> </span><span class="o">}}</span>/rag_sources<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="w">    </span>--exclude<span class="w"> </span><span class="s1">'{{ zfs_base_pool_path }}/backups'</span><span class="w"> </span><span class="c1"># NÃO FAÇA BACKUP DO DIRETÓRIO DE BACKUPS EM SI!</span>
-</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="w">    </span><span class="c1"># Adicione outros --exclude para caches, arquivos temporários grandes, etc.</span>
-</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="w">    </span><span class="c1"># Ex: --exclude '**/node_modules' --exclude '**/*.pyc' --exclude '**/cache'</span>
-</span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a>
-</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="nv">BACKUP_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
-</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a>
-</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="c1"># Poda de backups antigos (exemplo: manter 7 diários, 4 semanais, 3 mensais)</span>
-</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Podando backups antigos do repositório </span><span class="si">${</span><span class="nv">BORG_REPO</span><span class="si">}</span><span class="s2">..."</span>
-</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>borg<span class="w"> </span>prune<span class="w"> </span>-v<span class="w"> </span>--list<span class="w"> </span>--show-rc<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">    </span>--keep-daily<span class="o">=</span><span class="m">7</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="w">    </span>--keep-weekly<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">    </span>--keep-monthly<span class="o">=</span><span class="m">3</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-33"><a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="w">    </span>--keep-yearly<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="c1"># Opcional: manter 1 anual</span>
-</span><span id="__span-5-34"><a id="__codelineno-5-34" name="__codelineno-5-34" href="#__codelineno-5-34"></a>
-</span><span id="__span-5-35"><a id="__codelineno-5-35" name="__codelineno-5-35" href="#__codelineno-5-35"></a><span class="nv">PRUNE_EXIT_CODE</span><span class="o">=</span><span class="nv">$?</span>
-</span><span id="__span-5-36"><a id="__codelineno-5-36" name="__codelineno-5-36" href="#__codelineno-5-36"></a>
-</span><span id="__span-5-37"><a id="__codelineno-5-37" name="__codelineno-5-37" href="#__codelineno-5-37"></a><span class="c1"># Verificar integridade do repositório (opcional, mas bom de vez em quando)</span>
-</span><span id="__span-5-38"><a id="__codelineno-5-38" name="__codelineno-5-38" href="#__codelineno-5-38"></a><span class="c1"># borg check -v --show-rc</span>
-</span><span id="__span-5-39"><a id="__codelineno-5-39" name="__codelineno-5-39" href="#__codelineno-5-39"></a>
-</span><span id="__span-5-40"><a id="__codelineno-5-40" name="__codelineno-5-40" href="#__codelineno-5-40"></a><span class="nb">unset</span><span class="w"> </span>BORG_PASSPHRASE
-</span><span id="__span-5-41"><a id="__codelineno-5-41" name="__codelineno-5-41" href="#__codelineno-5-41"></a>
-</span><span id="__span-5-42"><a id="__codelineno-5-42" name="__codelineno-5-42" href="#__codelineno-5-42"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-5-43"><a id="__codelineno-5-43" name="__codelineno-5-43" href="#__codelineno-5-43"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Backup Borg e poda concluídos com sucesso."</span>
-</span><span id="__span-5-44"><a id="__codelineno-5-44" name="__codelineno-5-44" href="#__codelineno-5-44"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>ok<span class="w"> </span><span class="s2">"Backup Borg concluído"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">ARCHIVE_NAME</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>borg
-</span><span id="__span-5-45"><a id="__codelineno-5-45" name="__codelineno-5-45" href="#__codelineno-5-45"></a><span class="k">else</span>
-</span><span id="__span-5-46"><a id="__codelineno-5-46" name="__codelineno-5-46" href="#__codelineno-5-46"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Backup Borg ou poda falhou. Código de saída do Backup: </span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="s2">, Poda: </span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-5-47"><a id="__codelineno-5-47" name="__codelineno-5-47" href="#__codelineno-5-47"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>critical<span class="w"> </span><span class="s2">"Backup Borg falhou"</span><span class="w"> </span><span class="s2">"backup=</span><span class="si">${</span><span class="nv">BACKUP_EXIT_CODE</span><span class="si">}</span><span class="s2"> poda=</span><span class="si">${</span><span class="nv">PRUNE_EXIT_CODE</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>borg
-</span><span id="__span-5-48"><a id="__codelineno-5-48" name="__codelineno-5-48" href="#__codelineno-5-48"></a><span class="k">fi</span>
-</span></code></pre></div></li>
-<li>Torne o script executável e agende-o com <code>cron</code>. O aviso no Telegram vem do <code>scripts/notify.sh</code> (copie-o para <code>/opt/homeserver/scripts/</code> no host e configure <code>/etc/default/homeserver-notify</code>, ver <a href="../../01-manual-implementacao/09-painel-notificacoes/">Painel e Notificações</a>).</li>
+<li>O repositório (wiki, Ansible, stacks) está no GitHub; cada <code>git push</code> é uma cópia fora de casa.</li>
+<li>O <code>vault.yml</code> só entra no git criptografado. A senha do Ansible Vault e a <code>restic_senha</code> ficam no seu gerenciador de senhas.</li>
+<li>Sem essas duas senhas, o GitHub e o backup na nuvem não servem para nada.</li>
+</ul>
+<h2 id="testes-de-restauração">Testes de restauração<a class="headerlink" href="#testes-de-restauração" title="Permanent link">¶</a></h2>
+<p>Um backup que nunca foi restaurado não é confiável. <strong>A cada três meses:</strong></p>
+<ol>
+<li>Escolha um arquivo de cada dataset (<code>docker-volumes</code>, <code>photos</code>, <code>files</code>, <code>notes</code>) e restaure-o do repositório <strong>da nuvem</strong> em <code>/tmp/teste-restauro</code>. Compare com o original: <code>sha256sum</code>.</li>
+<li>Restaure o dump mais recente de um banco num Postgres descartável (<code>docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:16-alpine</code>; <code>pg_restore</code>; uma consulta qualquer) e apague o container.</li>
+<li>Confira que <code>restic snapshots</code> mostra backups diários recentes nos dois repositórios, e que o <code>journalctl -u backup-restic</code> do último domingo tem o <code>check</code> sem erro.</li>
+<li>Anote a data do teste e qualquer passo que tenha faltado nesta página, e corrija a página.</li>
 </ol>
-</li>
-</ul>
-</li>
-<li><strong>Opção 2: <code>rsync</code> (Mais Simples, para Sincronização/Cópia Direta):</strong><ul>
-<li>Bom para criar uma cópia espelhada dos seus dados em outro local (e.g., HD externo, outro servidor NAS). Não oferece deduplicação ou versionamento histórico como Borg, a menos que combinado com snapshots ou outras lógicas.</li>
-<li><strong>Exemplo de Script (sincronizar <code>/data/docker-volumes</code> para um HD externo):</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nv">SOURCE_DIR</span><span class="o">=</span><span class="s2">"{{ zfs_base_pool_path }}/docker-volumes/"</span><span class="w"> </span><span class="c1"># Note a barra no final!</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nv">DEST_DIR</span><span class="o">=</span><span class="s2">"/mnt/meu_hd_externo_backup/docker-volumes/"</span><span class="w"> </span><span class="c1"># Note a barra no final!</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nv">LOG_FILE</span><span class="o">=</span><span class="s2">"/var/log/rsync_backup_docker_volumes.log"</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">"Iniciando rsync de </span><span class="si">${</span><span class="nv">SOURCE_DIR</span><span class="si">}</span><span class="s2"> para </span><span class="si">${</span><span class="nv">DEST_DIR</span><span class="si">}</span><span class="s2"> em </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>rsync<span class="w"> </span>-avz<span class="w"> </span>--delete<span class="w"> </span>--human-readable<span class="w"> </span>--info<span class="o">=</span>progress2<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="s2">"</span><span class="si">${</span><span class="nv">SOURCE_DIR</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">    </span><span class="s2">"</span><span class="si">${</span><span class="nv">DEST_DIR</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c1"># --delete: remove arquivos no destino que não existem mais na origem</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="c1"># -a: modo archive (preserva permissões, links, etc.)</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="c1"># -v: verboso</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="c1"># -z: compressão durante a transferência</span>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$?</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-6-16"><a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"Rsync de docker-volumes concluído com sucesso em </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-6-17"><a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>ok<span class="w"> </span><span class="s2">"Rsync de docker-volumes concluído"</span><span class="w"> </span><span class="s2">"Destino: </span><span class="si">${</span><span class="nv">DEST_DIR</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>rsync
-</span><span id="__span-6-18"><a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="k">else</span>
-</span><span id="__span-6-19"><a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">  </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: Rsync de docker-volumes falhou em </span><span class="k">$(</span>date<span class="k">)</span><span class="s2">"</span><span class="w"> </span>&gt;&gt;<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span>
-</span><span id="__span-6-20"><a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a><span class="w">  </span>/opt/homeserver/scripts/notify.sh<span class="w"> </span>critical<span class="w"> </span><span class="s2">"Rsync de docker-volumes falhou"</span><span class="w"> </span><span class="s2">"Veja </span><span class="si">${</span><span class="nv">LOG_FILE</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span>rsync
-</span><span id="__span-6-21"><a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="k">fi</span>
-</span></code></pre></div></li>
-<li>Agende com <code>cron</code>.</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>Como Restaurar Volumes de Arquivos:</strong><ul>
-<li><strong>BorgBackup:</strong><ul>
-<li>Listar arquivos: <code>borg list /caminho/para/repo_borg::nome_do_archive</code></li>
-<li>Montar um archive como sistema de arquivos (para navegar e copiar):
-    <code>borg mount /caminho/para/repo_borg::nome_do_archive /mnt/borg_restore_temp</code>
-    (Depois <code>fusermount -u /mnt/borg_restore_temp</code> para desmontar).</li>
-<li>Extrair (restaurar) arquivos/diretórios para um local:
-    <code>borg extract --verbose --list /caminho/para/repo_borg::nome_do_archive caminho_relativo_dentro_do_archive</code>
-    (Extrai para o diretório atual, ou use <code>--target /caminho/destino/absoluto</code>).</li>
-</ul>
-</li>
-<li><strong>Rsync:</strong> Simplesmente copie os arquivos de volta do seu destino de backup rsync para o local original.</li>
-</ul>
-</li>
-</ul>
-<h3 id="4-zfs-snapshots-proteção-local-rápida-no-host-proxmox">4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)<a class="headerlink" href="#4-zfs-snapshots-proteção-local-rápida-no-host-proxmox" title="Permanent link">¶</a></h3>
-<p>Como detalhado no <a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/">Guia Prático de Snapshots ZFS</a>, os snapshots ZFS são uma forma rápida e eficiente de proteger seus datasets (<code>/data/docker-volumes</code>, <code>/data/media</code>, etc.) contra erros humanos (deleção acidental) ou corrupção de software.</p>
-<ul>
-<li><strong>Como Fazer Snapshots:</strong><ul>
-<li><strong>Manual (para ações pontuais):</strong> <code>sudo zfs snapshot data/docker-volumes@antes_de_uma_mudanca_arriscada</code></li>
-<li><strong>Automatizado com <code>zfs-auto-snapshot</code> (ou <code>sanoid</code>):</strong> neste homeserver ele é instalado pelo <code>setup-proxmox-host.yml</code> e vale <strong>só para <code>data/notes</code></strong> (vaults do Obsidian; propriedade <code>com.sun:auto-snapshot</code>), para desfazer edições da IA — veja <a href="../../01-manual-implementacao/12-segundo-cerebro/#desfazer-uma-edição">Segundo cérebro</a>. Os vaults também têm cópia completa no PC e no celular (Syncthing). O índice do qmd, os documentos convertidos, o banco do Syncthing e o estado dos mcp-auth-proxy ficam no disco local da <code>ai-desktop-vm</code>, fora dos snapshots e sem backup: todos são regeráveis. A base dos agentes (<a href="../../01-manual-implementacao/13-agentes-base/">seção 13</a>) também fica no disco local e sem backup: na <code>core-services-vm</code>, o config do hub <code>agentgateway</code> (regerado pelo <code>setup-agents-volumes.yml</code>), o clone do repositório e os segredos do runner do <code>ops</code> (vêm do vault) e o estado OAuth do <code>mcp_auth_servidor</code>; na <code>ai-desktop-vm</code>, os dados do <strong>Langfuse</strong> (traces descartáveis; organização, projeto e chaves voltam pelas variáveis <code>LANGFUSE_INIT_*</code>).<ul>
-<li>O pacote <code>zfs-auto-snapshot</code> (geralmente instalado com <code>zfsutils-linux</code> no Debian/Ubuntu) configura scripts cron para tirar e podar snapshots automaticamente (e.g., horários, diários, semanais, mensais).</li>
-<li>Verifique a configuração em <code>/etc/cron.*/zfs-auto-snapshot</code> e, se existir, <code>/etc/default/zfs-auto-snapshot</code>.</li>
-<li>Para controle mais avançado e integração com replicação, considere <a href="https://github.com/jimsalterjrs/sanoid">Sanoid/Syncoid</a>.</li>
-</ul>
-</li>
-</ul>
-</li>
-<li><strong>Como Restaurar de um Snapshot ZFS:</strong><ul>
-<li><strong>Rollback (Reverte o dataset inteiro - CUIDADO!):</strong> <code>sudo zfs rollback data/docker-volumes@nome_do_snapshot</code></li>
-<li><strong>Acessar Arquivos de um Snapshot (Método Seguro, Não Destrutivo):</strong>
-    Os snapshots são montados automaticamente em um diretório oculto <code>.zfs/snapshot/</code> dentro do ponto de montagem do dataset ativo.
-    Exemplo: Para restaurar <code>/data/docker-volumes/meuapp/config.txt</code> do snapshot <code>@snap1</code>:
-    <code>sudo cp /data/docker-volumes/.zfs/snapshot/snap1/meuapp/config.txt /data/docker-volumes/meuapp/config.txt</code></li>
-</ul>
-</li>
-</ul>
-<h3 id="5-repositório-git-do-projeto-wiki-home-server">5. Repositório Git do Projeto (<code>wiki-home-server</code>)<a class="headerlink" href="#5-repositório-git-do-projeto-wiki-home-server" title="Permanent link">¶</a></h3>
-<p>Sua configuração de Infraestrutura como Código é um ativo crítico.</p>
-<ul>
-<li><strong>Como Fazer Backup:</strong><ul>
-<li>Regularmente (após cada mudança significativa) execute <code>git add .</code>, <code>git commit -m "Sua mensagem descritiva"</code>, e <strong><code>git push</code> para um repositório Git remoto</strong> (e.g., GitHub, GitLab, Gitea auto-hospedado).</li>
-<li>Isso serve como seu backup principal e off-site para toda a lógica de configuração da sua infraestrutura.</li>
-</ul>
-</li>
-<li><strong>Como Restaurar:</strong><ul>
-<li>Em uma nova máquina de controle Ansible (ou na mesma, se o diretório local foi perdido), simplesmente execute <code>git clone URL_DO_SEU_REPO_REMOTO</code>.</li>
-<li>Certifique-se de ter sua senha do Ansible Vault para descriptografar o <code>vault.yml</code>.</li>
-</ul>
-</li>
-</ul>
-<h3 id="6-cópia-off-site-essencial-para-cumprir-a-regra-3-2-1">6. Cópia Off-site (Essencial para Cumprir a Regra 3-2-1)<a class="headerlink" href="#6-cópia-off-site-essencial-para-cumprir-a-regra-3-2-1" title="Permanent link">¶</a></h3>
-<p>Ter pelo menos uma cópia dos seus backups mais importantes <strong>fora da sua residência</strong> é o que protege contra desastres locais (incêndio, roubo, inundação, surto elétrico que destrói tudo).</p>
-<ul>
-<li><strong>O Que Enviar Off-site:</strong><ul>
-<li>Seu repositório Borg (se usar Borg para os volumes ZFS).</li>
-<li>Os arquivos de backup das VMs Proxmox (<code>.vma.zst</code>).</li>
-<li>Os dumps dos seus bancos de dados.</li>
-<li>O backup da configuração do host Proxmox.</li>
-<li>Seu repositório Git Ansible (o <code>git push</code> para um remote já é off-site).</li>
-</ul>
-</li>
-<li><strong>Métodos para Cópia Off-site:</strong><ul>
-<li><strong><code>rclone</code> para Armazenamento em Nuvem (Recomendado para Automação):</strong><ul>
-<li><a href="https://rclone.org/">rclone</a> é uma ferramenta de linha de comando extremamente versátil para sincronizar arquivos e diretórios com dezenas de provedores de armazenamento em nuvem (e.g., Backblaze B2, Amazon S3/Glacier, Google Cloud Storage, Wasabi, Storj, etc.).</li>
-<li><strong>Setup:</strong><ol>
-<li>Instale <code>rclone</code> no seu host Proxmox (ou em uma VM dedicada para backups).</li>
-<li>Configure um "remote" no <code>rclone</code> para o seu provedor de nuvem escolhido: <code>rclone config</code>. Siga as instruções para autenticar.</li>
-<li><strong>Use a Criptografia do <code>rclone</code> (<code>crypt</code> remote):</strong> É <strong>altamente recomendado</strong> criar um remote do tipo <code>crypt</code> que fica "em cima" do seu remote do provedor de nuvem. Isso garante que seus dados sejam criptografados <strong>antes</strong> de serem enviados para a nuvem, e apenas você tem a chave de descriptografia.</li>
-</ol>
-</li>
-<li><strong>Comandos para Sincronizar/Copiar:</strong>
-    <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Exemplo: Sincronizar o diretório de backups de VMs para um remote crypt 'nuvem_criptografada:'</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="c1"># que aponta para um bucket no Backblaze B2.</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>rclone<span class="w"> </span>sync<span class="w"> </span>/data/backups/vms/<span class="w"> </span>nuvem_criptografada:meu_servidor/proxmox_vm_backups/<span class="w"> </span>--progress<span class="w"> </span>--checksum<span class="w"> </span>--transfers<span class="o">=</span><span class="m">4</span><span class="w"> </span>--checkers<span class="o">=</span><span class="m">8</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># --checksum: verifica arquivos baseados em checksum em vez de apenas tamanho/modtime</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># --transfers, --checkers: ajusta paralelismo</span>
-</span></code></pre></div></li>
-<li>Agende seus comandos <code>rclone</code> com <code>cron</code> no host Proxmox para rodar após seus backups locais serem concluídos.</li>
-</ul>
-</li>
-<li><strong>HD Externo Rotacionado Fisicamente:</strong><ul>
-<li>Mantenha um (ou mais) HDs externos USB.</li>
-<li>Regularmente (e.g., semanalmente), conecte o HD ao host Proxmox, copie seus backups locais para ele (usando <code>rsync</code> ou Borg para um repositório no HD externo).</li>
-<li><strong>Guarde o HD externo em um local seguro e fisicamente separado</strong> da sua casa (e.g., casa de um familiar, trabalho, cofre bancário). Rotacione com outro HD externo.</li>
-</ul>
-</li>
-<li><strong>Servidor de Backup Remoto (Outro Local Físico):</strong>
-    Se você tiver acesso a outro servidor em um local diferente (e.g., casa de um amigo, outro escritório), você pode usar:<ul>
-<li><code>rsync</code> sobre SSH.</li>
-<li>Borg com um repositório remoto via SSH.</li>
-<li><code>zfs send/recv</code> via SSH (se o destino também for ZFS).</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h2 id="testando-seus-backups-e-procedimentos-de-restauração">Testando Seus Backups e Procedimentos de Restauração<a class="headerlink" href="#testando-seus-backups-e-procedimentos-de-restauração" title="Permanent link">¶</a></h2>
-<p>Repetindo pela última vez (mas não menos importante): <strong>TESTE, TESTE, TESTE!</strong></p>
-<ul>
-<li><strong>Agende Testes de Restauração:</strong> Pelo menos uma vez por trimestre, ou após qualquer mudança significativa na sua estratégia de backup ou nos sistemas que você está backupeando.</li>
-<li><strong>Simule Cenários de Falha:</strong><ul>
-<li>"Perdi um arquivo importante no Nextcloud." -&gt; Tente restaurá-lo de um snapshot ZFS ou do dump do banco de dados + backup de arquivos do Nextcloud.</li>
-<li>"Minha VM <code>core-services-vm</code> não inicia mais." -&gt; Tente restaurá-la de um backup do Proxmox para um novo VM ID.</li>
-<li>"O host Proxmox inteiro morreu, mas meus HDDs do pool <code>/data</code> estão OK (ou tenho backup off-site)." -&gt; Siga os passos de <a href="../04-reconstruindo-infraestrutura/">Reconstruindo a Infraestrutura</a>.</li>
-</ul>
-</li>
-<li><strong>Documente Seus Procedimentos de Restauração:</strong> Enquanto você testa, anote os passos exatos. Em uma emergência real, você estará sob pressão e ter um guia passo a passo documentado por você mesmo será inestimável.</li>
-</ul>
-<p>Uma estratégia de backup bem implementada e regularmente testada é o que lhe dará a verdadeira tranquilidade e a capacidade de se recuperar de quase qualquer eventualidade com seu servidor doméstico.</p>
 
 
 
@@ -2680,7 +2728,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:43:24 -03">21 de outubro de 2026</span>
   </span>
 
     

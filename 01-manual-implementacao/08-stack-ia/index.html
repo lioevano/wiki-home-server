@@ -2459,7 +2459,7 @@
 </tr>
 </tbody>
 </table>
-<p>Para mudar variáveis ou segredos: edite o vault ou o <code>group_vars</code> pela wiki, rode o <code>setup-ai-volumes.yml</code> (sem <code>--diff</code>, que imprimiria os segredos), recarregue o <code>ai.env</code> em <strong>Env</strong> e <strong>Update the stack</strong>.</p>
+<p>Para mudar variáveis ou segredos: edite o vault ou o <code>group_vars</code> pela wiki, rode o <code>setup-ai-volumes.yml</code> (sem <code>--diff</code>, que imprimiria os segredos), cole o <code>ai.env</code> atualizado em <strong>Advanced mode</strong> (<a href="../07-deploy-apps/#como-as-stacks-recebem-as-variáveis">como</a>) e <strong>Update the stack</strong>.</p>
 <h2 id="chaves-orçamentos-e-uso">Chaves, orçamentos e uso<a class="headerlink" href="#chaves-orçamentos-e-uso" title="Permanent link">¶</a></h2>
 <p>Cada cliente tem uma <strong>chave virtual</strong> própria (<code>litellm_client_keys</code>), nunca a chave mestra: <code>openwebui</code>, <code>claude_code</code> e <code>n8n</code> (os agentes da próxima etapa ganham as suas). O <code>ansible/playbooks/setup-ai-keys.yml</code> cria no LiteLLM as que faltam (inclusive as apagadas pela tela), troca a chave de um cliente quando o valor no vault muda (apaga a antiga pelo alias e cria a nova) e ajusta o orçamento das que mudaram (<code>litellm_key_budgets</code>, US$ por mês, renovado a cada 30 dias) e os modelos que cada uma enxerga (<code>litellm_key_models_ocultos</code>; sem entrada, todos); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.</p>
 <p><strong>Ver o uso:</strong> <code>https://llm.seudominio.com</code> (atrás do Authelia; entre com a <code>litellm_master_key</code>) mostra gasto, tokens e chamadas por chave e por modelo. O Prometheus raspa as métricas do LiteLLM (job <code>litellm</code>, porta 4001), e o alerta <code>llm-gasto-alto</code> avisa no Telegram quando o gasto das últimas 24 h passa de <code>llm_gasto_diario_alerta</code> (US$ 5 por padrão).</p>
@@ -2468,7 +2468,7 @@
 <p>O login é o <strong>OIDC do Authelia</strong> (cliente <code>openwebui</code>, política <code>so_admins</code>; o container chega ao Authelia pela LAN, com <code>extra_hosts</code>), além do forward-auth na frente: só entra quem está no grupo <code>admins</code> do Authelia, que vira administrador pelo grupo (<code>OAUTH_ADMIN_ROLES</code>; o papel padrão de quem chega é <code>pending</code>). No primeiro acesso:</p>
 <ol>
 <li>Abra <code>https://openwebui.seudominio.com</code> e entre por <strong>Authelia</strong>; se já existia uma conta local com o mesmo e-mail, as duas se juntam.</li>
-<li>Desligue o formulário local: <code>openwebui_login_form: false</code> no <code>group_vars</code> (pela wiki), rode o <code>setup-ai-volumes.yml</code>, recarregue o <code>ai.env</code> e <strong>Update the stack</strong>. A mesma variável desliga a API de senha (<code>ENABLE_PASSWORD_AUTH</code>): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para <code>true</code> do mesmo jeito.</li>
+<li>Desligue o formulário local: <code>openwebui_login_form: false</code> no <code>group_vars</code> (pela wiki), rode o <code>setup-ai-volumes.yml</code>, cole o <code>ai.env</code> atualizado (<a href="../07-deploy-apps/#como-as-stacks-recebem-as-variáveis">como</a>) e <strong>Update the stack</strong>. A mesma variável desliga a API de senha (<code>ENABLE_PASSWORD_AUTH</code>): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para <code>true</code> do mesmo jeito.</li>
 </ol>
 <h3 id="ferramentas-notas">Ferramentas: notas<a class="headerlink" href="#ferramentas-notas" title="Permanent link">¶</a></h3>
 <p>O compose declara, em <code>TOOL_SERVER_CONNECTIONS</code>, os dois MCPs do <a href="../12-segundo-cerebro/">segundo cérebro</a>: <strong>Notas (busca)</strong> (<code>http://qmd:8181/mcp</code>) e <strong>Notas (escrita)</strong> (<code>http://notes_escrita:8000/mcp</code>). O <code>open-webui</code> entra na rede <code>notes_mcp</code>, criada pela stack <code>notes</code>, então a stack <code>notes</code> precisa subir <strong>antes</strong> de um novo deploy da stack <code>ai</code>. Sem <code>access_grants</code>, só administradores usam as ferramentas. Na conversa, ligue-as pelo ícone de ferramentas (ou em <em>Workspace → Models</em>, por modelo).</p>
@@ -2572,7 +2572,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:31:06 -03">20 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:45:11 -03">21 de outubro de 2026</span>
   </span>
 
     

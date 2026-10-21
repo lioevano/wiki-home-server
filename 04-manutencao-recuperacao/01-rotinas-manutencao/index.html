@@ -2331,7 +2331,7 @@
 </ul>
 </li>
 <li><strong>Alertas de Saúde do ZFS:</strong><ul>
-<li>Um script simples de verificação (<code>zpool status -x</code>) pode ser agendado no host e avisar pelo <code>scripts/notify.sh</code> (ver <a href="../02-backup-restore-estrategia/#4-zfs-snapshots-proteção-local-rápida-no-host-proxmox">snapshots ZFS na página de backups</a>); o alerta <code>zfs-degradado</code> do Grafana já cobre o pool degradado.</li>
+<li>Um script simples de verificação (<code>zpool status -x</code>) pode ser agendado no host e avisar pelo <code>scripts/notify.sh</code> (ver <a href="../02-backup-restore-estrategia/#snapshots-zfs">snapshots ZFS na página de backups</a>); o alerta <code>zfs-degradado</code> do Grafana já cobre o pool degradado.</li>
 <li>Agende este script para rodar com frequência (e.g., a cada poucas horas ou diariamente).</li>
 </ul>
 </li>
@@ -2342,24 +2342,11 @@
 <p>Seus backups são sua última linha de defesa contra a perda de dados. Um backup que não foi testado é um backup em que você não pode confiar.</p>
 </div>
 <ul>
-<li><strong>Verificar a Conclusão dos Backups:</strong><ul>
-<li><strong>Backups de VMs Proxmox:</strong> Na UI web do Proxmox, verifique a aba "Tasks" (no nível do Datacenter ou do Nó) para o status dos jobs de backup agendados. Verifique se eles estão sendo concluídos com sucesso e sem erros.</li>
-<li><strong>Dumps de Banco de Dados:</strong> Se você tem scripts para fazer dump de bancos de dados (PostgreSQL para Authelia, Nextcloud, Grafana), verifique os logs desses scripts. Confirme se os arquivos de dump estão sendo criados no local esperado, se têm um tamanho razoável (não estão vazios) e se não há erros nos logs.</li>
-<li><strong>Backups de Volumes/Datasets ZFS (Borg, rsync, etc.):</strong> Verifique os logs da sua ferramenta de backup (e.g., <code>borg list /caminho/repo</code> para ver os arquivos).</li>
-</ul>
-</li>
-<li><strong>Testes de Restauração Periódicos:</strong><ul>
-<li><strong>Frequência:</strong> Pelo menos <strong>trimestralmente</strong>, ou mais frequentemente se você fizer mudanças significativas na sua estratégia de backup ou nos dados críticos.</li>
-<li><strong>O Que Testar (Simule Cenários Reais):</strong><ol>
-<li><strong>Restaurar uma VM de Teste:</strong> Restaure uma VM menos crítica (ou uma VM de teste que você possa deletar) a partir de um backup do Proxmox para um novo VM ID. Verifique se ela inicia e se os dados estão consistentes.</li>
-<li><strong>Restaurar um Banco de Dados:</strong> Restaure um dump de banco de dados para uma instância de teste do banco de dados (pode ser um container Docker temporário). Verifique se você consegue se conectar e consultar os dados.</li>
-<li><strong>Restaurar Arquivos Individuais de Volumes:</strong> Use sua ferramenta de backup de volumes (Borg, rsync) para restaurar alguns arquivos ou diretórios aleatórios para um local temporário. Verifique sua integridade e conteúdo.</li>
-<li><strong>Testar Recuperação de Snapshots ZFS:</strong> Tente acessar e copiar um arquivo de um snapshot ZFS recente para garantir que o mecanismo <code>.zfs/snapshot/</code> está funcionando como esperado.</li>
-</ol>
-</li>
-<li><strong>Documente Seu Processo de Restauração:</strong> Enquanto você testa, documente os passos exatos que você tomou. Isso será inestimável em uma emergência real quando você estiver sob pressão.</li>
-</ul>
-</li>
+<li><strong>Conclusão dos backups:</strong> você não precisa olhar todo dia. Os dumps dos bancos (<code>backup-&lt;nome&gt;-db</code>) e o backup do host (<code>backup-restic</code>) avisam pelo alerta <code>timer-falhou</code> quando falham (<a href="../02-backup-restore-estrategia/">backup</a>). Uma vez por mês, confira no host Proxmox que os dois repositórios têm backups recentes:
+    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sudo<span class="w"> </span>-i
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">for</span><span class="w"> </span>r<span class="w"> </span><span class="k">in</span><span class="w"> </span>/etc/restic/repositorios/*.env<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="o">(</span><span class="nb">set</span><span class="w"> </span>-a<span class="p">;</span><span class="w"> </span>.<span class="w"> </span><span class="s2">"</span><span class="nv">$r</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span>+a<span class="p">;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"== </span><span class="nv">$r</span><span class="s2">"</span><span class="p">;</span><span class="w"> </span>restic<span class="w"> </span>snapshots<span class="w"> </span>--latest<span class="w"> </span><span class="m">3</span><span class="o">)</span><span class="p">;</span><span class="w"> </span><span class="k">done</span>
+</span></code></pre></div></li>
+<li><strong>Testes de restauração:</strong> a cada três meses, siga os <a href="../02-backup-restore-estrategia/#testes-de-restauração">testes de restauração</a>: um arquivo de cada dataset vindo da nuvem, um dump de banco num Postgres descartável e o <code>check</code> de domingo sem erro. Anote o que faltou na página e corrija.</li>
 </ul>
 <p>Estabelecer e seguir estas rotinas de manutenção, mesmo que pareçam trabalhosas inicialmente, é um investimento fundamental na estabilidade, segurança e longevidade do seu servidor doméstico. Automatize o que puder (atualizações, backups, verificações de saúde) e reserve tempo para as verificações manuais e testes.</p>
 <h2 id="scripts-de-validação">Scripts de Validação<a class="headerlink" href="#scripts-de-validação" title="Permanent link">¶</a></h2>
@@ -2407,7 +2394,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:43:24 -03">21 de outubro de 2026</span>
   </span>
 
     

@@ -2037,20 +2037,16 @@
 
 <h1 id="reconstruindo-a-infraestrutura-após-uma-falha-grave">Reconstruindo a Infraestrutura Após uma Falha Grave<a class="headerlink" href="#reconstruindo-a-infraestrutura-após-uma-falha-grave" title="Permanent link">¶</a></h1>
 <p>Apesar de todos os nossos esforços de manutenção preventiva e redundância (como o pool ZFS <code>/data</code> em RAID 1), falhas de hardware catastróficas podem ocorrer. O cenário mais impactante seria a falha do seu SSD NVMe principal, que hospeda o sistema operacional Proxmox VE e os discos virtuais das suas máquinas virtuais. Outros cenários podem incluir corrupção irreparável do sistema operacional do host Proxmox ou um desastre físico que afete o servidor.</p>
-<p>Este guia descreve os passos gerais para reconstruir sua infraestrutura base do zero, assumindo que você implementou e manteve a <a href="../02-backup-restore-estrategia/">Estratégia de Backup e Restauração</a> e, portanto, possui:</p>
+<p>Este guia descreve como reconstruir a infraestrutura do zero com o que a <a href="../02-backup-restore-estrategia/">Estratégia de Backup</a> garante:</p>
 <ol>
-<li><strong>Backups recentes e testados das suas Máquinas Virtuais Proxmox</strong> (e.g., arquivos <code>.vma.zst</code> do sistema de backup integrado do Proxmox, armazenados no seu dataset ZFS <code>/data/backups/vms</code> ou em um backup off-site).</li>
-<li><strong>Backups dos seus dados persistentes de containers Docker:</strong><ul>
-<li>Idealmente, um backup completo dos seus datasets ZFS <code>/data/docker-volumes</code>, <code>/data/media</code>, etc., feito com uma ferramenta como BorgBackup para um destino externo.</li>
-<li>No mínimo, dumps recentes dos seus bancos de dados importantes (Authelia, Nextcloud, Grafana) salvos no dataset <code>/data/backups/db_dumps</code> (ou em um backup off-site).</li>
-</ul>
-</li>
-<li><strong>Seu repositório <code>homeserver</code> completo e atualizado</strong>, com todas as configurações da sua infraestrutura, seguramente armazenado em um serviço Git remoto (e.g., GitHub, GitLab).</li>
-<li><strong>Acesso seguro à sua senha do Ansible Vault.</strong></li>
+<li><strong>O pool ZFS <code>/data</code></strong>, intacto nos HDDs ou restaurado do restic (disco externo ou nuvem). Ele traz as configurações das aplicações, os arquivos e os <strong>dumps diários de todos os bancos</strong> em <code>docker-volumes/&lt;app&gt;/db-dumps/</code> (Immich: <code>photos/backups/</code>).</li>
+<li><strong>O repositório <code>homeserver</code></strong> no GitHub, com o <code>vault.yml</code> criptografado.</li>
+<li><strong>As senhas do Ansible Vault e do restic</strong>, guardadas fora do servidor.</li>
 </ol>
+<p>As VMs <strong>não</strong> são restauradas de imagem: são recriadas pelo <code>vm-deploy.yml</code> e configuradas pelos playbooks. Os bancos, que viviam no disco local das VMs, voltam pelos dumps.</p>
 <div class="admonition critical">
 <p class="admonition-title">A Importância dos Backups Off-Site</p>
-<p>Se a falha grave afetar <em>todos</em> os discos do seu servidor Proxmox (incluindo os HDDs do pool <code>/data</code>), ter backups off-site (na nuvem, em um HD externo guardado em outro local) será sua única forma de recuperação completa. Este guia assume que você tem acesso a alguma forma de backup dos dados do pool <code>/data</code> se ele também for perdido.</p>
+<p>Se a falha grave afetar <em>todos</em> os discos do servidor (inclusive os HDDs do pool <code>/data</code>), o repositório do restic na nuvem será a única forma de recuperar fotos, arquivos, notas e bancos. Confira de vez em quando os testes de restauração da página de backup.</p>
 </div>
 <h2 id="cenário-de-exemplo-considerado">Cenário de Exemplo Considerado<a class="headerlink" href="#cenário-de-exemplo-considerado" title="Permanent link">¶</a></h2>
 <p>Vamos focar no cenário onde o <strong>SSD NVMe principal do seu servidor Proxmox falhou completamente</strong>, mas seus HDDs do pool ZFS <code>/data</code> (que contêm os backups das VMs e, idealmente, os dados dos containers ou backups deles) <strong>estão intactos e podem ser reutilizados</strong>. Se os HDDs do pool <code>/data</code> também falharem, o processo será similar, mas a etapa de restauração dos dados dos datasets ZFS dependerá inteiramente dos seus backups off-site.</p>
@@ -2089,52 +2085,19 @@
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>sudo<span class="w"> </span>zpool<span class="w"> </span>status<span class="w"> </span>data
 </span></code></pre></div>
     O estado deve ser <code>ONLINE</code>, e seus datasets (<code>docker-volumes</code>, <code>media</code>, <code>backups</code>, etc.) devem agora estar acessíveis nos seus pontos de montagem usuais (e.g., <code>/data/docker-volumes</code>).</li>
-<li><strong>Se os HDDs do pool <code>/data</code> foram perdidos e você precisa restaurar de um backup off-site:</strong><ol>
-<li>Crie um novo pool ZFS <code>data</code> com os novos HDDs (ou os antigos formatados) seguindo a <a href="../../01-manual-implementacao/02-proxmox-ve-host/#22-configuração-do-pool-zfs-data-e-datasets">Seção 2.2</a>.</li>
-<li>Crie novamente os datasets ZFS principais (<code>data/docker-volumes</code>, <code>data/media</code>, <code>data/backups</code>, etc.).</li>
-<li><strong>Restaure o conteúdo de cada dataset</strong> a partir do seu backup off-site (Borg, rsync, etc.) para os respectivos pontos de montagem no novo pool (e.g., restaure o conteúdo de <code>docker-volumes</code> para <code>/data/docker-volumes</code>). Este será o passo mais demorado.</li>
+<li><strong>Se os HDDs do pool <code>/data</code> foram perdidos e você precisa restaurar do backup:</strong><ol>
+<li>Crie um novo pool ZFS <code>data</code> e os datasets seguindo a <a href="../../01-manual-implementacao/02-proxmox-ve-host/#22-configuração-do-pool-zfs-data-e-datasets">Seção 2.2</a> (mesmos nomes e cotas).</li>
+<li>Instale o restic (<code>apt install restic</code>), carregue o repositório (disco externo, se ele sobreviveu, ou a nuvem) e restaure cada dataset de <code>restic_datasets</code> como em <a href="../02-backup-restore-estrategia/#um-dataset-inteiro">Um dataset inteiro</a>. A mídia não está no backup: as *arr baixam de novo o que estiver na biblioteca.</li>
+<li>Este é o passo mais demorado (da nuvem, pode levar dias). Comece por <code>docker-volumes</code>, que é pequeno e destrava o resto.</li>
 </ol>
 </li>
 </ol>
 </li>
 <li>
-<p><strong>Configurar o Storage de Backup de VMs no Novo Proxmox:</strong></p>
+<p><strong>Recriar as VMs:</strong></p>
 <ul>
-<li>Na interface web do novo Proxmox VE, vá para <strong>Datacenter -&gt; Storage</strong>.</li>
-<li>Se o storage que aponta para o diretório onde seus backups de VMs estão (e.g., <code>/data/backups/vms</code>) não existir ou estiver com a configuração incorreta, você precisará <strong>Adicionar</strong> ou <strong>Editar</strong> um storage do tipo "<strong>Directory</strong>".<ul>
-<li><strong>ID:</strong> Dê um nome (e.g., <code>local_zfs_vmbackups</code>).</li>
-<li><strong>Directory:</strong> Especifique o caminho absoluto no host Proxmox (e.g., <code>/data/backups/vms</code>).</li>
-<li><strong>Content:</strong> Selecione <strong>APENAS "VZDump backup file"</strong>.</li>
-<li>Clique em "Add" ou "OK".</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>
-<p><strong>Restaurar Suas Máquinas Virtuais (VMs) a partir dos Backups:</strong></p>
-<ul>
-<li>Com o storage de backup configurado e os arquivos de backup das suas VMs (e.g., <code>.vma.zst</code>) presentes nele:<ol>
-<li>Na UI do Proxmox, selecione o <strong>storage de backup</strong> na árvore à esquerda.</li>
-<li>A aba "<strong>Backups</strong>" listará os arquivos de backup de VM disponíveis.</li>
-<li>Para cada VM que você precisa restaurar (<code>core-services-vm</code>, <code>ai-desktop-vm</code>):<ul>
-<li>Selecione o arquivo de backup mais recente e apropriado.</li>
-<li>Clique no botão "<strong>Restore</strong>".</li>
-</ul>
-</li>
-<li>No diálogo "Restore":<ul>
-<li>
-<div class="admonition critical">
-<p class="admonition-title">VM ID</p>
-É <strong>extremamente importante</strong> que você restaure as VMs com os <strong>mesmos VM IDs</strong> que elas tinham originalmente (e.g., <code>100</code> para <code>core-services-vm</code>, <code>101</code> para <code>ai-desktop-vm</code>). Seu inventário Ansible (<code>hosts.ini</code>) e potencialmente outras configurações (como as regras de firewall PVE no <code>setup-proxmox-host.yml</code>) dependem desses IDs. Se você não puder usar o mesmo ID por algum motivo, precisará atualizar cuidadosamente todas as referências a esse ID no seu código Ansible.</div>
-</li>
-<li><strong>Storage:</strong> Escolha o storage de destino para o disco da VM restaurada (e.g., <code>local-lvm</code> no seu novo SSD NVMe).</li>
-<li>Configure outras opções de restauração conforme necessário (e.g., <code>MAC address</code> - geralmente "generate new" é seguro, a menos que você tenha reservas DHCP baseadas no MAC antigo; <code>Start after restore</code> - pode deixar desmarcado por enquanto).</li>
-</ul>
-</li>
-<li>Clique em "<strong>Restore</strong>". Monitore a tarefa na parte inferior da UI do Proxmox.</li>
-</ol>
-</li>
-<li>Após a restauração, <strong>não inicie as VMs ainda</strong>. O Ansible fará a configuração final.</li>
+<li>Com a máquina de controle pronta (passo 5), rode <code>playbooks/vm-deploy.yml</code>: ele recria a <code>core-services-vm</code> e a <code>ai-desktop-vm</code> com os mesmos IDs, IPs e o passthrough da GPU (<a href="../../01-manual-implementacao/03-provisionamento-vms/">seção 3</a>). As VMs ganham discos novos; os bancos voltam pelos dumps no passo 7.</li>
+<li>O <code>/etc/pve/qemu-server/</code> no backup do restic (<code>/etc</code> do host) mostra a definição exata das VMs antigas, se precisar comparar.</li>
 </ul>
 </li>
 <li>
@@ -2162,11 +2125,11 @@
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># OU, se preferir executar diretamente:</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># cd server/ansible &amp;&amp; ansible-playbook -i inventories/home/hosts.ini playbooks/full-deploy.yml --ask-vault-pass</span>
 </span></code></pre></div>
-    O playbook <code>full-deploy.yml</code> não executa o <code>vm-deploy.yml</code>: as VMs vêm da restauração (se precisar recriá-las, rode-o antes). Ele irá:<ul>
+    O playbook <code>full-deploy.yml</code> não executa o <code>vm-deploy.yml</code> (rode-o antes, no passo 4). Ele irá:<ul>
 <li>Executar <code>setup-proxmox-host.yml</code>: Reconfigurar o host Proxmox (NFS server, firewall, pacotes, Alloy, etc.) para o estado definido.</li>
 <li>Executar <code>setup-base-ubuntu.yml</code>: Reconfigurar a base das VMs (NFS client, UFW, Alloy, Docker, Portainer na <code>core-services-vm</code>).</li>
 <li>Executar <code>setup-core-networking.yml</code>: Re-deployar as configurações e containers para Traefik, Cloudflared e Authelia.</li>
-<li>Executar os playbooks <code>setup-&lt;stack&gt;-volumes.yml</code> (produtividade/automação, mídia, monitoramento, n8n e IA): Garantir que os diretórios NFS para as stacks Docker estejam com as permissões corretas e que os arquivos <code>.env</code> sejam recriados nas VMs.</li>
+<li>Executar os playbooks <code>setup-&lt;stack&gt;-volumes.yml</code> (produtividade/automação, n8n, monitoramento, mídia, fotos, nuvem, IA, notas, Langfuse e agentes): Garantir que os diretórios NFS para as stacks Docker estejam com as permissões corretas e que os arquivos <code>.env</code> sejam recriados nas VMs.</li>
 </ul>
 </li>
 </ol>
@@ -2180,7 +2143,7 @@
 </ul>
 </li>
 <li><strong>Se você está recriando as stacks do zero no Portainer (ou se a config do Portainer foi perdida):</strong>
-    Para cada stack do Portainer (<code>apps</code> na <code>core-services-vm</code>, <code>ai</code> na <code>ai-desktop-vm</code>; a <code>core</code> já foi implantada pelo <code>setup-core-networking.yml</code>):<ol>
+    Para cada stack do Portainer (na <code>core-services-vm</code>: <code>apps</code>, <code>media</code>, <code>photos</code>, <code>cloud</code> e <code>agents</code>; na <code>ai-desktop-vm</code>: <code>notes</code>, <code>langfuse</code> e <code>ai</code>, nesta ordem; a <code>core</code> já foi implantada pelo <code>setup-core-networking.yml</code>):<ol>
 <li>Vá para "Stacks" -&gt; "+ Add stack".</li>
 <li>Cole o conteúdo do arquivo <code>docker-compose.yml</code> da respectiva stack.</li>
 <li>Em <strong>Env</strong> (<strong>Advanced mode</strong>), cole o <code>.env</code> que o Ansible recriou na VM (<code>/opt/portainer_stack_envs/&lt;stack&gt;.env</code>; <a href="../../01-manual-implementacao/07-deploy-apps/#como-as-stacks-recebem-as-variáveis">como</a>). Ele já traz os segredos do vault.</li>
@@ -2188,7 +2151,7 @@
 </ol>
 </li>
 <li><strong>Dados das Aplicações:</strong> Como o conteúdo do dataset <code>/data/docker-volumes</code> (e outros como <code>/data/media</code>) foi restaurado (seja pela importação do pool ZFS original ou de um backup off-site), suas aplicações Docker, ao serem reiniciadas com seus volumes corretamente mapeados, devem encontrar seus dados e configurações anteriores.<ul>
-<li><strong>Restauração de Dumps de DB:</strong> Se você tem dumps de banco de dados mais recentes do que o estado dos volumes ZFS restaurados, ou se a restauração do volume do DB não foi perfeita, você pode precisar restaurar os dumps de banco de dados manualmente (conforme descrito na <a href="../02-backup-restore-estrategia/#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana">Estratégia de Backup</a>).</li>
+<li><strong>Bancos de dados:</strong> as VMs novas nascem com os bancos vazios em <code>/opt/local-data</code>. Para cada um (Authelia, Grafana, Nextcloud, LiteLLM), pare o container da aplicação, restaure o dump mais recente no container do banco e suba a aplicação de novo (<a href="../02-backup-restore-estrategia/#bancos-de-dados">Bancos de dados</a>). O Immich restaura o dele pela própria tela de <a href="https://docs.immich.app/administration/backup-and-restore">restauração</a>, a partir de <code>photos/backups/</code>. Faça o Authelia primeiro: sem ele, ninguém entra nos outros.</li>
 </ul>
 </li>
 </ul>
@@ -2225,7 +2188,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:43:24 -03">21 de outubro de 2026</span>
   </span>
 
     
