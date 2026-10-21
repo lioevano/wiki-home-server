@@ -2300,7 +2300,7 @@ Ao atualizar, o Portainer geralmente oferece opções como:<ul>
 </ul>
 </li>
 <li>
-<p><strong>Modificar <code>docker/stacks/apps/docker-compose.yml</code>:</strong>
+<p><strong>Modificar <code>docker/stacks/media/docker-compose.yml</code>:</strong>
     Adicione o serviço <code>bazarr</code>:
     </p><div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># ... (serviços Jellyfin, Sonarr, Radarr, qBittorrent) ...</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
@@ -2313,16 +2313,16 @@ Ao atualizar, o Portainer geralmente oferece opções como:<ul>
 </span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">internal_services</span>
 </span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
 </span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"${MEDIA_STACK_BAZARR_CONFIG_PATH}:/config"</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">      </span><span class="c1"># Bazarr precisa de acesso de LEITURA às pastas de mídia para encontrar os arquivos de vídeo</span>
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"${MEDIA_STACK_MOVIES_PATH}:/movies:ro"</span>
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"${MEDIA_STACK_TVSHOWS_PATH}:/tv:ro"</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">      </span><span class="c1"># O Bazarr grava a legenda ao lado do vídeo: monta /data/media a partir da mesma variável das</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">      </span><span class="c1"># outras aplicações de mídia (regra DAD-4), nunca de uma variável própria.</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"${MEDIA_STACK_DATA_PATH}/media:/data/media"</span>
 </span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
 </span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PUID=${DOCKER_PUID}</span>
 </span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PGID=${DOCKER_PGID}</span>
 </span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TZ=${SYSTEM_TIMEZONE}</span>
 </span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">    </span><span class="nt">labels</span><span class="p">:</span>
 </span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="w">      </span><span class="nt">traefik.enable</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
-</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">      </span><span class="nt">traefik.http.routers.bazarr.rule</span><span class="p">:</span><span class="w"> </span><span class="s">"Host(`bazarr.{{</span><span class="nv"> </span><span class="s">base_domain</span><span class="nv"> </span><span class="s">}}`)"</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="w">      </span><span class="nt">traefik.http.routers.bazarr.rule</span><span class="p">:</span><span class="w"> </span><span class="s">"Host(`bazarr.${BASE_DOMAIN_FROM_VAULT}`)"</span>
 </span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="w">      </span><span class="nt">traefik.http.routers.bazarr.entrypoints</span><span class="p">:</span><span class="w"> </span><span class="s">"websecure"</span>
 </span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="w">      </span><span class="nt">traefik.http.routers.bazarr.tls.certresolver</span><span class="p">:</span><span class="w"> </span><span class="s">"letsencrypt"</span>
 </span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="w">      </span><span class="nt">traefik.http.routers.bazarr.middlewares</span><span class="p">:</span><span class="w"> </span><span class="s">"authelia-forwardauth@docker"</span>
@@ -2372,7 +2372,7 @@ Ao atualizar, o Portainer geralmente oferece opções como:<ul>
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 04:04:56 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:32:41 -03">20 de outubro de 2026</span>
   </span>
 
     
