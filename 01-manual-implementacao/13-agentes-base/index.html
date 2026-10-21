@@ -2,11 +2,11 @@
 <html class="no-js" lang="pt"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<meta content="Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle na LAN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas." name="description"/>
+<meta content="Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle só pela VPN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas." name="description"/>
 <meta content="Léo Ivan" name="author"/>
 <link href="https://wiki.lioevano.com/01-manual-implementacao/13-agentes-base/" rel="canonical"/>
 <link href="../12-segundo-cerebro/" rel="prev"/>
-<link href="../../02-visao-geral-arquitetura/" rel="next"/>
+<link href="../14-vpn-tailscale/" rel="next"/>
 <link href="../../assets/images/favicon.png" rel="icon"/>
 <meta content="mkdocs-1.6.1, mkdocs-material-9.7.1" name="generator"/>
 <title>Agentes: Base - Wiki do Servidor do Léo Ivan</title>
@@ -541,6 +541,18 @@
 </li>
 </ul>
 </nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../14-vpn-tailscale/">
+<span class="md-ellipsis">
+    
+  
+    VPN (Tailscale)
+  
+
+    
+  </span>
+</a>
 </li>
 </ul>
 </nav>
@@ -1096,11 +1108,11 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h1 id="seção-13-agentes--base-hub-de-mcps-operações-e-rastreio">Seção 13: Agentes — base (hub de MCPs, operações e rastreio)<a class="headerlink" href="#seção-13-agentes--base-hub-de-mcps-operações-e-rastreio" title="Permanent link">¶</a></h1>
-<p>A IA (Claude Code, app Claude, agentes) alcança o homeserver por um <strong>hub de MCPs</strong> na <code>core-services-vm</code>: <strong>leitura de qualquer lugar</strong> (métricas, logs, alertas, containers, a casa e as automações, pelo conector <strong>Servidor</strong>) e <strong>ações só na LAN</strong> (reiniciar containers, redeployar stacks, rodar playbooks Ansible, comandar a casa, executar workflows). Toda chamada de LLM e de ferramenta fica rastreada no <strong>Langfuse</strong>.</p>
+<p>A IA (Claude Code, app Claude, agentes) alcança o homeserver por um <strong>hub de MCPs</strong> na <code>core-services-vm</code>: <strong>leitura de qualquer lugar</strong> (métricas, logs, alertas, containers, a casa e as automações, pelo conector <strong>Servidor</strong>) e <strong>ações só pela VPN</strong> (<a href="../14-vpn-tailscale/">seção 14</a>: reiniciar containers, redeployar stacks, rodar playbooks Ansible, comandar a casa, executar workflows). Toda chamada de LLM e de ferramenta fica rastreada no <strong>Langfuse</strong>.</p>
 <h2 id="arquitetura">Arquitetura<a class="headerlink" href="#arquitetura" title="Permanent link">¶</a></h2>
 <pre class="mermaid"><code>flowchart LR
     claude[claude.ai / celular] -- OAuth + Authelia 2FA --&gt; proxy[mcp_auth_servidor&lt;br/&gt;servidor.]
-    code[Claude Code / agentes&lt;br/&gt;na LAN] -- chave Bearer --&gt; controle[agentgateway :4100&lt;br/&gt;rota controle]
+    code[Claude Code / agentes&lt;br/&gt;pela VPN] -- chave Bearer --&gt; controle[agentgateway :4100&lt;br/&gt;rota controle]
     proxy --&gt; leitura[agentgateway :4000&lt;br/&gt;rota leitura]
     leitura --&gt; gl[mcp_grafana_leitura]
     leitura --&gt; ol[ops_leitura]
@@ -1130,13 +1142,13 @@
 </tr>
 <tr>
 <td><code>controle</code></td>
-<td><code>http://&lt;IP da core-services-vm&gt;:4100/mcp</code> (só LAN; VPN quando existir)</td>
-<td>Claude Code em casa, agentes (4c3)</td>
+<td><code>http://&lt;IP da core-services-vm&gt;:4100/mcp</code> (só pela VPN: a LAN não alcança a 4100, <a href="../14-vpn-tailscale/">seção 14</a>)</td>
+<td>Claude Code com o Tailscale ligado (em casa ou fora), agentes (4c3)</td>
 <td>tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (<code>ansible_check</code> → <code>ansible_aplicar</code>), comandar a casa, executar e editar workflows liberados</td>
 </tr>
 </tbody>
 </table>
-<p>Por que duas rotas: a internet só alcança <strong>código que não sabe escrever</strong> (as instâncias <code>*_leitura</code> nem registram ferramentas de escrita) <strong>e</strong> uma lista fechada de ferramentas (<code>agents_leitura</code>); as ações ficam num endereço que só existe na rede de casa, com uma chave por cliente.</p>
+<p>Por que duas rotas: a internet só alcança <strong>código que não sabe escrever</strong> (as instâncias <code>*_leitura</code> nem registram ferramentas de escrita) <strong>e</strong> uma lista fechada de ferramentas (<code>agents_leitura</code>); as ações ficam num endereço que só a VPN alcança (cifrado pelo WireGuard), com uma chave por cliente.</p>
 <div class="admonition warning">
 <p class="admonition-title">Fora dos snapshots ZFS</p>
 <p>O config do hub, os segredos do runner, o clone do repositório e o estado OAuth do <code>mcp_auth_servidor</code> ficam no disco local da <code>core-services-vm</code> (<code>/opt/local-data/agentgateway</code>, <code>/opt/local-data/ops</code>, <code>/opt/local-data/mcp-auth-servidor</code>), e os dados do Langfuse no disco local da <code>ai-desktop-vm</code> (<code>/opt/local-data/langfuse</code>): <strong>fora dos snapshots ZFS e sem backup</strong>. Tudo é regerável pelos playbooks a partir do vault; os traces do Langfuse são descartáveis.</p>
@@ -1257,31 +1269,32 @@
 </span><span id="__span-1-85"><a href="#__codelineno-1-85" id="__codelineno-1-85" name="__codelineno-1-85"></a><span class="x">          prefixMode: always</span>
 </span><span id="__span-1-86"><a href="#__codelineno-1-86" id="__codelineno-1-86" name="__codelineno-1-86"></a><span class="x">          failureMode: failOpen</span>
 </span><span id="__span-1-87"><a href="#__codelineno-1-87" id="__codelineno-1-87" name="__codelineno-1-87"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'leitura'</span><span class="o">)</span> <span class="cp">}}</span>
-</span><span id="__span-1-88"><a href="#__codelineno-1-88" id="__codelineno-1-88" name="__codelineno-1-88"></a><span class="x"># Rota de controle: só na LAN (porta publicada no IP da core-services-vm), com a chave de cada cliente.</span>
-</span><span id="__span-1-89"><a href="#__codelineno-1-89" id="__codelineno-1-89" name="__codelineno-1-89"></a><span class="x">- port: 4100</span>
-</span><span id="__span-1-90"><a href="#__codelineno-1-90" id="__codelineno-1-90" name="__codelineno-1-90"></a><span class="x">  listeners:</span>
-</span><span id="__span-1-91"><a href="#__codelineno-1-91" id="__codelineno-1-91" name="__codelineno-1-91"></a><span class="x">  - name: controle</span>
-</span><span id="__span-1-92"><a href="#__codelineno-1-92" id="__codelineno-1-92" name="__codelineno-1-92"></a><span class="x">    routes:</span>
-</span><span id="__span-1-93"><a href="#__codelineno-1-93" id="__codelineno-1-93" name="__codelineno-1-93"></a><span class="x">    - name: controle</span>
-</span><span id="__span-1-94"><a href="#__codelineno-1-94" id="__codelineno-1-94" name="__codelineno-1-94"></a><span class="x">      policies:</span>
-</span><span id="__span-1-95"><a href="#__codelineno-1-95" id="__codelineno-1-95" name="__codelineno-1-95"></a><span class="x">        apiKey:</span>
-</span><span id="__span-1-96"><a href="#__codelineno-1-96" id="__codelineno-1-96" name="__codelineno-1-96"></a><span class="x">          mode: strict</span>
-</span><span id="__span-1-97"><a href="#__codelineno-1-97" id="__codelineno-1-97" name="__codelineno-1-97"></a><span class="x">          location:</span>
-</span><span id="__span-1-98"><a href="#__codelineno-1-98" id="__codelineno-1-98" name="__codelineno-1-98"></a><span class="x">            header:</span>
-</span><span id="__span-1-99"><a href="#__codelineno-1-99" id="__codelineno-1-99" name="__codelineno-1-99"></a><span class="x">              name: Authorization</span>
-</span><span id="__span-1-100"><a href="#__codelineno-1-100" id="__codelineno-1-100" name="__codelineno-1-100"></a><span class="x">              prefix: "Bearer "</span>
-</span><span id="__span-1-101"><a href="#__codelineno-1-101" id="__codelineno-1-101" name="__codelineno-1-101"></a><span class="x">          keys:</span>
-</span><span id="__span-1-102"><a href="#__codelineno-1-102" id="__codelineno-1-102" name="__codelineno-1-102"></a><span class="cp">{%</span> <span class="k">for</span> <span class="nv">cliente</span><span class="o">,</span> <span class="nv">chave</span> <span class="k">in</span> <span class="nv">agents_api_keys.items</span><span class="o">()</span> <span class="cp">%}</span>
-</span><span id="__span-1-103"><a href="#__codelineno-1-103" id="__codelineno-1-103" name="__codelineno-1-103"></a><span class="x">          - keyHash: "sha256:</span><span class="cp">{{</span> <span class="nv">chave</span> <span class="o">|</span> <span class="nf">hash</span><span class="o">(</span><span class="s1">'sha256'</span><span class="o">)</span> <span class="cp">}}</span><span class="x">"</span>
-</span><span id="__span-1-104"><a href="#__codelineno-1-104" id="__codelineno-1-104" name="__codelineno-1-104"></a><span class="x">            metadata:</span>
-</span><span id="__span-1-105"><a href="#__codelineno-1-105" id="__codelineno-1-105" name="__codelineno-1-105"></a><span class="x">              cliente: </span><span class="cp">{{</span> <span class="nv">cliente</span> <span class="cp">}}</span>
-</span><span id="__span-1-106"><a href="#__codelineno-1-106" id="__codelineno-1-106" name="__codelineno-1-106"></a><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
-</span><span id="__span-1-107"><a href="#__codelineno-1-107" id="__codelineno-1-107" name="__codelineno-1-107"></a><span class="x">      backends:</span>
-</span><span id="__span-1-108"><a href="#__codelineno-1-108" id="__codelineno-1-108" name="__codelineno-1-108"></a><span class="x">      - mcp:</span>
-</span><span id="__span-1-109"><a href="#__codelineno-1-109" id="__codelineno-1-109" name="__codelineno-1-109"></a><span class="x">          statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)</span>
-</span><span id="__span-1-110"><a href="#__codelineno-1-110" id="__codelineno-1-110" name="__codelineno-1-110"></a><span class="x">          prefixMode: always</span>
-</span><span id="__span-1-111"><a href="#__codelineno-1-111" id="__codelineno-1-111" name="__codelineno-1-111"></a><span class="x">          failureMode: failOpen</span>
-</span><span id="__span-1-112"><a href="#__codelineno-1-112" id="__codelineno-1-112" name="__codelineno-1-112"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'controle'</span><span class="o">)</span> <span class="cp">}}</span>
+</span><span id="__span-1-88"><a href="#__codelineno-1-88" id="__codelineno-1-88" name="__codelineno-1-88"></a><span class="x"># Rota de controle: porta publicada no IP da core-services-vm, que a LAN não alcança (firewall_docker_portas):</span>
+</span><span id="__span-1-89"><a href="#__codelineno-1-89" id="__codelineno-1-89" name="__codelineno-1-89"></a><span class="x"># só pela VPN (página 14), com a chave de cada cliente.</span>
+</span><span id="__span-1-90"><a href="#__codelineno-1-90" id="__codelineno-1-90" name="__codelineno-1-90"></a><span class="x">- port: 4100</span>
+</span><span id="__span-1-91"><a href="#__codelineno-1-91" id="__codelineno-1-91" name="__codelineno-1-91"></a><span class="x">  listeners:</span>
+</span><span id="__span-1-92"><a href="#__codelineno-1-92" id="__codelineno-1-92" name="__codelineno-1-92"></a><span class="x">  - name: controle</span>
+</span><span id="__span-1-93"><a href="#__codelineno-1-93" id="__codelineno-1-93" name="__codelineno-1-93"></a><span class="x">    routes:</span>
+</span><span id="__span-1-94"><a href="#__codelineno-1-94" id="__codelineno-1-94" name="__codelineno-1-94"></a><span class="x">    - name: controle</span>
+</span><span id="__span-1-95"><a href="#__codelineno-1-95" id="__codelineno-1-95" name="__codelineno-1-95"></a><span class="x">      policies:</span>
+</span><span id="__span-1-96"><a href="#__codelineno-1-96" id="__codelineno-1-96" name="__codelineno-1-96"></a><span class="x">        apiKey:</span>
+</span><span id="__span-1-97"><a href="#__codelineno-1-97" id="__codelineno-1-97" name="__codelineno-1-97"></a><span class="x">          mode: strict</span>
+</span><span id="__span-1-98"><a href="#__codelineno-1-98" id="__codelineno-1-98" name="__codelineno-1-98"></a><span class="x">          location:</span>
+</span><span id="__span-1-99"><a href="#__codelineno-1-99" id="__codelineno-1-99" name="__codelineno-1-99"></a><span class="x">            header:</span>
+</span><span id="__span-1-100"><a href="#__codelineno-1-100" id="__codelineno-1-100" name="__codelineno-1-100"></a><span class="x">              name: Authorization</span>
+</span><span id="__span-1-101"><a href="#__codelineno-1-101" id="__codelineno-1-101" name="__codelineno-1-101"></a><span class="x">              prefix: "Bearer "</span>
+</span><span id="__span-1-102"><a href="#__codelineno-1-102" id="__codelineno-1-102" name="__codelineno-1-102"></a><span class="x">          keys:</span>
+</span><span id="__span-1-103"><a href="#__codelineno-1-103" id="__codelineno-1-103" name="__codelineno-1-103"></a><span class="cp">{%</span> <span class="k">for</span> <span class="nv">cliente</span><span class="o">,</span> <span class="nv">chave</span> <span class="k">in</span> <span class="nv">agents_api_keys.items</span><span class="o">()</span> <span class="cp">%}</span>
+</span><span id="__span-1-104"><a href="#__codelineno-1-104" id="__codelineno-1-104" name="__codelineno-1-104"></a><span class="x">          - keyHash: "sha256:</span><span class="cp">{{</span> <span class="nv">chave</span> <span class="o">|</span> <span class="nf">hash</span><span class="o">(</span><span class="s1">'sha256'</span><span class="o">)</span> <span class="cp">}}</span><span class="x">"</span>
+</span><span id="__span-1-105"><a href="#__codelineno-1-105" id="__codelineno-1-105" name="__codelineno-1-105"></a><span class="x">            metadata:</span>
+</span><span id="__span-1-106"><a href="#__codelineno-1-106" id="__codelineno-1-106" name="__codelineno-1-106"></a><span class="x">              cliente: </span><span class="cp">{{</span> <span class="nv">cliente</span> <span class="cp">}}</span>
+</span><span id="__span-1-107"><a href="#__codelineno-1-107" id="__codelineno-1-107" name="__codelineno-1-107"></a><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</span><span id="__span-1-108"><a href="#__codelineno-1-108" id="__codelineno-1-108" name="__codelineno-1-108"></a><span class="x">      backends:</span>
+</span><span id="__span-1-109"><a href="#__codelineno-1-109" id="__codelineno-1-109" name="__codelineno-1-109"></a><span class="x">      - mcp:</span>
+</span><span id="__span-1-110"><a href="#__codelineno-1-110" id="__codelineno-1-110" name="__codelineno-1-110"></a><span class="x">          statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)</span>
+</span><span id="__span-1-111"><a href="#__codelineno-1-111" id="__codelineno-1-111" name="__codelineno-1-111"></a><span class="x">          prefixMode: always</span>
+</span><span id="__span-1-112"><a href="#__codelineno-1-112" id="__codelineno-1-112" name="__codelineno-1-112"></a><span class="x">          failureMode: failOpen</span>
+</span><span id="__span-1-113"><a href="#__codelineno-1-113" id="__codelineno-1-113" name="__codelineno-1-113"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'controle'</span><span class="o">)</span> <span class="cp">}}</span>
 </span></code></pre></div>
 <h2 id="rastreio-langfuse">Rastreio (Langfuse)<a class="headerlink" href="#rastreio-langfuse" title="Permanent link">¶</a></h2>
 <p>O <strong>Langfuse</strong> guarda cada chamada de LLM (o LiteLLM manda pelo callback <code>langfuse_otel</code>) e cada chamada de ferramenta pelo hub (traces OTLP), com custo, latência, entrada e saída. A tela fica em <code>https://langfuse.&lt;domínio&gt;</code>, atrás do Authelia; o login do próprio Langfuse é só pelo SSO (cliente OIDC <code>langfuse</code>, política <code>so_admins</code>): quem entra cai na organização <strong>Homeserver</strong> como admin. O <code>langfuse_web</code> e o <code>mcp_auth_servidor</code> falam com o Authelia pela LAN (<code>extra_hosts</code> de <code>auth.</code> para o Traefik na <code>core-services-vm</code>). A organização, o projeto e as chaves (<code>langfuse_secrets.public_key</code>/<code>secret_key</code>) são criados na primeira subida pelas variáveis <code>LANGFUSE_INIT_*</code> — não há passos na tela.</p>
@@ -1324,8 +1337,8 @@
 <td><strong>Configurações → Conectores → Adicionar conector personalizado</strong> com <code>https://servidor.&lt;domínio&gt;/mcp</code> (nome <code>Servidor</code>). <strong>Conectar</strong> abre o login do Authelia (2FA, só o grupo <code>admins</code>). Só leitura.</td>
 </tr>
 <tr>
-<td>Claude Code (PC, na LAN)</td>
-<td><code>claude mcp add --transport http servidor http://&lt;IP da core-services-vm&gt;:4100/mcp --header "Authorization: Bearer &lt;agents_api_keys.claude_code&gt;"</code>. A chave fica no <code>~/.claude.json</code> do seu usuário, nunca em repositório. Fora de casa, use a rota de leitura (<code>https://servidor.&lt;domínio&gt;/mcp</code>) até a VPN existir.</td>
+<td>Claude Code (PC, com o Tailscale ligado)</td>
+<td><code>claude mcp add --transport http servidor http://&lt;IP da core-services-vm&gt;:4100/mcp --header "Authorization: Bearer &lt;agents_api_keys.claude_code&gt;"</code>. A chave fica no <code>~/.claude.json</code> do seu usuário, nunca em repositório. Sem o Tailscale, a 4100 não responde (nem em casa): use a rota de leitura (<code>https://servidor.&lt;domínio&gt;/mcp</code>).</td>
 </tr>
 <tr>
 <td>Agentes (4c3)</td>
@@ -1398,7 +1411,7 @@
 </table>
 <h2 id="teste-de-ponta-a-ponta">Teste de ponta a ponta<a class="headerlink" href="#teste-de-ponta-a-ponta" title="Permanent link">¶</a></h2>
 <ol>
-<li><code>curl -s http://&lt;IP da core&gt;:4100/mcp</code> sem cabeçalho → <code>401</code>; com <code>-H "Authorization: Bearer &lt;chave&gt;"</code> e um <code>initialize</code> MCP → resposta do hub.</li>
+<li>Com o Tailscale ligado, <code>curl -s http://&lt;IP da core&gt;:4100/mcp</code> sem cabeçalho → <code>401</code> (sem o Tailscale, não conecta); com <code>-H "Authorization: Bearer &lt;chave&gt;"</code> e um <code>initialize</code> MCP → resposta do hub.</li>
 <li>No Claude Code: "liste os containers da VM de IA" (<code>ops_containers_listar</code>) e "quais alertas estão disparando?" (<code>grafana_…</code>).</li>
 <li>"Simule o playbook setup-media-stack-volumes.yml" → diff e <code>plano_id</code>; "aplique" → aprovação pedida, execução, aviso no Telegram.</li>
 <li>"Reinicie o traefik" → recusado (protegido), aviso no Telegram.</li>
@@ -1410,7 +1423,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:51:10 -03">20 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:58:07 -03">21 de outubro de 2026</span>
 </span>
 </aside>
 </article>

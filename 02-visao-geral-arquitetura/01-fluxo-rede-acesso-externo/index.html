@@ -419,6 +419,18 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../01-manual-implementacao/14-vpn-tailscale/">
+<span class="md-ellipsis">
+    
+  
+    VPN (Tailscale)
+  
+
+    
+  </span>
+</a>
+</li>
 </ul>
 </nav>
 </li>
@@ -537,6 +549,15 @@
 <span class="md-ellipsis">
       
         4. Authelia (Servidor de Autenticação e Autorização)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#5-vpn-tailscale-o-caminho-privado">
+<span class="md-ellipsis">
+      
+        5. VPN (Tailscale): o caminho privado
       
     </span>
 </a>
@@ -1004,6 +1025,15 @@
     </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#5-vpn-tailscale-o-caminho-privado">
+<span class="md-ellipsis">
+      
+        5. VPN (Tailscale): o caminho privado
+      
+    </span>
+</a>
+</li>
 </ul>
 </nav>
 </li>
@@ -1121,6 +1151,8 @@
 <li><strong>Políticas de Acesso:</strong> Authelia permite definir políticas granulares em seu arquivo <code>configuration.yml</code> para determinar qual nível de autenticação é necessário para diferentes domínios ou redes.</li>
 <li><strong>Single Sign-On (SSO) Básico:</strong> Uma vez que o usuário está logado no Authelia, ele pode acessar outros serviços protegidos pelo mesmo Authelia sem precisar logar novamente (dentro da validade da sessão Authelia).</li>
 </ul>
+<h3 id="5-vpn-tailscale-o-caminho-privado">5. VPN (Tailscale): o caminho privado<a class="headerlink" href="#5-vpn-tailscale-o-caminho-privado" title="Permanent link">¶</a></h3>
+<p>Além do túnel, os mesmos endereços funcionam pela <strong>VPN</strong> (<a href="../../01-manual-implementacao/14-vpn-tailscale/">seção 14</a>). Com o Tailscale ligado, o aparelho resolve <code>&lt;app&gt;.seudominio.com</code> no CoreDNS de casa (split DNS) e fala direto com o Traefik pela VPN, sem passar pela Cloudflare e sem o limite de 100 MB por requisição. O Authelia continua na frente das mesmas aplicações. A rota de controle do hub de MCPs só existe por esse caminho.</p>
 <h2 id="vantagens-desta-abordagem">Vantagens desta Abordagem<a class="headerlink" href="#vantagens-desta-abordagem" title="Permanent link">¶</a></h2>
 <ul>
 <li><strong>Segurança Aprimorada:</strong><ul>
@@ -1147,7 +1179,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:58:07 -03">21 de outubro de 2026</span>
 </span>
 </aside>
 </article>

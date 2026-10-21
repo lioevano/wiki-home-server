@@ -894,6 +894,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../01-manual-implementacao/14-vpn-tailscale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VPN (Tailscale)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2384,6 +2412,11 @@
 <td>Métricas e logs mudam o tempo todo; perder o histórico não para nada</td>
 </tr>
 <tr>
+<td><code>docker-volumes/ollama/models</code>, <code>photos/thumbs</code> e <code>photos/encoded-video</code></td>
+<td><strong>não</strong> (<code>restic_excluir</code>)</td>
+<td>Modelos se baixam de novo; miniaturas e vídeos convertidos o Immich regera (<em>Administração → Tarefas</em>)</td>
+</tr>
+<tr>
 <td>Disco local das VMs (<code>/opt/local-data</code>): bancos, índice do qmd, documentos convertidos, banco do Syncthing, estado dos mcp-auth-proxy, base dos agentes (config do hub <code>agentgateway</code>, clone e segredos do runner do <code>ops</code>; <a href="../../01-manual-implementacao/13-agentes-base/">seção 13</a>), Langfuse</td>
 <td>só os <strong>bancos</strong>, pelos dumps</td>
 <td>O resto é regerável pelos playbooks a partir do vault, ou é descartável (traces do Langfuse)</td>
@@ -2456,7 +2489,7 @@
 <li>Aos domingos, relê 5% dos dados de cada repositório (<code>restic check --read-data-subset</code>) para achar corrupção.</li>
 <li>Desmonta e apaga o snapshot, também em caso de erro.</li>
 </ol>
-<p>Qualquer falha deixa a unit em <code>failed</code> e dispara o alerta <code>timer-falhou</code>: o Alloy do host vê as units <code>backup-*</code>. A unit roda com prioridade baixa de disco e CPU, para não atrapalhar as VMs.</p>
+<p>Qualquer falha deixa a unit em <code>failed</code> e dispara o alerta <code>timer-falhou</code>: o Alloy do host vê as units <code>backup-*</code>. A unit roda com prioridade baixa de CPU (<code>Nice=10</code>) e guarda o cache dos índices em <code>/var/cache/restic</code>, para não baixar tudo da nuvem a cada rodada. Os backups são agrupados só pelo host (<code>--group-by host</code>): um dia em que um dataset falhou não cria um grupo que nunca expira.</p>
 <h3 id="preparar-os-destinos">Preparar os destinos<a class="headerlink" href="#preparar-os-destinos" title="Permanent link">¶</a></h3>
 <ol>
 <li><strong>Disco externo:</strong> formate um HD USB (ext4 serve), descubra o UUID (<code>blkid</code>) e monte-o pelo <code>/etc/fstab</code> do host em <code>/mnt/backup-externo</code>, com <code>nofail</code> para o host subir sem ele:
@@ -2466,7 +2499,7 @@
 <li><strong>Nuvem:</strong> crie um bucket privado no Backblaze B2 (ou outro S3) e uma <em>application key</em> só para ele. O endereço no formato <code>s3:https://&lt;endpoint&gt;/&lt;bucket&gt;/homeserver</code> e as chaves vão para <code>restic_repositorios</code> (página 01). O restic cifra tudo antes de enviar.</li>
 <li><strong>Vault:</strong> <code>restic_senha</code> (<code>openssl rand -base64 32</code>) e <code>restic_repositorios</code>, conforme o <code>vault.yml.example</code> (página 01).</li>
 <li>Aplique: <code>ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass --check</code>, depois sem <code>--check</code>.</li>
-<li><strong>Primeira rodada,</strong> pelo shell do host Proxmox: <code>systemctl start backup-restic.service</code> e acompanhe com <code>journalctl -fu backup-restic</code>. Na primeira vez, o script cria os repositórios (<code>restic init</code>). A primeira cópia para a nuvem pode levar dias; as seguintes só mandam o que mudou.</li>
+<li><strong>Primeira rodada,</strong> pelo shell do host Proxmox: <code>systemctl start --no-block backup-restic.service</code> (sem o <code>--no-block</code>, o comando só volta quando o backup terminar) e acompanhe com <code>journalctl -fu backup-restic</code>. Na primeira vez, o script cria os repositórios (<code>restic init</code>). A primeira cópia para a nuvem pode levar dias; as seguintes só mandam o que mudou.</li>
 </ol>
 <p>Para ver o que existe num repositório, carregue as variáveis dele e use o restic:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sudo<span class="w"> </span>-i
@@ -2517,7 +2550,7 @@
 </span><span id="__span-2-40"><a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a><span class="w">      </span><span class="no">{% for chave, valor in (item.ambiente | default({})).items() %}</span>
 </span><span id="__span-2-41"><a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="w">      </span><span class="no">{{ chave }}={{ valor | quote }}</span>
 </span><span id="__span-2-42"><a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="w">      </span><span class="no">{% endfor %}</span>
-</span><span id="__span-2-43"><a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">  </span><span class="nt">loop</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">restic_repositorios</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-43"><a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">  </span><span class="nt">loop</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">restic_repositorios</span><span class="nv"> </span><span class="s">|</span><span class="nv"> </span><span class="s">default([])</span><span class="nv"> </span><span class="s">}}"</span>
 </span><span id="__span-2-44"><a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">  </span><span class="nt">loop_control</span><span class="p">:</span>
 </span><span id="__span-2-45"><a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="w">    </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">item.nome</span><span class="nv"> </span><span class="s">}}"</span>
 </span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="w">  </span><span class="nt">no_log</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># senha e credenciais</span>
@@ -2535,7 +2568,7 @@
 </span><span id="__span-2-58"><a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a><span class="w">  </span><span class="nt">loop</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">restic_envs.files</span><span class="nv"> </span><span class="s">}}"</span>
 </span><span id="__span-2-59"><a id="__codelineno-2-59" name="__codelineno-2-59" href="#__codelineno-2-59"></a><span class="w">  </span><span class="nt">loop_control</span><span class="p">:</span>
 </span><span id="__span-2-60"><a id="__codelineno-2-60" name="__codelineno-2-60" href="#__codelineno-2-60"></a><span class="w">    </span><span class="nt">label</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">item.path</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-2-61"><a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">(item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | map(attribute='nome') | list)</span>
+</span><span id="__span-2-61"><a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">(item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | default([]) | map(attribute='nome') | list)</span>
 </span><span id="__span-2-62"><a id="__codelineno-2-62" name="__codelineno-2-62" href="#__codelineno-2-62"></a>
 </span><span id="__span-2-63"><a id="__codelineno-2-63" name="__codelineno-2-63" href="#__codelineno-2-63"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Script</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
 </span><span id="__span-2-64"><a id="__codelineno-2-64" name="__codelineno-2-64" href="#__codelineno-2-64"></a><span class="w">  </span><span class="nt">ansible.builtin.template</span><span class="p">:</span>
@@ -2560,33 +2593,36 @@
 </span><span id="__span-2-83"><a id="__codelineno-2-83" name="__codelineno-2-83" href="#__codelineno-2-83"></a><span class="w">      </span><span class="no">[Service]</span>
 </span><span id="__span-2-84"><a id="__codelineno-2-84" name="__codelineno-2-84" href="#__codelineno-2-84"></a><span class="w">      </span><span class="no">Type=oneshot</span>
 </span><span id="__span-2-85"><a id="__codelineno-2-85" name="__codelineno-2-85" href="#__codelineno-2-85"></a><span class="w">      </span><span class="no">ExecStart=/usr/local/sbin/backup-restic.sh</span>
-</span><span id="__span-2-86"><a id="__codelineno-2-86" name="__codelineno-2-86" href="#__codelineno-2-86"></a><span class="w">      </span><span class="no"># Não disputa disco e CPU com as VMs.</span>
-</span><span id="__span-2-87"><a id="__codelineno-2-87" name="__codelineno-2-87" href="#__codelineno-2-87"></a><span class="w">      </span><span class="no">Nice=10</span>
-</span><span id="__span-2-88"><a id="__codelineno-2-88" name="__codelineno-2-88" href="#__codelineno-2-88"></a><span class="w">      </span><span class="no">IOSchedulingClass=idle</span>
-</span><span id="__span-2-89"><a id="__codelineno-2-89" name="__codelineno-2-89" href="#__codelineno-2-89"></a>
-</span><span id="__span-2-90"><a id="__codelineno-2-90" name="__codelineno-2-90" href="#__codelineno-2-90"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Timer</span><span class="nv"> </span><span class="s">systemd</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
-</span><span id="__span-2-91"><a id="__codelineno-2-91" name="__codelineno-2-91" href="#__codelineno-2-91"></a><span class="w">  </span><span class="nt">ansible.builtin.copy</span><span class="p">:</span>
-</span><span id="__span-2-92"><a id="__codelineno-2-92" name="__codelineno-2-92" href="#__codelineno-2-92"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/systemd/system/backup-restic.timer</span>
-</span><span id="__span-2-93"><a id="__codelineno-2-93" name="__codelineno-2-93" href="#__codelineno-2-93"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
-</span><span id="__span-2-94"><a id="__codelineno-2-94" name="__codelineno-2-94" href="#__codelineno-2-94"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
-</span><span id="__span-2-95"><a id="__codelineno-2-95" name="__codelineno-2-95" href="#__codelineno-2-95"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0644'</span>
-</span><span id="__span-2-96"><a id="__codelineno-2-96" name="__codelineno-2-96" href="#__codelineno-2-96"></a><span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
-</span><span id="__span-2-97"><a id="__codelineno-2-97" name="__codelineno-2-97" href="#__codelineno-2-97"></a><span class="w">      </span><span class="no">[Unit]</span>
-</span><span id="__span-2-98"><a id="__codelineno-2-98" name="__codelineno-2-98" href="#__codelineno-2-98"></a><span class="w">      </span><span class="no">Description=Agenda o backup diário com restic</span>
-</span><span id="__span-2-99"><a id="__codelineno-2-99" name="__codelineno-2-99" href="#__codelineno-2-99"></a>
-</span><span id="__span-2-100"><a id="__codelineno-2-100" name="__codelineno-2-100" href="#__codelineno-2-100"></a><span class="w">      </span><span class="no">[Timer]</span>
-</span><span id="__span-2-101"><a id="__codelineno-2-101" name="__codelineno-2-101" href="#__codelineno-2-101"></a><span class="w">      </span><span class="no">OnCalendar={{ restic_horario }}</span>
-</span><span id="__span-2-102"><a id="__codelineno-2-102" name="__codelineno-2-102" href="#__codelineno-2-102"></a><span class="w">      </span><span class="no">Persistent=true</span>
-</span><span id="__span-2-103"><a id="__codelineno-2-103" name="__codelineno-2-103" href="#__codelineno-2-103"></a>
-</span><span id="__span-2-104"><a id="__codelineno-2-104" name="__codelineno-2-104" href="#__codelineno-2-104"></a><span class="w">      </span><span class="no">[Install]</span>
-</span><span id="__span-2-105"><a id="__codelineno-2-105" name="__codelineno-2-105" href="#__codelineno-2-105"></a><span class="w">      </span><span class="no">WantedBy=timers.target</span>
-</span><span id="__span-2-106"><a id="__codelineno-2-106" name="__codelineno-2-106" href="#__codelineno-2-106"></a>
-</span><span id="__span-2-107"><a id="__codelineno-2-107" name="__codelineno-2-107" href="#__codelineno-2-107"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Habilitar</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">timer</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
-</span><span id="__span-2-108"><a id="__codelineno-2-108" name="__codelineno-2-108" href="#__codelineno-2-108"></a><span class="w">  </span><span class="nt">ansible.builtin.systemd_service</span><span class="p">:</span>
-</span><span id="__span-2-109"><a id="__codelineno-2-109" name="__codelineno-2-109" href="#__codelineno-2-109"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-restic.timer</span>
-</span><span id="__span-2-110"><a id="__codelineno-2-110" name="__codelineno-2-110" href="#__codelineno-2-110"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-</span><span id="__span-2-111"><a id="__codelineno-2-111" name="__codelineno-2-111" href="#__codelineno-2-111"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">started</span>
-</span><span id="__span-2-112"><a id="__codelineno-2-112" name="__codelineno-2-112" href="#__codelineno-2-112"></a><span class="w">    </span><span class="nt">daemon_reload</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-86"><a id="__codelineno-2-86" name="__codelineno-2-86" href="#__codelineno-2-86"></a><span class="w">      </span><span class="no"># Cache dos índices do restic: sem ele, cada rodada baixa de novo os índices da nuvem.</span>
+</span><span id="__span-2-87"><a id="__codelineno-2-87" name="__codelineno-2-87" href="#__codelineno-2-87"></a><span class="w">      </span><span class="no">CacheDirectory=restic</span>
+</span><span id="__span-2-88"><a id="__codelineno-2-88" name="__codelineno-2-88" href="#__codelineno-2-88"></a><span class="w">      </span><span class="no">Environment=RESTIC_CACHE_DIR=/var/cache/restic</span>
+</span><span id="__span-2-89"><a id="__codelineno-2-89" name="__codelineno-2-89" href="#__codelineno-2-89"></a><span class="w">      </span><span class="no"># Prioridade baixa de CPU: não disputa com as VMs.</span>
+</span><span id="__span-2-90"><a id="__codelineno-2-90" name="__codelineno-2-90" href="#__codelineno-2-90"></a><span class="w">      </span><span class="no">Nice=10</span>
+</span><span id="__span-2-91"><a id="__codelineno-2-91" name="__codelineno-2-91" href="#__codelineno-2-91"></a>
+</span><span id="__span-2-92"><a id="__codelineno-2-92" name="__codelineno-2-92" href="#__codelineno-2-92"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Timer</span><span class="nv"> </span><span class="s">systemd</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
+</span><span id="__span-2-93"><a id="__codelineno-2-93" name="__codelineno-2-93" href="#__codelineno-2-93"></a><span class="w">  </span><span class="nt">ansible.builtin.copy</span><span class="p">:</span>
+</span><span id="__span-2-94"><a id="__codelineno-2-94" name="__codelineno-2-94" href="#__codelineno-2-94"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/systemd/system/backup-restic.timer</span>
+</span><span id="__span-2-95"><a id="__codelineno-2-95" name="__codelineno-2-95" href="#__codelineno-2-95"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-96"><a id="__codelineno-2-96" name="__codelineno-2-96" href="#__codelineno-2-96"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+</span><span id="__span-2-97"><a id="__codelineno-2-97" name="__codelineno-2-97" href="#__codelineno-2-97"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0644'</span>
+</span><span id="__span-2-98"><a id="__codelineno-2-98" name="__codelineno-2-98" href="#__codelineno-2-98"></a><span class="w">    </span><span class="nt">content</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-2-99"><a id="__codelineno-2-99" name="__codelineno-2-99" href="#__codelineno-2-99"></a><span class="w">      </span><span class="no">[Unit]</span>
+</span><span id="__span-2-100"><a id="__codelineno-2-100" name="__codelineno-2-100" href="#__codelineno-2-100"></a><span class="w">      </span><span class="no">Description=Agenda o backup diário com restic</span>
+</span><span id="__span-2-101"><a id="__codelineno-2-101" name="__codelineno-2-101" href="#__codelineno-2-101"></a>
+</span><span id="__span-2-102"><a id="__codelineno-2-102" name="__codelineno-2-102" href="#__codelineno-2-102"></a><span class="w">      </span><span class="no">[Timer]</span>
+</span><span id="__span-2-103"><a id="__codelineno-2-103" name="__codelineno-2-103" href="#__codelineno-2-103"></a><span class="w">      </span><span class="no">OnCalendar={{ restic_horario }}</span>
+</span><span id="__span-2-104"><a id="__codelineno-2-104" name="__codelineno-2-104" href="#__codelineno-2-104"></a><span class="w">      </span><span class="no">Persistent=true</span>
+</span><span id="__span-2-105"><a id="__codelineno-2-105" name="__codelineno-2-105" href="#__codelineno-2-105"></a>
+</span><span id="__span-2-106"><a id="__codelineno-2-106" name="__codelineno-2-106" href="#__codelineno-2-106"></a><span class="w">      </span><span class="no">[Install]</span>
+</span><span id="__span-2-107"><a id="__codelineno-2-107" name="__codelineno-2-107" href="#__codelineno-2-107"></a><span class="w">      </span><span class="no">WantedBy=timers.target</span>
+</span><span id="__span-2-108"><a id="__codelineno-2-108" name="__codelineno-2-108" href="#__codelineno-2-108"></a>
+</span><span id="__span-2-109"><a id="__codelineno-2-109" name="__codelineno-2-109" href="#__codelineno-2-109"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Habilitar</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">timer</span><span class="nv"> </span><span class="s">do</span><span class="nv"> </span><span class="s">backup"</span>
+</span><span id="__span-2-110"><a id="__codelineno-2-110" name="__codelineno-2-110" href="#__codelineno-2-110"></a><span class="w">  </span><span class="nt">ansible.builtin.systemd_service</span><span class="p">:</span>
+</span><span id="__span-2-111"><a id="__codelineno-2-111" name="__codelineno-2-111" href="#__codelineno-2-111"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backup-restic.timer</span>
+</span><span id="__span-2-112"><a id="__codelineno-2-112" name="__codelineno-2-112" href="#__codelineno-2-112"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-113"><a id="__codelineno-2-113" name="__codelineno-2-113" href="#__codelineno-2-113"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">started</span>
+</span><span id="__span-2-114"><a id="__codelineno-2-114" name="__codelineno-2-114" href="#__codelineno-2-114"></a><span class="w">    </span><span class="nt">daemon_reload</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span id="__span-2-115"><a id="__codelineno-2-115" name="__codelineno-2-115" href="#__codelineno-2-115"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">not ansible_check_mode</span><span class="w"> </span><span class="c1"># no --check a unit só foi simulada: o módulo falharia por ela não existir</span>
 </span></code></pre></div>
 <div class="language-bash highlight"><span class="filename">ansible/roles/infra/restic/templates/backup-restic.sh.j2</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="ch">#!/bin/bash</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># ansible/roles/infra/restic/templates/backup-restic.sh.j2</span>
@@ -2655,15 +2691,17 @@
 </span><span id="__span-3-65"><a id="__codelineno-3-65" name="__codelineno-3-65" href="#__codelineno-3-65"></a><span class="w">        </span><span class="k">fi</span>
 </span><span id="__span-3-66"><a id="__codelineno-3-66" name="__codelineno-3-66" href="#__codelineno-3-66"></a><span class="w">        </span>restic<span class="w"> </span>cat<span class="w"> </span>config<span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="o">||</span><span class="w"> </span>restic<span class="w"> </span>init<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 </span><span id="__span-3-67"><a id="__codelineno-3-67" name="__codelineno-3-67" href="#__codelineno-3-67"></a><span class="w">        </span>restic<span class="w"> </span>backup<span class="w"> </span>--host<span class="w"> </span>homeserver<span class="w"> </span>--tag<span class="w"> </span>zfs<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">EXCLUIR</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">caminhos</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">HOST</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
-</span><span id="__span-3-68"><a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a><span class="w">        </span>restic<span class="w"> </span>forget<span class="w"> </span>--prune<span class="w"> </span>--host<span class="w"> </span>homeserver<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">RETENCAO</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
-</span><span id="__span-3-69"><a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>date<span class="w"> </span>+%u<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"7"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
-</span><span id="__span-3-70"><a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a><span class="w">            </span>restic<span class="w"> </span>check<span class="w"> </span>--read-data-subset<span class="w"> </span><span class="s2">"</span><span class="nv">$CHECK_PARCIAL</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
-</span><span id="__span-3-71"><a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a><span class="w">        </span><span class="k">fi</span>
-</span><span id="__span-3-72"><a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a><span class="w">    </span><span class="o">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: falha no repositório </span><span class="nv">$nome</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span><span class="w"> </span><span class="nv">falhas</span><span class="o">=</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
-</span><span id="__span-3-73"><a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a><span class="k">done</span>
-</span><span id="__span-3-74"><a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a>
-</span><span id="__span-3-75"><a id="__codelineno-3-75" name="__codelineno-3-75" href="#__codelineno-3-75"></a><span class="nb">exit</span><span class="w"> </span><span class="s2">"</span><span class="nv">$falhas</span><span class="s2">"</span>
-</span><span id="__span-3-76"><a id="__codelineno-3-76" name="__codelineno-3-76" href="#__codelineno-3-76"></a><span class="o">{</span>%<span class="w"> </span>endraw<span class="w"> </span>%<span class="o">}</span>
+</span><span id="__span-3-68"><a id="__codelineno-3-68" name="__codelineno-3-68" href="#__codelineno-3-68"></a><span class="w">        </span><span class="c1"># --group-by host: um dia com um dataset a menos (ou uma mudança em restic_datasets) não cria um grupo</span>
+</span><span id="__span-3-69"><a id="__codelineno-3-69" name="__codelineno-3-69" href="#__codelineno-3-69"></a><span class="w">        </span><span class="c1"># de snapshots que nunca expira.</span>
+</span><span id="__span-3-70"><a id="__codelineno-3-70" name="__codelineno-3-70" href="#__codelineno-3-70"></a><span class="w">        </span>restic<span class="w"> </span>forget<span class="w"> </span>--prune<span class="w"> </span>--host<span class="w"> </span>homeserver<span class="w"> </span>--group-by<span class="w"> </span>host<span class="w"> </span><span class="s2">"</span><span class="si">${</span><span class="nv">RETENCAO</span><span class="p">[@]</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-71"><a id="__codelineno-3-71" name="__codelineno-3-71" href="#__codelineno-3-71"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>date<span class="w"> </span>+%u<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"7"</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+</span><span id="__span-3-72"><a id="__codelineno-3-72" name="__codelineno-3-72" href="#__codelineno-3-72"></a><span class="w">            </span>restic<span class="w"> </span>check<span class="w"> </span>--read-data-subset<span class="w"> </span><span class="s2">"</span><span class="nv">$CHECK_PARCIAL</span><span class="s2">"</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+</span><span id="__span-3-73"><a id="__codelineno-3-73" name="__codelineno-3-73" href="#__codelineno-3-73"></a><span class="w">        </span><span class="k">fi</span>
+</span><span id="__span-3-74"><a id="__codelineno-3-74" name="__codelineno-3-74" href="#__codelineno-3-74"></a><span class="w">    </span><span class="o">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">{</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"ERRO: falha no repositório </span><span class="nv">$nome</span><span class="s2">"</span><span class="w"> </span>&gt;<span class="p">&amp;</span><span class="m">2</span><span class="p">;</span><span class="w"> </span><span class="nv">falhas</span><span class="o">=</span><span class="m">1</span><span class="p">;</span><span class="w"> </span><span class="o">}</span>
+</span><span id="__span-3-75"><a id="__codelineno-3-75" name="__codelineno-3-75" href="#__codelineno-3-75"></a><span class="k">done</span>
+</span><span id="__span-3-76"><a id="__codelineno-3-76" name="__codelineno-3-76" href="#__codelineno-3-76"></a>
+</span><span id="__span-3-77"><a id="__codelineno-3-77" name="__codelineno-3-77" href="#__codelineno-3-77"></a><span class="nb">exit</span><span class="w"> </span><span class="s2">"</span><span class="nv">$falhas</span><span class="s2">"</span>
+</span><span id="__span-3-78"><a id="__codelineno-3-78" name="__codelineno-3-78" href="#__codelineno-3-78"></a><span class="o">{</span>%<span class="w"> </span>endraw<span class="w"> </span>%<span class="o">}</span>
 </span></code></pre></div>
 <h2 id="restaurar">Restaurar<a class="headerlink" href="#restaurar" title="Permanent link">¶</a></h2>
 <p>Todos os comandos rodam como root no host Proxmox, com as variáveis do repositório carregadas (<code>set -a; . /etc/restic/repositorios/&lt;nome&gt;.env; set +a</code>). Prefira o disco externo, que é mais rápido; a nuvem fica para quando a casa inteira se perdeu.</p>
@@ -2672,18 +2710,22 @@
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>restic<span class="w"> </span>ls<span class="w"> </span>latest<span class="w"> </span>/mnt/restic/files/leo/files/Documentos
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>restic<span class="w"> </span>restore<span class="w"> </span>latest<span class="w"> </span>--include<span class="w"> </span>/mnt/restic/files/leo/files/Documentos/contrato.pdf<span class="w"> </span>--target<span class="w"> </span>/tmp/restaurado
 </span></code></pre></div>
-<p>Ou navegue com <code>restic mount /mnt/restic-navegar</code> (em outro terminal) e copie o que precisar. Arquivos do Nextcloud restaurados direto em <code>/data/files</code> só aparecem na interface depois de <code>docker exec -u www-data nextcloud_app php occ files:scan --all</code>.</p>
+<p>Ou navegue com <code>mkdir -p /mnt/restic-navegar &amp;&amp; restic mount /mnt/restic-navegar</code> (em outro terminal) e copie o que precisar. Arquivos do Nextcloud restaurados direto em <code>/data/files</code> só aparecem na interface depois de <code>docker exec -u www-data nextcloud_app php occ files:scan --all</code>.</p>
 <h3 id="um-dataset-inteiro">Um dataset inteiro<a class="headerlink" href="#um-dataset-inteiro" title="Permanent link">¶</a></h3>
 <ol>
 <li>Pare no Portainer as stacks que usam o dataset (ex.: <code>photos</code> para <code>/data/photos</code>).</li>
-<li><code>restic restore latest --include /mnt/restic/photos --target /tmp/restauro</code> (o conteúdo fica em <code>/tmp/restauro/mnt/restic/photos</code>; use um disco com espaço).</li>
-<li><code>rsync -aHAX --delete /tmp/restauro/mnt/restic/photos/ /data/photos/</code> e <code>chown -R &lt;docker_puid&gt;:&lt;docker_pgid&gt; /data/photos</code> se o dono mudou.</li>
-<li>Suba as stacks de novo.</li>
+<li>Monte o dataset no caminho em que ele foi copiado e restaure por cima, sem cópia intermediária:
+   <div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>/mnt/restic/photos<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mount<span class="w"> </span>--bind<span class="w"> </span>/data/photos<span class="w"> </span>/mnt/restic/photos
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>restic<span class="w"> </span>restore<span class="w"> </span>latest<span class="w"> </span>--include<span class="w"> </span>/mnt/restic/photos<span class="w"> </span>--target<span class="w"> </span>/
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>umount<span class="w"> </span>/mnt/restic/photos
+</span></code></pre></div>
+   Para comparar antes, restaure num disco com espaço (<code>--target /caminho/com/espaço</code>) e use <code>rsync -aHAX --delete</code> de lá.</li>
+<li><code>chown -R &lt;docker_puid&gt;:&lt;docker_pgid&gt; /data/photos</code> se o dono mudou, e suba as stacks de novo.</li>
 </ol>
 <h3 id="bancos-de-dados">Bancos de dados<a class="headerlink" href="#bancos-de-dados" title="Permanent link">¶</a></h3>
 <p>Restaure o <code>docker-volumes</code> (ou só a pasta <code>db-dumps</code> do banco) e use o dump mais recente:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># na VM do banco, com o container do banco no ar e vazio (stack recém-criada)</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>&lt;container&gt;<span class="w"> </span>pg_restore<span class="w"> </span>-U<span class="w"> </span>&lt;usuário&gt;<span class="w"> </span>-d<span class="w"> </span>&lt;banco&gt;<span class="w"> </span>--clean<span class="w"> </span>--if-exists<span class="w"> </span>&lt;<span class="w"> </span>&lt;app&gt;-&lt;data&gt;.dump
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># na VM do banco, com o container do banco no ar e vazio (stack recém-criada)</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>&lt;container&gt;<span class="w"> </span>pg_restore<span class="w"> </span>-U<span class="w"> </span>&lt;usuário&gt;<span class="w"> </span>-d<span class="w"> </span>&lt;banco&gt;<span class="w"> </span>--clean<span class="w"> </span>--if-exists<span class="w"> </span>&lt;<span class="w"> </span>&lt;app&gt;-&lt;data&gt;.dump
 </span></code></pre></div>
 <p>Os detalhes de cada aplicação: Nextcloud e Immich na <a href="../../01-manual-implementacao/11-fotos-arquivos/">seção 11</a>, LiteLLM na <a href="../../01-manual-implementacao/08-stack-ia/">seção 8</a>. Para o Authelia e o Grafana, pare o container da aplicação (<code>authelia</code>, <code>grafana</code>), restaure no <code>authelia_db</code>/<code>grafana_db</code> e suba de novo.</p>
 <h3 id="o-host-proxmox-e-as-vms">O host Proxmox e as VMs<a class="headerlink" href="#o-host-proxmox-e-as-vms" title="Permanent link">¶</a></h3>
@@ -2691,8 +2733,8 @@
 <h2 id="snapshots-zfs">Snapshots ZFS<a class="headerlink" href="#snapshots-zfs" title="Permanent link">¶</a></h2>
 <p>Os snapshots automáticos (<code>zfs-auto-snapshot</code>, instalado pelo <code>setup-proxmox-host.yml</code>) valem <strong>só para <code>data/notes</code></strong>, pela propriedade <code>com.sun:auto-snapshot</code>. Eles servem para desfazer edições da IA nos vaults pelo <code>.zfs/snapshot</code> (<a href="../../01-manual-implementacao/12-segundo-cerebro/#desfazer-uma-edição">seção 12</a>). Snapshot no mesmo pool não é backup: se o pool se perde, ele vai junto. Nos datasets com <code>quota</code> (<code>photos</code>, <code>files</code>), os snapshots ainda consumiriam a cota.</p>
 <p>Para um ponto de volta antes de uma mudança arriscada, tire um à mão e apague depois (<a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/">guia de snapshots</a>):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>zfs<span class="w"> </span>snapshot<span class="w"> </span>data/docker-volumes@antes-da-mudanca
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>zfs<span class="w"> </span>destroy<span class="w"> </span>data/docker-volumes@antes-da-mudanca
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>zfs<span class="w"> </span>snapshot<span class="w"> </span>data/docker-volumes@antes-da-mudanca
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>zfs<span class="w"> </span>destroy<span class="w"> </span>data/docker-volumes@antes-da-mudanca
 </span></code></pre></div>
 <h2 id="repositório-e-segredos">Repositório e segredos<a class="headerlink" href="#repositório-e-segredos" title="Permanent link">¶</a></h2>
 <ul>
@@ -2704,7 +2746,7 @@
 <p>Um backup que nunca foi restaurado não é confiável. <strong>A cada três meses:</strong></p>
 <ol>
 <li>Escolha um arquivo de cada dataset (<code>docker-volumes</code>, <code>photos</code>, <code>files</code>, <code>notes</code>) e restaure-o do repositório <strong>da nuvem</strong> em <code>/tmp/teste-restauro</code>. Compare com o original: <code>sha256sum</code>.</li>
-<li>Restaure o dump mais recente de um banco num Postgres descartável (<code>docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:16-alpine</code>; <code>pg_restore</code>; uma consulta qualquer) e apague o container.</li>
+<li>Restaure o dump mais recente de um banco num Postgres descartável e apague o container: <code>docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:16-alpine</code>, espere o <code>docker exec pg-teste pg_isready</code>, rode <code>docker exec -i pg-teste pg_restore -U postgres -d postgres --no-owner --no-acl &lt; &lt;app&gt;-&lt;data&gt;.dump</code> e faça uma consulta qualquer (<code>docker exec pg-teste psql -U postgres -c '\dt'</code>).</li>
 <li>Confira que <code>restic snapshots</code> mostra backups diários recentes nos dois repositórios, e que o <code>journalctl -u backup-restic</code> do último domingo tem o <code>check</code> sem erro.</li>
 <li>Anote a data do teste e qualquer passo que tenha faltado nesta página, e corrija a página.</li>
 </ol>
@@ -2728,7 +2770,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:43:24 -03">21 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:58:07 -03">21 de outubro de 2026</span>
   </span>
 
     

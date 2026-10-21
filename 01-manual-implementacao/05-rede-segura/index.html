@@ -1038,6 +1038,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../14-vpn-tailscale/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VPN (Tailscale)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2323,7 +2351,7 @@
 </span></code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Variáveis de Ambiente no Docker Compose</p>
-<p>Variáveis como <code>${CORE_SERVICES_VM_IP_VAR}</code>, <code>${VM_NFS_MOUNT_BASE_PATH}</code>, <code>${ZFS_DOCKER_VOLUMES_DATASET_NAME}</code>, <code>${CLOUDFLARE_API_TOKEN_FROM_VAULT}</code>, <code>${BASE_DOMAIN_FROM_VAULT}</code>, e <code>${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}</code> são placeholders que serão substituídos:
+<p>Variáveis como <code>${CORE_SERVICES_VM_IP_VAR}</code>, <code>${VM_NFS_MOUNT_BASE_PATH}</code>, <code>${AUTHELIA_DB_PATH}</code>, <code>${ZFS_DOCKER_VOLUMES_DATASET_NAME}</code>, <code>${CLOUDFLARE_API_TOKEN_FROM_VAULT}</code>, <code>${BASE_DOMAIN_FROM_VAULT}</code>, e <code>${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}</code> são placeholders que serão substituídos:
 pelos valores que o playbook <code>setup-core-networking.yml</code> passa no bloco <code>environment:</code> da tarefa de deploy (vault, inventário e <code>group_vars</code>). A stack <code>core</code> não tem <code>.env</code> em disco nem é criada no Portainer.</p>
 </div>
 <h2 id="53-authelia-parte-de-dockerstackscoredocker-composeyml">5.3. Authelia (parte de <code>docker/stacks/core/docker-compose.yml</code>)<a class="headerlink" href="#53-authelia-parte-de-dockerstackscoredocker-composeyml" title="Permanent link">¶</a></h2>
@@ -2418,13 +2446,14 @@ pelos valores que o playbook <code>setup-core-networking.yml</code> passa no blo
 </ul>
 </li>
 <li><strong>Executa Role <code>infra/authelia-config</code>:</strong><ul>
-<li>Cria os diretórios de configuração e do banco do Authelia no volume NFS.</li>
+<li>Cria o diretório de configuração do Authelia no volume NFS e o do banco no disco local da VM (<code>/opt/local-data/authelia-db</code>).</li>
 <li>Copia o <code>configuration.yml</code> e o <code>users_database.yml</code> (base de usuários do backend <code>file</code>) templateados.</li>
 </ul>
 </li>
 <li><strong>Copia o compose para a VM:</strong> o módulo de deploy roda na <code>core-services-vm</code>, então o <code>docker/stacks/core/docker-compose.yml</code> do repositório é copiado para <code>/opt/stacks/core/</code> na VM.</li>
 <li><strong>Deploy da Stack <code>core</code>:</strong> Usa o módulo <code>community.docker.docker_compose_v2</code> sobre <code>/opt/stacks/core/</code>, injetando as variáveis de ambiente do Ansible Vault, do inventário e de <code>group_vars</code>.</li>
 <li><strong>Aguarda Traefik:</strong> Espera o healthcheck do Traefik passar.</li>
+<li><strong>Dump diário do banco do Authelia:</strong> instala o <code>backup-authelia-db</code> (03:15) pelo <code>ansible/playbooks/tasks/dump-postgres.yml</code> (<a href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/#bancos-de-dados-dumps-diários">backup</a>).</li>
 </ol>
 <h3 id="ações-preparatórias-roles-ansible-para-configuração">Ações Preparatórias: Roles Ansible para Configuração<a class="headerlink" href="#ações-preparatórias-roles-ansible-para-configuração" title="Permanent link">¶</a></h3>
 <p>Antes de criar o playbook, precisamos dos roles que preparam os arquivos de configuração.</p>
@@ -3290,7 +3319,7 @@ O <code>cloudflared</code> tentará criar e gerenciar automaticamente um registr
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:43:24 -03">21 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:58:07 -03">21 de outubro de 2026</span>
   </span>
 
     
