@@ -213,6 +213,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/recyclarr.yml.j2` | template | `01-manual-implementacao/10-midia.md` |
+| `docker/images/ops/.dockerignore` | outro | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/Dockerfile` | outro | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/__init__.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/auditoria.py` | script | `01-manual-implementacao/13-agentes-base.md` |

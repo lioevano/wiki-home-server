@@ -131,9 +131,6 @@ services:
       OPS_INVENTARIO: inventories/home/hosts.ini
       OPS_CHAVE_SSH: /segredos/id_ed25519
       ANSIBLE_VAULT_PASSWORD_FILE: /segredos/vault_pass
-      # O ansible.cfg do repositório pede o callback 'yaml', que saiu do community.general recente.
-      ANSIBLE_STDOUT_CALLBACK: default
-      ANSIBLE_CALLBACK_RESULT_FORMAT: yaml
     volumes:
       - ${OPS_DATA_PATH}/segredos:/segredos:ro
       - ${OPS_DATA_PATH}/repo:/repo

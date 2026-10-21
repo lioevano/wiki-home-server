@@ -465,7 +465,7 @@ ai_desktop_vm_ip_var=192.168.15.68
 ### Variáveis Globais Não Sensíveis (`ansible/inventories/home/group_vars/all/main.yml`)
 
 !!! info "Configuração do Ansible do projeto"
-    O arquivo `ansible/ansible.cfg` define o inventário padrão (`inventories/home/hosts.ini`), o `roles_path` e opções como `host_key_checking`. Rode os comandos `ansible-playbook` a partir de `server/ansible/` para que ele seja carregado.
+    O arquivo `ansible/ansible.cfg` define o inventário padrão (`inventories/home/hosts.ini`), o `roles_path`, opções como `host_key_checking` e a saída em YAML (`stdout_callback = default` com `callback_result_format = yaml`; o antigo callback `yaml` saiu do community.general 12). Rode os comandos `ansible-playbook` a partir de `server/ansible/` para que ele seja carregado.
 
 Crie o arquivo `server/ansible/inventories/home/group_vars/all/main.yml`. Este arquivo define variáveis que se aplicam a todos os hosts no seu inventário e que não são secretas (segredos vão no `vault.yml`).
 
@@ -629,8 +629,10 @@ agents_leitura:
   ops: "*"
   homeassistant: ["GetLiveContext"]
   n8n: ["search_workflows"]
-# O ops recusa reiniciar estes containers e redeployar estas stacks (o caminho de controle da própria IA).
-ops_containers_protegidos: [traefik, authelia, cloudflared, portainer, agentgateway, mcp_auth_servidor, ops_leitura, ops_controle]
+# O ops recusa reiniciar estes containers e redeployar estas stacks (o caminho de controle da própria IA;
+# o n8n leva os avisos das ações dela ao Telegram).
+ops_containers_protegidos: [traefik, authelia, authelia_db, cloudflared, portainer, portainer_agent, agentgateway, mcp_auth_servidor,
+                            ops_leitura, ops_controle, n8n_app]
 ops_stacks_protegidas: [core, agents]
 # Playbooks que a IA pode simular (ansible_check) e aplicar (ansible_aplicar). Fora da lista: criação de VMs,
 # host Proxmox, rede core (Traefik/Authelia), base das VMs (Docker/NFS/Alloy da core, onde roda o ops) e o deploy completo.

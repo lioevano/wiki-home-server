@@ -76,22 +76,25 @@ class Portainer:
                               "_eid": eid, "_id": c["Id"]})
         return lista
 
-    def _localizar(self, nome: str) -> dict:
-        for c in self.containers():
-            if c["nome"] == nome:
-                return c
-        raise ErroPortainer(f"container {nome} não encontrado nas VMs")
+    def _localizar(self, nome: str, vm: str | None = None) -> dict:
+        achados = [c for c in self.containers(vm) if c["nome"] == nome]
+        if not achados:
+            raise ErroPortainer(f"container {nome} não encontrado" + (f" na VM {vm}" if vm else " nas VMs"))
+        if len(achados) > 1:  # mesmo nome nas duas VMs: não escolhe sozinho
+            vms = ", ".join(sorted(c["vm"] for c in achados))
+            raise ErroPortainer(f"o container {nome} existe em mais de uma VM ({vms}); informe vm")
+        return achados[0]
 
-    def logs(self, nome: str, linhas: int) -> str:
-        c = self._localizar(nome)
+    def logs(self, nome: str, linhas: int, vm: str | None = None) -> str:
+        c = self._localizar(nome, vm)
         status, corpo = self.http("GET", f"/api/endpoints/{c['_eid']}/docker/containers/{c['_id']}/logs"
                                          f"?stdout=1&stderr=1&tail={linhas}", None)
         if status >= 300:
             raise ErroPortainer(f"Portainer respondeu {status} ao ler os logs de {nome}")
         return _desmultiplexar(corpo)
 
-    def reiniciar(self, nome: str) -> None:
-        c = self._localizar(nome)
+    def reiniciar(self, nome: str, vm: str | None = None) -> None:
+        c = self._localizar(nome, vm)
         status, corpo = self.http("POST", f"/api/endpoints/{c['_eid']}/docker/containers/{c['_id']}/restart", None)
         if status >= 300:
             raise ErroPortainer(f"Portainer respondeu {status} ao reiniciar {nome}: {corpo[:200]!r}")

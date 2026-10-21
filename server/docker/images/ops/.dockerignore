@@ -1,0 +1,3 @@
+# Fora da imagem: cache do Python criado pelos testes (tools/wikisync/tests/test_ops.py).
+**/__pycache__
+**/*.pyc

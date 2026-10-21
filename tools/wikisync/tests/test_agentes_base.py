@@ -115,11 +115,11 @@ def test_ops_leitura_sem_segredos_de_escrita():
         assert o["image"] == "${OPS_IMAGE}" and o["pull_policy"] == "never"
         assert o["user"] == "${DOCKER_PUID}:${DOCKER_PGID}"
         assert env["HOME"] == "/tmp"
-    # só o controle tem o runner: chave, vault e o callback de saída compatível com o ansible-core novo
+    # só o controle tem o runner: chave e vault (o callback de saída vem do ansible.cfg do repositório)
     env = _env(controle)
     assert env["OPS_CHAVE_SSH"] == "/segredos/id_ed25519"
     assert env["ANSIBLE_VAULT_PASSWORD_FILE"] == "/segredos/vault_pass"
-    assert env["ANSIBLE_STDOUT_CALLBACK"] == "default" and env["ANSIBLE_CALLBACK_RESULT_FORMAT"] == "yaml"
+    assert "ANSIBLE_STDOUT_CALLBACK" not in env and "ANSIBLE_CALLBACK_RESULT_FORMAT" not in env
     assert "ANSIBLE_VAULT_PASSWORD_FILE" not in _env(leitura)
 
 
@@ -545,3 +545,26 @@ def test_clone_sem_become_user():
     dono = tarefas[i + 1].get("ansible.builtin.file", {})
     assert dono.get("path") == "{{ vm_local_data_path }}/ops/repo" and dono.get("recurse") is True
     assert dono.get("owner") == "{{ docker_puid }}" and dono.get("group") == "{{ docker_pgid }}"
+
+
+# --- Pendências menores (spec 2026-10-20-pendencias-menores, #5, #6, #13) ---
+
+def test_ansible_cfg_sem_callback_yaml():
+    """#13: o callback 'yaml' saiu do community.general 12; o 'default' com result_format yaml faz o mesmo."""
+    import configparser
+    cfg = configparser.ConfigParser()
+    cfg.read(ROOT / "server/ansible/ansible.cfg", encoding="utf-8")
+    assert cfg["defaults"]["stdout_callback"] == "default"
+    assert cfg["defaults"]["callback_result_format"] == "yaml"
+
+
+def test_protegidos_incluem_banco_do_authelia_agente_e_n8n():
+    """#6: o banco do Authelia, o Portainer Agent e o n8n (avisos da própria IA) também são caminho de controle."""
+    m = yaml.safe_load((ROOT / "server/ansible/inventories/home/group_vars/all/main.yml").read_text(encoding="utf-8"))
+    assert {"authelia_db", "portainer_agent", "n8n_app"} <= set(m["ops_containers_protegidos"])
+
+
+def test_langfuse_em_utc():
+    """#5: o Langfuse compara timestamps em UTC; a tela converte para o fuso do navegador."""
+    for nome in ("langfuse_web", "langfuse_worker"):
+        assert _env(_svc(LANGFUSE)[nome])["TZ"] == "UTC", nome

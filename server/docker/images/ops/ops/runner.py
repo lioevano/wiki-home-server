@@ -1,7 +1,9 @@
 """Runner Ansible do ops: simulação obrigatória (ansible_check) antes de aplicar (ansible_aplicar)."""
 from __future__ import annotations
 
+import os
 import secrets
+import signal
 import subprocess
 import threading
 import time
@@ -16,11 +18,23 @@ TEMPO_APLICAR_S = 3600
 
 
 def executar_real(argv: list[str], cwd: str, timeout: int) -> tuple[int, str]:
+    """Roda em sessão própria: no tempo esgotado, mata o grupo inteiro (ansible-playbook e os ssh filhos)."""
+    proc = subprocess.Popen(argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                            errors="replace", start_new_session=True)
     try:
-        r = subprocess.run(argv, cwd=cwd, timeout=timeout, capture_output=True, text=True)
-    except subprocess.TimeoutExpired as erro:
-        return 124, f"{erro.output or ''}\n[tempo esgotado depois de {timeout} s]"
-    return r.returncode, r.stdout + r.stderr
+        saida, _ = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        try:
+            saida, _ = proc.communicate(timeout=10)
+        except subprocess.TimeoutExpired:  # um neto fora do grupo segurando o pipe: desiste da saída restante
+            proc.kill()
+            saida = ""
+        return 124, f"{saida or ''}\n[tempo esgotado depois de {timeout} s]"
+    return proc.returncode, saida
 
 
 class Runner:
@@ -74,13 +88,13 @@ class Runner:
         return {"plano_id": plano_id, "commit": commit, "rc": rc, "saida": limpar_saida(saida, self.cfg.limite_saida)}
 
     def aplicar(self, plano_id: str) -> dict:
-        plano = self._planos.pop(plano_id, None)  # um plano só vale uma vez
-        if plano is None:
-            raise Recusado("plano_id desconhecido ou já usado; rode ansible_check de novo")
-        if self.agora() - plano["criado"] > self.cfg.plano_validade_s:
-            raise Recusado("plano vencido; rode ansible_check de novo")
-        trava = self._exclusivo()
+        trava = self._exclusivo()  # antes de consumir o plano: a recusa por concorrência não o queima
         try:
+            plano = self._planos.pop(plano_id, None)  # um plano só vale uma vez
+            if plano is None:
+                raise Recusado("plano_id desconhecido ou já usado; rode ansible_check de novo")
+            if self.agora() - plano["criado"] > self.cfg.plano_validade_s:
+                raise Recusado("plano vencido; rode ansible_check de novo")
             commit = self._atualizar_repo()
             if commit != plano["commit"]:
                 raise Recusado(f"o repositório mudou desde a simulação ({plano['commit'][:8]} → {commit[:8]}); "

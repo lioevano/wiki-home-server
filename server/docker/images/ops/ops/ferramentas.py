@@ -29,20 +29,24 @@ def _tabela(linhas: list[dict], campos: list[str]) -> str:
 
 
 def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
-                enviar: auditoria.Enviar | None) -> dict[str, Ferramenta]:
+                enviar: auditoria.Enviar | None, cliente: Callable[[], str] = lambda: "") -> dict[str, Ferramenta]:
+    def quem() -> str:
+        return cliente() or "desconhecido"
+
     def acao(nome_acao: str, alvo: str, executar: Callable[[], "str | tuple[str, bool, str]"]) -> str:
         """executar devolve o texto, ou (texto, deu_certo, alvo) quando o resultado depende do que rodou (Ansible)."""
         inicio = time.monotonic()
         try:
             r = executar()
         except Recusado as erro:
-            auditoria.registrar(nome_acao, alvo, "recusado", time.monotonic() - inicio, str(erro), enviar)
+            auditoria.registrar(nome_acao, alvo, "recusado", time.monotonic() - inicio, str(erro), enviar, quem())
             raise
         except Exception as erro:
-            auditoria.registrar(nome_acao, alvo, "erro", time.monotonic() - inicio, str(erro), enviar)
+            auditoria.registrar(nome_acao, alvo, "erro", time.monotonic() - inicio, str(erro), enviar, quem())
             raise
         texto, ok, alvo = (r, True, alvo) if isinstance(r, str) else r
-        auditoria.registrar(nome_acao, alvo, "ok" if ok else "erro", time.monotonic() - inicio, texto[-300:], enviar)
+        auditoria.registrar(nome_acao, alvo, "ok" if ok else "erro", time.monotonic() - inicio, texto[-300:], enviar,
+                            quem())
         return texto
 
     # --- leitura ---
@@ -50,9 +54,10 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
         """Lista os containers das VMs (core e ai): nome, imagem, estado e saúde. vm: 'core', 'ai' ou vazio."""
         return _tabela(portainer.containers(vm), ["vm", "nome", "imagem", "estado", "saude", "status"])
 
-    def container_logs(nome: str, linhas: int = 200) -> str:
-        """Últimas linhas do log de um container (no máximo 500). Linhas com cara de segredo vêm mascaradas."""
-        return limpar_saida(portainer.logs(nome, max(1, min(linhas, 500))), cfg.limite_saida)
+    def container_logs(nome: str, linhas: int = 200, vm: str | None = None) -> str:
+        """Últimas linhas do log de um container (no máximo 500). Linhas com cara de segredo vêm mascaradas.
+        vm ('core' ou 'ai') só é exigida quando o mesmo nome existe nas duas VMs."""
+        return limpar_saida(portainer.logs(nome, max(1, min(linhas, 500)), vm), cfg.limite_saida)
 
     def stacks_listar() -> str:
         """Lista as stacks do Portainer, a VM de cada uma e se está ativa."""
@@ -70,11 +75,12 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
     ]
 
     if cfg.modo == "controle":
-        def container_reiniciar(nome: str) -> str:
-            """Reinicia um container. Containers do caminho de controle (Traefik, Authelia, Portainer, hub) são recusados."""
+        def container_reiniciar(nome: str, vm: str | None = None) -> str:
+            """Reinicia um container. Containers do caminho de controle (Traefik, Authelia, Portainer, hub) são recusados.
+            vm ('core' ou 'ai') só é exigida quando o mesmo nome existe nas duas VMs."""
             def fazer() -> str:
                 checar_container(nome, cfg)
-                portainer.reiniciar(nome)
+                portainer.reiniciar(nome, vm)
                 return f"container {nome} reiniciado"
             return acao("container_reiniciar", nome, fazer)
 

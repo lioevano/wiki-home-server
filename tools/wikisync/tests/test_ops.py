@@ -413,3 +413,97 @@ def test_imagem_ops_usa_o_uid_do_compose():
     d = (IMG / "Dockerfile").read_text(encoding="utf-8")
     assert "ARG UID" in d and "ARG GID" in d
     assert "useradd --uid ${UID} --gid ${GID}" in d or "useradd --uid \"${UID}\" --gid \"${GID}\"" in d
+
+
+# --- Pendências menores (spec 2026-10-20-pendencias-menores, #1, #2, #3, #7, #8) ---
+
+def test_aplicar_recusado_pela_trava_nao_queima_o_plano():
+    """#1: com outra execução em andamento, o aplicar recusa sem consumir o plano."""
+    runner = _runner()
+    plano = runner.check("setup-media-stack-volumes.yml", None)["plano_id"]
+    assert runner._trava.acquire(blocking=False)
+    try:
+        with pytest.raises(Recusado, match="outra execução em andamento"):
+            runner.aplicar(plano)
+    finally:
+        runner._trava.release()
+    assert runner.aplicar(plano)["rc"] == 0
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="grupo de processos é POSIX")
+def test_tempo_esgotado_mata_o_grupo_e_devolve_texto(tmp_path):
+    """#2: o tempo esgotado devolve texto (não bytes) e não deixa filho vivo (ex.: ssh do Ansible)."""
+    import time
+    from pathlib import Path
+
+    from ops.runner import executar_real
+    pid_arq = tmp_path / "filho.pid"
+    rc, saida = executar_real(["sh", "-c", f"echo começou; sleep 30 & echo $! > {pid_arq}; wait"], str(tmp_path), 1)
+    assert rc == 124 and isinstance(saida, str)
+    assert "começou" in saida and "tempo esgotado" in saida
+    filho = int(pid_arq.read_text())
+    time.sleep(0.2)
+    estado = Path(f"/proc/{filho}/stat")
+    # morto: some, ou vira zumbi esperando o init do container recolher
+    assert not estado.exists() or estado.read_text().split(") ", 1)[1].startswith("Z")
+
+
+def test_executar_real_junta_stdout_e_stderr(tmp_path):
+    from ops.runner import executar_real
+    rc, saida = executar_real(["sh", "-c", "echo fora; echo erro >&2; exit 3"], str(tmp_path), 30)
+    assert rc == 3 and "fora" in saida and "erro" in saida
+
+
+def test_cliente_no_registro_e_no_aviso(capsys):
+    """#3: o registro da ação diz qual cliente do hub pediu (claude_code, agentes, mcp_auth_servidor)."""
+    cfg = _cfg()
+    avisos = []
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), None, avisos.append, cliente=lambda: "claude_code")
+    fs["container_reiniciar"].funcao(nome="jellyfin")
+    registro = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert registro["cliente"] == "claude_code"
+    assert "claude_code" in avisos[-1]["titulo"]
+
+
+def test_cliente_padrao_desconhecido(capsys):
+    fs, _, _ = _ferr()
+    fs["container_reiniciar"].funcao(nome="jellyfin")
+    registro = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
+    assert registro["cliente"] == "desconhecido"
+
+
+def test_servidor_le_o_cliente_do_cabecalho_do_hub():
+    srv = (IMG / "ops/server.py").read_text(encoding="utf-8")
+    assert "get_http_headers" in srv and "x-homeserver-cliente" in srv
+
+
+def _falso_com_nome_repetido():
+    falso = PortainerFalso()
+    falso.rotas[("GET", "/api/endpoints/2/docker/containers/json?all=1")] = (200, [
+        {"Id": "c9", "Names": ["/litellm_proxy"], "Image": "litellm", "State": "exited", "Status": "Exited"},
+        {"Id": "c8", "Names": ["/jellyfin"], "Image": "jellyfin/jellyfin:10", "State": "running", "Status": "Up"}])
+    falso.rotas[("POST", "/api/endpoints/2/docker/containers/c8/restart")] = (204, b"")
+    return falso
+
+
+def test_nome_repetido_nas_duas_vms_exige_vm():
+    """#7: com o mesmo nome nas duas VMs, a ação não escolhe sozinha."""
+    from ops.portainer import ErroPortainer
+    fs, falso, _ = _ferr(falso=_falso_com_nome_repetido())
+    with pytest.raises(ErroPortainer, match="informe vm"):
+        fs["container_reiniciar"].funcao(nome="jellyfin")
+    assert not [c for c in falso.chamadas if c[0] == "POST"]
+    fs["container_reiniciar"].funcao(nome="jellyfin", vm="ai")
+    assert ("POST", "/api/endpoints/2/docker/containers/c8/restart", None) in falso.chamadas
+
+
+def test_logs_com_vm():
+    fs, falso, _ = _ferr()
+    falso.rotas[("GET", "/api/endpoints/1/docker/containers/c1/logs?stdout=1&stderr=1&tail=10")] = (200, b"oi\n")
+    assert "oi" in fs["container_logs"].funcao(nome="jellyfin", linhas=10, vm="core")
+
+
+def test_dockerignore_sem_cache_dos_testes():
+    """#8: os testes importam o pacote e criam __pycache__; ele não entra na imagem."""
+    ignorados = (IMG / ".dockerignore").read_text(encoding="utf-8").split()
+    assert "**/__pycache__" in ignorados and "**/*.pyc" in ignorados

@@ -157,8 +157,10 @@ agents_leitura:
   ops: "*"
   homeassistant: ["GetLiveContext"]
   n8n: ["search_workflows"]
-# O ops recusa reiniciar estes containers e redeployar estas stacks (o caminho de controle da própria IA).
-ops_containers_protegidos: [traefik, authelia, cloudflared, portainer, agentgateway, mcp_auth_servidor, ops_leitura, ops_controle]
+# O ops recusa reiniciar estes containers e redeployar estas stacks (o caminho de controle da própria IA;
+# o n8n leva os avisos das ações dela ao Telegram).
+ops_containers_protegidos: [traefik, authelia, authelia_db, cloudflared, portainer, portainer_agent, agentgateway, mcp_auth_servidor,
+                            ops_leitura, ops_controle, n8n_app]
 ops_stacks_protegidas: [core, agents]
 # Playbooks que a IA pode simular (ansible_check) e aplicar (ansible_aplicar). Fora da lista: criação de VMs,
 # host Proxmox, rede core (Traefik/Authelia), base das VMs (Docker/NFS/Alloy da core, onde roda o ops) e o deploy completo.

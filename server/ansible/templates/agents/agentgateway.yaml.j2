@@ -23,6 +23,12 @@
               backendAuth:
                 key:
                   file: /segredos/backends_token
+              # Quem pediu (metadado da chave) vai para o registro de auditoria do ops; 'set' sobrescreve
+              # qualquer valor que o cliente tenha mandado.
+              transformations:
+                request:
+                  set:
+                    x-homeserver-cliente: 'apiKey.cliente'
 {% for nome, alvo in alvos_fixos.items() %}
           - name: {{ nome }}
             mcp:
@@ -37,6 +43,9 @@ config:
   statsAddr: 0.0.0.0:15020
   logging:
     format: json
+    fields:
+      add:
+        cliente: 'apiKey.cliente' # qual chave chamou (claude_code, agentes, mcp_auth_servidor)
   tracing:
     otlpEndpoint: http://{{ ai_desktop_vm_ip_var }}:3100/api/public/otel
     otlpProtocol: http
@@ -72,6 +81,7 @@ binds:
 {% endfor %}
       backends:
       - mcp:
+          statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)
           prefixMode: always
           failureMode: failOpen
 {{ alvos('leitura') }}
@@ -96,6 +106,7 @@ binds:
 {% endfor %}
       backends:
       - mcp:
+          statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)
           prefixMode: always
           failureMode: failOpen
 {{ alvos('controle') }}

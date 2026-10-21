@@ -10,13 +10,14 @@ Enviar = Callable[[dict], None]
 
 
 def registrar(acao: str, alvo: str, resultado: str, duracao_s: float, detalhe: str = "",
-              enviar: Enviar | None = None) -> dict:
-    reg = {"evento": "ops_acao", "acao": acao, "alvo": alvo, "resultado": resultado,
+              enviar: Enviar | None = None, cliente: str = "desconhecido") -> dict:
+    """cliente: quem pediu pelo hub (metadado da chave: claude_code, agentes, mcp_auth_servidor)."""
+    reg = {"evento": "ops_acao", "acao": acao, "alvo": alvo, "resultado": resultado, "cliente": cliente,
            "duracao_s": round(duracao_s, 2), "detalhe": detalhe[:500]}
     if enviar is not None:
         try:
             enviar({"gravidade": "info" if resultado == "ok" else "warning",
-                    "titulo": f"IA: {acao} {alvo} ({resultado})",
+                    "titulo": f"IA: {acao} {alvo} ({resultado}, {cliente})",
                     "mensagem": detalhe[:500] or f"{acao} em {alvo}: {resultado}", "app": "ops"})
             reg["aviso"] = "enviado"
         except Exception as erro:  # o aviso nunca derruba a ação

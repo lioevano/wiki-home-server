@@ -5,7 +5,7 @@
 # Variáveis em /opt/portainer_stack_envs/langfuse.env (setup-langfuse-volumes.yml).
 
 x-langfuse-env: &langfuse-env
-  TZ: ${SYSTEM_TIMEZONE}
+  TZ: UTC # o Langfuse compara timestamps em UTC (ClickHouse e Postgres também); a tela usa o fuso do navegador
   DATABASE_URL: postgresql://langfuse:${LANGFUSE_DB_PASSWORD}@langfuse_db:5432/langfuse
   SALT: ${LANGFUSE_SALT}
   ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
