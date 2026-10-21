@@ -61,7 +61,21 @@
         VM_NFS_MOUNT_BASE_PATH: "{{ vm_nfs_mount_base_path }}"
         ZFS_DOCKER_VOLUMES_DATASET_NAME: "{{ zfs_docker_volumes_dataset_name }}"
         CORE_SERVICES_VM_IP_VAR: "{{ core_services_vm_ip_var }}"
+        # Banco do Authelia no disco local
+        AUTHELIA_DB_PATH: "{{ vm_local_data_path }}/authelia-db"
       register: core_stack_deploy_result
+
+    # Dump diário do banco do Authelia (2FA, sessões, consentimentos OIDC) para o NFS, copiado pelo restic.
+    - name: "Dump diário do Postgres do Authelia"
+      ansible.builtin.include_tasks: tasks/dump-postgres.yml
+      vars:
+        dump_nome: authelia
+        dump_descricao: "do Authelia (página 05)"
+        dump_container: authelia_db
+        dump_db: authelia
+        dump_user: authelia
+        dump_destino: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db-dumps"
+        dump_horario: "*-*-* 03:15:00"
 
     - name: "Aguardar Traefik estar saudável"
       community.docker.docker_container_info:

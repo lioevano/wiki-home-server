@@ -391,6 +391,20 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
       public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
       secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"
+    # Backup com restic (página 04/02). A senha cifra os repositórios: sem ela, nenhum backup se restaura.
+    # Gere com openssl rand -base64 32 e guarde uma cópia FORA do servidor (gerenciador de senhas).
+    restic_senha: "SENHA_LONGA_DOS_REPOSITORIOS_DO_RESTIC"
+    # Destinos do backup. 'montagem' (opcional): o backup só grava se esse caminho estiver montado.
+    restic_repositorios:
+      - nome: externo
+        repositorio: /mnt/backup-externo/restic
+        montagem: /mnt/backup-externo
+        ambiente: {}
+      - nome: nuvem
+        repositorio: "s3:https://s3.us-west-004.backblazeb2.com/NOME-DO-BUCKET/homeserver"
+        ambiente:
+          AWS_ACCESS_KEY_ID: "ID_DA_CHAVE_DE_APLICACAO_DO_B2"
+          AWS_SECRET_ACCESS_KEY: "CHAVE_DE_APLICACAO_DO_B2"
     ```
     !!! important "Como Editar o Arquivo Vault no Futuro"
         Para editar o arquivo `vault.yml` após sua criação, SEMPRE use o comando:
@@ -523,9 +537,28 @@ zfs_files_dataset_name: "files"             # Diretório de dados do Nextcloud. 
 zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo cérebro, página 12). Só na VM de IA; snapshots automáticos.
 
 # --- Disco local das VMs ---
-# Bancos que não podem ficar em NFS (o Immich exige disco local) ficam aqui, fora dos snapshots ZFS;
-# o backup deles são os dumps diários gravados no NFS (página 11).
+# Bancos que não podem ficar em NFS (o Postgres exige ser dono dos arquivos) ficam aqui, fora dos snapshots
+# ZFS; o backup deles são os dumps diários gravados no NFS (página 04/02).
 vm_local_data_path: "/opt/local-data"
+
+# --- Backup com restic no host Proxmox (página 04/02) ---
+# Datasets copiados (a mídia fica de fora: dá para baixar de novo e não cabe na nuvem).
+restic_datasets:
+  - "{{ zfs_docker_volumes_dataset_name }}"
+  - "{{ zfs_photos_dataset_name }}"
+  - "{{ zfs_files_dataset_name }}"
+  - "{{ zfs_notes_dataset_name }}"
+# Caminhos (dataset/pasta) que não entram: métricas e logs mudam o tempo todo e não valem o espaço.
+restic_excluir:
+  - "{{ zfs_docker_volumes_dataset_name }}/prometheus/data"
+  - "{{ zfs_docker_volumes_dataset_name }}/loki/data"
+# Arquivos do host Proxmox que vão junto (rede, GRUB/IOMMU, definição das VMs em /etc/pve).
+restic_host_caminhos: ["/etc"]
+# Todo dia, depois dos dumps dos bancos (o último às 03:45).
+restic_horario: "*-*-* 04:30:00"
+restic_retencao: "--keep-daily 7 --keep-weekly 4 --keep-monthly 12"
+# Aos domingos, o restic relê esta fração dos dados de cada repositório para achar corrupção.
+restic_check_parcial: "5%"
 
 # --- Caminhos de Montagem NFS DENTRO das VMs ---
 # Ponto de montagem base DENTRO das VMs para os datasets ZFS compartilhados do Host Proxmox.

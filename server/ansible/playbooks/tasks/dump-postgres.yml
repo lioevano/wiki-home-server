@@ -1,0 +1,68 @@
+# ansible/playbooks/tasks/dump-postgres.yml
+# Dump diário de um Postgres que roda no disco local da VM (regra DAD-5), gravado no NFS, onde o restic do
+# host Proxmox o copia (página 04/02). Incluído com include_tasks pelos playbooks de cada banco, com:
+#   dump_nome      nome curto (vira backup-<nome>-db.service/.timer e /usr/local/sbin/backup-<nome>-db.sh)
+#   dump_descricao para a Description da unit (ex.: "do Nextcloud (página 11)")
+#   dump_container, dump_db, dump_user, dump_destino, dump_horario (OnCalendar)
+#   dump_extra_dir opcional: diretório copiado junto, em .tar.gz
+- name: "Dump {{ dump_nome }}: diretório no NFS"
+  ansible.builtin.file:
+    path: "{{ dump_destino }}"
+    state: directory
+    owner: "{{ docker_puid }}" # NFS com all_squash: tudo grava como o dockeruser
+    group: "{{ docker_pgid }}"
+    mode: '0770' # dumps têm hashes de senha e segredos
+
+- name: "Dump {{ dump_nome }}: script"
+  ansible.builtin.template:
+    src: "{{ playbook_dir }}/../templates/backup-postgres.sh.j2"
+    dest: "/usr/local/sbin/backup-{{ dump_nome }}-db.sh"
+    owner: root
+    group: root
+    mode: '0750'
+  vars:
+    backup_container: "{{ dump_container }}"
+    backup_db: "{{ dump_db }}"
+    backup_user: "{{ dump_user }}"
+    backup_dest: "{{ dump_destino }}"
+    backup_prefix: "{{ dump_nome }}"
+    backup_extra_dir: "{{ dump_extra_dir | default('') }}"
+
+- name: "Dump {{ dump_nome }}: serviço systemd"
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/backup-{{ dump_nome }}-db.service"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Dump diário do Postgres {{ dump_descricao }}
+      After=docker.service
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/backup-{{ dump_nome }}-db.sh
+
+- name: "Dump {{ dump_nome }}: timer systemd"
+  ansible.builtin.copy:
+    dest: "/etc/systemd/system/backup-{{ dump_nome }}-db.timer"
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Agenda o dump diário do Postgres {{ dump_descricao }}
+
+      [Timer]
+      OnCalendar={{ dump_horario }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+- name: "Dump {{ dump_nome }}: habilitar o timer"
+  ansible.builtin.systemd:
+    name: "backup-{{ dump_nome }}-db.timer"
+    enabled: true
+    state: started
+    daemon_reload: true

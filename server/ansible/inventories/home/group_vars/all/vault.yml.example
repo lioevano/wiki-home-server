@@ -202,3 +202,17 @@ langfuse_secrets:
   minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
   public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
   secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"
+# Backup com restic (página 04/02). A senha cifra os repositórios: sem ela, nenhum backup se restaura.
+# Gere com openssl rand -base64 32 e guarde uma cópia FORA do servidor (gerenciador de senhas).
+restic_senha: "SENHA_LONGA_DOS_REPOSITORIOS_DO_RESTIC"
+# Destinos do backup. 'montagem' (opcional): o backup só grava se esse caminho estiver montado.
+restic_repositorios:
+  - nome: externo
+    repositorio: /mnt/backup-externo/restic
+    montagem: /mnt/backup-externo
+    ambiente: {}
+  - nome: nuvem
+    repositorio: "s3:https://s3.us-west-004.backblazeb2.com/NOME-DO-BUCKET/homeserver"
+    ambiente:
+      AWS_ACCESS_KEY_ID: "ID_DA_CHAVE_DE_APLICACAO_DO_B2"
+      AWS_SECRET_ACCESS_KEY: "CHAVE_DE_APLICACAO_DO_B2"

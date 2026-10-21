@@ -36,67 +36,17 @@
         state: directory
         mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório
 
-    # Dump diário do banco do LiteLLM (chaves, orçamentos e histórico de uso) para o NFS.
-    - name: Criar diretório dos dumps do LiteLLM no NFS
-      ansible.builtin.file:
-        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/db-dumps"
-        state: directory
-        owner: "{{ docker_puid }}"
-        group: "{{ docker_pgid }}"
-        mode: '0775'
-
-    - name: Instalar o script de dump do banco do LiteLLM
-      ansible.builtin.template:
-        src: ../templates/backup-postgres.sh.j2
-        dest: /usr/local/sbin/backup-litellm-db.sh
-        owner: root
-        group: root
-        mode: '0750'
+    # Dump diário do banco do LiteLLM (chaves, orçamentos e histórico de uso) para o NFS, copiado pelo restic.
+    - name: Dump diário do Postgres do LiteLLM
+      ansible.builtin.include_tasks: tasks/dump-postgres.yml
       vars:
-        backup_container: litellm_db
-        backup_db: litellm
-        backup_user: litellm
-        backup_dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/db-dumps"
-        backup_prefix: litellm
-
-    - name: Instalar o serviço systemd do dump do LiteLLM
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/backup-litellm-db.service
-        owner: root
-        group: root
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=Dump diário do Postgres do LiteLLM (página 08)
-          After=docker.service
-
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/local/sbin/backup-litellm-db.sh
-
-    - name: Instalar o timer systemd do dump do LiteLLM
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/backup-litellm-db.timer
-        owner: root
-        group: root
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=Agenda o dump diário do Postgres do LiteLLM
-
-          [Timer]
-          OnCalendar=*-*-* 03:45:00
-          Persistent=true
-
-          [Install]
-          WantedBy=timers.target
-
-    - name: Habilitar o timer do dump do LiteLLM
-      ansible.builtin.systemd:
-        name: backup-litellm-db.timer
-        enabled: true
-        state: started
-        daemon_reload: true
+        dump_nome: litellm
+        dump_descricao: "do LiteLLM (página 08)"
+        dump_container: litellm_db
+        dump_db: litellm
+        dump_user: litellm
+        dump_destino: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/db-dumps"
+        dump_horario: "*-*-* 03:45:00"
 
     # --- Ollama ---
     - name: Criar diretório dos modelos Ollama no NFS

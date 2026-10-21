@@ -61,7 +61,7 @@ services:
     container_name: authelia_db
     restart: unless-stopped
     volumes:
-      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/db_pg:/var/lib/postgresql/data"
+      - "${AUTHELIA_DB_PATH}:/var/lib/postgresql/data" # disco local da VM; dump diário para o NFS
     networks:
       - internal_services
     environment:

@@ -120,7 +120,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `03-guias-sustentacao/11-guia-snapshots-zfs.md` | Guia Prático de Snapshots ZFS | Guia prático de snapshots ZFS: criar, listar, reverter, automatizar e usá-los antes de mudanças arriscadas. |
 | `03-guias-sustentacao/index.md` | 🛠️ Guias de Sustentação e Modificação da Infraestrutura | Guias para modificar, expandir e manter a infraestrutura depois da implementação inicial. |
 | `04-manutencao-recuperacao/01-rotinas-manutencao.md` | Rotinas de Manutenção Essenciais | Rotinas periódicas de manutenção (atualizações, ZFS scrub, logs, certificados) e scripts de validação do server. |
-| `04-manutencao-recuperacao/02-backup-restore-estrategia.md` | Estratégia de Backup e Procedimentos de Restauração | Estratégia de backup 3-2-1 e procedimentos de restauração de VMs, volumes e configurações. |
+| `04-manutencao-recuperacao/02-backup-restore-estrategia.md` | Estratégia de Backup e Procedimentos de Restauração | Backup 3-2-1 do homeserver: dumps diários dos bancos, restic no host Proxmox (disco externo e nuvem), restauração e testes. |
 | `04-manutencao-recuperacao/03-cicd-basico-ansible.md` | CI/CD Básico para Infraestrutura como Código | Fluxo de mudança e CI do repositório: dev.py, workflows docs e server-lint, simulação com --check e o deploy completo pelo full-deploy.yml. |
 | `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` | Reconstruindo a Infraestrutura Após uma Falha Grave | Como reconstruir a infraestrutura após falha grave do disco do sistema, usando Git, Ansible e o pool ZFS. |
 | `04-manutencao-recuperacao/05-migrando-hardware-rede.md` | Adaptando a Infraestrutura para Novo Hardware ou Mudanças de Rede | Como adaptar a infraestrutura a um novo hardware ou a mudanças de rede (novo IP, sub-rede ou roteador). |
@@ -153,6 +153,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/playbooks/setup-productivity-automation-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/setup-proxmox-host.yml` | playbook | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `ansible/playbooks/tasks/apps-env.yml` | outro | `01-manual-implementacao/07-deploy-apps.md` |
+| `ansible/playbooks/tasks/dump-postgres.yml` | outro | `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/playbooks/vm-deploy.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `03-guias-sustentacao/06-gerenciando-recursos-vms.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `ansible/requirements.yml` | outro | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/roles/apps/desktop-environment/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
@@ -160,10 +161,10 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2` | role-template | `01-manual-implementacao/08-stack-ia.md` |
 | `ansible/roles/common/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `ansible/roles/common/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
-| `ansible/roles/infra/alloy/defaults/main.yml` | role-defaults | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
-| `ansible/roles/infra/alloy/handlers/main.yml` | role-handlers | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
-| `ansible/roles/infra/alloy/tasks/main.yml` | role-tasks | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
-| `ansible/roles/infra/alloy/templates/config.alloy.j2` | role-template | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/roles/infra/alloy/defaults/main.yml` | role-defaults | `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/alloy/handlers/main.yml` | role-handlers | `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/alloy/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
+| `ansible/roles/infra/alloy/templates/config.alloy.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/roles/infra/authelia-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
@@ -178,6 +179,8 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/proxmox-vm/defaults/main.yml` | role-defaults | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/infra/proxmox-vm/handlers/main.yml` | role-handlers | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/infra/proxmox-vm/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
+| `ansible/roles/infra/restic/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
+| `ansible/roles/infra/restic/templates/backup-restic.sh.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/roles/infra/traefik-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
@@ -187,7 +190,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/traefik-config/templates/traefik.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/templates/agents/agentgateway.yaml.j2` | template | `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/agents/ops-requirements.txt.j2` | template | `01-manual-implementacao/13-agentes-base.md` |
-| `ansible/templates/backup-postgres.sh.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `01-manual-implementacao/11-fotos-arquivos.md` |
+| `ansible/templates/backup-postgres.sh.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `01-manual-implementacao/11-fotos-arquivos.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/templates/blackbox.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
 | `ansible/templates/grafana/alerting/contact-points.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/grafana/alerting/policies.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |

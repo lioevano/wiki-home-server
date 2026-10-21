@@ -1,0 +1,112 @@
+# ansible/roles/infra/restic/tasks/main.yml
+# Backup automatizado no host Proxmox (página 04/02): restic copia os datasets de restic_datasets, a partir de
+# snapshots ZFS, para cada repositório de restic_repositorios (vault), todo dia às restic_horario.
+
+- name: "Instalar o restic"
+  ansible.builtin.apt:
+    name: restic
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: "Diretório dos repositórios (só root: senha e credenciais)"
+  ansible.builtin.file:
+    path: /etc/restic/repositorios
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: "Ponto de montagem dos snapshots"
+  ansible.builtin.file:
+    path: /mnt/restic
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: "Variáveis de cada repositório"
+  ansible.builtin.copy:
+    dest: "/etc/restic/repositorios/{{ item.nome }}.env"
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      RESTIC_REPOSITORY={{ item.repositorio | quote }}
+      RESTIC_PASSWORD={{ restic_senha | quote }}
+      {% if item.montagem | default('') %}
+      RESTIC_MONTAGEM={{ item.montagem | quote }}
+      {% endif %}
+      {% for chave, valor in (item.ambiente | default({})).items() %}
+      {{ chave }}={{ valor | quote }}
+      {% endfor %}
+  loop: "{{ restic_repositorios }}"
+  loop_control:
+    label: "{{ item.nome }}"
+  no_log: true # senha e credenciais
+
+- name: "Listar os arquivos de repositório existentes"
+  ansible.builtin.find:
+    paths: /etc/restic/repositorios
+    patterns: "*.env"
+  register: restic_envs
+
+- name: "Apagar repositórios que saíram de restic_repositorios"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ restic_envs.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when: (item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | map(attribute='nome') | list)
+
+- name: "Script do backup"
+  ansible.builtin.template:
+    src: backup-restic.sh.j2
+    dest: /usr/local/sbin/backup-restic.sh
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: "Serviço systemd do backup"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/backup-restic.service
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Backup dos datasets ZFS com restic (página 04/02)
+      After=zfs-mount.service network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/backup-restic.sh
+      # Não disputa disco e CPU com as VMs.
+      Nice=10
+      IOSchedulingClass=idle
+
+- name: "Timer systemd do backup"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/backup-restic.timer
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Agenda o backup diário com restic
+
+      [Timer]
+      OnCalendar={{ restic_horario }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+- name: "Habilitar o timer do backup"
+  ansible.builtin.systemd_service:
+    name: backup-restic.timer
+    enabled: true
+    state: started
+    daemon_reload: true

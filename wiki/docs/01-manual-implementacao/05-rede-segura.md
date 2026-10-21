@@ -103,7 +103,7 @@ services:
     container_name: authelia_db
     restart: unless-stopped
     volumes:
-      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/db_pg:/var/lib/postgresql/data"
+      - "${AUTHELIA_DB_PATH}:/var/lib/postgresql/data" # disco local da VM; dump diário para o NFS
     networks:
       - internal_services
     environment:
@@ -153,6 +153,10 @@ services:
 ## 5.3. Authelia (parte de `docker/stacks/core/docker-compose.yml`)
 
 Authelia fornecerá o portal de autenticação e o serviço de 2FA. O conteúdo está incluído em `docker/stacks/core/docker-compose.yml` junto com Traefik e Cloudflared.
+
+!!! warning "Banco do Authelia fora dos snapshots ZFS"
+    O Postgres do Authelia (`authelia_db`: dispositivos 2FA, sessões e consentimentos OIDC) fica no disco local da `core-services-vm`, em `/opt/local-data/authelia-db`: o Postgres exige ser dono dos arquivos, o que o NFS com `all_squash` não permite (regra DAD-5). O backup é o dump diário `backup-authelia-db` (03:15) em `docker-volumes/authelia/db-dumps/`, instalado pelo `setup-core-networking.yml` ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#bancos-de-dados-dumps-diários)). Os usuários (`users_database.yml`) e a configuração ficam no NFS.
+
 ```yaml title="Trecho: docker/stacks/core/docker-compose.yml (serviços Authelia)"
 # docker/stacks/core/docker-compose.yml (serviços Authelia)
 version: '3.9'
@@ -212,8 +216,8 @@ services:
     container_name: authelia_db
     restart: unless-stopped
     volumes:
-      # Caminho NFS para os dados do banco de dados do Authelia. As variáveis virão do .env.
-      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/db_pg:/var/lib/postgresql/data"
+      # Disco local da VM (o Postgres não roda bem sobre NFS com all_squash); dump diário para o NFS (página 04/02).
+      - "${AUTHELIA_DB_PATH}:/var/lib/postgresql/data"
     networks:
       - internal_services # Apenas na rede interna, não acessível diretamente pelo Traefik ou externamente
     environment:
@@ -611,9 +615,11 @@ Este role prepara os arquivos de configuração do Authelia.
     group: "{{ docker_pgid }}"
     mode: '0750' # Authelia só precisa ler (e talvez escrever logs se configurado para arquivos)
 
-- name: "Garantir que o diretório de dados do PostgreSQL do Authelia exista na VM (via NFS)"
+# Disco local, não NFS: o Postgres exige ser dono dos arquivos, o que o NFS com all_squash não permite
+# (regra DAD-5). O backup é o dump diário do setup-core-networking.yml.
+- name: "Garantir que o diretório de dados do PostgreSQL do Authelia exista no disco local da VM"
   ansible.builtin.file:
-    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db_pg"
+    path: "{{ vm_local_data_path }}/authelia-db"
     state: directory
     mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório; reexecutar o role não desfaz isso
 
@@ -1026,7 +1032,21 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
         VM_NFS_MOUNT_BASE_PATH: "{{ vm_nfs_mount_base_path }}"
         ZFS_DOCKER_VOLUMES_DATASET_NAME: "{{ zfs_docker_volumes_dataset_name }}"
         CORE_SERVICES_VM_IP_VAR: "{{ core_services_vm_ip_var }}"
+        # Banco do Authelia no disco local
+        AUTHELIA_DB_PATH: "{{ vm_local_data_path }}/authelia-db"
       register: core_stack_deploy_result
+
+    # Dump diário do banco do Authelia (2FA, sessões, consentimentos OIDC) para o NFS, copiado pelo restic.
+    - name: "Dump diário do Postgres do Authelia"
+      ansible.builtin.include_tasks: tasks/dump-postgres.yml
+      vars:
+        dump_nome: authelia
+        dump_descricao: "do Authelia (página 05)"
+        dump_container: authelia_db
+        dump_db: authelia
+        dump_user: authelia
+        dump_destino: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db-dumps"
+        dump_horario: "*-*-* 03:15:00"
 
     - name: "Aguardar Traefik estar saudável"
       community.docker.docker_container_info:

@@ -1,9 +1,9 @@
 #!/bin/bash
 # ansible/templates/backup-postgres.sh.j2
 # Dump diário de um Postgres que roda no disco local da VM (fora dos snapshots ZFS), gravado no NFS.
-# Usado pelo Nextcloud (setup-cloud-stack-volumes.yml, que também copia o config/) e pelo LiteLLM
-# (setup-ai-volumes.yml). Variáveis da tarefa: backup_container, backup_db, backup_user, backup_dest,
-# backup_prefix e, opcional, backup_extra_dir (diretório copiado junto, em .tar.gz).
+# Usado pelo Authelia, Grafana, Nextcloud (que também copia o config/) e LiteLLM. Variáveis da tarefa: backup_container, backup_db, backup_user, backup_dest,
+# backup_prefix e, opcional, backup_extra_dir (diretório copiado junto, em .tar.gz). Instalado pelo
+# ansible/playbooks/tasks/dump-postgres.yml.
 set -euo pipefail
 
 destino="{{ backup_dest }}"
@@ -18,7 +18,7 @@ fi
 
 docker exec {{ backup_container }} pg_dump -U {{ backup_user }} -d {{ backup_db }} -Fc > "$arquivo.tmp"
 mv "$arquivo.tmp" "$arquivo"
-{% if backup_extra_dir is defined %}
+{% if backup_extra_dir | default('') %}
 extra="$destino/{{ backup_prefix }}-config-$dia.tar.gz"
 tar -czf "$extra.tmp" -C "{{ backup_extra_dir }}" .
 mv "$extra.tmp" "$extra"

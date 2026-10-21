@@ -214,14 +214,8 @@ def test_dump_generico_nos_dois_bancos():
     for out in (nc, lt):
         assert "-mtime +14" in out and "*.tmp" in out
     assert "tar " in nc and "tar " not in lt
-    tarefas = _pb_tasks(PB_AI)
-    copias = {x["ansible.builtin.copy"]["dest"]: x["ansible.builtin.copy"]["content"]
-              for x in tarefas if "ansible.builtin.copy" in x}
-    timer = copias["/etc/systemd/system/backup-litellm-db.timer"]
-    assert "OnCalendar=*-*-* 03:45:00" in timer and "Persistent=true" in timer
-    assert "ExecStart=/usr/local/sbin/backup-litellm-db.sh" in copias["/etc/systemd/system/backup-litellm-db.service"]
-    sd = next(x["ansible.builtin.systemd"] for x in tarefas if "ansible.builtin.systemd" in x)
-    assert sd["name"] == "backup-litellm-db.timer" and sd["enabled"] is True
+    from test_fotos_arquivos import _include_dump
+    assert _include_dump(PB_AI, "litellm")["dump_horario"] == "*-*-* 03:45:00"
     assert not (ROOT / "server/ansible/templates/nextcloud/backup-nextcloud-db.sh.j2").exists()
 
 

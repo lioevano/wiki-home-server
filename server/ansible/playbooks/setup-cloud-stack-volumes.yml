@@ -63,59 +63,18 @@
         group: "{{ docker_pgid }}"
         mode: '0755'
 
-    - name: Instalar o script de dump do banco do Nextcloud
-      ansible.builtin.template:
-        src: ../templates/backup-postgres.sh.j2
-        dest: /usr/local/sbin/backup-nextcloud-db.sh
-        owner: root
-        group: root
-        mode: '0750'
+    # Dump diário do banco e do config/ (instanceid, secret e passwordsalt) para o NFS, copiado pelo restic.
+    - name: Dump diário do Postgres do Nextcloud
+      ansible.builtin.include_tasks: tasks/dump-postgres.yml
       vars:
-        backup_container: nextcloud_db
-        backup_db: nextcloud
-        backup_user: nextcloud
-        backup_dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/db-dumps"
-        backup_prefix: nextcloud
-        backup_extra_dir: "{{ vm_local_data_path }}/nextcloud/config" # instanceid, secret e passwordsalt
-
-    - name: Instalar o serviço systemd do dump
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/backup-nextcloud-db.service
-        owner: root
-        group: root
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=Dump diário do Postgres do Nextcloud (página 11)
-          After=docker.service
-
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/local/sbin/backup-nextcloud-db.sh
-
-    - name: Instalar o timer systemd do dump
-      ansible.builtin.copy:
-        dest: /etc/systemd/system/backup-nextcloud-db.timer
-        owner: root
-        group: root
-        mode: '0644'
-        content: |
-          [Unit]
-          Description=Agenda o dump diário do Postgres do Nextcloud
-
-          [Timer]
-          OnCalendar=*-*-* 03:30:00
-          Persistent=true
-
-          [Install]
-          WantedBy=timers.target
-
-    - name: Habilitar o timer do dump
-      ansible.builtin.systemd:
-        name: backup-nextcloud-db.timer
-        enabled: true
-        state: started
-        daemon_reload: true
+        dump_nome: nextcloud
+        dump_descricao: "do Nextcloud (página 11)"
+        dump_container: nextcloud_db
+        dump_db: nextcloud
+        dump_user: nextcloud
+        dump_destino: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/nextcloud/db-dumps"
+        dump_horario: "*-*-* 03:30:00"
+        dump_extra_dir: "{{ vm_local_data_path }}/nextcloud/config"
 
     - name: Generate .env file for cloud stack
       ansible.builtin.template:

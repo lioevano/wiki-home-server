@@ -125,7 +125,7 @@ Seu pool ZFS `/data` é o coração do armazenamento de dados.
     *   **Agendar com `cron` (e.g., `sudo crontab -e` no host Proxmox):**
         `0 2 1 * * /sbin/zpool scrub data # Roda às 2 AM no primeiro dia de cada mês`
 *   **Alertas de Saúde do ZFS:**
-    *   Um script simples de verificação (`zpool status -x`) pode ser agendado no host e avisar pelo `scripts/notify.sh` (ver [snapshots ZFS na página de backups](02-backup-restore-estrategia.md#4-zfs-snapshots-proteção-local-rápida-no-host-proxmox)); o alerta `zfs-degradado` do Grafana já cobre o pool degradado.
+    *   Um script simples de verificação (`zpool status -x`) pode ser agendado no host e avisar pelo `scripts/notify.sh` (ver [snapshots ZFS na página de backups](02-backup-restore-estrategia.md#snapshots-zfs)); o alerta `zfs-degradado` do Grafana já cobre o pool degradado.
     *   Agende este script para rodar com frequência (e.g., a cada poucas horas ou diariamente).
 
 ## 6. Verificação e Teste de Backups
@@ -133,18 +133,12 @@ Seu pool ZFS `/data` é o coração do armazenamento de dados.
 !!! critical "A Rotina de Manutenção MAIS IMPORTANTE!"
     Seus backups são sua última linha de defesa contra a perda de dados. Um backup que não foi testado é um backup em que você não pode confiar.
 
-*   **Verificar a Conclusão dos Backups:**
-    *   **Backups de VMs Proxmox:** Na UI web do Proxmox, verifique a aba "Tasks" (no nível do Datacenter ou do Nó) para o status dos jobs de backup agendados. Verifique se eles estão sendo concluídos com sucesso e sem erros.
-    *   **Dumps de Banco de Dados:** Se você tem scripts para fazer dump de bancos de dados (PostgreSQL para Authelia, Nextcloud, Grafana), verifique os logs desses scripts. Confirme se os arquivos de dump estão sendo criados no local esperado, se têm um tamanho razoável (não estão vazios) e se não há erros nos logs.
-    *   **Backups de Volumes/Datasets ZFS (Borg, rsync, etc.):** Verifique os logs da sua ferramenta de backup (e.g., `borg list /caminho/repo` para ver os arquivos).
-*   **Testes de Restauração Periódicos:**
-    *   **Frequência:** Pelo menos **trimestralmente**, ou mais frequentemente se você fizer mudanças significativas na sua estratégia de backup ou nos dados críticos.
-    *   **O Que Testar (Simule Cenários Reais):**
-        1.  **Restaurar uma VM de Teste:** Restaure uma VM menos crítica (ou uma VM de teste que você possa deletar) a partir de um backup do Proxmox para um novo VM ID. Verifique se ela inicia e se os dados estão consistentes.
-        2.  **Restaurar um Banco de Dados:** Restaure um dump de banco de dados para uma instância de teste do banco de dados (pode ser um container Docker temporário). Verifique se você consegue se conectar e consultar os dados.
-        3.  **Restaurar Arquivos Individuais de Volumes:** Use sua ferramenta de backup de volumes (Borg, rsync) para restaurar alguns arquivos ou diretórios aleatórios para um local temporário. Verifique sua integridade e conteúdo.
-        4.  **Testar Recuperação de Snapshots ZFS:** Tente acessar e copiar um arquivo de um snapshot ZFS recente para garantir que o mecanismo `.zfs/snapshot/` está funcionando como esperado.
-    *   **Documente Seu Processo de Restauração:** Enquanto você testa, documente os passos exatos que você tomou. Isso será inestimável em uma emergência real quando você estiver sob pressão.
+*   **Conclusão dos backups:** você não precisa olhar todo dia. Os dumps dos bancos (`backup-<nome>-db`) e o backup do host (`backup-restic`) avisam pelo alerta `timer-falhou` quando falham ([backup](02-backup-restore-estrategia.md)). Uma vez por mês, confira no host Proxmox que os dois repositórios têm backups recentes:
+    ```bash
+    sudo -i
+    for r in /etc/restic/repositorios/*.env; do (set -a; . "$r"; set +a; echo "== $r"; restic snapshots --latest 3); done
+    ```
+*   **Testes de restauração:** a cada três meses, siga os [testes de restauração](02-backup-restore-estrategia.md#testes-de-restauração): um arquivo de cada dataset vindo da nuvem, um dump de banco num Postgres descartável e o `check` de domingo sem erro. Anote o que faltou na página e corrija.
 
 Estabelecer e seguir estas rotinas de manutenção, mesmo que pareçam trabalhosas inicialmente, é um investimento fundamental na estabilidade, segurança e longevidade do seu servidor doméstico. Automatize o que puder (atualizações, backups, verificações de saúde) e reserve tempo para as verificações manuais e testes.
 

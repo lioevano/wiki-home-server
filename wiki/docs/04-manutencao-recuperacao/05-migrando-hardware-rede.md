@@ -33,12 +33,12 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
 1.  **BACKUP COMPLETO E VERIFICADO DO SERVIDOR ANTIGO:**
     *   !!! critical "Este é o Passo Mais Importante e Não Pode Ser Ignorado!"
         Antes de iniciar qualquer migração:
-        *   Garanta que você tem **backups completos e recentes de todas as suas VMs Proxmox**, salvos em um local acessível (idealmente no seu pool `/data/backups/vms` e também uma cópia off-site). Verifique se os backups foram concluídos com sucesso.
-        *   Faça um **backup completo dos seus dados do pool ZFS `/data`** (que contém `docker-volumes`, `media`, `photos`, `files`, `notes`, etc.). A melhor forma é usar [BorgBackup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#b-volumes-de-arquivos-configs-docker-mídia-modelos-rag) para um destino externo. Se não usa Borg, pelo menos `rsync` para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.
-        *   Faça um backup da [configuração do seu host Proxmox antigo](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#1-configuração-do-host-proxmox-ve) (arquivos de `/etc/`).
+        *   **VMs:** este homeserver não faz backup automático das VMs (elas são recriadas pelo `vm-deploy.yml`). Se quiser levá-las como estão, faça um backup pontual de cada uma pelo Proxmox (**Backup now**, modo *Stop*) para `/data/backups/vms`. Se for recriá-las, pule este item: os bancos voltam pelos dumps.
+        *   **Dados:** rode o backup uma última vez à mão (`systemctl start backup-restic.service`, com os dumps dos bancos feitos antes: `systemctl start backup-<nome>-db.service` em cada VM) e confira que terminou sem erro nos dois repositórios ([restic](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#restic-no-host-proxmox)). A mídia não está no restic: se não for levar os HDDs, copie `/data/media` com `rsync` para um disco externo.
+        *   Faça um backup da [configuração do seu host Proxmox antigo](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#o-host-proxmox-e-as-vms) (arquivos de `/etc/`).
         *   Certifique-se de que seu **repositório `homeserver` está totalmente atualizado e enviado (`pushed`) para seu Git remote** (GitHub, GitLab, etc.).
         *   Tenha sua **senha do Ansible Vault** em local seguro.
-        *   **Teste a restauração de uma VM e de alguns dados importantes de seus backups em um ambiente de teste, se possível, ANTES da migração.**
+        *   **Teste a restauração de alguns arquivos e de um dump de banco ANTES da migração** ([testes de restauração](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#testes-de-restauração)).
 
 2.  **Setup Inicial do Novo Servidor Físico com Proxmox VE:**
     *   No novo hardware, instale o Proxmox VE no SSD NVMe, seguindo os passos da [**Seção 2.1 do Manual de Implementação**](../01-manual-implementacao/02-proxmox-ve-host.md#21-instalação-do-proxmox-ve-no-servidor-físico).
@@ -65,13 +65,13 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         6.  Verifique o status do pool importado: `sudo zpool status data`. Se o estado for `ONLINE`, seus datasets (como `/data/docker-volumes`, `/data/media`, `/data/backups/vms`) devem estar acessíveis nos seus pontos de montagem usuais.
     *   **Opção B: Recriar o Pool ZFS no Novo Servidor e Restaurar os Dados de um Backup Externo (Se não puder mover os HDDs, ou se os HDDs do novo servidor forem diferentes/novos):**
         1.  No novo host Proxmox, crie um novo pool ZFS `data` com os HDDs disponíveis no novo servidor, seguindo os passos da [**Seção 2.2 do Manual de Implementação**](../01-manual-implementacao/02-proxmox-ve-host.md#22-configuração-do-pool-zfs-data-e-datasets). Use o mesmo nome de pool (`data`) e os mesmos nomes de datasets (`data/docker-volumes`, `data/media`, `data/backups`, etc.).
-        2.  Agora, **restaure o conteúdo de cada dataset** a partir do seu backup externo (Borg, rsync de um HD externo, etc.) para os respectivos pontos de montagem no novo pool ZFS (e.g., restaure o conteúdo de `docker-volumes` do seu backup para `/data/docker-volumes` no novo servidor). Este processo pode ser bastante demorado, dependendo do volume de dados e da velocidade do seu backup/rede.
+        2.  Agora, **restaure o conteúdo de cada dataset** a partir do restic ([Um dataset inteiro](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#um-dataset-inteiro); a mídia, do `rsync`) para os respectivos pontos de montagem no novo pool ZFS (e.g., restaure o conteúdo de `docker-volumes` do seu backup para `/data/docker-volumes` no novo servidor). Este processo pode ser bastante demorado, dependendo do volume de dados e da velocidade do seu backup/rede.
 
-4.  **Configurar o Storage de Backup de VMs no Novo Proxmox:**
+4.  **Configurar o Storage de Backup de VMs no Novo Proxmox** (só se você trouxe as VMs por backup pontual; senão, rode o `vm-deploy.yml` e vá para o passo 6):
     *   Na interface web do novo Proxmox VE, vá para **Datacenter -> Storage**.
     *   Certifique-se de que existe um storage do tipo "**Directory**" configurado para apontar para o local onde seus arquivos de backup de VMs estão armazenados (e.g., `/data/backups/vms`, que agora deve estar acessível no novo host). Se necessário, "Add" ou "Edit" o storage. O campo "Content" deve ter **"VZDump backup file" selecionado**.
 
-5.  **Restaurar Suas Máquinas Virtuais (VMs) no Novo Host Proxmox:**
+5.  **Restaurar Suas Máquinas Virtuais (VMs) no Novo Host Proxmox** (mesma condição do passo 4):
     *   Usando a interface web do Proxmox, selecione o storage de backup que você acabou de configurar.
     *   A aba "**Backups**" listará os arquivos de backup de VM disponíveis.
     *   Para cada VM que você precisa restaurar (e.g., `core-services-vm`, `ai-desktop-vm`):
@@ -124,7 +124,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         3.  Sem fazer alterações no compose (a menos que necessário), clique em "**Update the stack**". Marque "**Re-pull image and redeploy**" se quiser garantir que as imagens estão corretas ou se houve alguma mudança na configuração da VM que possa afetar os containers (como IPs, se referenciados incorretamente).
         *   Isso força o Portainer a reconciliar o estado da stack com sua definição e com os arquivos `.env` que o Ansible pode ter recriado/atualizado.
     *   **Dados das Aplicações:** Como o conteúdo dos seus datasets ZFS (e.g., `/data/docker-volumes/nextcloud`, `/data/media`) foi migrado, suas aplicações Docker, ao serem reiniciadas com seus volumes corretamente mapeados, devem encontrar seus dados e configurações anteriores.
-    *   **Restauração de Dumps de DB:** Se você optou por restaurar os dados do pool ZFS de um backup que não era o mais recente, e você tem dumps de banco de dados mais recentes, restaure esses dumps manualmente agora (conforme descrito na [Estratégia de Backup](02-backup-restore-estrategia.md#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana)).
+    *   **Restauração de Dumps de DB:** Se você optou por restaurar os dados do pool ZFS de um backup que não era o mais recente, e você tem dumps de banco de dados mais recentes, restaure esses dumps manualmente agora (conforme descrito na [Estratégia de Backup](02-backup-restore-estrategia.md#bancos-de-dados-dumps-diários)).
 
 9.  **Testar Tudo Exaustivamente:**
     *   Verifique o acesso a todos os seus serviços web através dos seus subdomínios.

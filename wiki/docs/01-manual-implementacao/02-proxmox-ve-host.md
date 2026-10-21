@@ -510,11 +510,12 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
   roles:
     - role: infra/proxmox-host-config # Aplica o role que configura o host
     - role: infra/alloy # Coletor de logs e métricas (seção 4.4 do manual); sem Docker no host
+    - role: infra/restic # Backup diário dos datasets com restic (página 04/02)
 ```
 
 ### Executando o Playbook `setup-proxmox-host.yml`
 
-1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/etc_exports.j2` e `handlers/main.yml`, e que o role `ansible/roles/infra/alloy/` existe ([seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)) com o conteúdo apropriado.
+1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/etc_exports.j2` e `handlers/main.yml`, que o role `ansible/roles/infra/alloy/` existe ([seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)) e que o role `ansible/roles/infra/restic/` existe ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#restic-no-host-proxmox)). O restic precisa de `restic_senha` e `restic_repositorios` no vault; prepare os destinos antes (disco externo e bucket).
 2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 

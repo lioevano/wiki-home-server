@@ -92,7 +92,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   **A maioria das mudanças aqui requer um reinício do container Authelia para terem efeito.**
     *   **Banco de Dados PostgreSQL do Authelia:**
         *   Armazena informações de usuários, dispositivos 2FA registrados, sessões, etc.
-        *   Localizado no volume NFS: `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db_pg/`.
+        *   Fica no disco local da `core-services-vm`, em `/opt/local-data/authelia-db/`; o dump diário vai para `docker-volumes/authelia/db-dumps/` ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)).
 
 7.  **Configurações Internas das Aplicações Específicas:**
     *   Muitas aplicações (Nextcloud, Sonarr, Radarr, Grafana, Home Assistant, etc.) têm suas próprias interfaces de administração web (UIs) ou arquivos de configuração específicos dentro dos seus volumes persistentes.

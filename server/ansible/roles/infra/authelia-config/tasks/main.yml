@@ -7,9 +7,11 @@
     group: "{{ docker_pgid }}"
     mode: '0750' # Authelia só precisa ler (e talvez escrever logs se configurado para arquivos)
 
-- name: "Garantir que o diretório de dados do PostgreSQL do Authelia exista na VM (via NFS)"
+# Disco local, não NFS: o Postgres exige ser dono dos arquivos, o que o NFS com all_squash não permite
+# (regra DAD-5). O backup é o dump diário do setup-core-networking.yml.
+- name: "Garantir que o diretório de dados do PostgreSQL do Authelia exista no disco local da VM"
   ansible.builtin.file:
-    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/authelia/db_pg"
+    path: "{{ vm_local_data_path }}/authelia-db"
     state: directory
     mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório; reexecutar o role não desfaz isso
 

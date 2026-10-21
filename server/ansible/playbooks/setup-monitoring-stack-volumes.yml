@@ -38,10 +38,28 @@
         mode: '0775'
       loop:
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/data"
-        - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/db_pg"
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/datasources"
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/dashboards"
         - "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning/alerting"
+
+    # Banco do Grafana no disco local (o Postgres não roda sobre NFS com all_squash; regra DAD-5).
+    - name: Criar diretório local do banco do Grafana
+      ansible.builtin.file:
+        path: "{{ vm_local_data_path }}/grafana-db"
+        state: directory
+        mode: '0700' # sem owner: o entrypoint do Postgres assume o diretório
+
+    # Dump diário do banco do Grafana (usuários, service accounts, painéis criados na tela) para o NFS.
+    - name: Dump diário do Postgres do Grafana
+      ansible.builtin.include_tasks: tasks/dump-postgres.yml
+      vars:
+        dump_nome: grafana
+        dump_descricao: "do Grafana (página 07)"
+        dump_container: grafana_db
+        dump_db: grafana
+        dump_user: grafana
+        dump_destino: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/db-dumps"
+        dump_horario: "*-*-* 03:20:00"
 
     # --- Loki directories ---
     - name: Create Loki directories on NFS volume
@@ -201,7 +219,7 @@
         stack_configs:
           - { name: 'MONITORING_PROMETHEUS_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/prometheus/data" }
           - { name: 'MONITORING_PROMETHEUS_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/prometheus/config" }
-          - { name: 'MONITORING_GRAFANA_DB_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/db_pg" }
+          - { name: 'MONITORING_GRAFANA_DB_PATH', value: "{{ vm_local_data_path }}/grafana-db" }
           - { name: 'MONITORING_GRAFANA_DATA_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/data" }
           - { name: 'MONITORING_GRAFANA_PROVISIONING_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/grafana/provisioning" }
           - { name: 'MONITORING_LOKI_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/loki/config" }

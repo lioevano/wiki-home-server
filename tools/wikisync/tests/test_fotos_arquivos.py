@@ -248,15 +248,21 @@ DUMP_BASE = dict(vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_docker_volumes_
                  vm_local_data_path="/opt/local-data")
 
 
-def _script_dump(pb, destino) -> str:
-    """Renderiza o dump genérico com as vars: da tarefa do playbook que instala o script em `destino`."""
+def _include_dump(pb, nome) -> dict:
+    """A inclusão do tasks/dump-postgres.yml com dump_nome == nome, com as variáveis resolvidas."""
     import jinja2
-    tarefa = next(x for x in _pb_tasks(pb)
-                  if x.get("ansible.builtin.template", {}).get("dest") == destino)
-    assert tarefa["ansible.builtin.template"]["src"] == "../" + DUMP_TPL
-    vars_ = {k: jinja2.Environment().from_string(str(v)).render(**DUMP_BASE) if isinstance(v, str) else v
-             for k, v in tarefa.get("vars", {}).items()}
-    return render(DUMP_TPL, **DUMP_BASE, **vars_)
+    tarefa = next(x for x in _pb_tasks(pb) if x.get("ansible.builtin.include_tasks") == "tasks/dump-postgres.yml"
+                  and x["vars"]["dump_nome"] == nome)
+    return {k: jinja2.Environment().from_string(str(v)).render(**DUMP_BASE) for k, v in tarefa["vars"].items()}
+
+
+def _script_dump(pb, destino) -> str:
+    """Renderiza o script que o tasks/dump-postgres.yml instala em `destino` (/usr/local/sbin/backup-<nome>-db.sh)."""
+    nome = destino.rsplit("/backup-", 1)[1].removesuffix("-db.sh")
+    v = _include_dump(pb, nome)
+    return render(DUMP_TPL, backup_container=v["dump_container"], backup_db=v["dump_db"], backup_user=v["dump_user"],
+                  backup_dest=v["dump_destino"], backup_prefix=v["dump_nome"],
+                  backup_extra_dir=v.get("dump_extra_dir", ""))
 MIDDLEWARE_TPL = "roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2"
 
 
@@ -334,17 +340,8 @@ def test_hook_sem_segredo_e_idempotente(tmp_path):
 
 
 def test_dump_diario_do_nextcloud():
-    tarefas = _pb_tasks(PB_CLOUD)
-    script = next(t for t in tarefas
-                  if t.get("ansible.builtin.template", {}).get("dest") == "/usr/local/sbin/backup-nextcloud-db.sh")
-    assert script["ansible.builtin.template"]["mode"] == "0750"
-    copias = {t["ansible.builtin.copy"]["dest"]: t["ansible.builtin.copy"]["content"]
-              for t in tarefas if "ansible.builtin.copy" in t}
-    timer = next(v for k, v in copias.items() if k.endswith(".timer"))
-    assert "OnCalendar=" in timer and "Persistent=true" in timer
-    assert any(k.endswith(".service") for k in copias)
-    sd = next(t for t in tarefas if "ansible.builtin.systemd" in t)["ansible.builtin.systemd"]
-    assert sd["name"].endswith(".timer") and sd["enabled"] is True and sd.get("daemon_reload") is True
+    v = _include_dump(PB_CLOUD, "nextcloud")
+    assert v["dump_horario"] == "*-*-* 03:30:00"  # units e timer: tasks/dump-postgres.yml (test_backup.py)
     out = _script_dump(PB_CLOUD, "/usr/local/sbin/backup-nextcloud-db.sh")
     assert "pg_dump" in out and "/mnt/pve_data_zfs/docker-volumes/nextcloud/db-dumps" in out
     assert "-mtime +14" in out and "-delete" in out

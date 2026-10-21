@@ -31,9 +31,9 @@ Os três endereços públicos ficam fora do forward-auth do Authelia (regras `by
 
 | O quê | Onde | Backup |
 |---|---|---|
-| Fotos, vídeos, miniaturas e dumps do banco do Immich | dataset `photos` (NFS), em `/data` do `immich_server` | snapshots ZFS e Borg |
-| Arquivos do Nextcloud | dataset `files` (NFS), em `/data` do `nextcloud_app` | snapshots ZFS e Borg |
-| Hook do Nextcloud | `docker-volumes` (NFS) | snapshots ZFS e Borg |
+| Fotos, vídeos, miniaturas e dumps do banco do Immich | dataset `photos` (NFS), em `/data` do `immich_server` | restic (disco externo e nuvem; [backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)) |
+| Arquivos do Nextcloud | dataset `files` (NFS), em `/data` do `nextcloud_app` | restic (disco externo e nuvem; [backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)) |
+| Hook do Nextcloud | `docker-volumes` (NFS) | restic (disco externo e nuvem; [backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)) |
 | `immich.json` (contém o segredo do cliente OIDC) | disco local da VM, em `/opt/local-data/immich-config` (`0600`) | regerado pelo `setup-photos-stack-volumes.yml` a partir do vault |
 | Bancos (`immich_db`, `nextcloud_db`), html e config do Nextcloud, cache de modelos | disco local da VM, em `/opt/local-data` | **só os dumps** (abaixo); o html sai da imagem e o cache é baixado de novo |
 

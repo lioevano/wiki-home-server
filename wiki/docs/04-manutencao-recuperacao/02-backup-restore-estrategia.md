@@ -1,420 +1,341 @@
 ---
-description: "Estratégia de backup 3-2-1 e procedimentos de restauração de VMs, volumes e configurações."
+description: "Backup 3-2-1 do homeserver: dumps diários dos bancos, restic no host Proxmox (disco externo e nuvem), restauração e testes."
 ---
 
 # Estratégia de Backup e Procedimentos de Restauração
 
-Uma estratégia de backup abrangente, bem planejada e regularmente testada é a sua apólice de seguro mais valiosa contra a perda de dados. Falhas de hardware, corrupção de software, erros humanos, ou até mesmo eventos maliciosos como ransomware podem ocorrer, e ter backups confiáveis é o que determinará se você pode se recuperar completamente ou se enfrentará uma perda de dados catastrófica.
+O backup é automático e segue a regra **3-2-1**: três cópias, em duas mídias, uma delas fora de casa. Nada aqui depende de lembrar de rodar um comando. Quando algo falha, chega o alerta `timer-falhou` no Telegram ([seção 9](../01-manual-implementacao/09-painel-notificacoes.md)).
 
-Este guia detalha o que fazer backup em nossa arquitetura de servidor doméstico, como implementar os backups para cada componente, e, crucialmente, os procedimentos para restaurar a partir desses backups.
+| Cópia | Onde | O que tem | Quem faz |
+|---|---|---|---|
+| 1 | Pool ZFS `data` (produção) | Tudo | — |
+| 2 | Disco externo no host Proxmox | `docker-volumes` (configs e dumps dos bancos), `photos`, `files`, `notes` e o `/etc` do host | restic, todo dia às 04:30 |
+| 3 | Nuvem compatível com S3 (ex.: Backblaze B2) | O mesmo, cifrado antes de sair de casa | restic, na mesma rodada |
 
-## A Regra de Ouro dos Backups: 3-2-1
+Além disso:
 
-Lembre-se sempre da **regra 3-2-1** para backups, um princípio fundamental na proteção de dados:
+- **`data/notes`:** snapshots automáticos para desfazer edições da IA ([seção 12](../01-manual-implementacao/12-segundo-cerebro.md#desfazer-uma-edição)).
+- **Vaults do Obsidian:** cópia completa no PC e no celular (Syncthing).
+- **Repositório:** fica no GitHub. O `vault.yml` vai criptografado.
 
-*   **3 Cópias dos Dados:** Mantenha pelo menos **TRÊS** cópias de qualquer dado importante. Isso inclui o dado original (em produção) e pelo menos dois backups.
-*   **2 Mídias Diferentes:** Armazene essas cópias em pelo menos **DOIS** tipos diferentes de mídia de armazenamento. Por exemplo:
-    *   HD interno do servidor (para o original).
-    *   HDs do pool ZFS `/data` (para backups locais de VMs, snapshots ZFS).
-    *   Um HD externo USB.
-    *   Armazenamento em nuvem.
-    *   Outro servidor NAS na sua rede.
-*   **1 Cópia Off-site:** Mantenha pelo menos **UMA** cópia do backup fisicamente separada do local original do seu servidor (e.g., na nuvem, na casa de um amigo ou familiar de confiança, em um cofre à prova de fogo em outro local). Isso protege contra desastres locais como incêndio, roubo ou inundação.
+!!! critical "Guarde a senha do restic fora do servidor"
+    Os repositórios são cifrados com `restic_senha` (vault). Sem ela, **nenhum backup se restaura**. Ela também fica no `vault.yml`, que só abre com a senha do Ansible Vault. Guarde as duas num gerenciador de senhas, fora do servidor e fora deste repositório.
 
-!!! critical "Backups Não Testados São Backups Que Podem Falhar!"
-    Um backup só é útil se você sabe que pode restaurá-lo com sucesso. **TESTE SEUS PROCEDIMENTOS DE RESTAURAÇÃO REGULARMENTE!** Não espere um desastre real para descobrir que seus backups estão corrompidos ou que você não sabe como usá-los. Consulte a seção [Rotinas de Manutenção Essenciais](01-rotinas-manutencao.md#6-verificação-e-teste-de-backups) para dicas sobre testes.
+## O que é copiado e o que não é
 
-## O Que Fazer Backup e Como Implementar
+| Dados | Backup | Por quê |
+|---|---|---|
+| `docker-volumes`: configurações das aplicações, hooks, `immich.json` regerável, **dumps dos bancos** | restic | É o estado das aplicações |
+| `photos` (Immich, com os dumps do banco dele em `photos/backups/`) e `files` (Nextcloud) | restic | Insubstituíveis |
+| `notes` (vaults do Obsidian) | restic + snapshots + Syncthing | Insubstituíveis |
+| `/etc` do host Proxmox (rede, GRUB/IOMMU, `/etc/pve` com a definição das VMs) | restic | Atalho para reinstalar o host igual |
+| `media` (filmes, séries, músicas, torrents) | **não** | Pode ser baixada de novo e não cabe na nuvem. Para mudar, inclua o dataset em `restic_datasets` |
+| `docker-volumes/prometheus/data` e `loki/data` | **não** (`restic_excluir`) | Métricas e logs mudam o tempo todo; perder o histórico não para nada |
+| Disco local das VMs (`/opt/local-data`): bancos, índice do qmd, documentos convertidos, banco do Syncthing, estado dos mcp-auth-proxy, base dos agentes (config do hub `agentgateway`, clone e segredos do runner do `ops`; [seção 13](../01-manual-implementacao/13-agentes-base.md)), Langfuse | só os **bancos**, pelos dumps | O resto é regerável pelos playbooks a partir do vault, ou é descartável (traces do Langfuse) |
+| Discos das VMs | **não** | As VMs são recriadas pelo `vm-deploy.yml` e pelos playbooks ([reconstrução](04-reconstruindo-infraestrutura.md)) |
 
-Vamos detalhar a estratégia de backup para cada componente crítico da nossa infraestrutura:
+## Bancos de dados: dumps diários
 
-### 1. Configuração do Host Proxmox VE
+Todo Postgres roda no disco local da sua VM (o Postgres exige ser dono dos arquivos, o que o NFS com `all_squash` não permite; regra DAD-5). Um dump diário vai para o NFS, onde o restic o pega às 04:30. Todos usam o mesmo `ansible/playbooks/tasks/dump-postgres.yml` (script `ansible/templates/backup-postgres.sh.j2`, unit e timer `backup-<nome>-db`), que guarda duas semanas:
 
-Isto inclui as configurações do próprio hypervisor Proxmox VE, definições de rede do host, configurações ZFS, NFS, e outros arquivos de sistema importantes.
+| Banco | VM | Horário | Destino (em `/data/docker-volumes`) | Instalado por |
+|---|---|---|---|---|
+| Authelia (2FA, sessões, consentimentos OIDC) | core | 03:15 | `authelia/db-dumps/` | `setup-core-networking.yml` |
+| Grafana (usuários, service accounts, painéis da tela) | core | 03:20 | `grafana/db-dumps/` | `setup-monitoring-stack-volumes.yml` |
+| Nextcloud (banco e o `config/`) | core | 03:30 | `nextcloud/db-dumps/` | `setup-cloud-stack-volumes.yml` |
+| LiteLLM (chaves, orçamentos, uso) | ai | 03:45 | `litellm/db-dumps/` | `setup-ai-volumes.yml` |
+| Immich | core | 02:00 | `/data/photos/backups/` (o próprio Immich) | `immich.json` |
 
-*   **O Que Fazer Backup (Arquivos e Diretórios Chave no Host Proxmox):**
-    *   `/etc/pve/` (Contém a configuração do cluster Proxmox, definições de VMs, storage, etc. **MUITO IMPORTANTE!**)
-    *   `/etc/hostname`
-    *   `/etc/hosts`
-    *   `/etc/network/interfaces` (Configuração de rede do host)
-    *   `/etc/resolv.conf` (Se não for gerenciado dinamicamente)
-    *   `/etc/default/grub` (Opções de boot do kernel, importantes para IOMMU)
-    *   `/etc/kernel/cmdline` (Se usado para opções de kernel)
-    *   `/etc/modules` e `/etc/modprobe.d/` (Módulos do kernel e blacklists, importantes para passthrough)
-    *   `/etc/cron*` (Tarefas agendadas do host)
-    *   `/etc/ssh/sshd_config` (Configuração do servidor SSH do host)
-    *   `/etc/smartd.conf` (Configuração do monitoramento S.M.A.R.T. de discos)
-    *   `/etc/zfs/` (Configuração do ZFS, embora os metadados do pool estejam nos discos)
-    *   `/etc/exports` (Configuração do servidor NFS, gerada por Ansible)
-    *   Quaisquer outros arquivos de configuração importantes que você tenha modificado manualmente no host.
-*   **Como Fazer Backup (Script Agendado no Host Proxmox):**
-    *   Use um script para arquivar esses arquivos e diretórios importantes em um arquivo `.tar.gz` e salvá-lo no seu dataset de backups ZFS (e.g., `/data/backups/proxmox_host_config/`).
-    *   **Exemplo de Script (`/usr/local/sbin/backup_proxmox_host_config.sh` no host Proxmox):**
-        ```bash
-        #!/bin/bash
-        # /usr/local/sbin/backup_proxmox_host_config.sh
+Antes do deploy da stack, sem o container do banco, o dump só registra um aviso no journal e não falha. Depois do deploy, uma falha deixa a unit em `failed` e o alerta `timer-falhou` avisa.
 
-        # Destino do backup (no pool ZFS /data/backups, que deve ser um dataset separado)
-        # As variáveis {{ zfs_base_pool_path }} e {{ zfs_backups_dataset_name }} são do Ansible,
-        # aqui usamos os valores literais ou definimos variáveis no script.
-        ZFS_BASE_POOL_PATH="/data" # Ou o que você definiu
-        ZFS_BACKUPS_DATASET_NAME="backups" # Ou o que você definiu
-        BACKUP_DEST_PARENT="${ZFS_BASE_POOL_PATH}/${ZFS_BACKUPS_DATASET_NAME}"
-        BACKUP_DEST="${BACKUP_DEST_PARENT}/proxmox_host_config"
-        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-        FILENAME="proxmox_etc_backup_${TIMESTAMP}.tar.gz"
+## Restic no host Proxmox
 
-        # Garante que o diretório de destino exista
-        mkdir -p "$BACKUP_DEST"
+O role `ansible/roles/infra/restic/` (aplicado pelo `setup-proxmox-host.yml`) instala o restic do Debian e roda o `backup-restic` todo dia às `restic_horario` (04:30). Para cada dataset de `restic_datasets`, ele:
 
-        echo "Iniciando backup da configuração do host Proxmox para ${BACKUP_DEST}/${FILENAME}..."
+1. Tira um snapshot ZFS (`data/<dataset>@restic`), para copiar um estado consistente mesmo com as aplicações gravando.
+2. Monta o snapshot só leitura em `/mnt/restic/<dataset>`. O caminho é sempre o mesmo, então o restic deduplica contra o backup anterior.
+3. Copia para **cada** repositório de `restic_repositorios`. Um repositório que falha (nuvem fora, disco desligado) não impede o outro.
+4. Apaga os backups antigos (`restic_retencao`: 7 diários, 4 semanais, 12 mensais).
+5. Aos domingos, relê 5% dos dados de cada repositório (`restic check --read-data-subset`) para achar corrupção.
+6. Desmonta e apaga o snapshot, também em caso de erro.
 
-        # Lista de arquivos e diretórios a serem backupeados
-        # O -P no tar preserva os caminhos absolutos, mas ao restaurar é melhor
-        # extrair para um local temporário e copiar seletivamente.
-        # Usar --transform='s,^etc,etc_backup,' pode ser mais seguro para extração.
-        # Para simplicidade aqui, vamos usar caminhos relativos a /etc ou absolutos com cuidado.
-        # É mais seguro fazer backup de /etc e depois selecionar o que restaurar.
-        # Ou listar explicitamente:
-        PATHS_TO_BACKUP="
-        /etc/pve
-        /etc/hostname
-        /etc/hosts
-        /etc/network/interfaces
-        /etc/resolv.conf
-        /etc/default/grub
-        /etc/kernel/cmdline
-        /etc/modules
-        /etc/modprobe.d
-        /etc/cron.allow
-        /etc/cron.deny
-        /etc/cron.d
-        /etc/cron.daily
-        /etc/cron.hourly
-        /etc/cron.monthly
-        /etc/cron.weekly
-        /etc/crontab
-        /etc/issue
-        /etc/issue.net
-        /etc/ssh/sshd_config
-        /etc/smartd.conf
-        /etc/zfs
-        /etc/exports
-        "
-        # Outros locais importantes podem incluir /root (para scripts), /usr/local/sbin (para scripts customizados)
+Qualquer falha deixa a unit em `failed` e dispara o alerta `timer-falhou`: o Alloy do host vê as units `backup-*`. A unit roda com prioridade baixa de disco e CPU, para não atrapalhar as VMs.
 
-        tar czfP ${BACKUP_DEST}/${FILENAME} ${PATHS_TO_BACKUP}
-        # Alternativa mais segura para restauração: cd / && tar czf ${BACKUP_DEST}/${FILENAME} etc/pve etc/hostname ...
+### Preparar os destinos
 
-        if [ $? -eq 0 ]; then
-          echo "Backup da configuração do host Proxmox concluído com sucesso: ${FILENAME}"
-          # Opcional: Remover backups antigos deste tipo (e.g., manter os últimos 7)
-          find "$BACKUP_DEST" -name "proxmox_etc_backup_*.tar.gz" -type f -mtime +7 -delete
-        else
-          echo "ERRO: Backup da configuração do host Proxmox falhou."
-          # Adicione aqui uma notificação por email ou outro método, se desejar.
+1. **Disco externo:** formate um HD USB (ext4 serve), descubra o UUID (`blkid`) e monte-o pelo `/etc/fstab` do host em `/mnt/backup-externo`, com `nofail` para o host subir sem ele:
+   ```text
+   UUID=<uuid-do-disco>  /mnt/backup-externo  ext4  defaults,nofail,x-systemd.device-timeout=10s  0  2
+   ```
+   O backup confere a `montagem` antes de gravar. Com o disco desligado, aquele repositório falha (e você é avisado), em vez de encher o disco do sistema.
+2. **Nuvem:** crie um bucket privado no Backblaze B2 (ou outro S3) e uma *application key* só para ele. O endereço no formato `s3:https://<endpoint>/<bucket>/homeserver` e as chaves vão para `restic_repositorios` (página 01). O restic cifra tudo antes de enviar.
+3. **Vault:** `restic_senha` (`openssl rand -base64 32`) e `restic_repositorios`, conforme o `vault.yml.example` (página 01).
+4. Aplique: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass --check`, depois sem `--check`.
+5. **Primeira rodada,** pelo shell do host Proxmox: `systemctl start backup-restic.service` e acompanhe com `journalctl -fu backup-restic`. Na primeira vez, o script cria os repositórios (`restic init`). A primeira cópia para a nuvem pode levar dias; as seguintes só mandam o que mudou.
+
+Para ver o que existe num repositório, carregue as variáveis dele e use o restic:
+
+```bash
+sudo -i
+set -a; . /etc/restic/repositorios/nuvem.env; set +a
+restic snapshots
+restic stats latest
+```
+
+### Arquivos do role
+
+```yaml title="ansible/roles/infra/restic/tasks/main.yml"
+# ansible/roles/infra/restic/tasks/main.yml
+# Backup automatizado no host Proxmox (página 04/02): restic copia os datasets de restic_datasets, a partir de
+# snapshots ZFS, para cada repositório de restic_repositorios (vault), todo dia às restic_horario.
+
+- name: "Instalar o restic"
+  ansible.builtin.apt:
+    name: restic
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: "Diretório dos repositórios (só root: senha e credenciais)"
+  ansible.builtin.file:
+    path: /etc/restic/repositorios
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: "Ponto de montagem dos snapshots"
+  ansible.builtin.file:
+    path: /mnt/restic
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: "Variáveis de cada repositório"
+  ansible.builtin.copy:
+    dest: "/etc/restic/repositorios/{{ item.nome }}.env"
+    owner: root
+    group: root
+    mode: '0600'
+    content: |
+      RESTIC_REPOSITORY={{ item.repositorio | quote }}
+      RESTIC_PASSWORD={{ restic_senha | quote }}
+      {% if item.montagem | default('') %}
+      RESTIC_MONTAGEM={{ item.montagem | quote }}
+      {% endif %}
+      {% for chave, valor in (item.ambiente | default({})).items() %}
+      {{ chave }}={{ valor | quote }}
+      {% endfor %}
+  loop: "{{ restic_repositorios }}"
+  loop_control:
+    label: "{{ item.nome }}"
+  no_log: true # senha e credenciais
+
+- name: "Listar os arquivos de repositório existentes"
+  ansible.builtin.find:
+    paths: /etc/restic/repositorios
+    patterns: "*.env"
+  register: restic_envs
+
+- name: "Apagar repositórios que saíram de restic_repositorios"
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ restic_envs.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  when: (item.path | basename | regex_replace('\.env$', '')) not in (restic_repositorios | map(attribute='nome') | list)
+
+- name: "Script do backup"
+  ansible.builtin.template:
+    src: backup-restic.sh.j2
+    dest: /usr/local/sbin/backup-restic.sh
+    owner: root
+    group: root
+    mode: '0750'
+
+- name: "Serviço systemd do backup"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/backup-restic.service
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Backup dos datasets ZFS com restic (página 04/02)
+      After=zfs-mount.service network-online.target
+      Wants=network-online.target
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/sbin/backup-restic.sh
+      # Não disputa disco e CPU com as VMs.
+      Nice=10
+      IOSchedulingClass=idle
+
+- name: "Timer systemd do backup"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/backup-restic.timer
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      [Unit]
+      Description=Agenda o backup diário com restic
+
+      [Timer]
+      OnCalendar={{ restic_horario }}
+      Persistent=true
+
+      [Install]
+      WantedBy=timers.target
+
+- name: "Habilitar o timer do backup"
+  ansible.builtin.systemd_service:
+    name: backup-restic.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+```
+
+```bash title="ansible/roles/infra/restic/templates/backup-restic.sh.j2"
+#!/bin/bash
+# ansible/roles/infra/restic/templates/backup-restic.sh.j2
+# Backup diário dos datasets ZFS (restic_datasets) para cada repositório de restic_repositorios (página 04/02).
+# Cada dataset sai de um snapshot (cópia consistente), montado só leitura sempre no mesmo caminho
+# (/mnt/restic/<dataset>): o restic deduplica contra o backup anterior e a restauração não depende do snapshot.
+# Um repositório que falha não impede os outros; qualquer falha termina com código 1 (unit 'failed', alerta
+# timer-falhou). Gerado pelo role infra/restic.
+set -uo pipefail
+
+POOL="{{ zfs_base_pool_path | basename }}"
+SNAP="restic"
+BASE="${RESTIC_BASE:-/mnt/restic}"
+ENV_DIR="${RESTIC_ENV_DIR:-/etc/restic/repositorios}"
+DATASETS=({% for ds in restic_datasets %}"{{ ds }}"{{ " " if not loop.last }}{% endfor %})
+EXCLUIR=({% for ex in restic_excluir %}--exclude "$BASE/{{ ex }}"{{ " " if not loop.last }}{% endfor %})
+# Arquivos do próprio host (rede, GRUB/IOMMU, /etc/pve): pequenos, copiados direto, sem snapshot.
+HOST=({% for c in restic_host_caminhos %}"{{ c }}"{{ " " if not loop.last }}{% endfor %})
+read -r -a RETENCAO <<< "{{ restic_retencao }}"
+CHECK_PARCIAL="{{ restic_check_parcial }}"
+{% raw %}
+falhas=0
+
+limpar() {
+    for ds in "${DATASETS[@]}"; do
+        umount "$BASE/$ds" 2>/dev/null || true
+        zfs destroy "$POOL/$ds@$SNAP" 2>/dev/null || true
+    done
+}
+trap limpar EXIT
+limpar # sobra de uma execução interrompida
+
+caminhos=()
+for ds in "${DATASETS[@]}"; do
+    mkdir -p "$BASE/$ds"
+    if zfs snapshot "$POOL/$ds@$SNAP" && mount -t zfs -o ro "$POOL/$ds@$SNAP" "$BASE/$ds"; then
+        caminhos+=("$BASE/$ds")
+    else
+        echo "ERRO: não foi possível montar o snapshot de $POOL/$ds" >&2
+        falhas=1
+    fi
+done
+if [ "${#caminhos[@]}" -eq 0 ]; then
+    echo "ERRO: nenhum dataset para copiar" >&2
+    exit 1
+fi
+
+shopt -s nullglob
+repositorios=("$ENV_DIR"/*.env)
+if [ "${#repositorios[@]}" -eq 0 ]; then
+    echo "ERRO: nenhum repositório em $ENV_DIR (restic_repositorios no vault)" >&2
+    exit 1
+fi
+
+for env in "${repositorios[@]}"; do
+    nome="$(basename "$env" .env)"
+    echo "== repositório $nome"
+    (
+        set -a
+        # shellcheck disable=SC1090
+        . "$env"
+        set +a
+        if [ -n "${RESTIC_MONTAGEM:-}" ] && ! mountpoint -q "$RESTIC_MONTAGEM"; then
+            echo "ERRO [$nome]: $RESTIC_MONTAGEM não está montado; nada gravado no disco do sistema" >&2
+            exit 1
         fi
-        ```
-    *   **Agendamento:** Torne o script executável (`sudo chmod +x ...`) e agende-o com `cron` para rodar diariamente (e.g., `sudo crontab -e` e adicione `0 3 * * * /usr/local/sbin/backup_proxmox_host_config.sh`).
-*   **Como Restaurar a Configuração do Host Proxmox:**
-    1.  Este é um cenário de recuperação de desastre, geralmente após uma reinstalação limpa do Proxmox VE no mesmo hardware ou em um novo (consulte [Reconstruindo a Infraestrutura](04-reconstruindo-infraestrutura.md)).
-    2.  Copie o arquivo `.tar.gz` de backup mais recente para o novo host Proxmox (e.g., para `/tmp`).
-    3.  **Com MUITO CUIDADO**, extraia seletivamente os arquivos e diretórios necessários. **Não sobrescreva tudo cegamente**, especialmente se o hardware ou a versão do Proxmox mudaram.
-        ```bash
-        cd /tmp
-        tar xzf proxmox_etc_backup_YYYYMMDD-HHMMSS.tar.gz
-        # Agora você terá uma estrutura como etc/pve, etc/network, etc. em /tmp
-        # Copie seletivamente para os locais corretos, e.g.:
-        # sudo cp -ar /tmp/etc/pve/* /etc/pve/  (MUITO CUIDADO com este, pode ser melhor restaurar VMs de seus backups)
-        # sudo cp /tmp/etc/network/interfaces /etc/network/interfaces (Verifique se os nomes das interfaces são os mesmos)
-        # sudo cp /tmp/etc/exports /etc/exports
-        ```
-    4.  Pode ser necessário ajustar configurações (e.g., nomes de interface de rede em `/etc/network/interfaces` se o hardware mudou) antes de reiniciar serviços ou o host.
-    5.  Reboot o host Proxmox após restaurar arquivos críticos do sistema.
-
-### 2. Máquinas Virtuais (VMs) do Proxmox (`core-services-vm`, `ai-desktop-vm`)
-
-Proxmox VE tem um sistema de backup integrado robusto para VMs.
-
-*   **Como Fazer Backup (Recomendado: via UI Proxmox para Agendamento):**
-    1.  **Configure um Storage de Backup no Proxmox:**
-        *   Na UI web do Proxmox: Datacenter -> Storage -> Add -> Directory.
-        *   **ID:** Dê um nome (e.g., `local_zfs_backups`).
-        *   **Directory:** Especifique o caminho no host Proxmox para o seu dataset ZFS de backups (e.g., `{{ zfs_base_pool_path }}/{{ zfs_backups_dataset_name }}/vms` que seria `/data/backups/vms`). Crie este subdiretório `vms` se não existir.
-        *   **Content:** Selecione **APENAS "VZDump backup file"**.
-        *   **Max Backups:** Você pode definir uma retenção aqui, mas é melhor gerenciar a retenção no próprio job de backup.
-    2.  **Crie um Job de Backup Agendado:**
-        *   Na UI web do Proxmox: Datacenter -> Backup -> Add.
-        *   **Node:** Selecione seu nó Proxmox (`pve`).
-        *   **Storage:** Escolha o storage de backup que você acabou de configurar (e.g., `local_zfs_backups`).
-        *   **Schedule:** Defina a frequência (e.g., `Diariamente às 02:00`).
-        *   **Selection mode:** "Include selected VMs". Selecione suas VMs (`core-services-vm`, `ai-desktop-vm`).
-        *   **Mode:**
-            *   `Snapshot`: Recomendado. Cria um snapshot da VM em execução e faz o backup a partir dele. Consistente para a maioria das cargas de trabalho. Mínimo downtime.
-            *   `Suspend`: Suspende a VM, faz o backup e depois retoma. Mais consistente, mas causa um breve downtime.
-            *   `Stop`: Desliga a VM, faz o backup e depois religa (se configurado). Máxima consistência, maior downtime.
-        *   **Compression:** `ZSTD (good)` é geralmente uma boa escolha, oferecendo boa compressão com velocidade razoável.
-        *   **Retention:** Configure quantas cópias de backup manter (e.g., Keep last: 7 diárias, Keep weekly: 4, Keep monthly: 3). Proxmox podará os backups antigos automaticamente.
-        *   **Email Notification:** Configure para receber emails sobre o status dos backups.
-*   **Como Restaurar uma VM:**
-    1.  Na UI web do Proxmox:
-        *   Selecione o **storage de backup** na árvore à esquerda (e.g., `local_zfs_backups`).
-        *   A aba "Backups" listará os arquivos de backup disponíveis.
-        *   Selecione o arquivo de backup da VM que você deseja restaurar.
-        *   Clique no botão "**Restore**".
-    2.  No diálogo "Restore":
-        *   **VM ID:** Você pode restaurar para o VM ID original (sobrescrevendo a VM existente, se houver e estiver desligada) ou para um **novo VM ID** (criando uma nova VM a partir do backup).
-        *   **Storage:** Escolha onde o disco da VM restaurada será armazenado (e.g., `local-lvm`).
-        *   Outras opções como `MAC address` (gerar novo ou usar o do backup), `Start after restore`.
-    3.  Clique em "Restore". Monitore a tarefa na parte inferior da UI.
-
-### 3. Dados Persistentes dos Containers Docker (Volumes NFS)
-
-Estes são os dados críticos que residem nos seus datasets ZFS (e.g., `/data/docker-volumes`, `/data/media`, `/data/photos`, `/data/files`, `/data/rag_sources`) e são montados nas VMs via NFS para os containers Docker.
-
-#### A. Bancos de Dados das Aplicações (PostgreSQL para Authelia, Nextcloud, Grafana)
-
-!!! warning "Immich e Nextcloud: bancos no disco local da VM"
-    Os bancos do Immich (`immich_db`) e do Nextcloud (`nextcloud_db`) ficam em `/opt/local-data` na `core-services-vm`, **fora dos snapshots ZFS**. O backup deles são os dumps diários, já automatizados ([Fotos e Arquivos](../01-manual-implementacao/11-fotos-arquivos.md)):
-
-    * **Immich:** o próprio Immich grava um dump por dia em `/data/photos/backups/` (14 últimos);
-    * **Nextcloud:** o timer `backup-nextcloud-db.timer` grava `nextcloud-<data>.dump` e `nextcloud-config-<data>.tar.gz` (o `config/` do Nextcloud, que também fica no disco local) em `/data/docker-volumes/nextcloud/db-dumps/` (duas semanas).
-
-    * **LiteLLM** (na `ai-desktop-vm`): o timer `backup-litellm-db.timer` grava `litellm-<data>.dump` (chaves, orçamentos e histórico de uso) em `/data/docker-volumes/litellm/db-dumps/` (duas semanas); as chaves também podem ser recriadas pelo `setup-ai-keys.yml` a partir do vault ([seção 8](../01-manual-implementacao/08-stack-ia.md)).
-
-    Todos ficam em datasets ZFS (snapshots, Borg e cópia off-site). A restauração de cada um está na página 11. O script de exemplo abaixo vale para os bancos que ainda não têm dump automático (Authelia e Grafana).
-
-É **altamente recomendado** fazer dumps lógicos dos seus bancos de dados, além do backup do volume ZFS onde os arquivos do banco de dados residem. Dumps lógicos são mais portáteis e podem ser mais fáceis de restaurar para diferentes versões do PostgreSQL.
-
-*   **Como Fazer Backup (Scripts Agendados na `core-services-vm`):**
-    *   Para cada banco de dados (Authelia, Nextcloud, Grafana), crie um script shell na `core-services-vm` que use `docker exec` para executar o comando `pg_dump` dentro do container Docker do respectivo banco de dados.
-    *   Salve os arquivos de dump (`.sql.gz`) em um subdiretório do seu montado NFS de backups (e.g., `/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/nextcloud/`, `/mnt/pve_data_zfs/{{ zfs_backups_dataset_name }}/db_dumps/authelia/`, etc.).
-    *   **Exemplo de Script para Nextcloud DB (backup lógico do PostgreSQL; ver também as [rotinas de manutenção](01-rotinas-manutencao.md)):**
-        ```bash
-        #!/bin/bash
-        # /opt/homelab_scripts/backup_postgres_nextcloud.sh (na core-services-vm)
-        DB_CONTAINER_NAME="nextcloud_db"
-        DB_USER="nextcloud"
-        DB_NAME="nextcloud"
-        BACKUP_DEST_PARENT="/mnt/pve_data_zfs/backups/db_dumps" # Ajuste se seu dataset de backup for diferente
-        APP_BACKUP_DIR="${BACKUP_DEST_PARENT}/nextcloud"
-        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-        BACKUP_FILE="${APP_BACKUP_DIR}/nextcloud_db_${TIMESTAMP}.sql.gz"
-
-        mkdir -p "$APP_BACKUP_DIR"
-        echo "Fazendo backup do Nextcloud DB ($DB_NAME) para $BACKUP_FILE..."
-
-        # Assumindo que a senha está em uma variável de ambiente ou .pgpass dentro do container
-        # ou que o usuário pode dumpar localmente sem senha.
-        # Se NEXTCLOUD_DB_PASSWORD_FROM_PORTAINER_ENV foi usado para criar o usuário no DB,
-        # essa senha é necessária aqui. Uma forma é passá-la para o script de forma segura,
-        # ou usar .pgpass no container (mais complexo de automatizar com Ansible).
-        # Exemplo tentando usar PGPASSWORD (verifique se sua imagem postgres suporta isso para pg_dump):
-        # docker exec -e PGPASSWORD="${NEXTCLOUD_DB_PASSWORD_PLAIN}" \
-        #   -t "$DB_CONTAINER_NAME" pg_dump -U "$DB_USER" -d "$DB_NAME" -h localhost | gzip > "$BACKUP_FILE"
-        # Simplificando, assumindo que a conexão local do usuário funciona:
-        docker exec -t "$DB_CONTAINER_NAME" pg_dump -U "$DB_USER" -d "$DB_NAME" | gzip > "$BACKUP_FILE"
-
-        if [ $? -eq 0 ]; then
-          echo "Backup do Nextcloud DB concluído: ${BACKUP_FILE}"
-          find "$APP_BACKUP_DIR" -name "nextcloud_db_*.sql.gz" -type f -mtime +7 -delete # Retenção de 7 dias
-        else
-          echo "ERRO: Backup do Nextcloud DB falhou."
+        restic cat config >/dev/null 2>&1 || restic init || exit 1
+        restic backup --host homeserver --tag zfs "${EXCLUIR[@]}" "${caminhos[@]}" "${HOST[@]}" || exit 1
+        restic forget --prune --host homeserver "${RETENCAO[@]}" || exit 1
+        if [ "$(date +%u)" = "7" ]; then
+            restic check --read-data-subset "$CHECK_PARCIAL" || exit 1
         fi
-        ```
-        Adapte e crie scripts similares para `authelia_db` e `grafana_db`.
-    *   Agende esses scripts com `cron` na `core-services-vm` para rodarem diariamente.
-*   **Como Restaurar um Banco de Dados PostgreSQL de um Dump:**
-    1.  Certifique-se de que o container do banco de dados e o usuário/banco de dados vazios existem na stack Docker (o `docker-compose.yml` deve criá-los se não existirem ao iniciar).
-    2.  Copie o arquivo de dump `.sql.gz` mais recente para a `core-services-vm` (e.g., para `/tmp`).
-    3.  Execute o comando de restauração (exemplo para Nextcloud):
-        ```bash
-        # Na core-services-vm
-        gunzip < /tmp/nextcloud_db_YYYYMMDD-HHMMSS.sql.gz | docker exec -i nextcloud_db psql -U nextcloud -d nextcloud
-        ```
-        (Substitua os nomes e usuários conforme o banco de dados que está restaurando).
+    ) || { echo "ERRO: falha no repositório $nome" >&2; falhas=1; }
+done
 
-#### B. Volumes de Arquivos (Configs Docker, Mídia, Modelos RAG)
+exit "$falhas"
+{% endraw %}
+```
 
-Estes são os diretórios e arquivos dentro dos seus datasets ZFS (`/data/docker-volumes`, `/data/media`, etc.).
+## Restaurar
 
-*   **Como Fazer Backup (Ferramentas Executadas no Host Proxmox, que tem acesso direto aos datasets ZFS):**
-    *   **Opção 1: `borgbackup` (Altamente Recomendado para Eficiência e Criptografia):**
-        *   **Vantagens:** Backups incrementais (apenas blocos alterados são enviados após o primeiro backup completo), deduplicação global (economiza muito espaço se houver dados repetidos entre os backups), compressão e criptografia do lado do cliente (seus dados são criptografados antes de saírem do seu servidor).
-        *   **Setup Básico:**
-            1.  **Instale Borg no host Proxmox:** `sudo apt install borgbackup`.
-            2.  **Inicialize um Repositório Borg:** Este repositório pode estar em um HD externo conectado ao Proxmox, em outro servidor na sua LAN com acesso SSH, ou em um storage remoto (como Backblaze B2 via `rclone` como backend para Borg, mais avançado).
-                ```bash
-                # Exemplo para um HD externo montado em /mnt/borg_backup_repo
-                # Use --encryption=repokey (requer passphrase na primeira vez e para cada acesso)
-                # ou --encryption=keyfile (requer um arquivo de chave exportado). repokey é comum.
-                export BORG_PASSPHRASE='SUA_PASSPHRASE_FORTE_E_UNICA_PARA_O_REPO_BORG'
-                borg init --encryption=repokey /mnt/borg_backup_repo/meu_repo_borg_data
-                unset BORG_PASSPHRASE # Boa prática
-                ```
-            3.  **Crie um Script de Backup com Borg (e.g., `/usr/local/sbin/backup_zfs_data_with_borg.sh`):**
-                ```bash
-                #!/bin/bash
-                export BORG_REPO='/mnt/borg_backup_repo/meu_repo_borg_data'
-                # Para automação, é melhor usar BORG_PASSCOMMAND para buscar a passphrase de um local seguro,
-                # ou uma chave SSH se o repo Borg for remoto. Para simplicidade aqui, assumimos BORG_PASSPHRASE.
-                # CUIDADO: Não deixe a passphrase em texto plano em um script sem permissões restritas.
-                export BORG_PASSPHRASE='SUA_PASSPHRASE_FORTE_E_UNICA_PARA_O_REPO_BORG'
+Todos os comandos rodam como root no host Proxmox, com as variáveis do repositório carregadas (`set -a; . /etc/restic/repositorios/<nome>.env; set +a`). Prefira o disco externo, que é mais rápido; a nuvem fica para quando a casa inteira se perdeu.
 
-                # Nome do arquivo de backup (archive)
-                ARCHIVE_NAME="homelab_data-{now:%Y-%m-%d_%H-%M-%S}"
+### Um arquivo ou uma pasta
 
-                echo "Iniciando backup Borg para o repositório ${BORG_REPO} como ${ARCHIVE_NAME}..."
+```bash
+restic snapshots                                   # escolha o snapshot (ou use latest)
+restic ls latest /mnt/restic/files/leo/files/Documentos
+restic restore latest --include /mnt/restic/files/leo/files/Documentos/contrato.pdf --target /tmp/restaurado
+```
 
-                borg create --verbose --stats --list --progress \
-                    --compression lz4 \
-                    ::"${ARCHIVE_NAME}" \
-                    {{ zfs_base_pool_path }}/docker-volumes \
-                    {{ zfs_base_pool_path }}/media \
-                    {{ zfs_base_pool_path }}/photos \
-                    {{ zfs_base_pool_path }}/files \
-                    {{ zfs_base_pool_path }}/rag_sources \
-                    --exclude '{{ zfs_base_pool_path }}/backups' # NÃO FAÇA BACKUP DO DIRETÓRIO DE BACKUPS EM SI!
-                    # Adicione outros --exclude para caches, arquivos temporários grandes, etc.
-                    # Ex: --exclude '**/node_modules' --exclude '**/*.pyc' --exclude '**/cache'
+Ou navegue com `restic mount /mnt/restic-navegar` (em outro terminal) e copie o que precisar. Arquivos do Nextcloud restaurados direto em `/data/files` só aparecem na interface depois de `docker exec -u www-data nextcloud_app php occ files:scan --all`.
 
-                BACKUP_EXIT_CODE=$?
+### Um dataset inteiro
 
-                # Poda de backups antigos (exemplo: manter 7 diários, 4 semanais, 3 mensais)
-                echo "Podando backups antigos do repositório ${BORG_REPO}..."
-                borg prune -v --list --show-rc \
-                    --keep-daily=7 \
-                    --keep-weekly=4 \
-                    --keep-monthly=3 \
-                    --keep-yearly=1 # Opcional: manter 1 anual
+1. Pare no Portainer as stacks que usam o dataset (ex.: `photos` para `/data/photos`).
+2. `restic restore latest --include /mnt/restic/photos --target /tmp/restauro` (o conteúdo fica em `/tmp/restauro/mnt/restic/photos`; use um disco com espaço).
+3. `rsync -aHAX --delete /tmp/restauro/mnt/restic/photos/ /data/photos/` e `chown -R <docker_puid>:<docker_pgid> /data/photos` se o dono mudou.
+4. Suba as stacks de novo.
 
-                PRUNE_EXIT_CODE=$?
+### Bancos de dados
 
-                # Verificar integridade do repositório (opcional, mas bom de vez em quando)
-                # borg check -v --show-rc
+Restaure o `docker-volumes` (ou só a pasta `db-dumps` do banco) e use o dump mais recente:
 
-                unset BORG_PASSPHRASE
+```bash
+# na VM do banco, com o container do banco no ar e vazio (stack recém-criada)
+docker exec -i <container> pg_restore -U <usuário> -d <banco> --clean --if-exists < <app>-<data>.dump
+```
 
-                if [ ${BACKUP_EXIT_CODE} -eq 0 ] && [ ${PRUNE_EXIT_CODE} -eq 0 ]; then
-                  echo "Backup Borg e poda concluídos com sucesso."
-                  /opt/homeserver/scripts/notify.sh ok "Backup Borg concluído" "${ARCHIVE_NAME}" borg
-                else
-                  echo "ERRO: Backup Borg ou poda falhou. Código de saída do Backup: ${BACKUP_EXIT_CODE}, Poda: ${PRUNE_EXIT_CODE}"
-                  /opt/homeserver/scripts/notify.sh critical "Backup Borg falhou" "backup=${BACKUP_EXIT_CODE} poda=${PRUNE_EXIT_CODE}" borg
-                fi
-                ```
-            4.  Torne o script executável e agende-o com `cron`. O aviso no Telegram vem do `scripts/notify.sh` (copie-o para `/opt/homeserver/scripts/` no host e configure `/etc/default/homeserver-notify`, ver [Painel e Notificações](../01-manual-implementacao/09-painel-notificacoes.md)).
-    *   **Opção 2: `rsync` (Mais Simples, para Sincronização/Cópia Direta):**
-        *   Bom para criar uma cópia espelhada dos seus dados em outro local (e.g., HD externo, outro servidor NAS). Não oferece deduplicação ou versionamento histórico como Borg, a menos que combinado com snapshots ou outras lógicas.
-        *   **Exemplo de Script (sincronizar `/data/docker-volumes` para um HD externo):**
-            ```bash
-            #!/bin/bash
-            SOURCE_DIR="{{ zfs_base_pool_path }}/docker-volumes/" # Note a barra no final!
-            DEST_DIR="/mnt/meu_hd_externo_backup/docker-volumes/" # Note a barra no final!
-            LOG_FILE="/var/log/rsync_backup_docker_volumes.log"
+Os detalhes de cada aplicação: Nextcloud e Immich na [seção 11](../01-manual-implementacao/11-fotos-arquivos.md), LiteLLM na [seção 8](../01-manual-implementacao/08-stack-ia.md). Para o Authelia e o Grafana, pare o container da aplicação (`authelia`, `grafana`), restaure no `authelia_db`/`grafana_db` e suba de novo.
 
-            echo "Iniciando rsync de ${SOURCE_DIR} para ${DEST_DIR} em $(date)" >> "${LOG_FILE}"
-            rsync -avz --delete --human-readable --info=progress2 \
-                "${SOURCE_DIR}" \
-                "${DEST_DIR}" >> "${LOG_FILE}" 2>&1
-            # --delete: remove arquivos no destino que não existem mais na origem
-            # -a: modo archive (preserva permissões, links, etc.)
-            # -v: verboso
-            # -z: compressão durante a transferência
+### O host Proxmox e as VMs
 
-            if [ $? -eq 0 ]; then
-              echo "Rsync de docker-volumes concluído com sucesso em $(date)" >> "${LOG_FILE}"
-              /opt/homeserver/scripts/notify.sh ok "Rsync de docker-volumes concluído" "Destino: ${DEST_DIR}" rsync
-            else
-              echo "ERRO: Rsync de docker-volumes falhou em $(date)" >> "${LOG_FILE}"
-              /opt/homeserver/scripts/notify.sh critical "Rsync de docker-volumes falhou" "Veja ${LOG_FILE}" rsync
-            fi
-            ```
-        *   Agende com `cron`.
-*   **Como Restaurar Volumes de Arquivos:**
-    *   **BorgBackup:**
-        *   Listar arquivos: `borg list /caminho/para/repo_borg::nome_do_archive`
-        *   Montar um archive como sistema de arquivos (para navegar e copiar):
-            `borg mount /caminho/para/repo_borg::nome_do_archive /mnt/borg_restore_temp`
-            (Depois `fusermount -u /mnt/borg_restore_temp` para desmontar).
-        *   Extrair (restaurar) arquivos/diretórios para um local:
-            `borg extract --verbose --list /caminho/para/repo_borg::nome_do_archive caminho_relativo_dentro_do_archive`
-            (Extrai para o diretório atual, ou use `--target /caminho/destino/absoluto`).
-    *   **Rsync:** Simplesmente copie os arquivos de volta do seu destino de backup rsync para o local original.
+O host e as VMs são recriados, não restaurados: reinstale o Proxmox, rode o `setup-proxmox-host.yml`, o `vm-deploy.yml` e os playbooks das stacks ([reconstrução](04-reconstruindo-infraestrutura.md)). O `/etc` do host no restic serve de consulta para o que foi feito à mão: interfaces de rede, GRUB e IOMMU para o passthrough da GPU, definições das VMs em `/etc/pve/qemu-server/`. Restaure-o num diretório temporário e copie só o que precisar. **Nunca sobrescreva o `/etc` inteiro.**
 
-### 4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)
+## Snapshots ZFS
 
-Como detalhado no [Guia Prático de Snapshots ZFS](../03-guias-sustentacao/11-guia-snapshots-zfs.md), os snapshots ZFS são uma forma rápida e eficiente de proteger seus datasets (`/data/docker-volumes`, `/data/media`, etc.) contra erros humanos (deleção acidental) ou corrupção de software.
+Os snapshots automáticos (`zfs-auto-snapshot`, instalado pelo `setup-proxmox-host.yml`) valem **só para `data/notes`**, pela propriedade `com.sun:auto-snapshot`. Eles servem para desfazer edições da IA nos vaults pelo `.zfs/snapshot` ([seção 12](../01-manual-implementacao/12-segundo-cerebro.md#desfazer-uma-edição)). Snapshot no mesmo pool não é backup: se o pool se perde, ele vai junto. Nos datasets com `quota` (`photos`, `files`), os snapshots ainda consumiriam a cota.
 
-*   **Como Fazer Snapshots:**
-    *   **Manual (para ações pontuais):** `sudo zfs snapshot data/docker-volumes@antes_de_uma_mudanca_arriscada`
-    *   **Automatizado com `zfs-auto-snapshot` (ou `sanoid`):** neste homeserver ele é instalado pelo `setup-proxmox-host.yml` e vale **só para `data/notes`** (vaults do Obsidian; propriedade `com.sun:auto-snapshot`), para desfazer edições da IA — veja [Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md#desfazer-uma-edição). Os vaults também têm cópia completa no PC e no celular (Syncthing). O índice do qmd, os documentos convertidos, o banco do Syncthing e o estado dos mcp-auth-proxy ficam no disco local da `ai-desktop-vm`, fora dos snapshots e sem backup: todos são regeráveis. A base dos agentes ([seção 13](../01-manual-implementacao/13-agentes-base.md)) também fica no disco local e sem backup: na `core-services-vm`, o config do hub `agentgateway` (regerado pelo `setup-agents-volumes.yml`), o clone do repositório e os segredos do runner do `ops` (vêm do vault) e o estado OAuth do `mcp_auth_servidor`; na `ai-desktop-vm`, os dados do **Langfuse** (traces descartáveis; organização, projeto e chaves voltam pelas variáveis `LANGFUSE_INIT_*`).
-        *   O pacote `zfs-auto-snapshot` (geralmente instalado com `zfsutils-linux` no Debian/Ubuntu) configura scripts cron para tirar e podar snapshots automaticamente (e.g., horários, diários, semanais, mensais).
-        *   Verifique a configuração em `/etc/cron.*/zfs-auto-snapshot` e, se existir, `/etc/default/zfs-auto-snapshot`.
-        *   Para controle mais avançado e integração com replicação, considere [Sanoid/Syncoid](https://github.com/jimsalterjrs/sanoid).
-*   **Como Restaurar de um Snapshot ZFS:**
-    *   **Rollback (Reverte o dataset inteiro - CUIDADO!):** `sudo zfs rollback data/docker-volumes@nome_do_snapshot`
-    *   **Acessar Arquivos de um Snapshot (Método Seguro, Não Destrutivo):**
-        Os snapshots são montados automaticamente em um diretório oculto `.zfs/snapshot/` dentro do ponto de montagem do dataset ativo.
-        Exemplo: Para restaurar `/data/docker-volumes/meuapp/config.txt` do snapshot `@snap1`:
-        `sudo cp /data/docker-volumes/.zfs/snapshot/snap1/meuapp/config.txt /data/docker-volumes/meuapp/config.txt`
+Para um ponto de volta antes de uma mudança arriscada, tire um à mão e apague depois ([guia de snapshots](../03-guias-sustentacao/11-guia-snapshots-zfs.md)):
 
-### 5. Repositório Git do Projeto (`wiki-home-server`)
+```bash
+zfs snapshot data/docker-volumes@antes-da-mudanca
+zfs destroy data/docker-volumes@antes-da-mudanca
+```
 
-Sua configuração de Infraestrutura como Código é um ativo crítico.
+## Repositório e segredos
 
-*   **Como Fazer Backup:**
-    *   Regularmente (após cada mudança significativa) execute `git add .`, `git commit -m "Sua mensagem descritiva"`, e **`git push` para um repositório Git remoto** (e.g., GitHub, GitLab, Gitea auto-hospedado).
-    *   Isso serve como seu backup principal e off-site para toda a lógica de configuração da sua infraestrutura.
-*   **Como Restaurar:**
-    *   Em uma nova máquina de controle Ansible (ou na mesma, se o diretório local foi perdido), simplesmente execute `git clone URL_DO_SEU_REPO_REMOTO`.
-    *   Certifique-se de ter sua senha do Ansible Vault para descriptografar o `vault.yml`.
+- O repositório (wiki, Ansible, stacks) está no GitHub; cada `git push` é uma cópia fora de casa.
+- O `vault.yml` só entra no git criptografado. A senha do Ansible Vault e a `restic_senha` ficam no seu gerenciador de senhas.
+- Sem essas duas senhas, o GitHub e o backup na nuvem não servem para nada.
 
-### 6. Cópia Off-site (Essencial para Cumprir a Regra 3-2-1)
+## Testes de restauração
 
-Ter pelo menos uma cópia dos seus backups mais importantes **fora da sua residência** é o que protege contra desastres locais (incêndio, roubo, inundação, surto elétrico que destrói tudo).
+Um backup que nunca foi restaurado não é confiável. **A cada três meses:**
 
-*   **O Que Enviar Off-site:**
-    *   Seu repositório Borg (se usar Borg para os volumes ZFS).
-    *   Os arquivos de backup das VMs Proxmox (`.vma.zst`).
-    *   Os dumps dos seus bancos de dados.
-    *   O backup da configuração do host Proxmox.
-    *   Seu repositório Git Ansible (o `git push` para um remote já é off-site).
-*   **Métodos para Cópia Off-site:**
-    *   **`rclone` para Armazenamento em Nuvem (Recomendado para Automação):**
-        *   [rclone](https://rclone.org/) é uma ferramenta de linha de comando extremamente versátil para sincronizar arquivos e diretórios com dezenas de provedores de armazenamento em nuvem (e.g., Backblaze B2, Amazon S3/Glacier, Google Cloud Storage, Wasabi, Storj, etc.).
-        *   **Setup:**
-            1.  Instale `rclone` no seu host Proxmox (ou em uma VM dedicada para backups).
-            2.  Configure um "remote" no `rclone` para o seu provedor de nuvem escolhido: `rclone config`. Siga as instruções para autenticar.
-            3.  **Use a Criptografia do `rclone` (`crypt` remote):** É **altamente recomendado** criar um remote do tipo `crypt` que fica "em cima" do seu remote do provedor de nuvem. Isso garante que seus dados sejam criptografados **antes** de serem enviados para a nuvem, e apenas você tem a chave de descriptografia.
-        *   **Comandos para Sincronizar/Copiar:**
-            ```bash
-            # Exemplo: Sincronizar o diretório de backups de VMs para um remote crypt 'nuvem_criptografada:'
-            # que aponta para um bucket no Backblaze B2.
-            rclone sync /data/backups/vms/ nuvem_criptografada:meu_servidor/proxmox_vm_backups/ --progress --checksum --transfers=4 --checkers=8
-            # --checksum: verifica arquivos baseados em checksum em vez de apenas tamanho/modtime
-            # --transfers, --checkers: ajusta paralelismo
-            ```
-        *   Agende seus comandos `rclone` com `cron` no host Proxmox para rodar após seus backups locais serem concluídos.
-    *   **HD Externo Rotacionado Fisicamente:**
-        *   Mantenha um (ou mais) HDs externos USB.
-        *   Regularmente (e.g., semanalmente), conecte o HD ao host Proxmox, copie seus backups locais para ele (usando `rsync` ou Borg para um repositório no HD externo).
-        *   **Guarde o HD externo em um local seguro e fisicamente separado** da sua casa (e.g., casa de um familiar, trabalho, cofre bancário). Rotacione com outro HD externo.
-    *   **Servidor de Backup Remoto (Outro Local Físico):**
-        Se você tiver acesso a outro servidor em um local diferente (e.g., casa de um amigo, outro escritório), você pode usar:
-        *   `rsync` sobre SSH.
-        *   Borg com um repositório remoto via SSH.
-        *   `zfs send/recv` via SSH (se o destino também for ZFS).
-
-## Testando Seus Backups e Procedimentos de Restauração
-
-Repetindo pela última vez (mas não menos importante): **TESTE, TESTE, TESTE!**
-
-*   **Agende Testes de Restauração:** Pelo menos uma vez por trimestre, ou após qualquer mudança significativa na sua estratégia de backup ou nos sistemas que você está backupeando.
-*   **Simule Cenários de Falha:**
-    *   "Perdi um arquivo importante no Nextcloud." -> Tente restaurá-lo de um snapshot ZFS ou do dump do banco de dados + backup de arquivos do Nextcloud.
-    *   "Minha VM `core-services-vm` não inicia mais." -> Tente restaurá-la de um backup do Proxmox para um novo VM ID.
-    *   "O host Proxmox inteiro morreu, mas meus HDDs do pool `/data` estão OK (ou tenho backup off-site)." -> Siga os passos de [Reconstruindo a Infraestrutura](04-reconstruindo-infraestrutura.md).
-*   **Documente Seus Procedimentos de Restauração:** Enquanto você testa, anote os passos exatos. Em uma emergência real, você estará sob pressão e ter um guia passo a passo documentado por você mesmo será inestimável.
-
-Uma estratégia de backup bem implementada e regularmente testada é o que lhe dará a verdadeira tranquilidade e a capacidade de se recuperar de quase qualquer eventualidade com seu servidor doméstico.
+1. Escolha um arquivo de cada dataset (`docker-volumes`, `photos`, `files`, `notes`) e restaure-o do repositório **da nuvem** em `/tmp/teste-restauro`. Compare com o original: `sha256sum`.
+2. Restaure o dump mais recente de um banco num Postgres descartável (`docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:16-alpine`; `pg_restore`; uma consulta qualquer) e apague o container.
+3. Confira que `restic snapshots` mostra backups diários recentes nos dois repositórios, e que o `journalctl -u backup-restic` do último domingo tem o `check` sem erro.
+4. Anote a data do teste e qualquer passo que tenha faltado nesta página, e corrija a página.

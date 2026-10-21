@@ -23,7 +23,7 @@ Antes de iniciar qualquer atualização em um componente fundamental, siga estes
 
 2.  **FAÇA BACKUP COMPLETO PRIMEIRO:**
     Não se pode enfatizar o suficiente. Antes de tocar em qualquer componente crítico:
-    *   **Host Proxmox VE:** Faça um backup completo da [configuração do host Proxmox](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#1-configuração-do-host-proxmox-ve) e, mais crucialmente, **backups atualizados de TODAS as suas máquinas virtuais (VMs)** usando o sistema de backup do Proxmox.
+    *   **Host Proxmox VE:** Faça um backup completo da [configuração do host Proxmox](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#o-host-proxmox-e-as-vms) e, mais crucialmente, **backups atualizados de TODAS as suas máquinas virtuais (VMs)** usando o sistema de backup do Proxmox.
     *   **Volumes Docker (Dados Persistentes):** Para os datasets ZFS que contêm os volumes dos seus containers (e.g., `data/docker-volumes`, `data/media`), crie **snapshots ZFS** no host Proxmox antes de atualizar o Docker Engine, Traefik, Authelia, ou qualquer container que gerencie dados críticos. Veja o [Guia de Snapshots ZFS](11-guia-snapshots-zfs.md).
     *   **Arquivos de Configuração Específicos:** Faça uma cópia manual dos arquivos de configuração relevantes que podem ser afetados (e.g., `traefik.yml`, `authelia/configuration.yml`, `prometheus.yml`) antes de uma atualização que possa alterá-los ou introduzir um novo formato. (Seus arquivos Ansible já estão no Git, o que é um backup da *definição* da configuração).
 
@@ -56,7 +56,7 @@ Atualizar o Proxmox VE pode trazer novas features, melhorias de performance, cor
     *   Wiki do Proxmox VE, especialmente a página de [Roadmap e Notas de Release](https://pve.proxmox.com/wiki/Roadmap).
 *   **Procedimento Geral:**
     1.  **Leia as Notas de Release** para a versão do Proxmox VE para a qual você está atualizando. Preste atenção especial a quaisquer mudanças no ZFS, QEMU, LXC, ou rede que possam impactar seu setup.
-    2.  **Faça backup de TODAS as suas VMs** e da [configuração do host Proxmox](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#1-configuração-do-host-proxmox-ve).
+    2.  **Faça backup de TODAS as suas VMs** e da [configuração do host Proxmox](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#o-host-proxmox-e-as-vms).
     3.  (Opcional) Se você tem um cluster, atualize um nó por vez, migrando VMs se possível. (Não aplicável ao nosso setup de nó único).
     4.  No shell do host Proxmox, como `root`:
         ```bash
@@ -150,7 +150,7 @@ Traefik e Authelia são componentes críticos da nossa camada de rede e seguran�
         *   **Arquivos de Configuração:** Faça uma cópia dos seus arquivos de configuração atuais (e.g., `traefik.yml`, `authelia/configuration.yml` e o diretório de config dinâmica do Traefik) que estão nos volumes NFS. Seus templates Ansible `.j2` já estão no Git, mas o arquivo renderizado no volume é o que está em uso.
         *   **Dados Persistentes:**
             *   Para Traefik: Faça backup do `acme.json` (contém seus certificados SSL!).
-            *   Para Authelia: Faça um dump do banco de dados PostgreSQL do Authelia ([ver estratégia de backup de DB](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana)).
+            *   Para Authelia: Faça um dump do banco de dados PostgreSQL do Authelia ([ver estratégia de backup de DB](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#bancos-de-dados-dumps-diários)).
         *   Crie um snapshot ZFS do dataset `data/docker-volumes` no host Proxmox.
     3.  **Adapte Suas Configurações (SE NECESSÁRIO):**
         *   Se as notas de release indicarem breaking changes que afetam sua configuração, atualize seus templates Ansible (`.j2` para `traefik.yml` ou `authelia/configuration.yml`) e/ou os arquivos de configuração dinâmica do Traefik, ou as labels Docker nos `docker-compose.yml` de outros serviços (se as mudanças do Traefik as afetarem).

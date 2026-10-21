@@ -51,9 +51,28 @@ zfs_files_dataset_name: "files"             # Diretório de dados do Nextcloud. 
 zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo cérebro, página 12). Só na VM de IA; snapshots automáticos.
 
 # --- Disco local das VMs ---
-# Bancos que não podem ficar em NFS (o Immich exige disco local) ficam aqui, fora dos snapshots ZFS;
-# o backup deles são os dumps diários gravados no NFS (página 11).
+# Bancos que não podem ficar em NFS (o Postgres exige ser dono dos arquivos) ficam aqui, fora dos snapshots
+# ZFS; o backup deles são os dumps diários gravados no NFS (página 04/02).
 vm_local_data_path: "/opt/local-data"
+
+# --- Backup com restic no host Proxmox (página 04/02) ---
+# Datasets copiados (a mídia fica de fora: dá para baixar de novo e não cabe na nuvem).
+restic_datasets:
+  - "{{ zfs_docker_volumes_dataset_name }}"
+  - "{{ zfs_photos_dataset_name }}"
+  - "{{ zfs_files_dataset_name }}"
+  - "{{ zfs_notes_dataset_name }}"
+# Caminhos (dataset/pasta) que não entram: métricas e logs mudam o tempo todo e não valem o espaço.
+restic_excluir:
+  - "{{ zfs_docker_volumes_dataset_name }}/prometheus/data"
+  - "{{ zfs_docker_volumes_dataset_name }}/loki/data"
+# Arquivos do host Proxmox que vão junto (rede, GRUB/IOMMU, definição das VMs em /etc/pve).
+restic_host_caminhos: ["/etc"]
+# Todo dia, depois dos dumps dos bancos (o último às 03:45).
+restic_horario: "*-*-* 04:30:00"
+restic_retencao: "--keep-daily 7 --keep-weekly 4 --keep-monthly 12"
+# Aos domingos, o restic relê esta fração dos dados de cada repositório para achar corrupção.
+restic_check_parcial: "5%"
 
 # --- Caminhos de Montagem NFS DENTRO das VMs ---
 # Ponto de montagem base DENTRO das VMs para os datasets ZFS compartilhados do Host Proxmox.

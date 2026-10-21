@@ -1,0 +1,76 @@
+#!/bin/bash
+# ansible/roles/infra/restic/templates/backup-restic.sh.j2
+# Backup diário dos datasets ZFS (restic_datasets) para cada repositório de restic_repositorios (página 04/02).
+# Cada dataset sai de um snapshot (cópia consistente), montado só leitura sempre no mesmo caminho
+# (/mnt/restic/<dataset>): o restic deduplica contra o backup anterior e a restauração não depende do snapshot.
+# Um repositório que falha não impede os outros; qualquer falha termina com código 1 (unit 'failed', alerta
+# timer-falhou). Gerado pelo role infra/restic.
+set -uo pipefail
+
+POOL="{{ zfs_base_pool_path | basename }}"
+SNAP="restic"
+BASE="${RESTIC_BASE:-/mnt/restic}"
+ENV_DIR="${RESTIC_ENV_DIR:-/etc/restic/repositorios}"
+DATASETS=({% for ds in restic_datasets %}"{{ ds }}"{{ " " if not loop.last }}{% endfor %})
+EXCLUIR=({% for ex in restic_excluir %}--exclude "$BASE/{{ ex }}"{{ " " if not loop.last }}{% endfor %})
+# Arquivos do próprio host (rede, GRUB/IOMMU, /etc/pve): pequenos, copiados direto, sem snapshot.
+HOST=({% for c in restic_host_caminhos %}"{{ c }}"{{ " " if not loop.last }}{% endfor %})
+read -r -a RETENCAO <<< "{{ restic_retencao }}"
+CHECK_PARCIAL="{{ restic_check_parcial }}"
+{% raw %}
+falhas=0
+
+limpar() {
+    for ds in "${DATASETS[@]}"; do
+        umount "$BASE/$ds" 2>/dev/null || true
+        zfs destroy "$POOL/$ds@$SNAP" 2>/dev/null || true
+    done
+}
+trap limpar EXIT
+limpar # sobra de uma execução interrompida
+
+caminhos=()
+for ds in "${DATASETS[@]}"; do
+    mkdir -p "$BASE/$ds"
+    if zfs snapshot "$POOL/$ds@$SNAP" && mount -t zfs -o ro "$POOL/$ds@$SNAP" "$BASE/$ds"; then
+        caminhos+=("$BASE/$ds")
+    else
+        echo "ERRO: não foi possível montar o snapshot de $POOL/$ds" >&2
+        falhas=1
+    fi
+done
+if [ "${#caminhos[@]}" -eq 0 ]; then
+    echo "ERRO: nenhum dataset para copiar" >&2
+    exit 1
+fi
+
+shopt -s nullglob
+repositorios=("$ENV_DIR"/*.env)
+if [ "${#repositorios[@]}" -eq 0 ]; then
+    echo "ERRO: nenhum repositório em $ENV_DIR (restic_repositorios no vault)" >&2
+    exit 1
+fi
+
+for env in "${repositorios[@]}"; do
+    nome="$(basename "$env" .env)"
+    echo "== repositório $nome"
+    (
+        set -a
+        # shellcheck disable=SC1090
+        . "$env"
+        set +a
+        if [ -n "${RESTIC_MONTAGEM:-}" ] && ! mountpoint -q "$RESTIC_MONTAGEM"; then
+            echo "ERRO [$nome]: $RESTIC_MONTAGEM não está montado; nada gravado no disco do sistema" >&2
+            exit 1
+        fi
+        restic cat config >/dev/null 2>&1 || restic init || exit 1
+        restic backup --host homeserver --tag zfs "${EXCLUIR[@]}" "${caminhos[@]}" "${HOST[@]}" || exit 1
+        restic forget --prune --host homeserver "${RETENCAO[@]}" || exit 1
+        if [ "$(date +%u)" = "7" ]; then
+            restic check --read-data-subset "$CHECK_PARCIAL" || exit 1
+        fi
+    ) || { echo "ERRO: falha no repositório $nome" >&2; falhas=1; }
+done
+
+exit "$falhas"
+{% endraw %}
