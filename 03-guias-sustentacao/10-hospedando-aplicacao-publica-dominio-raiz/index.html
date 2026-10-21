@@ -9,13 +9,13 @@
         <meta name="author" content="Léo Ivan">
       
       
-        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/">
+        <link rel="canonical" href="https://wiki.lioevano.com/03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/">
       
       
-        <link rel="prev" href="../10-atualizacao-segura-componentes-criticos/">
+        <link rel="prev" href="../09-atualizacao-segura-componentes-criticos/">
       
       
-        <link rel="next" href="../12-guia-snapshots-zfs/">
+        <link rel="next" href="../11-guia-snapshots-zfs/">
       
       
         
@@ -1558,35 +1558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1761,7 +1733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1769,34 +1741,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2344,17 +2288,16 @@
 </span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">      </span><span class="c1"># --- Labels Traefik para o Domínio Raiz ---</span>
 </span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a><span class="w">      </span><span class="nt">traefik.enable</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span>
 </span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">      </span><span class="c1"># Roteador para o domínio raiz (sem www)</span>
-</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">      </span><span class="nt">traefik.http.routers.meu_blog_raiz.rule</span><span class="p">:</span><span class="w"> </span><span class="s">"Host(`{{</span><span class="nv"> </span><span class="s">base_domain</span><span class="nv"> </span><span class="s">}}`)"</span>
+</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="w">      </span><span class="nt">traefik.http.routers.meu_blog_raiz.rule</span><span class="p">:</span><span class="w"> </span><span class="s">"Host(`${BASE_DOMAIN_FROM_VAULT}`)"</span>
 </span><span id="__span-1-35"><a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">      </span><span class="nt">traefik.http.routers.meu_blog_raiz.entrypoints</span><span class="p">:</span><span class="w"> </span><span class="s">"websecure"</span>
 </span><span id="__span-1-36"><a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="w">      </span><span class="nt">traefik.http.routers.meu_blog_raiz.tls.certresolver</span><span class="p">:</span><span class="w"> </span><span class="s">"letsencrypt"</span>
 </span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">      </span><span class="c1"># Prioridade ALTA para garantir que esta regra mais específica (domínio raiz)</span>
-</span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">      </span><span class="c1"># seja correspondida antes de quaisquer regras wildcard (e.g., para Authelia em *.{{ base_domain }}).</span>
+</span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">      </span><span class="c1"># seja correspondida antes de quaisquer regras mais genéricas.</span>
 </span><span id="__span-1-39"><a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">      </span><span class="nt">traefik.http.routers.meu_blog_raiz.priority</span><span class="p">:</span><span class="w"> </span><span class="s">"100"</span><span class="w"> </span><span class="c1"># Um número alto significa maior prioridade</span>
-</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">      </span><span class="c1"># Middlewares: NÃO inclua 'authelia-forwardauth@docker' para um blog público.</span>
-</span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">      </span><span class="c1"># Você PODE (e deve) incluir seus headers de segurança globais.</span>
-</span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">      </span><span class="nt">traefik.http.routers.meu_blog_raiz.middlewares</span><span class="p">:</span><span class="w"> </span><span class="s">"securityHeaders@file"</span>
-</span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">      </span><span class="c1"># Serviço Traefik (como Traefik se conecta ao container Nginx)</span>
-</span><span id="__span-1-44"><a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">      </span><span class="nt">traefik.http.services.meu_blog_raiz.loadbalancer.server.port</span><span class="p">:</span><span class="w"> </span><span class="s">"80"</span><span class="w"> </span><span class="c1"># Nginx escuta na porta 80 dentro do container por padrão</span>
+</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a><span class="w">      </span><span class="c1"># Sem middlewares: NÃO inclua 'authelia-forwardauth@docker' num blog público. Os headers de</span>
+</span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">      </span><span class="c1"># segurança (securityHeaders@file) já valem para todo o entrypoint websecure (página 05).</span>
+</span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">      </span><span class="c1"># Serviço Traefik (como Traefik se conecta ao container Nginx)</span>
+</span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a><span class="w">      </span><span class="nt">traefik.http.services.meu_blog_raiz.loadbalancer.server.port</span><span class="p">:</span><span class="w"> </span><span class="s">"80"</span><span class="w"> </span><span class="c1"># Nginx escuta na porta 80 dentro do container por padrão</span>
 </span></code></pre></div>
     *   <strong>Preparação Ansible:</strong> Crie um playbook (e.g., <code>setup-blog-raiz-volumes.yml</code>) para:
 1.  Criar o diretório NFS na <code>core-services-vm</code> (e.g., <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/meu_blog_raiz/html/</code> e opcionalmente <code>.../meu_blog_raiz/nginx_conf/</code>).
@@ -2371,19 +2314,18 @@
 <p><strong>Roteador Específico para o Domínio Raiz:</strong>
     No <code>docker-compose.yml</code> do seu blog (ou do servidor web Nginx/Caddy que o serve), as labels Traefik são cruciais. Veja o exemplo do Nginx acima. Os pontos chave são:</p>
 <ul>
-<li><code _="{" base_domain="base_domain">traefik.http.routers.NOMEDOROUTEADOR.rule: "Host(\</code>`)"`}<ul>
+<li><code>traefik.http.routers.NOMEDOROUTEADOR.rule: "Host(\</code>${BASE_DOMAIN_FROM_VAULT}`)"`<ul>
 <li>Certifique-se de usar crases (`) em volta do valor da regra Host.</li>
-<li>Use seu <code>{{ base_domain }}</code> aqui (sem <code>www</code> ou outros subdomínios).</li>
+<li>No compose, o domínio vem de <code>${BASE_DOMAIN_FROM_VAULT}</code> (sem <code>www</code> ou outros subdomínios).</li>
 </ul>
 </li>
 <li><code>traefik.http.routers.NOMEDOROUTEADOR.priority: "100"</code> (ou outro número alto)<ul>
-<li>Isso é importante se você tem outras regras mais genéricas (como uma regra wildcard <code>HostS(\</code>*.{{ base_domain }}`)` que pode ser usada pelo Authelia ou outros serviços). A prioridade mais alta garante que a regra específica para o domínio raiz seja avaliada e correspondida primeiro.</li>
+<li>Isso é importante se você tem outras regras mais genéricas. A prioridade mais alta garante que a regra específica para o domínio raiz seja avaliada e correspondida primeiro.</li>
 </ul>
 </li>
 <li><strong>Middlewares:</strong><ul>
 <li><strong>NÃO inclua <code>authelia-forwardauth@docker</code></strong> para um blog ou site que deve ser publicamente acessível sem login.</li>
-<li>Você <strong>DEVE</strong> incluir seus middlewares de segurança globais (e.g., <code>securityHeaders@file</code>, que foi definido na <a href="../../01-manual-implementacao/05-rede-segura/#templatessecurity_headersymlj2-middleware-de-segurança">Seção 5.4</a>) para aplicar headers de segurança importantes.
-    Exemplo: <code>traefik.http.routers.meu_blog_raiz.middlewares: "securityHeaders@file"</code></li>
+<li>Os headers de segurança (<code>securityHeaders@file</code>, <a href="../../01-manual-implementacao/05-rede-segura/#templatessecurity_headersymlj2-middleware-de-segurança">Seção 5.4</a>) já são aplicados a todo o entrypoint <code>websecure</code>; não repita o middleware no router.</li>
 </ul>
 </li>
 </ul>
@@ -2402,7 +2344,7 @@
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span><span class="nt">traefik.http.middlewares.redirect-www-to-nonwww.redirectregex.permanent</span><span class="p">:</span><span class="w"> </span><span class="s">"true"</span><span class="w">             </span><span class="c1"># Usa redirecionamento 301 (permanente)</span>
 </span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
 </span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span><span class="c1"># --- Roteador para www.seudominio.com que USA o middleware de redirecionamento ---</span>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span><span class="nt">traefik.http.routers.blog_www_redirect.rule</span><span class="p">:</span><span class="w"> </span><span class="s">"Host(`www.{{</span><span class="nv"> </span><span class="s">base_domain</span><span class="nv"> </span><span class="s">}}`)"</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span><span class="nt">traefik.http.routers.blog_www_redirect.rule</span><span class="p">:</span><span class="w"> </span><span class="s">"Host(`www.${BASE_DOMAIN_FROM_VAULT}`)"</span>
 </span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">  </span><span class="nt">traefik.http.routers.blog_www_redirect.entrypoints</span><span class="p">:</span><span class="w"> </span><span class="s">"websecure"</span>
 </span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">  </span><span class="nt">traefik.http.routers.blog_www_redirect.tls.certresolver</span><span class="p">:</span><span class="w"> </span><span class="s">"letsencrypt"</span>
 </span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">  </span><span class="nt">traefik.http.routers.blog_www_redirect.middlewares</span><span class="p">:</span><span class="w"> </span><span class="s">"redirect-www-to-nonwww@docker"</span>
@@ -2410,8 +2352,13 @@
 </span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="w">  </span><span class="c1"># Para versões mais recentes do Traefik (v2.10+), pode ser necessário especificar um serviço "noop" (no operation):</span>
 </span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">  </span><span class="nt">traefik.http.routers.blog_www_redirect.service</span><span class="p">:</span><span class="w"> </span><span class="s">"noop@internal"</span>
 </span></code></pre></div>
-E no seu DNS da Cloudflare, certifique-se de que tanto <code>seudominio.com</code> quanto <code>www.seudominio.com</code> apontam para o seu Cloudflare Tunnel (e.g., ambos como CNAMEs ou cobertos pela Ingress Rule do túnel).<p></p>
+O <code>www.</code> já é coberto pelo hostname curinga do túnel; o domínio raiz não (veja abaixo).<p></p>
 </li>
+<li>
+<p><strong>Hostname do domínio raiz no túnel (obrigatório):</strong>
+    O hostname curinga <code>*</code> do Cloudflare Tunnel (<a href="../../01-manual-implementacao/05-rede-segura/#55-configuração-de-dns-na-cloudflare">seção 5.5</a>) só cobre subdomínios: <code>seudominio.com</code> sozinho não casa com <code>*.seudominio.com</code>. Em <strong>Zero Trust → Networks → Tunnels → (seu túnel) → Public Hostname → Add a public hostname</strong>, crie um com <strong>Subdomain vazio</strong>, <strong>Domain</strong> <code>seudominio.com</code>, serviço <code>HTTPS</code> → <code>traefik:443</code> e, em <em>Additional application settings → TLS</em>, <strong>No TLS Verify</strong> ligado (o mesmo dos outros). A Cloudflare cria o CNAME do domínio raiz para o túnel (o <em>CNAME flattening</em> resolve o apex).</p>
+</li>
+<li><strong>Authelia:</strong> o domínio raiz não casa com a regra curinga <code>*.seudominio.com</code> e cairia na <code>default_policy: deny</code>. Isso só importa se o router do blog usar o middleware do Authelia, o que ele <strong>não</strong> deve fazer; sem o middleware, o Authelia nem é consultado.</li>
 </ul>
 <h2 id="4-se-optar-por-uma-aplicação-de-blog-dinâmica-wordpress-ghost-etc">4. Se Optar por uma Aplicação de Blog Dinâmica (WordPress, Ghost, etc.)<a class="headerlink" href="#4-se-optar-por-uma-aplicação-de-blog-dinâmica-wordpress-ghost-etc" title="Permanent link">¶</a></h2>
 <p>Se, apesar das recomendações de segurança e performance, você optar por uma aplicação de blog dinâmica no seu domínio raiz:</p>
@@ -2461,7 +2408,7 @@ E no seu DNS da Cloudflare, certifique-se de que tanto <code>seudominio.com</cod
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

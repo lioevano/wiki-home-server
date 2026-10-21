@@ -1699,35 +1699,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1755,7 +1727,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -1783,7 +1755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1791,34 +1763,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2465,7 +2409,7 @@ pelos valores que o playbook <code>setup-core-networking.yml</code> passa no blo
 <li><strong>Executa Role <code>infra/traefik-config</code>:</strong><ul>
 <li>Cria os diretórios de configuração e dados para Traefik no volume NFS.</li>
 <li>Copia o <code>traefik.yml</code> (config estática) templateado.</li>
-<li>Copia os arquivos de configuração dinâmica (middlewares como <code>security_headers.yml</code>, <code>nextcloud_middleware.yml</code>, e o roteamento para os serviços da VM de IA em <code>rag_services.yml</code>) para o diretório apropriado.</li>
+<li>Copia os arquivos de configuração dinâmica (middlewares como <code>security_headers.yml</code>, <code>nextcloud_middleware.yml</code>, e o roteamento para os serviços da VM de IA em <code>ai_services.yml</code>) para o diretório apropriado.</li>
 <li>Garante que o arquivo <code>acme.json</code> (para certificados SSL) exista com as permissões corretas.</li>
 </ul>
 </li>
@@ -2514,30 +2458,36 @@ pelos valores que o playbook <code>setup-core-networking.yml</code> passa no blo
 </span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_pgid</span><span class="nv"> </span><span class="s">}}"</span>
 </span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0640'</span>
 </span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a>
-</span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Copiar</span><span class="nv"> </span><span class="s">configuração</span><span class="nv"> </span><span class="s">dinâmica</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">serviços</span><span class="nv"> </span><span class="s">RAG</span><span class="nv"> </span><span class="s">(se</span><span class="nv"> </span><span class="s">ai-desktop-vm</span><span class="nv"> </span><span class="s">existir)"</span>
+</span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Copiar</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">roteamento</span><span class="nv"> </span><span class="s">dos</span><span class="nv"> </span><span class="s">serviços</span><span class="nv"> </span><span class="s">da</span><span class="nv"> </span><span class="s">ai-desktop-vm</span><span class="nv"> </span><span class="s">(se</span><span class="nv"> </span><span class="s">ela</span><span class="nv"> </span><span class="s">existir)"</span>
 </span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="w">  </span><span class="nt">ansible.builtin.template</span><span class="p">:</span>
-</span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="w">    </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dynamic_rag_services.yml.j2</span><span class="w"> </span><span class="c1"># Para rotear para OpenWebUI na ai-desktop-vm</span>
-</span><span id="__span-2-35"><a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}/traefik/config/dynamic/rag_services.yml"</span>
+</span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="w">    </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dynamic_ai_services.yml.j2</span><span class="w"> </span><span class="c1"># LiteLLM, Open WebUI, Langfuse e segundo cérebro, em outra VM</span>
+</span><span id="__span-2-35"><a id="__codelineno-2-35" name="__codelineno-2-35" href="#__codelineno-2-35"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}/traefik/config/dynamic/ai_services.yml"</span>
 </span><span id="__span-2-36"><a id="__codelineno-2-36" name="__codelineno-2-36" href="#__codelineno-2-36"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_puid</span><span class="nv"> </span><span class="s">}}"</span>
 </span><span id="__span-2-37"><a id="__codelineno-2-37" name="__codelineno-2-37" href="#__codelineno-2-37"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_pgid</span><span class="nv"> </span><span class="s">}}"</span>
 </span><span id="__span-2-38"><a id="__codelineno-2-38" name="__codelineno-2-38" href="#__codelineno-2-38"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0640'</span>
 </span><span id="__span-2-39"><a id="__codelineno-2-39" name="__codelineno-2-39" href="#__codelineno-2-39"></a><span class="w">  </span><span class="nt">when</span><span class="p">:</span><span class="w"> </span><span class="s">"'ai-desktop-vm'</span><span class="nv"> </span><span class="s">in</span><span class="nv"> </span><span class="s">groups['virtual_machines']"</span><span class="w"> </span><span class="c1"># Só cria se a VM AI estiver no inventário</span>
 </span><span id="__span-2-40"><a id="__codelineno-2-40" name="__codelineno-2-40" href="#__codelineno-2-40"></a>
-</span><span id="__span-2-41"><a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Copiar</span><span class="nv"> </span><span class="s">middleware</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Nextcloud</span><span class="nv"> </span><span class="s">(dinâmico)"</span>
-</span><span id="__span-2-42"><a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="w">  </span><span class="nt">ansible.builtin.template</span><span class="p">:</span>
-</span><span id="__span-2-43"><a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">    </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nextcloud_middleware.yml.j2</span><span class="w"> </span><span class="c1"># Headers recomendados para Nextcloud</span>
-</span><span id="__span-2-44"><a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}/traefik/config/dynamic/nextcloud_middleware.yml"</span>
-</span><span id="__span-2-45"><a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_puid</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_pgid</span><span class="nv"> </span><span class="s">}}"</span>
-</span><span id="__span-2-47"><a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0640'</span>
-</span><span id="__span-2-48"><a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a>
-</span><span id="__span-2-49"><a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Garantir</span><span class="nv"> </span><span class="s">que</span><span class="nv"> </span><span class="s">acme.json</span><span class="nv"> </span><span class="s">existe</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">tem</span><span class="nv"> </span><span class="s">permissões</span><span class="nv"> </span><span class="s">corretas</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Traefik"</span>
-</span><span id="__span-2-50"><a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a><span class="w">  </span><span class="nt">ansible.builtin.file</span><span class="p">:</span>
-</span><span id="__span-2-51"><a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}/traefik/data/acme.json"</span>
-</span><span id="__span-2-52"><a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">touch</span><span class="w"> </span><span class="c1"># Cria se não existir, não modifica se existir (Traefik gerencia o conteúdo)</span>
-</span><span id="__span-2-53"><a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_puid</span><span class="nv"> </span><span class="s">}}"</span><span class="w"> </span><span class="c1"># Usuário que o container Traefik usa (ou root se PUID/PGID não for setado no container)</span>
-</span><span id="__span-2-54"><a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_pgid</span><span class="nv"> </span><span class="s">}}"</span><span class="w"> </span><span class="c1"># Certifique-se que as permissões do NFS squash para este PUID/PGID</span>
-</span><span id="__span-2-55"><a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0600'</span><span class="w"> </span><span class="c1"># Permissões restritas para o arquivo de certificados SSL</span>
+</span><span id="__span-2-41"><a id="__codelineno-2-41" name="__codelineno-2-41" href="#__codelineno-2-41"></a><span class="c1"># Nome antigo do mesmo arquivo (rag_services.yml): sairia em dobro no Traefik (routers repetidos).</span>
+</span><span id="__span-2-42"><a id="__codelineno-2-42" name="__codelineno-2-42" href="#__codelineno-2-42"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Remover</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">arquivo</span><span class="nv"> </span><span class="s">de</span><span class="nv"> </span><span class="s">roteamento</span><span class="nv"> </span><span class="s">com</span><span class="nv"> </span><span class="s">o</span><span class="nv"> </span><span class="s">nome</span><span class="nv"> </span><span class="s">antigo"</span>
+</span><span id="__span-2-43"><a id="__codelineno-2-43" name="__codelineno-2-43" href="#__codelineno-2-43"></a><span class="w">  </span><span class="nt">ansible.builtin.file</span><span class="p">:</span>
+</span><span id="__span-2-44"><a id="__codelineno-2-44" name="__codelineno-2-44" href="#__codelineno-2-44"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}/traefik/config/dynamic/rag_services.yml"</span>
+</span><span id="__span-2-45"><a id="__codelineno-2-45" name="__codelineno-2-45" href="#__codelineno-2-45"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">absent</span>
+</span><span id="__span-2-46"><a id="__codelineno-2-46" name="__codelineno-2-46" href="#__codelineno-2-46"></a>
+</span><span id="__span-2-47"><a id="__codelineno-2-47" name="__codelineno-2-47" href="#__codelineno-2-47"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Copiar</span><span class="nv"> </span><span class="s">middleware</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Nextcloud</span><span class="nv"> </span><span class="s">(dinâmico)"</span>
+</span><span id="__span-2-48"><a id="__codelineno-2-48" name="__codelineno-2-48" href="#__codelineno-2-48"></a><span class="w">  </span><span class="nt">ansible.builtin.template</span><span class="p">:</span>
+</span><span id="__span-2-49"><a id="__codelineno-2-49" name="__codelineno-2-49" href="#__codelineno-2-49"></a><span class="w">    </span><span class="nt">src</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nextcloud_middleware.yml.j2</span><span class="w"> </span><span class="c1"># Headers recomendados para Nextcloud</span>
+</span><span id="__span-2-50"><a id="__codelineno-2-50" name="__codelineno-2-50" href="#__codelineno-2-50"></a><span class="w">    </span><span class="nt">dest</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}/traefik/config/dynamic/nextcloud_middleware.yml"</span>
+</span><span id="__span-2-51"><a id="__codelineno-2-51" name="__codelineno-2-51" href="#__codelineno-2-51"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_puid</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-52"><a id="__codelineno-2-52" name="__codelineno-2-52" href="#__codelineno-2-52"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_pgid</span><span class="nv"> </span><span class="s">}}"</span>
+</span><span id="__span-2-53"><a id="__codelineno-2-53" name="__codelineno-2-53" href="#__codelineno-2-53"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0640'</span>
+</span><span id="__span-2-54"><a id="__codelineno-2-54" name="__codelineno-2-54" href="#__codelineno-2-54"></a>
+</span><span id="__span-2-55"><a id="__codelineno-2-55" name="__codelineno-2-55" href="#__codelineno-2-55"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">"Garantir</span><span class="nv"> </span><span class="s">que</span><span class="nv"> </span><span class="s">acme.json</span><span class="nv"> </span><span class="s">existe</span><span class="nv"> </span><span class="s">e</span><span class="nv"> </span><span class="s">tem</span><span class="nv"> </span><span class="s">permissões</span><span class="nv"> </span><span class="s">corretas</span><span class="nv"> </span><span class="s">para</span><span class="nv"> </span><span class="s">Traefik"</span>
+</span><span id="__span-2-56"><a id="__codelineno-2-56" name="__codelineno-2-56" href="#__codelineno-2-56"></a><span class="w">  </span><span class="nt">ansible.builtin.file</span><span class="p">:</span>
+</span><span id="__span-2-57"><a id="__codelineno-2-57" name="__codelineno-2-57" href="#__codelineno-2-57"></a><span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">vm_nfs_mount_base_path</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">zfs_docker_volumes_dataset_name</span><span class="nv"> </span><span class="s">}}/traefik/data/acme.json"</span>
+</span><span id="__span-2-58"><a id="__codelineno-2-58" name="__codelineno-2-58" href="#__codelineno-2-58"></a><span class="w">    </span><span class="nt">state</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">touch</span><span class="w"> </span><span class="c1"># Cria se não existir, não modifica se existir (Traefik gerencia o conteúdo)</span>
+</span><span id="__span-2-59"><a id="__codelineno-2-59" name="__codelineno-2-59" href="#__codelineno-2-59"></a><span class="w">    </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_puid</span><span class="nv"> </span><span class="s">}}"</span><span class="w"> </span><span class="c1"># Usuário que o container Traefik usa (ou root se PUID/PGID não for setado no container)</span>
+</span><span id="__span-2-60"><a id="__codelineno-2-60" name="__codelineno-2-60" href="#__codelineno-2-60"></a><span class="w">    </span><span class="nt">group</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">docker_pgid</span><span class="nv"> </span><span class="s">}}"</span><span class="w"> </span><span class="c1"># Certifique-se que as permissões do NFS squash para este PUID/PGID</span>
+</span><span id="__span-2-61"><a id="__codelineno-2-61" name="__codelineno-2-61" href="#__codelineno-2-61"></a><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="s">'0600'</span><span class="w"> </span><span class="c1"># Permissões restritas para o arquivo de certificados SSL</span>
 </span></code></pre></div>
 <h5 id="templatestraefikymlj2-configuração-estática"><code>templates/traefik.yml.j2</code> (Configuração Estática)<a class="headerlink" href="#templatestraefikymlj2-configuração-estática" title="Permanent link">¶</a></h5>
 <div class="language-yaml highlight"><span class="filename">ansible/roles/infra/traefik-config/templates/traefik.yml.j2</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># ansible/roles/infra/traefik-config/templates/traefik.yml.j2</span>
@@ -2655,9 +2605,9 @@ pelos valores que o playbook <code>setup-core-networking.yml</code> passa no blo
 <p class="admonition-title">Content-Security-Policy (CSP)</p>
 <p>O <code>contentSecurityPolicy</code> é um header muito poderoso para mitigar XSS e outros ataques de injeção. No entanto, configurá-lo incorretamente pode quebrar a funcionalidade das suas aplicações. O exemplo acima é muito básico. Você precisará pesquisar e testar as diretivas CSP apropriadas para cada um dos seus serviços (Nextcloud, Grafana, etc.) ou começar com uma política menos restritiva e aumentá-la gradualmente.</p>
 </div>
-<h5 id="templatesdynamic_rag_servicesymlj2-roteamento-para-vm-de-ia"><code>templates/dynamic_rag_services.yml.j2</code> (Roteamento para VM de IA)<a class="headerlink" href="#templatesdynamic_rag_servicesymlj2-roteamento-para-vm-de-ia" title="Permanent link">¶</a></h5>
-<div class="language-yaml highlight"><span class="filename">ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># (Copiado para /etc/traefik/dynamic_configs/rag_services.yml no container Traefik)</span>
+<h5 id="templatesdynamic_ai_servicesymlj2-roteamento-para-vm-de-ia"><code>templates/dynamic_ai_services.yml.j2</code> (Roteamento para VM de IA)<a class="headerlink" href="#templatesdynamic_ai_servicesymlj2-roteamento-para-vm-de-ia" title="Permanent link">¶</a></h5>
+<div class="language-yaml highlight"><span class="filename">ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2</span><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1"># (Copiado para /etc/traefik/dynamic_configs/ai_services.yml no container Traefik)</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># Define roteamento para serviços rodando na ai-desktop-vm (e.g., OpenWebUI).</span>
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Usa o File Provider do Traefik para definir serviços que não são descobertos via Docker (porque estão em outra VM).</span>
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nt">http</span><span class="p">:</span>
@@ -2714,7 +2664,7 @@ pelos valores que o playbook <code>setup-core-networking.yml</code> passa no blo
 </span><span id="__span-5-56"><a id="__codelineno-5-56" name="__codelineno-5-56" href="#__codelineno-5-56"></a><span class="w">      </span><span class="nt">middlewares</span><span class="p">:</span>
 </span><span id="__span-5-57"><a id="__codelineno-5-57" name="__codelineno-5-57" href="#__codelineno-5-57"></a><span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"authelia-forwardauth@docker"</span>
 </span><span id="__span-5-58"><a id="__codelineno-5-58" name="__codelineno-5-58" href="#__codelineno-5-58"></a>
-</span><span id="__span-5-59"><a id="__codelineno-5-59" name="__codelineno-5-59" href="#__codelineno-5-59"></a><span class="w">    </span><span class="c1"># Adicione aqui roteadores para outros serviços RAG/AI na ai-desktop-vm se necessário</span>
+</span><span id="__span-5-59"><a id="__codelineno-5-59" name="__codelineno-5-59" href="#__codelineno-5-59"></a><span class="w">    </span><span class="c1"># Adicione aqui roteadores para outros serviços da ai-desktop-vm se necessário</span>
 </span><span id="__span-5-60"><a id="__codelineno-5-60" name="__codelineno-5-60" href="#__codelineno-5-60"></a><span class="w">    </span><span class="c1"># Exemplo para um hipotético OpenNotebookLM</span>
 </span><span id="__span-5-61"><a id="__codelineno-5-61" name="__codelineno-5-61" href="#__codelineno-5-61"></a><span class="w">    </span><span class="c1"># opennotebooklm-dynamic:</span>
 </span><span id="__span-5-62"><a id="__codelineno-5-62" name="__codelineno-5-62" href="#__codelineno-5-62"></a><span class="w">    </span><span class="c1">#   entryPoints: ["websecure"]</span>
@@ -3320,7 +3270,7 @@ O <code>cloudflared</code> tentará criar e gerenciar automaticamente um registr
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:28:12 -03">20 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

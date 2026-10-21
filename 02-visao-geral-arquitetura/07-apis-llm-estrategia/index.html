@@ -747,19 +747,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/">
-<span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/">
+<a class="md-nav__link" href="../../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos/">
 <span class="md-ellipsis">
     
   
@@ -771,7 +759,7 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/">
+<a class="md-nav__link" href="../../03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/">
 <span class="md-ellipsis">
     
   
@@ -783,23 +771,11 @@
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="../../03-guias-sustentacao/12-guia-snapshots-zfs/">
+<a class="md-nav__link" href="../../03-guias-sustentacao/11-guia-snapshots-zfs/">
 <span class="md-ellipsis">
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="../../03-guias-sustentacao/13-usando-geminicli/">
-<span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -1008,38 +984,23 @@
 </tr>
 </tbody>
 </table>
-<p>Nossa estratégia visa combinar esses pontos fortes. O diagrama a seguir ilustra o fluxo de decisão que o LiteLLM nos permite implementar:</p>
-<pre class="mermaid"><code>graph TD
-    A[Aplicação Cliente \n(Open WebUI, n8n, Script Custom)] -- Requisição API OpenAI-Compatible --&gt; B(LiteLLM Proxy);
-
-    subgraph LiteLLM - Lógica de Roteamento
-        B -- Avalia a Requisição --&gt; C{Qual modelo foi solicitado?};
-        C -- Modelo Específico \n(ex: "gpt-4o") --&gt; D[Roteia para API Externa Específica];
-        C -- Modelo Genérico \n(ex: "modelo-chat") --&gt; E{Roteamento Inteligente};
+<p>Nossa estratégia combina esses pontos fortes com <strong>um gateway só</strong>: todo cliente fala com o LiteLLM, com uma chave virtual própria, e escolhe um <strong>apelido</strong> pela intenção. O LiteLLM traduz o apelido no modelo real, cai para a reserva se o provedor falhar e registra o custo e o rastro de cada chamada:</p>
+<pre class="mermaid"><code>flowchart LR
+    subgraph Clientes["Clientes (uma chave virtual cada)"]
+        owui[Open WebUI]
+        cc[Claude Code&lt;br/&gt;alias claude-gw]
+        n8n[n8n e agentes]
     end
-
-    subgraph Roteamento Inteligente
-        E -- Requisição Simples? \n(Baixo número de tokens, prompt curto) --&gt; F[Ollama (Local)];
-        E -- Requisição Complexa? \n(Análise de documento, geração de código) --&gt; G[API Externa (Fallback)];
-    end
-
-    subgraph Endpoints de IA
-        F -- Conecta-se via IP local --&gt; H[Serviço Ollama \n(llama3, phi3, etc.)];
-        G -- Tenta o 1º da lista --&gt; I(API do Google Gemini);
-        I -- Falhou ou Timeout? --&gt; J(API da Anthropic);
-        J -- Falhou ou Timeout? --&gt; K(API da OpenAI);
-    end
-
-    D --&gt; I;
-    D --&gt; J;
-    D --&gt; K;
-
-    H -- Resposta --&gt; B;
-    I -- Resposta --&gt; B;
-    J -- Resposta --&gt; B;
-    K -- Resposta --&gt; B;
-
-    B -- Resposta Unificada --&gt; A;</code></pre>
+    Clientes -- API OpenAI ou Anthropic --&gt; litellm[LiteLLM&lt;br/&gt;llm_models / llm_fallbacks]
+    litellm -- principal --&gt; sonnet[Anthropic&lt;br/&gt;Claude Sonnet]
+    litellm -- rapido --&gt; haiku[Anthropic&lt;br/&gt;Claude Haiku]
+    litellm -- local --&gt; ollama[Ollama na GPU&lt;br/&gt;llama3.2:3b]
+    litellm -- decisao --&gt; jev[TypeSafe&lt;br/&gt;Jev]
+    sonnet -. falhou .-&gt; gpt[OpenAI&lt;br/&gt;reserva]
+    haiku -. falhou .-&gt; gpt
+    litellm -. custo e métricas .-&gt; prom[Prometheus&lt;br/&gt;alerta llm-gasto-alto]
+    litellm -. cada chamada .-&gt; lf[Langfuse]</code></pre>
+<p>Os modelos e as reservas exatos estão em <code>llm_models</code> e <code>llm_fallbacks</code> (página 01), renderizados no <code>config.yaml</code> pelo template <code>ansible/templates/litellm_config.yaml.j2</code> (<a href="../../01-manual-implementacao/08-stack-ia/#modelos-e-apelidos">Stack de IA</a>). O LiteLLM não decide sozinho pelo tamanho do prompt: quem escolhe é o cliente, pelo apelido.</p>
 <h2 id="estratégias-de-roteamento-e-casos-de-uso">Estratégias de Roteamento e Casos de Uso<a class="headerlink" href="#estratégias-de-roteamento-e-casos-de-uso" title="Permanent link">¶</a></h2>
 <p>O roteamento do homeserver é feito por <strong>apelidos</strong> declarados em <code>llm_models</code> (<code>group_vars/all/main.yml</code>) e renderizados no <code>config.yaml</code> do LiteLLM (<a href="../../01-manual-implementacao/08-stack-ia/#modelos-e-apelidos">Stack de IA</a>). O cliente escolhe a intenção; o código decide o modelo.</p>
 <table>
@@ -1085,7 +1046,7 @@
 <ul>
 <li><strong>Orçamento por cliente:</strong> cada cliente tem uma chave virtual própria (<code>litellm_client_keys</code>) com orçamento mensal (<code>litellm_key_budgets</code>), aplicado pelo <code>setup-ai-keys.yml</code>. Estourou, aquele cliente recebe erro; os outros seguem.</li>
 <li><strong>Alerta de gasto:</strong> o Prometheus raspa as métricas do LiteLLM e o alerta <code>llm-gasto-alto</code> avisa no Telegram quando o gasto das últimas 24 h passa de <code>llm_gasto_diario_alerta</code>.</li>
-<li><strong>Observabilidade:</strong> a tela do LiteLLM em <code>https://llm.seudominio.com</code> (atrás do Authelia) mostra gasto, tokens e chamadas por chave e por modelo. O rastreamento passo a passo de agentes (Langfuse) entra com os agentes.</li>
+<li><strong>Observabilidade:</strong> a tela do LiteLLM em <code>https://llm.seudominio.com</code> (atrás do Authelia) mostra gasto, tokens e chamadas por chave e por modelo. O rastro de cada chamada (entrada, saída, custo e latência) fica no Langfuse, em <code>https://langfuse.seudominio.com</code>.</li>
 <li><strong>Cache:</strong> o cache de respostas do LiteLLM não está ligado; pode ser acrescentado em <code>litellm_settings</code> se houver muitas perguntas repetidas.</li>
 </ul>
 <p>Ao adotar esta arquitetura de IA híbrida, seu home server se torna uma plataforma de IA resiliente e flexível, com um único lugar para trocar modelos, controlar custos e ver o uso.</p>
@@ -1094,7 +1055,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 15:44:41 -03">20 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
 </span>
 </aside>
 </article>

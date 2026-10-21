@@ -1473,10 +1473,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-serviço-web-inacessível-externamente-httpsmeuservico-base_domain-" class="md-nav__link">
+  <a href="#1-serviço-web-inacessível-externamente-httpsmeuservicoseudominiocom" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Serviço Web Inacessível Externamente (https://meuservico.{{ base_domain }})
+        1. Serviço Web Inacessível Externamente (https://meuservico.seudominio.com)
       
     </span>
   </a>
@@ -1688,35 +1688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1744,7 +1716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="../10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -1772,7 +1744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1780,34 +1752,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2134,10 +2078,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-serviço-web-inacessível-externamente-httpsmeuservico-base_domain-" class="md-nav__link">
+  <a href="#1-serviço-web-inacessível-externamente-httpsmeuservicoseudominiocom" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Serviço Web Inacessível Externamente (https://meuservico.{{ base_domain }})
+        1. Serviço Web Inacessível Externamente (https://meuservico.seudominio.com)
       
     </span>
   </a>
@@ -2221,8 +2165,9 @@
 <li>
 <p><strong>Logs de Containers Docker:</strong></p>
 <ul>
+<li><strong>Via Grafana (Loki), o primeiro lugar a olhar:</strong> o Alloy de cada VM manda os logs de <strong>todos</strong> os containers e do journal para o Loki. Em <code>https://grafana.seudominio.com</code> → <strong>Explore</strong> → fonte <strong>Loki</strong>, filtre por <code>{container_name="traefik"}</code> (ou <code>{unit="notes-documentos.service"}</code> para uma tarefa agendada) e busque texto com <code>|= "error"</code>. Dá para ver as duas VMs e o host Proxmox na mesma tela, com o histórico de antes do reinício do container. Os alertas que chegam no Telegram também ficam em <em>Alerting</em> (<a href="../../01-manual-implementacao/09-painel-notificacoes/">seção 9</a>).</li>
 <li><strong>Via Portainer:</strong> A maneira mais fácil de visualizar logs de containers individuais.<ol>
-<li>Acesse o Portainer (<code>https://portainer.{{ base_domain }}</code>).</li>
+<li>Acesse o Portainer (<code>https://portainer.seudominio.com</code>).</li>
 <li>Navegue até o endpoint Docker correto (e.g., <code>local</code> para <code>core-services-vm</code>).</li>
 <li>Vá para "Containers", selecione o container problemático.</li>
 <li>Clique no ícone de "Logs" (📄).</li>
@@ -2247,7 +2192,7 @@
 <li>
 <p><strong>Dashboard e Logs do Traefik:</strong></p>
 <ul>
-<li><strong>Dashboard Traefik:</strong> Acessível em <code>https://traefik.{{ base_domain }}</code> (protegido por Authelia).<ul>
+<li><strong>Dashboard Traefik:</strong> Acessível em <code>https://traefik.seudominio.com</code> (protegido por Authelia).<ul>
 <li><strong>Routers:</strong> Verifique se o roteador para o seu serviço problemático existe, está ativo (verde), e se a regra (<code>Rule</code>) corresponde ao hostname esperado.</li>
 <li><strong>Services:</strong> Verifique se o serviço backend associado ao roteador está saudável e aponta para o(s) container(es) correto(s) e a porta interna correta.</li>
 <li><strong>Middlewares:</strong> Verifique se os middlewares esperados (e.g., Authelia, headers) estão aplicados ao roteador e se não há erros neles.</li>
@@ -2294,9 +2239,9 @@
 <p><strong>Ferramentas de Rede (Execute na sua máquina de controle, ou dentro de uma VM/container para testes específicos):</strong></p>
 <ul>
 <li><strong><code>ping &lt;hostname_ou_IP&gt;</code>:</strong> Testa a conectividade de rede básica (ICMP).</li>
-<li><strong><code>nslookup &lt;hostname&gt;</code></strong> ou <strong><code>dig &lt;hostname&gt;</code>:</strong> Verifica a resolução DNS. Essencial para ver se <code>meuservico.{{ base_domain }}</code> está resolvendo para IPs da Cloudflare.</li>
+<li><strong><code>nslookup &lt;hostname&gt;</code></strong> ou <strong><code>dig &lt;hostname&gt;</code>:</strong> Verifica a resolução DNS. Essencial para ver se <code>meuservico.seudominio.com</code> está resolvendo para IPs da Cloudflare.</li>
 <li><strong><code>curl -vL &lt;URL&gt;</code>:</strong> Faz uma requisição HTTP/S e mostra detalhes verbosos da conexão, incluindo headers HTTP, códigos de status e redirecionamentos. Extremamente útil para testar Traefik, Authelia e o serviço backend.<ul>
-<li>Exemplo: <code>curl -vL https://nextcloud.{{ base_domain }}</code></li>
+<li>Exemplo: <code>curl -vL https://nextcloud.seudominio.com</code></li>
 </ul>
 </li>
 <li><strong><code>traceroute &lt;hostname_ou_IP&gt;</code></strong> (Linux/macOS) ou <strong><code>tracert &lt;hostname_ou_IP&gt;</code></strong> (Windows): Mostra o caminho (saltos de rede) que os pacotes levam para alcançar um destino.</li>
@@ -2320,16 +2265,16 @@
 </li>
 </ol>
 <h2 id="problemas-comuns-e-estratégias-de-solução">Problemas Comuns e Estratégias de Solução<a class="headerlink" href="#problemas-comuns-e-estratégias-de-solução" title="Permanent link">¶</a></h2>
-<h3 id="1-serviço-web-inacessível-externamente-httpsmeuservico-base_domain-">1. Serviço Web Inacessível Externamente (<code>https://meuservico.{{ base_domain }}</code>)<a class="headerlink" href="#1-serviço-web-inacessível-externamente-httpsmeuservico-base_domain-" title="Permanent link">¶</a></h3>
+<h3 id="1-serviço-web-inacessível-externamente-httpsmeuservicoseudominiocom">1. Serviço Web Inacessível Externamente (<code>https://meuservico.seudominio.com</code>)<a class="headerlink" href="#1-serviço-web-inacessível-externamente-httpsmeuservicoseudominiocom" title="Permanent link">¶</a></h3>
 <ul>
 <li><strong>Sintomas Comuns:</strong> Erro "Site não pode ser alcançado" no navegador, timeout, erro 5xx da Cloudflare (e.g., 502 Bad Gateway, 503 Service Unavailable), erro 404 "Not Found" do Traefik, página de login do Authelia não aparece ou dá erro.</li>
 <li><strong>Checklist de Diagnóstico (Siga a ordem do fluxo de tráfego):</strong><ol>
 <li><strong>DNS Público (Cloudflare):</strong><ul>
 <li>O subdomínio (<code>meuservico</code>) está configurado corretamente no seu painel DNS da Cloudflare?</li>
 <li>Se usa CNAME, ele aponta para o hostname correto do seu Cloudflare Tunnel (e.g., <code>UUID.cfargotunnel.com</code>)?</li>
-<li>Se usa Ingress Rules/Public Hostnames no Zero Trust Dashboard, a regra para <code>meuservico.{{ base_domain }}</code> existe e aponta para o serviço <code>https://traefik:443</code> (com <em>No TLS Verify</em>)? <code>http://traefik:80</code> causa redirecionamento em loop.</li>
+<li>Se usa Ingress Rules/Public Hostnames no Zero Trust Dashboard, a regra para <code>meuservico.seudominio.com</code> existe e aponta para o serviço <code>https://traefik:443</code> (com <em>No TLS Verify</em>)? <code>http://traefik:80</code> causa redirecionamento em loop.</li>
 <li>O "Proxy status" (nuvem laranja) está <strong>habilitado</strong> para o registro DNS?</li>
-<li>Use uma ferramenta online de DNS lookup (ou <code>nslookup meuservico.{{ base_domain }}</code> na sua máquina) para verificar se ele resolve para endereços IP da Cloudflare.</li>
+<li>Use uma ferramenta online de DNS lookup (ou <code>nslookup meuservico.seudominio.com</code> na sua máquina) para verificar se ele resolve para endereços IP da Cloudflare.</li>
 </ul>
 </li>
 <li><strong>Cloudflare Tunnel (<code>cloudflared</code> Agent):</strong><ul>
@@ -2344,8 +2289,8 @@
 </li>
 <li><strong>Traefik (Proxy Reverso):</strong><ul>
 <li>O container <code>traefik</code> está rodando na <code>core-services-vm</code>?</li>
-<li>Acesse o <strong>Dashboard do Traefik</strong> (<code>https://traefik.{{ base_domain }}</code> - você precisará autenticar com Authelia).<ul>
-<li><strong>Routers:</strong> O roteador para <code>meuservico.{{ base_domain }}</code> existe e está com status verde? A <code>Rule</code> está correta (<code>Host(\</code>meuservico.{{ base_domain }}`)<code>)? Os</code>EntryPoints<code>(</code>websecure`) estão corretos?</li>
+<li>Acesse o <strong>Dashboard do Traefik</strong> (<code>https://traefik.seudominio.com</code> - você precisará autenticar com Authelia).<ul>
+<li><strong>Routers:</strong> O roteador para <code>meuservico.seudominio.com</code> existe e está com status verde? A <code>Rule</code> está correta (<code>Host(\</code>meuservico.seudominio.com`)<code>)? Os</code>EntryPoints<code>(</code>websecure`) estão corretos?</li>
 <li><strong>Services:</strong> O serviço backend associado ao roteador está saudável? Ele aponta para o(s) container(es) correto(s) do <code>meuservico</code> e para a porta interna correta que o <code>meuservico</code> escuta?</li>
 <li><strong>Middlewares:</strong> Os middlewares aplicados ao roteador (e.g., <code>authelia-forwardauth@docker</code>, <code>securityHeaders@file</code>) estão corretos e sem erros?</li>
 </ul>
@@ -2356,7 +2301,7 @@
 </li>
 <li><strong>Authelia (se o serviço estiver protegido por ele):</strong><ul>
 <li>O container <code>authelia</code> e seu banco de dados (<code>authelia_db</code>) estão rodando?</li>
-<li>Você consegue acessar o portal Authelia (<code>https://auth.{{ base_domain }}</code>)?</li>
+<li>Você consegue acessar o portal Authelia (<code>https://auth.seudominio.com</code>)?</li>
 <li>Examine os <strong>logs do Authelia</strong> (<code>docker logs authelia</code>) para erros de autenticação, problemas com as regras de acesso (<code>access_control</code> no <code>configuration.yml</code>), ou falhas de conexão com o banco de dados.</li>
 <li>A configuração do middleware <code>authelia-forwardauth@docker</code> no Traefik (definida no <code>docker-compose.yml</code> do Authelia) está correta?</li>
 </ul>
@@ -2446,7 +2391,7 @@
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>mount<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nfs
 </span></code></pre></div>
     Você deve ver seus datasets (e.g., <code>/data/docker-volumes</code>) montados em <code>/mnt/pve_data_zfs/docker-volumes</code> (ou seu <code>{{ vm_nfs_mount_base_path }}</code>).</li>
-<li>O arquivo <code>/etc/fstab</code> na VM contém as entradas corretas para montar os compartilhamentos NFS automaticamente no boot, com as opções corretas (e.g., <code>rw,sync,hard,intr,bg,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2</code>)?</li>
+<li>O arquivo <code>/etc/fstab</code> na VM contém as entradas corretas para montar os compartilhamentos NFS automaticamente no boot, com as opções corretas (<code>rw,sync,hard,intr,_netdev,x-systemd.mount-timeout=60s,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2</code>, do role <code>common</code>)?</li>
 <li>Você consegue listar, criar e deletar arquivos (como root ou como <code>{{ vm_ansible_user_name }}</code>) nos pontos de montagem NFS dentro da VM?
     Exemplo: <code>ls -l /mnt/pve_data_zfs/docker-volumes/</code>
     <code>sudo touch /mnt/pve_data_zfs/docker-volumes/testfile &amp;&amp; sudo rm /mnt/pve_data_zfs/docker-volumes/testfile</code></li>
@@ -2478,9 +2423,9 @@
 <li><strong>Logs do Authelia:</strong> <code>docker logs authelia</code> na <code>core-services-vm</code>. Este é o primeiro lugar para procurar. Aumente o nível de log no <code>configuration.yml</code> do Authelia se precisar de mais detalhes.</li>
 <li><strong>Configuração do Authelia (<code>authelia/config/configuration.yml</code>):</strong><ul>
 <li><strong><code>jwt_secret</code> e <code>session.secret</code>:</strong> Estão definidos, são complexos e são os mesmos que Authelia está usando? (Se você os define via variáveis de ambiente no compose, certifique-se que estão sendo passados corretamente).</li>
-<li><strong><code>session.domain</code>:</strong> Está configurado para o seu domínio pai (e.g., <code>{{ base_domain }}</code>), e <strong>NÃO</strong> para um subdomínio como <code>auth.{{ base_domain }}</code>? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.</li>
+<li><strong><code>session.domain</code>:</strong> Está configurado para o seu domínio pai (e.g., <code>seudominio.com</code>), e <strong>NÃO</strong> para um subdomínio como <code>auth.seudominio.com</code>? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.</li>
 <li><strong><code>storage</code> (PostgreSQL):</strong> A configuração do banco de dados (host <code>authelia_db</code>, usuário, senha, nome do DB) está correta e o container <code>authelia_db</code> está rodando e saudável?</li>
-<li><strong><code>access_control.rules</code>:</strong> As regras estão definidas como você espera? A <code>default_policy</code> está correta? As regras para domínios específicos e a regra <code>bypass</code> para <code>auth.{{ base_domain }}</code> estão presentes e corretas?</li>
+<li><strong><code>access_control.rules</code>:</strong> As regras estão definidas como você espera? A <code>default_policy</code> está correta? As regras para domínios específicos e a regra <code>bypass</code> para <code>auth.seudominio.com</code> estão presentes e corretas?</li>
 <li><strong><code>notifier</code> (SMTP):</strong> Se configurado, está correto? Problemas aqui podem impedir o reset de senha.</li>
 </ul>
 </li>
@@ -2490,7 +2435,7 @@
 </ul>
 </li>
 <li><strong>Cookies do Navegador:</strong><ul>
-<li>Tente limpar os cookies do seu navegador para o seu <code>{{ base_domain }}</code> e para <code>auth.{{ base_domain }}</code> e tente logar novamente.</li>
+<li>Tente limpar os cookies do seu navegador para o seu <code>seudominio.com</code> e para <code>auth.seudominio.com</code> e tente logar novamente.</li>
 <li>Use as Developer Tools do navegador (F12 -&gt; Aba Application/Storage -&gt; Cookies) para inspecionar o cookie de sessão do Authelia (geralmente chamado <code>homelab_authelia_session</code> ou o que você definiu em <code>session.name</code>). Ele está sendo definido para o domínio correto?</li>
 </ul>
 </li>
@@ -2516,7 +2461,7 @@
 <li>O <code>storage</code> para o <code>acme.json</code> (e.g., <code>/data/acme.json</code> dentro do container Traefik) está correto e o container Traefik tem permissão de <strong>escrita</strong> nesse caminho no volume NFS? (Verifique as permissões do diretório <code>traefik/data</code> no NFS).</li>
 <li>Para o <code>dnsChallenge</code> com <code>provider: "cloudflare"</code>:<ul>
 <li>A variável de ambiente <code>CF_DNS_API_TOKEN</code> está sendo passada corretamente para o container Traefik (verifique o <code>docker-compose.yml</code> da stack <code>core</code> e o <code>.env</code> carregado)?</li>
-<li>O token API da Cloudflare que você gerou é válido e tem as permissões corretas (geralmente "Zone:DNS:Edit" para o seu <code>{{ base_domain }}</code>)?</li>
+<li>O token API da Cloudflare que você gerou é válido e tem as permissões corretas (geralmente "Zone:DNS:Edit" para o seu <code>seudominio.com</code>)?</li>
 </ul>
 </li>
 </ul>
@@ -2566,7 +2511,7 @@ Se você deletar o <code>acme.json</code> e forçar o Traefik a obter muitos cer
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 01:06:15 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

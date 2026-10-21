@@ -1627,35 +1627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1683,7 +1655,7 @@
   
   
     <li class="md-nav__item">
-      <a href="11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -1711,7 +1683,7 @@
   
   
     <li class="md-nav__item">
-      <a href="12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1719,34 +1691,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2106,8 +2050,8 @@
 <h2 id="tópicos-cobertos-nos-guias-de-sustentação">Tópicos Cobertos nos Guias de Sustentação<a class="headerlink" href="#tópicos-cobertos-nos-guias-de-sustentação" title="Permanent link">¶</a></h2>
 <p>Esta seção está organizada nos seguintes guias práticos para ajudá-lo a operar e evoluir seu servidor doméstico:</p>
 <ol>
-<li><strong><a href="01-adicionando-novo-servico-docker/">Adicionando um Novo Serviço Docker à Infraestrutura</a>:</strong>
-    Um checklist detalhado e um exemplo prático de como integrar uma nova aplicação containerizada ao seu setup, desde o planejamento até o deploy e configuração de acesso.</li>
+<li><strong><a href="01-adicionando-novo-servico-docker/">Adicionando um Serviço Docker</a>:</strong>
+    O caminho de uma aplicação nova, numa stack nova ou existente: catálogo, integrações, página, compose, playbook de volumes, deploy e índice.</li>
 <li><strong><a href="02-modificando-configuracoes-existentes/">Modificando Configurações Existentes</a>:</strong>
     Um guia essencial sobre onde encontrar as principais configurações da sua infraestrutura e dos seus serviços, e o processo seguro para alterá-las, mantendo a consistência com sua IaC.</li>
 <li><strong><a href="03-troubleshooting-comum/">Troubleshooting Comum</a>:</strong>
@@ -2122,16 +2066,12 @@
     Explorando a criação de máquinas virtuais para propósitos mais específicos, como um firewall/roteador dedicado (e.g., pfSense/OPNsense), ambientes de teste isolados, ou VMs Windows.</li>
 <li><strong><a href="08-compartilhando-recursos-entre-vms/">Compartilhando Recursos Entre VMs ou com a Rede Local</a>:</strong>
     Diferentes métodos para compartilhar arquivos, bancos de dados ou outros recursos entre suas VMs ou com outros dispositivos na sua rede local (NFS, Samba, VirtIO-FS).</li>
-<li><strong><a href="09-integrando-novos-servicos-stacks-existentes/">Integrando Novos Serviços a Stacks Docker Existentes</a>:</strong>
-    Como adicionar um novo container a um arquivo <code>docker-compose.yml</code> já existente, em vez de criar uma stack totalmente nova para cada pequeno serviço.</li>
-<li><strong><a href="10-atualizacao-segura-componentes-criticos/">Atualização Segura de Componentes Críticos da Infraestrutura</a>:</strong>
+<li><strong><a href="09-atualizacao-segura-componentes-criticos/">Atualização Segura de Componentes Críticos da Infraestrutura</a>:</strong>
     Estratégias e pontos de atenção para atualizar componentes fundamentais como Proxmox VE, Docker Engine, Traefik e Authelia de forma mais segura e controlada.</li>
-<li><strong><a href="11-hospedando-aplicacao-publica-dominio-raiz/">Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)</a>:</strong>
+<li><strong><a href="10-hospedando-aplicacao-publica-dominio-raiz/">Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)</a>:</strong>
     Considerações de segurança e configuração no Traefik para expor uma aplicação (idealmente um site estático) diretamente no seu domínio principal (e.g., <code>https://seudominio.com</code>).</li>
-<li><strong><a href="12-guia-snapshots-zfs/">Guia Prático de Snapshots ZFS</a>:</strong>
+<li><strong><a href="11-guia-snapshots-zfs/">Guia Prático de Snapshots ZFS</a>:</strong>
     Um guia detalhado sobre como criar, listar, gerenciar e utilizar os poderosos snapshots ZFS para recuperação rápida de dados e proteção local no seu host Proxmox.</li>
-<li><strong><a href="13-usando-geminicli/">Uso do Gemini CLI para Operações Assistidas por IA</a>:</strong>
-    Como instalar, configurar e utilizar o Gemini CLI com segurança para troubleshooting, análise de logs e apoio operacional no homelab.</li>
 </ol>
 <p>Estes guias são projetados para serem suas referências rápidas e acionáveis para as operações do dia-a-dia e para a evolução contínua do seu servidor doméstico. Lembre-se sempre da importância de testar as mudanças em ambientes menos críticos quando possível e de manter seus <a href="../04-manutencao-recuperacao/02-backup-restore-estrategia/">backups atualizados e testados</a>!</p>
 
@@ -2154,7 +2094,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="18 de outubro de 2026 22:45:16 -03">18 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

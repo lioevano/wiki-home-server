@@ -1688,35 +1688,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1744,7 +1716,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -1772,7 +1744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1780,34 +1752,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2363,25 +2307,23 @@ Este é um passo <strong>absolutamente essencial</strong> para que a virtualiza�
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Assumindo os valores padrão de zfs_*_dataset_name do main.yml:</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># zfs_docker_volumes_dataset_name: "docker-volumes"</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># zfs_media_dataset_name: "media"</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># zfs_rag_sources_dataset_name: "rag_sources"</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># zfs_backups_dataset_name: "backups"</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># zfs_photos_dataset_name: "photos"</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># zfs_files_dataset_name: "files"</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="c1"># zfs_notes_dataset_name: "notes"</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/docker-volumes
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/media
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/rag_sources
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/backups
-</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="c1"># Fotos e arquivos com cota (ajuste os tamanhos ao seu acervo; ver a página 11):</span>
-</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>-o<span class="w"> </span><span class="nv">quota</span><span class="o">=</span>150G<span class="w"> </span>data/photos
-</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>-o<span class="w"> </span><span class="nv">quota</span><span class="o">=</span>75G<span class="w"> </span>data/files
-</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># Vaults do Obsidian (segundo cérebro, página 12). refquota (não quota): os snapshots automáticos não</span>
-</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1"># contam no limite, então a IA e o Syncthing nunca têm a escrita recusada por causa deles.</span>
-</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>-o<span class="w"> </span><span class="nv">refquota</span><span class="o">=</span>20G<span class="w"> </span>data/notes
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="c1"># A raiz de cada dataset nasce root:root 0755; com all_squash, toda escrita das VMs chega como o dockeruser</span>
-</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="c1"># e seria recusada. Entregue as raízes a ele (use os valores de docker_puid e docker_pgid do vault):</span>
-</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>root@pve:~#<span class="w"> </span>chown<span class="w"> </span>&lt;docker_puid&gt;:&lt;docker_pgid&gt;<span class="w"> </span>/data/docker-volumes<span class="w"> </span>/data/media<span class="w"> </span>/data/rag_sources<span class="w"> </span>/data/photos<span class="w"> </span>/data/files<span class="w"> </span>/data/notes
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># zfs_backups_dataset_name: "backups"</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># zfs_photos_dataset_name: "photos"</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># zfs_files_dataset_name: "files"</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># zfs_notes_dataset_name: "notes"</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/docker-volumes
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/media
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>data/backups
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="c1"># Fotos e arquivos com cota (ajuste os tamanhos ao seu acervo; ver a página 11):</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>-o<span class="w"> </span><span class="nv">quota</span><span class="o">=</span>150G<span class="w"> </span>data/photos
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>-o<span class="w"> </span><span class="nv">quota</span><span class="o">=</span>75G<span class="w"> </span>data/files
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="c1"># Vaults do Obsidian (segundo cérebro, página 12). refquota (não quota): os snapshots automáticos não</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># contam no limite, então a IA e o Syncthing nunca têm a escrita recusada por causa deles.</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>root@pve:~#<span class="w"> </span>zfs<span class="w"> </span>create<span class="w"> </span>-o<span class="w"> </span><span class="nv">refquota</span><span class="o">=</span>20G<span class="w"> </span>data/notes
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1"># A raiz de cada dataset nasce root:root 0755; com all_squash, toda escrita das VMs chega como o dockeruser</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="c1"># e seria recusada. Entregue as raízes a ele (use os valores de docker_puid e docker_pgid do vault):</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>root@pve:~#<span class="w"> </span>chown<span class="w"> </span>&lt;docker_puid&gt;:&lt;docker_pgid&gt;<span class="w"> </span>/data/docker-volumes<span class="w"> </span>/data/media<span class="w"> </span>/data/photos<span class="w"> </span>/data/files<span class="w"> </span>/data/notes
 </span></code></pre></div>
 <p>A cota limita o quanto fotos e arquivos podem crescer no pool compartilhado com a mídia. Para mudar depois: <code>zfs set quota=200G data/photos</code>. Um dataset com cota aparece para o <code>df</code> (e para o alerta <code>disco-cheio</code>) com o tamanho da cota, então o aviso de espaço chega antes de o pool encher.</p>
 <div class="admonition tip">
@@ -2392,7 +2334,7 @@ Este é um passo <strong>absolutamente essencial</strong> para que a virtualiza�
 <div class="admonition tip">
 <p class="admonition-title">Vantagens de Usar Datasets ZFS</p>
 <ul>
-<li><strong>Snapshots Individuais:</strong> Você pode tirar snapshots de <code>data/media</code> sem afetar <code>data/docker-volumes</code>. Veja o <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/">Guia de Snapshots ZFS</a> para mais detalhes.</li>
+<li><strong>Snapshots Individuais:</strong> Você pode tirar snapshots de <code>data/media</code> sem afetar <code>data/docker-volumes</code>. Veja o <a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/">Guia de Snapshots ZFS</a> para mais detalhes.</li>
 <li><strong>Propriedades por Dataset:</strong> Permite definir configurações específicas como compressão (<code>zfs set compression=lz4 data/docker-volumes</code>), cotas (<code>zfs set quota=100G data/media</code>), ou <code>recordsize</code> por dataset.</li>
 <li><strong>Compartilhamento Granular via NFS:</strong> Facilita a exportação de diretórios específicos.</li>
 <li><strong>Organização:</strong> Mantém seus dados logicamente separados dentro do pool.</li>
@@ -2679,14 +2621,9 @@ Este é um passo <strong>absolutamente essencial</strong> para que a virtualiza�
 </span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="x"># Vaults do Obsidian (segundo cérebro, página 12): exportado só para a VM de IA, onde rodam o Syncthing e a busca</span>
 </span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_notes_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">ai_desktop_vm_ip_var</span> <span class="cp">}}</span><span class="x">(rw,sync,no_subtree_check,all_squash,anonuid=</span><span class="cp">{{</span> <span class="nv">docker_puid</span> <span class="cp">}}</span><span class="x">,anongid=</span><span class="cp">{{</span> <span class="nv">docker_pgid</span> <span class="cp">}}</span><span class="x">)</span>
 </span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>
-</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="x"># Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)</span>
-</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="cp">{%</span> <span class="k">if</span> <span class="nv">zfs_rag_sources_dataset_name</span> <span class="k">is</span> <span class="nf">defined</span> <span class="k">and</span> <span class="s1">'ai-desktop-vm'</span> <span class="k">in</span> <span class="nv">groups</span><span class="o">[</span><span class="s1">'virtual_machines'</span><span class="o">]</span> <span class="cp">%}</span>
-</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_rag_sources_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(rw,sync,no_subtree_check,all_squash,anonuid=</span><span class="cp">{{</span> <span class="nv">docker_puid</span> <span class="cp">}}</span><span class="x">,anongid=</span><span class="cp">{{</span> <span class="nv">docker_pgid</span> <span class="cp">}}</span><span class="x">)</span>
-</span><span id="__span-8-28"><a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a><span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
-</span><span id="__span-8-29"><a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>
-</span><span id="__span-8-30"><a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a><span class="x"># Compartilhamento para backups (geralmente não precisa ser montado por VMs,</span>
-</span><span id="__span-8-31"><a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a><span class="x"># a menos que uma VM específica precise ler backups. Pode ser 'ro' para VMs).</span>
-</span><span id="__span-8-32"><a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a><span class="x"># </span><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_backups_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(ro,sync,no_subtree_check)</span>
+</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="x"># Compartilhamento para backups (geralmente não precisa ser montado por VMs,</span>
+</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="x"># a menos que uma VM específica precise ler backups. Pode ser 'ro' para VMs).</span>
+</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="x"># </span><span class="cp">{{</span> <span class="nv">zfs_base_pool_path</span> <span class="cp">}}</span><span class="x">/</span><span class="cp">{{</span> <span class="nv">zfs_backups_dataset_name</span> <span class="cp">}}</span><span class="x"> </span><span class="cp">{{</span> <span class="nv">vm_nfs_allowed_clients_cidr</span> <span class="cp">}}</span><span class="x">(ro,sync,no_subtree_check)</span>
 </span></code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Opções de Exportação NFS Explicadas</p>
@@ -2792,7 +2729,7 @@ Esta combinação garante que os arquivos criados pelas VMs nos montados NFS ten
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:24:11 -03">20 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

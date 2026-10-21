@@ -1627,35 +1627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1683,7 +1655,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="../10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -1711,7 +1683,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1719,34 +1691,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2173,7 +2117,7 @@
 </ul>
 </li>
 <li><strong>Variáveis de Ambiente e Secrets:</strong><ul>
-<li>Ao criar/editar uma stack no Portainer, carregue o arquivo <code>.env</code> gerado pelo Ansible na VM.</li>
+<li>Ao criar/editar uma stack no Portainer, cole o <code>.env</code> gerado pelo Ansible na VM em <strong>Advanced mode</strong> (<a href="../../01-manual-implementacao/07-deploy-apps/#como-as-stacks-recebem-as-variáveis">como</a>).</li>
 <li><strong>Secrets críticos</strong> (senhas de banco de dados, tokens de API) ficam no vault e chegam ao <code>.env</code> pelo playbook da stack; para mudá-los, edite o vault e rode o playbook de novo. Nada é digitado na UI do Portainer.</li>
 </ul>
 </li>
@@ -2195,7 +2139,7 @@
 </li>
 <li><strong>Configuração Dinâmica (Diretório de Arquivos):</strong><ul>
 <li>Arquivos YAML localizados em <code>{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/</code>.</li>
-<li>Gerados pelo Ansible (e.g., <code>security_headers.yml</code>, <code>nextcloud_middleware.yml</code>, <code>rag_services.yml</code>).</li>
+<li>Gerados pelo Ansible (e.g., <code>security_headers.yml</code>, <code>nextcloud_middleware.yml</code>, <code>ai_services.yml</code>).</li>
 <li>Contém definições de middlewares, e roteamento para serviços que não são descobertos automaticamente pelo Docker provider (como os da <code>ai-desktop-vm</code>).</li>
 <li>Traefik monitora este diretório e <strong>recarrega automaticamente as mudanças</strong> sem necessidade de reinício.</li>
 </ul>
@@ -2260,7 +2204,7 @@ Traefik gerencia este arquivo. A edição manual pode corrompê-lo e causar prob
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># No host Proxmox</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sudo<span class="w"> </span>zfs<span class="w"> </span>snapshot<span class="w"> </span>data/docker-volumes@antes_da_mudanca_X
 </span></code></pre></div>
-    Consulte o <a href="../12-guia-snapshots-zfs/">Guia de Snapshots ZFS</a> para mais detalhes.</li>
+    Consulte o <a href="../11-guia-snapshots-zfs/">Guia de Snapshots ZFS</a> para mais detalhes.</li>
 <li><strong>Arquivos de Configuração Específicos:</strong> Se for editar manualmente um arquivo de configuração crítico (o que deve ser raro se gerenciado por Ansible), faça uma cópia dele primeiro (e.g., <code>cp /caminho/arquivo.conf /caminho/arquivo.conf.bak</code>).</li>
 </ul>
 </li>
@@ -2268,15 +2212,15 @@ Traefik gerencia este arquivo. A edição manual pode corrompê-lo e causar prob
 <p><strong>Aplique a Mudança (Método Preferencial Primeiro):</strong></p>
 <ul>
 <li><strong>Se a Configuração é Gerenciada pelo Ansible (Ideal):</strong><ol>
-<li>Edite o arquivo Ansible apropriado na sua máquina de controle (inventário, <code>main.yml</code>, <code>vault.yml</code>, um template <code>.j2</code>, ou as tasks de um role).</li>
-<li>Execute o playbook Ansible relevante para aplicar a mudança. Exemplo:
+<li><strong>Comece pela wiki</strong> (ela é a fonte da verdade). Ache no <code>INDEX.md</code> a página que documenta o arquivo. Se o arquivo tem bloco literal na página, edite o bloco; se não, descreva a mudança na página e edite o arquivo. Depois, <code>python tools/dev.py check</code>, <code>sync</code> (confira o diff) e <code>sync --yes</code>, e então <code>test</code>, <code>build</code> e <code>lint</code>. Os segredos são a exceção: <code>ansible-vault edit inventories/home/group_vars/all/vault.yml</code>, mas a chave nova entra antes no <code>vault.yml.example</code> da página 01.</li>
+<li>Execute o playbook Ansible relevante para aplicar a mudança (sempre <code>--check</code> antes). Exemplo:
     <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-core-networking.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div></li>
 <li>O Ansible aplicará a mudança de forma idempotente. Se a configuração já estiver no estado desejado, nenhuma alteração será feita.</li>
 </ol>
 </li>
 <li><strong>Se a Mudança é em uma Stack Docker (via Portainer):</strong><ol>
-<li>Edite o arquivo <code>docker-compose.yml</code> correspondente no seu projeto Git (<code>server/docker/stacks/.../</code>).</li>
+<li>Edite o arquivo <code>docker-compose.yml</code> correspondente no seu projeto Git (<code>server/docker/stacks/.../</code>), descrevendo a mudança na página da stack.</li>
 <li>No Portainer, navegue até a stack que você deseja modificar.</li>
 <li>Clique em "<strong>Editor</strong>".</li>
 <li>Cole o conteúdo do <code>docker-compose.yml</code> atualizado.</li>
@@ -2321,11 +2265,7 @@ Se a configuração que você alterou na UI do Proxmox também é definida pelo 
 </ul>
 </li>
 <li>
-<p><strong>Documente a Mudança (Opcional, mas Boa Prática):</strong></p>
-<ul>
-<li>Se for uma alteração significativa, adicione uma nota nesta wiki (talvez uma subseção em "Modificando Configurações" ou em um log de mudanças).</li>
-<li>Faça um <code>git commit</code> das suas alterações nos arquivos Ansible/Docker Compose com uma mensagem clara descrevendo a mudança.</li>
-</ul>
+<p><strong>Feche no Git:</strong> atualize o <code>INDEX.md</code> se surgiu ou saiu arquivo (skill <code>update-index</code>) e faça <strong>um</strong> commit com a wiki, o <code>server/</code> e o índice juntos. O push dispara o CI (<code>server-lint</code>) e publica a wiki.</p>
 </li>
 </ol>
 <p>Lembre-se sempre de proceder com cautela, especialmente ao modificar configurações críticas ou que afetam a segurança. A abordagem de Infraestrutura como Código com Ansible, combinada com backups e snapshots, fornece uma base sólida para gerenciar mudanças de forma segura e recuperável.</p>
@@ -2349,7 +2289,7 @@ Se a configuração que você alterou na UI do Proxmox também é definida pelo 
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="19 de outubro de 2026 01:06:15 -03">19 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

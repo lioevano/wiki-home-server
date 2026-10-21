@@ -1771,35 +1771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1827,7 +1799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -1855,7 +1827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1863,34 +1835,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2556,7 +2500,7 @@
 <li><code>setup-core-networking.yml</code> — regra do Authelia que libera <code>/webhook/</code> (reinicie o Authelia: <code>sudo docker restart authelia</code>);</li>
 <li><code>setup-n8n-volumes.yml</code> e <code>setup-monitoring-stack-volumes.yml</code> — workflow, alertas, blackbox, Diun e Homepage; depois atualize a stack <code>apps</code> no Portainer (página 07);</li>
 <li><code>setup-ai-volumes.yml</code> — <code>diun_ai</code>; depois atualize a stack <code>ai</code>.
-   As variáveis <code>TELEGRAM_*</code> e <code>NOTIFICACOES_WEBHOOK_TOKEN</code> saem iguais no <code>n8n.env</code> e no <code>monitoring.env</code>; a junção no <code>apps.env</code> (página 07) mantém só a primeira de cada nome.</li>
+   As variáveis <code>TELEGRAM_*</code> e <code>NOTIFICACOES_WEBHOOK_TOKEN</code> saem iguais no <code>n8n.env</code> e no <code>monitoring.env</code>; o <code>apps.env</code> que os playbooks montam (página 07) mantém só a primeira de cada nome.</li>
 <li>Importe e ative o workflow (na <code>core-services-vm</code>):
    <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sudo<span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>n8n_app<span class="w"> </span>n8n<span class="w"> </span>import:workflow<span class="w"> </span>--input<span class="o">=</span>/home/node/.n8n/workflows/notificar.json
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sudo<span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>n8n_app<span class="w"> </span>n8n<span class="w"> </span>publish:workflow<span class="w"> </span>--id<span class="o">=</span>HsNotificar00001
@@ -2658,7 +2602,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:51:10 -03">20 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

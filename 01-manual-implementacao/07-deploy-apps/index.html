@@ -779,6 +779,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#primeiro-acesso-ao-portainer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primeiro acesso ao Portainer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primeiro acesso ao Portainer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#como-as-stacks-recebem-as-variáveis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Como as stacks recebem as variáveis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#deploy-via-portainer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1699,35 +1727,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -1755,7 +1755,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -1783,7 +1783,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -1791,34 +1791,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -2133,6 +2105,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#primeiro-acesso-ao-portainer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Primeiro acesso ao Portainer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primeiro acesso ao Portainer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#como-as-stacks-recebem-as-variáveis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Como as stacks recebem as variáveis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#deploy-via-portainer" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2259,6 +2259,21 @@
 </tr>
 </tbody>
 </table>
+<h2 id="primeiro-acesso-ao-portainer">Primeiro acesso ao Portainer<a class="headerlink" href="#primeiro-acesso-ao-portainer" title="Permanent link">¶</a></h2>
+<p>O Portainer CE foi instalado na <code>core-services-vm</code> pelo role <code>infra/docker</code> (<a href="../04-configuracao-base-vms-ubuntu/">seção 4</a>), e o Portainer Agent na <code>ai-desktop-vm</code>. Esta é a primeira vez que você o usa, então faça antes de qualquer stack:</p>
+<ol>
+<li><strong>Crie o administrador logo.</strong> Abra <code>https://portainer.seudominio.com</code> (atrás do Authelia) ou, na LAN, <code>https://&lt;IP da core-services-vm&gt;:9443</code> (certificado autoassinado). O Portainer só aceita criar o administrador nos <strong>5 minutos</strong> depois de subir; passou do prazo, rode <code>sudo docker restart portainer</code> e tente de novo. Use uma senha forte (o Authelia fica na frente, mas a API também é alcançável pela LAN).</li>
+<li><strong>Ambiente local.</strong> Em <strong>Environments</strong>, o ambiente da própria core aparece como <code>local</code>. Se o assistente perguntar, escolha <strong>Get Started</strong> (Docker local, pelo socket).</li>
+<li><strong>Ambiente da VM de IA.</strong> <strong>Environments → Add environment → Docker Standalone → Agent</strong>: nome <code>ai-desktop-vm</code> e endereço <code>&lt;IP da ai-desktop-vm&gt;:9001</code>. O agente só atende quem conhece o <code>AGENT_SECRET</code> (<code>portainer_agent_secret</code> do vault), que o Portainer server já recebeu do Ansible. Os nomes <code>local</code> e <code>ai-desktop-vm</code> são os que o MCP <code>ops</code> procura (<code>ops_endpoints</code>, página 01); se usar outros, ajuste a variável.</li>
+<li><strong>Token de API</strong> (para a <a href="../13-agentes-base/">base dos agentes</a>): <em>My account → Access tokens → Add access token</em> → guarde em <code>portainer_api_key</code> no vault.</li>
+</ol>
+<h3 id="como-as-stacks-recebem-as-variáveis">Como as stacks recebem as variáveis<a class="headerlink" href="#como-as-stacks-recebem-as-variáveis" title="Permanent link">¶</a></h3>
+<p>Cada stack do Portainer usa o compose do repositório e um <code>.env</code> que o playbook dela gerou na VM, em <code>/opt/portainer_stack_envs/</code>. O botão <strong>Load variables from .env file</strong> do Portainer lê um arquivo <strong>do seu computador</strong>, não da VM. Por isso, faça assim:</p>
+<ol>
+<li>Na VM da stack: <code>sudo cat /opt/portainer_stack_envs/&lt;stack&gt;.env</code>.</li>
+<li>Em <strong>Environment variables</strong>, troque para <strong>Advanced mode</strong> e cole o conteúdo. O arquivo tem segredos: não o salve no computador nem o mande por chat.</li>
+</ol>
+<p>Ao mudar uma variável, rode o playbook de novo, cole o <code>.env</code> atualizado na stack (<strong>Editor</strong> → <strong>Advanced mode</strong>) e clique em <strong>Update the stack</strong>.</p>
 <h2 id="deploy-via-portainer">Deploy via Portainer<a class="headerlink" href="#deploy-via-portainer" title="Permanent link">¶</a></h2>
 <ol>
 <li>Acesse o Portainer em <code>https://portainer.seudominio.com</code></li>
@@ -2266,7 +2281,7 @@
 <li>Nome: <code>apps</code></li>
 <li>Selecione <strong>Web editor</strong></li>
 <li>Cole o conteúdo de <code>docker/stacks/apps/docker-compose.yml</code></li>
-<li>Em <strong>Env</strong>, carregue o arquivo <code>/opt/portainer_stack_envs/apps.env</code> montado conforme os passos manuais abaixo</li>
+<li>Em <strong>Environment variables → Advanced mode</strong>, cole o <code>/opt/portainer_stack_envs/apps.env</code>, que os playbooks da stack montam (veja abaixo e <a href="#como-as-stacks-recebem-as-variáveis">como as stacks recebem as variáveis</a>)</li>
 <li>Clique em <strong>Deploy the stack</strong></li>
 </ol>
 <h3 id="variáveis-da-stack">Variáveis da stack<a class="headerlink" href="#variáveis-da-stack" title="Permanent link">¶</a></h3>
@@ -2311,24 +2326,21 @@
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">done</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># sem erros? repita o laço sem --check</span>
 </span></code></pre></div>
-   Depois junte os arquivos num só <code>apps.env</code> para o Portainer (contém segredos: <code>0600</code>). Os quatro repetem as variáveis comuns e as do Telegram com o mesmo valor; o <code>awk</code> mantém só a primeira de cada nome e tira os comentários:
-   <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># na core-services-vm</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'umask 077; cd /opt/portainer_stack_envs &amp;&amp; cat productivity.env automation.env n8n.env monitoring.env | awk -F= "/^[A-Za-z_]/ &amp;&amp; !visto[\$1]++" &gt; apps.env &amp;&amp; chmod 600 apps.env'</span>
-</span></code></pre></div></li>
+   No fim, cada um desses playbooks monta o <code>/opt/portainer_stack_envs/apps.env</code> (<code>0600</code>) com as tarefas de <code>ansible/playbooks/tasks/apps-env.yml</code>: junta os quatro <code>.env</code>, mantém só a primeira ocorrência de cada nome (as variáveis comuns e as do Telegram se repetem com o mesmo valor) e tira os comentários. Não é preciso juntar à mão.</li>
 <li>No Portainer, abra a stack <code>apps</code>, recarregue <code>apps.env</code> em <strong>Env</strong> e clique em <strong>Update the stack</strong>.</li>
 </ol>
 <h3 id="versões-fixadas">Versões fixadas<a class="headerlink" href="#versões-fixadas" title="Permanent link">¶</a></h3>
 <p>O Grafana (<code>13.2.4</code>), o n8n (<code>2.44.4</code>) e o Home Assistant (<code>2026.10.2</code>) têm versão fixada no compose: o hub de MCPs da <a href="../13-agentes-base/">base dos agentes</a> usa as APIs deles (o MCP nativo do n8n exige 2.33 ou mais nova; o do Home Assistant é embutido). Para atualizar, troque a versão no compose, confira as notas da versão nova e teste as ferramentas pelo Claude Code (página 13) depois do redeploy.</p>
 <h2 id="preparação-dos-volumes">Preparação dos Volumes<a class="headerlink" href="#preparação-dos-volumes" title="Permanent link">¶</a></h2>
 <p>Os volumes são criados pelos playbooks Ansible <code>ansible/playbooks/setup-productivity-automation-volumes.yml</code>, <code>ansible/playbooks/setup-n8n-volumes.yml</code> e <code>ansible/playbooks/setup-monitoring-stack-volumes.yml</code>. A partir de <code>server/ansible</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Volumes do Home Assistant (e IP da VM para o Prometheus)</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-productivity-automation-volumes.yml
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Volumes n8n</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-n8n-volumes.yml
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Volumes monitoramento (gera prometheus.yml, Loki, blackbox, alertas do Grafana, Diun e Homepage)</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-monitoring-stack-volumes.yml
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Volumes do Home Assistant (e IP da VM para o Prometheus)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-productivity-automation-volumes.yml
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Volumes n8n</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-n8n-volumes.yml
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Volumes monitoramento (gera prometheus.yml, Loki, blackbox, alertas do Grafana, Diun e Homepage)</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/setup-monitoring-stack-volumes.yml
 </span></code></pre></div>
 <p>O playbook de monitoramento renderiza as configurações a partir de <code>ansible/templates/prometheus.yml.j2</code>, <code>ansible/templates/loki-local-config.yaml.j2</code>, <code>ansible/templates/blackbox.yml.j2</code>, <code>ansible/templates/grafana/alerting/</code> e <code>ansible/templates/homepage/</code> (ver <a href="../09-painel-notificacoes/">Painel e Notificações</a>), e o <code>.env</code> da stack a partir de <code>ansible/templates/portainer_stack_env.j2</code>.</p>
 <h2 id="ativandodesativando-serviços">Ativando/Desativando Serviços<a class="headerlink" href="#ativandodesativando-serviços" title="Permanent link">¶</a></h2>
@@ -2363,7 +2375,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:37:29 -03">20 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     

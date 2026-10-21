@@ -2370,35 +2370,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integrando Serviços
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos/" class="md-nav__link">
         
   
   
@@ -2426,7 +2398,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/" class="md-nav__link">
         
   
   
@@ -2454,7 +2426,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/12-guia-snapshots-zfs/" class="md-nav__link">
+      <a href="../../03-guias-sustentacao/11-guia-snapshots-zfs/" class="md-nav__link">
         
   
   
@@ -2462,34 +2434,6 @@
     
   
     Snapshots ZFS
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../03-guias-sustentacao/13-usando-geminicli/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gemini CLI
   
 
     
@@ -4049,7 +3993,7 @@
 </tr>
 <tr>
 <td>Arquivos</td>
-<td>compose do consumidor (serviço principal <code>mcp-auth-proxy</code> e o servidor MCP); <code>ansible/roles/infra/authelia-config/templates/configuration.yml.j2</code> (cliente <code>mcp</code>); <code>ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2</code></td>
+<td>compose do consumidor (serviço principal <code>mcp-auth-proxy</code> e o servidor MCP); <code>ansible/roles/infra/authelia-config/templates/configuration.yml.j2</code> (cliente <code>mcp</code>); <code>ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2</code></td>
 </tr>
 <tr>
 <td>Páginas</td>
@@ -4238,7 +4182,7 @@
 <h2 id="pendências-da-auditoria-inicial">Pendências da auditoria inicial<a class="headerlink" href="#pendências-da-auditoria-inicial" title="Permanent link">¶</a></h2>
 <p>Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão ou de refatoração. Os mecânicos (VAR-2 e DAD-3) foram corrigidos pela skill <code>fix-integrations</code>.</p>
 <p>Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (coleta de logs na VM de IA — hoje pelo Alloy, que substituiu o Promtail em 2026-10-19 —, Open WebUI <code>protegida</code>, job <code>glances</code> removido).</p>
-<p><strong>Fora das regras</strong> (para a reestruturação): a stack <code>apps</code> é um compose único, mas recebe cinco <code>.env</code> separados (hoje unidos à mão num <code>apps.env</code>, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.</p>
+<p><strong>Fora das regras</strong> (para a reestruturação): a stack <code>apps</code> é um compose único, mas recebe quatro <code>.env</code> separados (os playbooks os juntam no <code>apps.env</code>, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.</p>
 
 
 
@@ -4259,7 +4203,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:28:12 -03">20 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:31:32 -03">21 de outubro de 2026</span>
   </span>
 
     
