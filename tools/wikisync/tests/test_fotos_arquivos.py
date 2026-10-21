@@ -318,7 +318,7 @@ def test_variaveis_cloud_no_env():
 def test_hook_sem_segredo_e_idempotente(tmp_path):
     out = render(HOOK_TPL, base_domain=DOM, oidc_clients=OIDC)
     assert OIDC["nextcloud"]["secret"] not in out and OIDC["immich"]["secret"] not in out
-    assert '"$NEXTCLOUD_OIDC_CLIENT_SECRET"' in out
+    assert "--clientsecret-env=NEXTCLOUD_OIDC_CLIENT_SECRET" in out
     for linha in (l for l in out.splitlines() if "app:install" in l):
         assert "|| " in linha and "app:enable" in linha.split("|| ", 1)[1], linha
     for trecho in ("app:disable photos", "user_oidc:provider", "allow_multiple_user_backends", "wopi_url",
@@ -475,3 +475,50 @@ def test_politicas_oidc_por_cliente():
         "immich": "familia", "nextcloud": "familia",
         "openwebui": "so_admins", "mcp": "so_admins", "langfuse": "so_admins"}
     assert all(c["pre_configured_consent_duration"] == "1y" for c in oidc["clients"])
+
+
+# --- Pendências menores (#28, #29, #31, #35) ---
+
+ST = ROOT / "server/docker/stacks"
+PB = ROOT / "server/ansible/playbooks"
+
+
+def test_hook_passa_o_segredo_por_variavel_de_ambiente():
+    """#28: o segredo não aparece na linha de comando do occ (ps)."""
+    out = render(HOOK_TPL, base_domain=DOM, oidc_clients=OIDC)
+    assert "--clientsecret-env=NEXTCLOUD_OIDC_CLIENT_SECRET" in out
+    assert "--clientsecret=" not in out
+
+
+def test_immich_json_no_disco_local():
+    """#29: o immich.json tem o segredo do cliente OIDC; fica no disco local, não no NFS (all_squash)."""
+    t = next(t for t in _pb_tasks(PB_PHOTOS)
+             if str(t.get("ansible.builtin.template", {}).get("src", "")).endswith("immich.json.j2"))
+    assert t["ansible.builtin.template"]["dest"] == "{{ vm_local_data_path }}/immich-config/immich.json"
+    assert t["ansible.builtin.template"]["mode"] == "0600"
+    assert _configs(PB_PHOTOS, "photos.env")["PHOTOS_STACK_CONFIG_PATH"] == "{{ vm_local_data_path }}/immich-config"
+    assert "immich/config" not in PB_PHOTOS.read_text(encoding="utf-8")
+
+
+AUTH_LAN = {  # serviço → (compose, playbook, .env, variável com o IP da core)
+    "immich_server": ("photos", "setup-photos-stack-volumes.yml", "photos.env", "CORE_SERVICES_VM_IP_VAR"),
+    "nextcloud_app": ("cloud", "setup-cloud-stack-volumes.yml", "cloud.env", "CORE_SERVICES_VM_IP_VAR"),
+    "open-webui": ("ai", "setup-ai-volumes.yml", "ai.env", "CORE_SERVICES_VM_IP_VAR"),
+    "langfuse_web": ("langfuse", "setup-langfuse-volumes.yml", "langfuse.env", "CORE_SERVICES_VM_IP_VAR"),
+    "mcp_auth_busca": ("notes", "setup-notes-volumes.yml", "notes.env", "CORE_SERVICES_VM_IP"),
+    "mcp_auth_escrita": ("notes", "setup-notes-volumes.yml", "notes.env", "CORE_SERVICES_VM_IP"),
+    "mcp_auth_servidor": ("agents", "setup-agents-volumes.yml", "agents.env", "CORE_SERVICES_VM_IP_VAR"),
+}
+
+
+def test_login_oidc_pela_lan():
+    """#31: descoberta e troca de código com o Authelia pela LAN (Traefik na core), sem depender da internet."""
+    for nome, (stack, pb, env, var) in AUTH_LAN.items():
+        s = _svc(ST / stack / "docker-compose.yml")[nome]
+        assert f"auth.${{BASE_DOMAIN_FROM_VAULT}}:${{{var}}}" in s.get("extra_hosts", []), nome
+        assert var in _configs(PB / pb, env), nome
+
+
+def test_collabora_com_versao_fixada():
+    """#35."""
+    assert _svc(ST / "cloud/docker-compose.yml")["collabora"]["image"] == "collabora/code:26.04.5.1.1"

@@ -97,6 +97,8 @@ services:
       - "${AI_DESKTOP_VM_IP}:3000:8080" # alvo do Traefik (openwebui.), atrás do Authelia
     volumes:
       - "${AI_STACK_OPENWEBUI_DATA_PATH}:/app/backend/data"
+    extra_hosts: # login OIDC pela LAN: descoberta e troca de código com o Authelia via Traefik na core
+      - "auth.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP_VAR}"
     environment:
       # O compose é a fonte da verdade: sem isto, o Open WebUI grava a configuração no banco na primeira
       # partida e passa a ignorar estas variáveis (chave do LiteLLM, Ollama desligado, formulário de login).

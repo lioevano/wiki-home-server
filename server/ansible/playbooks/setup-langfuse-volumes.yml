@@ -38,6 +38,7 @@
         stack_name: langfuse
         stack_configs:
           - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'CORE_SERVICES_VM_IP_VAR', value: "{{ core_services_vm_ip_var }}" } # login OIDC pela LAN
           - { name: 'LANGFUSE_DATA_PATH', value: "{{ vm_local_data_path }}/langfuse" }
           - { name: 'LANGFUSE_SALT', value: "{{ langfuse_secrets.salt }}" }
           - { name: 'LANGFUSE_ENCRYPTION_KEY', value: "{{ langfuse_secrets.encryption_key }}" }

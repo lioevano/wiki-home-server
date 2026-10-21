@@ -52,6 +52,8 @@ services:
     depends_on: *depende
     ports:
       - "${AI_DESKTOP_VM_IP}:3100:3000" # Traefik (langfuse.), LiteLLM e hub (OTLP em /api/public/otel)
+    extra_hosts: # login OIDC pela LAN: descoberta e troca de código com o Authelia via Traefik na core
+      - "auth.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP_VAR}"
     environment:
       <<: *langfuse-env
       NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}

@@ -47,6 +47,8 @@ services:
     command: ["http://agentgateway:4000/mcp"] # rota de leitura do hub
     volumes:
       - ${MCP_AUTH_SERVIDOR_DATA_PATH}:/data # estado OAuth (regerável: perder = novo login)
+    extra_hosts: # login OIDC pela LAN: descoberta e troca de código com o Authelia via Traefik na core
+      - "auth.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP_VAR}"
     environment:
       TZ: ${SYSTEM_TIMEZONE}
       EXTERNAL_URL: https://servidor.${BASE_DOMAIN_FROM_VAULT}

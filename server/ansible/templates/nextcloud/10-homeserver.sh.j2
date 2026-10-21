@@ -17,10 +17,11 @@ for app in user_oidc richdocuments calendar contacts; do
 done
 occ app:disable photos || aviso "não desativou photos"
 
-# Provedor OIDC (cria ou atualiza): uid = usuário do Authelia, sem hash.
+# Provedor OIDC (cria ou atualiza): uid = usuário do Authelia, sem hash. O segredo vem pelo nome da variável
+# (--clientsecret-env), não pelo valor: assim ele não aparece na lista de processos.
 occ user_oidc:provider Authelia \
   --clientid=nextcloud \
-  --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
+  --clientsecret-env=NEXTCLOUD_OIDC_CLIENT_SECRET \
   --discoveryuri="https://auth.{{ base_domain }}/.well-known/openid-configuration" \
   --scope="openid email profile groups" \
   --unique-uid=0 \

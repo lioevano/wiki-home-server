@@ -124,6 +124,8 @@ services:
     command: ["http://qmd:8181/mcp"]
     volumes:
       - "${NOTES_STACK_MCP_AUTH_BUSCA_PATH}:/data" # estado OAuth (regerável: perder = novo login)
+    extra_hosts: # login OIDC pela LAN: descoberta e troca de código com o Authelia via Traefik na core
+      - "auth.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP}"
     environment:
       - TZ=${SYSTEM_TIMEZONE}
       - EXTERNAL_URL=https://notas.${BASE_DOMAIN_FROM_VAULT}
@@ -152,6 +154,8 @@ services:
     command: ["http://notes_escrita:8000/mcp"]
     volumes:
       - "${NOTES_STACK_MCP_AUTH_ESCRITA_PATH}:/data" # estado OAuth (regerável: perder = novo login)
+    extra_hosts: # login OIDC pela LAN: descoberta e troca de código com o Authelia via Traefik na core
+      - "auth.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP}"
     environment:
       - TZ=${SYSTEM_TIMEZONE}
       - EXTERNAL_URL=https://escrita.${BASE_DOMAIN_FROM_VAULT}

@@ -187,7 +187,7 @@ binds:
 
 ## Rastreio (Langfuse)
 
-O **Langfuse** guarda cada chamada de LLM (o LiteLLM manda pelo callback `langfuse_otel`) e cada chamada de ferramenta pelo hub (traces OTLP), com custo, latência, entrada e saída. A tela fica em `https://langfuse.<domínio>`, atrás do Authelia; o login do próprio Langfuse é só pelo SSO (cliente OIDC `langfuse`): quem entra cai na organização **Homeserver** como admin. A organização, o projeto e as chaves (`langfuse_secrets.public_key`/`secret_key`) são criados na primeira subida pelas variáveis `LANGFUSE_INIT_*` — não há passos na tela.
+O **Langfuse** guarda cada chamada de LLM (o LiteLLM manda pelo callback `langfuse_otel`) e cada chamada de ferramenta pelo hub (traces OTLP), com custo, latência, entrada e saída. A tela fica em `https://langfuse.<domínio>`, atrás do Authelia; o login do próprio Langfuse é só pelo SSO (cliente OIDC `langfuse`, política `so_admins`): quem entra cai na organização **Homeserver** como admin. O `langfuse_web` e o `mcp_auth_servidor` falam com o Authelia pela LAN (`extra_hosts` de `auth.` para o Traefik na `core-services-vm`). A organização, o projeto e as chaves (`langfuse_secrets.public_key`/`secret_key`) são criados na primeira subida pelas variáveis `LANGFUSE_INIT_*` — não há passos na tela.
 
 Os dados (Postgres, ClickHouse, MinIO, Redis) ficam no disco local da `ai-desktop-vm` e **não têm backup**: traces são descartáveis. O alerta **disco-cheio** avisa se o disco local encher.
 

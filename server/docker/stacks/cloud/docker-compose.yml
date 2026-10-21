@@ -74,6 +74,8 @@ services:
       - proxy
       - internal_services
     volumes: *nextcloud-volumes
+    extra_hosts: # login OIDC pela LAN: descoberta e troca de código com o Authelia via Traefik na core
+      - "auth.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP_VAR}"
     environment: *nextcloud-env
     depends_on:
       nextcloud_db:
@@ -108,7 +110,7 @@ services:
   # Edição de documentos no navegador (Nextcloud Office). O navegador acessa office.; o Collabora volta ao
   # Nextcloud pela LAN (extra_hosts → Traefik na core-services-vm), sem dar a volta pela Cloudflare.
   collabora:
-    image: collabora/code:latest
+    image: collabora/code:26.04.5.1.1
     container_name: collabora
     restart: unless-stopped
     networks:

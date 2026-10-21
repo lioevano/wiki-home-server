@@ -127,7 +127,7 @@ Cada cliente tem uma **chave virtual** própria (`litellm_client_keys`), nunca a
 
 O Open WebUI fala só com o LiteLLM (com a chave `openwebui`) — o acesso direto ao Ollama fica desligado, então todo uso aparece na tela do LiteLLM. Ele roda com `ENABLE_PERSISTENT_CONFIG=false`: a configuração vem sempre do compose (chave, conexões, formulário de login), e mudanças feitas em *Admin → Settings* nessas áreas não sobrevivem a um restart. Os modelos que aparecem nele são os do `llm_models`, inclusive os apelidos, menos os de `litellm_key_models_ocultos` (o `decisao`, que não conversa).
 
-O login é o **OIDC do Authelia** (cliente `openwebui`), além do forward-auth na frente: só entra quem está no grupo `admins` do Authelia, que vira administrador pelo grupo (`OAUTH_ADMIN_ROLES`; o papel padrão de quem chega é `pending`). No primeiro acesso:
+O login é o **OIDC do Authelia** (cliente `openwebui`, política `so_admins`; o container chega ao Authelia pela LAN, com `extra_hosts`), além do forward-auth na frente: só entra quem está no grupo `admins` do Authelia, que vira administrador pelo grupo (`OAUTH_ADMIN_ROLES`; o papel padrão de quem chega é `pending`). No primeiro acesso:
 
 1. Abra `https://openwebui.seudominio.com` e entre por **Authelia**; se já existia uma conta local com o mesmo e-mail, as duas se juntam.
 2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, recarregue o `ai.env` e **Update the stack**. A mesma variável desliga a API de senha (`ENABLE_PASSWORD_AUTH`): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para `true` do mesmo jeito.

@@ -25,7 +25,7 @@ casa (Wi-Fi) ─────────────────────► 
 | `cloud` | `nextcloud_redis` / `nextcloud_db` | Cache e banco (Postgres) | — |
 | `cloud` | `collabora` | Edição de documentos (Nextcloud Office) | `http://collabora:9980` |
 
-Os três endereços públicos ficam fora do forward-auth do Authelia (regras `bypass` na [seção 5](05-rede-segura.md)): os apps de celular e de desktop não passam por ele. O login de cada app vai direto para o Authelia, com `two_factor`, pelo provedor OIDC configurado no mesmo `configuration.yml`. Os dois clientes usam a política `familia`: só quem está no grupo `users` do Authelia entra (e só então o Nextcloud cria a conta). Quem já entrou no Authelia em outro subdomínio não precisa entrar de novo.
+Os três endereços públicos ficam fora do forward-auth do Authelia (regras `bypass` na [seção 5](05-rede-segura.md)): os apps de celular e de desktop não passam por ele. O login de cada app vai direto para o Authelia, com `two_factor`, pelo provedor OIDC configurado no mesmo `configuration.yml`. Os dois clientes usam a política `familia`: só quem está no grupo `users` do Authelia entra (e só então o Nextcloud cria a conta). Quem já entrou no Authelia em outro subdomínio não precisa entrar de novo. A conversa do servidor com o Authelia (descoberta e troca do código) vai pela LAN: `immich_server` e `nextcloud_app` resolvem `auth.<domínio>` para o Traefik na `core-services-vm` (`extra_hosts`), então o login funciona mesmo com a internet fora (o navegador ou o app ainda precisam alcançar `auth.`).
 
 ## Dados
 
@@ -33,7 +33,8 @@ Os três endereços públicos ficam fora do forward-auth do Authelia (regras `by
 |---|---|---|
 | Fotos, vídeos, miniaturas e dumps do banco do Immich | dataset `photos` (NFS), em `/data` do `immich_server` | snapshots ZFS e Borg |
 | Arquivos do Nextcloud | dataset `files` (NFS), em `/data` do `nextcloud_app` | snapshots ZFS e Borg |
-| Hook do Nextcloud; `immich.json` | `docker-volumes` (NFS) | snapshots ZFS e Borg |
+| Hook do Nextcloud | `docker-volumes` (NFS) | snapshots ZFS e Borg |
+| `immich.json` (contém o segredo do cliente OIDC) | disco local da VM, em `/opt/local-data/immich-config` (`0600`) | regerado pelo `setup-photos-stack-volumes.yml` a partir do vault |
 | Bancos (`immich_db`, `nextcloud_db`), html e config do Nextcloud, cache de modelos | disco local da VM, em `/opt/local-data` | **só os dumps** (abaixo); o html sai da imagem e o cache é baixado de novo |
 
 !!! warning "Bancos fora dos snapshots ZFS"
@@ -70,7 +71,7 @@ Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-v
 |---|---|
 | `IMMICH_VERSION` | `immich_version` (`group_vars/all/main.yml`) |
 | `PHOTOS_STACK_UPLOAD_PATH` | NFS + `zfs_photos_dataset_name` |
-| `PHOTOS_STACK_CONFIG_PATH` | NFS + `docker-volumes/immich/config` |
+| `PHOTOS_STACK_CONFIG_PATH` | `/opt/local-data/immich-config` (disco local: o arquivo tem um segredo) |
 | `PHOTOS_STACK_DB_PATH`, `PHOTOS_STACK_MODEL_CACHE_PATH` | `vm_local_data_path` + `immich-db` / `immich-model-cache` |
 | `IMMICH_DB_PASSWORD` | vault `immich_db_password` |
 | `NEXTCLOUD_MAJOR` | `nextcloud_major` (`group_vars/all/main.yml`) |
@@ -132,9 +133,10 @@ Depois: `setup-photos-stack-volumes.yml` e `docker restart immich_server` (o Imm
 
 | Situação | Comportamento | O que fazer |
 |---|---|---|
-| Authelia fora do ar | Login novo falha nos dois apps; sessões abertas e apps já logados continuam | Immich: `immich_password_login: true`, playbook e `docker restart immich_server`. Nextcloud: `ncadmin` por `/login?direct=1` |
+| Authelia fora do ar | Login novo falha nos dois apps; sessões abertas e apps já logados continuam | Immich: `immich_password_login: true`, playbook e `docker restart immich_server`; entre por `https://fotos.<domínio>/auth/login?autoLaunch=0` (sem isso, a tela pula direto para o Authelia). Nextcloud: `ncadmin` por `/login?direct=1` |
 | Upload acima de 100 MB pelo túnel | A Cloudflare responde 413 | Nextcloud: pedaços de 50 MB (navegador e `maxChunkSize` no desktop). Immich: o vídeo sobe em casa, pela URL local |
 | Collabora não abre o documento | O Nextcloud recusa as chamadas WOPI | Confira `wopi_allowlist` (redes Docker), `aliasgroup1` e o `extra_hosts` do `collabora`; `docker logs collabora` |
+| Editor do Collabora em branco dentro do Nextcloud | O navegador recusou o iframe de `office.` | O Traefik aplica `X-Frame-Options: SAMEORIGIN` em tudo; o Collabora manda `Content-Security-Policy: frame-ancestors`, que os navegadores atuais respeitam no lugar dele. Se o console do navegador acusar `X-Frame-Options`, o middleware global não pode ser desligado só para um router: tire o `customFrameOptionsValue` do `securityHeaders` ([seção 5](05-rede-segura.md)) e confie no cabeçalho de cada aplicação (a conferir no primeiro deploy) |
 | Aviso no log do hook (`homeserver-hook: aviso`) | O Nextcloud sobe com aquele passo pendente | Corrija a causa (ex.: loja de apps fora do ar) e `docker restart nextcloud_app` |
 | Cota cheia | Uploads falham; alerta `disco-cheio` | `zfs set quota=<maior> data/photos` (ou `data/files`) ou mova o dataset para os discos novos ([seção 2](02-proxmox-ve-host.md)) |
 | Disco local da VM perdido | Bancos perdidos; fotos e arquivos intactos no NFS | Immich: [restauração do backup](https://docs.immich.app/administration/backup-and-restore) a partir de `photos/backups/` (container `immich_db`, usuário `immich`). Nextcloud: abaixo |

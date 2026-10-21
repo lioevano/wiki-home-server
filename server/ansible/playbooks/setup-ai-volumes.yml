@@ -151,6 +151,7 @@
         stack_name: ai
         stack_configs:
           - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'CORE_SERVICES_VM_IP_VAR', value: "{{ core_services_vm_ip_var }}" } # login OIDC pela LAN
           - { name: 'AI_STACK_LITELLM_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/litellm/config" }
           - { name: 'AI_STACK_LITELLM_DB_PATH', value: "{{ vm_local_data_path }}/litellm-db" }
           - { name: 'AI_STACK_OLLAMA_MODELS_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/ollama/models" }

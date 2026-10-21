@@ -17,6 +17,8 @@ services:
       - "${PHOTOS_STACK_UPLOAD_PATH}:/data" # dataset photos (NFS): uploads, miniaturas, vídeos convertidos e dumps do banco
       - "${PHOTOS_STACK_CONFIG_PATH}:/config:ro" # immich.json gerado pelo Ansible
       - "/etc/localtime:/etc/localtime:ro"
+    extra_hosts: # login OIDC pela LAN: descoberta e troca de código com o Authelia via Traefik na core
+      - "auth.${BASE_DOMAIN_FROM_VAULT}:${CORE_SERVICES_VM_IP_VAR}"
     environment:
       IMMICH_CONFIG_FILE: /config/immich.json
       DB_HOSTNAME: immich_db

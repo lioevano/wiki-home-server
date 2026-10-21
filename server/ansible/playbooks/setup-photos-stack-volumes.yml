@@ -17,13 +17,15 @@
         group: root
         mode: '0755'
 
-    - name: Criar diretório de configuração do Immich no NFS
+    # Disco local: o immich.json tem o segredo do cliente OIDC, e no NFS (all_squash) qualquer VM que monta
+    # docker-volumes o leria. É regerado pelo playbook a partir do vault (não precisa de backup).
+    - name: Criar diretório de configuração do Immich no disco local
       ansible.builtin.file:
-        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/immich/config"
+        path: "{{ vm_local_data_path }}/immich-config"
         state: directory
         owner: "{{ docker_puid }}"
         group: "{{ docker_pgid }}"
-        mode: '0775'
+        mode: '0700'
 
     # Disco local: o Postgres do Immich não pode ficar em NFS; o cache de modelos é descartável.
     - name: Criar diretórios locais do Immich (banco e cache de modelos)
@@ -38,7 +40,7 @@
     - name: Gerar a configuração do Immich (contém o segredo do cliente OIDC)
       ansible.builtin.template:
         src: ../templates/immich/immich.json.j2
-        dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/immich/config/immich.json"
+        dest: "{{ vm_local_data_path }}/immich-config/immich.json"
         owner: "{{ docker_puid }}"
         group: "{{ docker_pgid }}"
         mode: '0600'
@@ -55,7 +57,7 @@
         stack_configs:
           - { name: 'IMMICH_VERSION', value: "{{ immich_version }}" }
           - { name: 'PHOTOS_STACK_UPLOAD_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_photos_dataset_name }}" }
-          - { name: 'PHOTOS_STACK_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/immich/config" }
+          - { name: 'PHOTOS_STACK_CONFIG_PATH', value: "{{ vm_local_data_path }}/immich-config" }
           - { name: 'PHOTOS_STACK_DB_PATH', value: "{{ vm_local_data_path }}/immich-db" }
           - { name: 'PHOTOS_STACK_MODEL_CACHE_PATH', value: "{{ vm_local_data_path }}/immich-model-cache" }
           - { name: 'IMMICH_DB_PASSWORD', value: "{{ immich_db_password }}" }
