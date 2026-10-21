@@ -472,7 +472,8 @@ def test_rotas_notes():
 UNIT_VARS = dict(vm_nfs_mount_base_path="/mnt/pve_data_zfs", zfs_files_dataset_name="files",
                  notes_nextcloud_usuario="leo", vm_local_data_path="/opt/local-data", docker_puid=1001,
                  docker_pgid=1001, markitdown_version="0.1.8",
-                 notes_documentos_extensoes=["pdf", "docx", "md"], notes_documentos_max_mb=50)
+                 notes_documentos_extensoes=["pdf", "docx", "md"], notes_documentos_max_mb=50,
+                 zfs_notes_dataset_name="notes")
 
 
 def _unit(nome) -> str:
@@ -515,14 +516,49 @@ def test_conversor_tem_tempo_limite():
 
 
 def test_coletor_systemd_e_alerta():
+    """#16 e #34: units do segundo cérebro e dos dumps de banco; um alerta por falha, sem repetir a cada rodada."""
     alloy = (ROOT / "server/ansible/roles/infra/alloy/templates/config.alloy.j2").read_text(encoding="utf-8")
-    assert 'enable_collectors = ["systemd"]' in alloy and 'unit_include = "notes-.+\\\\.service"' in alloy
+    assert 'enable_collectors = ["systemd"]' in alloy and 'unit_include = "(notes|backup)-.+\\\\.service"' in alloy
     regras = {r["uid"]: r for r in yaml.safe_load(render(
         "templates/grafana/alerting/rules.yml.j2"))["groups"][0]["rules"]}
-    r = regras["notes-timer-falhou"]
-    assert r["data"][0]["model"]["expr"] == 'node_systemd_unit_state{name=~"notes-.*", state="failed"}'
+    assert "notes-timer-falhou" not in regras
+    r = regras["timer-falhou"]
+    assert r["data"][0]["model"]["expr"] == (
+        'max_over_time(node_systemd_unit_state{name=~"(notes|backup)-.+\\\\.service", state="failed"}[30m])')
     assert r["data"][1]["model"]["conditions"][0]["evaluator"] == {"type": "gt", "params": [0]}
     assert r["labels"]["severity"] == "warning"
+
+
+def test_origem_com_aspas_e_barra_vira_yaml_valido(tmp_path):
+    """#14: o caminho vai entre aspas duplas no cabeçalho YAML; aspas e barras invertidas são escapadas."""
+    c = _conv()
+    origem, destino = tmp_path / "origem", tmp_path / "destino"
+    _arq(origem, 'rel "final" \\ v2.pdf')
+    c.sincronizar(origem, destino, EXT, 10_000, _falso)
+    texto = next(destino.glob("*.md")).read_text(encoding="utf-8")
+    cabecalho = yaml.safe_load(texto.split("---\n")[1])
+    assert cabecalho["origem"] == 'Nextcloud/rel "final" \\ v2.pdf'
+
+
+def test_units_exigem_as_montagens():
+    """#17: sem o NFS montado, a unit nem começa (em vez de ler uma pasta vazia)."""
+    doc = _unit("notes-documentos.service")
+    assert "RequiresMountsFor=/mnt/pve_data_zfs/files" in doc
+    idx = _unit("notes-indice.service")
+    assert "RequiresMountsFor=/mnt/pve_data_zfs/notes" in idx
+
+
+def test_escrita_com_sistema_de_arquivos_so_leitura():
+    """#20: mesmo que o cliente MCP troque as roots, só trabalho/ e estudos/ aceitam escrita."""
+    e = _svc(NOTES)["notes_escrita"]
+    assert e["read_only"] is True
+    assert e["tmpfs"] == ["/tmp"]
+    assert _env(e)["HOME"] == "/tmp"
+
+
+def test_syncthing_painel_explicito():
+    """#19: o endereço do painel não depende do padrão da imagem."""
+    assert _env(_svc(NOTES)["syncthing"])["STGUIADDRESS"] == "0.0.0.0:8384"
 
 
 # --- Task 8: Open WebUI com os dois MCPs ---

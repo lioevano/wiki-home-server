@@ -92,7 +92,8 @@ def sincronizar(origem: Path, destino: Path, extensoes: set[str], max_bytes: int
                     resumo.mantidos += 1
                     continue
                 texto = converter(p)
-                _gravar(saida, f'---\norigem: "Nextcloud/{rel}"\n---\n\n{texto}')
+                origem_yaml = rel.replace("\\", "\\\\").replace('"', '\\"')  # aspas duplas do YAML
+                _gravar(saida, f'---\norigem: "Nextcloud/{origem_yaml}"\n---\n\n{texto}')
             except Exception as erro:
                 print(f"falha ao converter {rel}: {erro}", file=sys.stderr)
                 resumo.falhas.append(rel)

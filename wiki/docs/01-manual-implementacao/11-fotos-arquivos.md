@@ -40,7 +40,7 @@ Os três endereços públicos ficam fora do forward-auth do Authelia (regras `by
     O Immich exige o banco em disco local ("never a network share"), e o do Nextcloud foi junto. O html e o config do Nextcloud também ficam no disco local: o `occ` e o cron só rodam como o dono do `config.php`, e o entrypoint entrega os arquivos ao `www-data` com `chown`, o que o NFS com `all_squash` não permite. Esses diretórios ficam fora dos snapshots ZFS: o backup deles são os **dumps diários** no NFS:
 
     * **Immich:** o próprio Immich grava um dump por dia às 02:00 em `photos/backups/` e guarda os 14 últimos.
-    * **Nextcloud:** o timer `backup-nextcloud-db.timer` roda `/usr/local/sbin/backup-nextcloud-db.sh` às 03:30 e grava `nextcloud-<data>.dump` (banco) e `nextcloud-config-<data>.tar.gz` (o `config/`, com `instanceid`, `secret` e `passwordsalt`) em `docker-volumes/nextcloud/db-dumps/`, guardando duas semanas.
+    * **Nextcloud:** o timer `backup-nextcloud-db.timer` roda `/usr/local/sbin/backup-nextcloud-db.sh` às 03:30 e grava `nextcloud-<data>.dump` (banco) e `nextcloud-config-<data>.tar.gz` (o `config/`, com `instanceid`, `secret` e `passwordsalt`) em `docker-volumes/nextcloud/db-dumps/`, guardando duas semanas. Se o dump falhar, o alerta `timer-falhou` avisa ([seção 9](09-painel-notificacoes.md)).
 
     Os dois estão na [estratégia de backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md).
 

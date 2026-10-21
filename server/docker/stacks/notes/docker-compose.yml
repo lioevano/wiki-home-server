@@ -40,6 +40,7 @@ services:
       - STCONFDIR=/var/syncthing/config
       - STDATADIR=/var/syncthing/data
       - STGUIAPIKEY=${SYNCTHING_API_KEY}
+      - STGUIADDRESS=0.0.0.0:8384 # explícito (não depende do padrão da imagem); a porta só sai no IP da VM
       - STNOUPGRADE=1 # versão fixada; atualização pela imagem
     healthcheck:
       test: ["CMD-SHELL", "curl -fkLsS -m 2 127.0.0.1:8384/rest/noauth/health | grep -o OK || exit 1"]
@@ -89,6 +90,11 @@ services:
       diun.enable: "false"
     networks:
       - notes_mcp
+    # Sistema de arquivos só leitura: mesmo que o cliente MCP troque as roots do server-filesystem, só as
+    # montagens de trabalho/ e estudos/ aceitam escrita.
+    read_only: true
+    tmpfs:
+      - /tmp
     command: ["supergateway", "--stdio", "mcp-server-filesystem /notes/trabalho /notes/estudos",
               "--outputTransport", "streamableHttp", "--stateful", "--sessionTimeout", "600000",
               "--port", "8000", "--healthEndpoint", "/healthz"]
@@ -99,6 +105,7 @@ services:
       - "${NOTES_STACK_DATA_PATH}/estudos/.obsidian:/notes/estudos/.obsidian:ro"
     environment:
       - TZ=${SYSTEM_TIMEZONE}
+      - HOME=/tmp # o resto do sistema de arquivos é só leitura
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 1m

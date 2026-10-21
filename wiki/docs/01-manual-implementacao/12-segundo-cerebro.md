@@ -49,7 +49,7 @@ O dataset `data/notes` (cota de 20G, [seção 2](02-proxmox-ve-host.md)) é expo
 
 Todos os seus arquivos do Nextcloud (`<files>/<notes_nextcloud_usuario>/files`), exceto imagem, vídeo e áudio, são convertidos para Markdown pelo **markitdown** e indexados como a coleção `documentos`. A conversão roda a cada 10 minutos (timer `notes-documentos`) e é incremental: só converte o que mudou (tamanho ou data) e remove a cópia do que você apagou ou moveu. O resultado fica no disco local da VM (`/opt/local-data/notes-documentos`), porque pode ser regerado a qualquer momento. Arquivos ocultos, links simbólicos e arquivos acima de `notes_documentos_max_mb` ficam de fora; um arquivo que o markitdown não consegue ler aparece no log (`journalctl -u notes-documentos`) e é tentado de novo na próxima rodada.
 
-Se a origem estiver vazia ou não existir (por exemplo, o NFS do `files` não montou), o conversor **não apaga nada** e termina com código 2 — o alerta `notes-timer-falhou` avisa. Para recomeçar do zero, apague `/opt/local-data/notes-documentos` inteiro.
+Se a origem estiver vazia ou não existir (por exemplo, o NFS do `files` não montou), o conversor **não apaga nada** e termina com código 2 — o alerta `timer-falhou` avisa. Com o NFS desmontado, a unit nem começa (`RequiresMountsFor=`). Para recomeçar do zero, apague `/opt/local-data/notes-documentos` inteiro.
 
 ```python title="ansible/templates/notes/conversor.py"
 """Converte os documentos do Nextcloud para Markdown, de forma incremental (segundo cérebro, página 12).
@@ -146,7 +146,8 @@ def sincronizar(origem: Path, destino: Path, extensoes: set[str], max_bytes: int
                     resumo.mantidos += 1
                     continue
                 texto = converter(p)
-                _gravar(saida, f'---\norigem: "Nextcloud/{rel}"\n---\n\n{texto}')
+                origem_yaml = rel.replace("\\", "\\\\").replace('"', '\\"')  # aspas duplas do YAML
+                _gravar(saida, f'---\norigem: "Nextcloud/{origem_yaml}"\n---\n\n{texto}')
             except Exception as erro:
                 print(f"falha ao converter {rel}: {erro}", file=sys.stderr)
                 resumo.falhas.append(rel)
@@ -251,7 +252,7 @@ collections:
 
 ## Escrita (Trabalho e Estudos)
 
-O MCP oficial de arquivos (`@modelcontextprotocol/server-filesystem`) roda dentro do **supergateway**, que o expõe em `http://notes_escrita:8000/mcp` (Streamable HTTP), também só na rede `notes_mcp`. O container monta **apenas** `trabalho/` e `estudos/`: o vault Pessoal e os arquivos do Nextcloud não existem para ele, então nenhuma instrução (nem uma nota maliciosa) consegue alterá-los. A pasta `.obsidian` de cada vault entra **só leitura** por cima: ela guarda os plugins do Obsidian, que rodam JavaScript no PC — uma injeção de prompt não pode instalar ou ligar um plugin. O playbook cria essas pastas antes do deploy (a montagem precisa delas). Continua possível a IA escrever blocos `dataviewjs` ou de Templater numa nota; se você usa esses plugins, revise o que a IA escreveu antes de abrir a nota. Ferramentas: ler, listar, buscar por nome, criar, sobrescrever (`write_file`), editar trechos (`edit_file`, com prévia), criar pastas e mover — **não há ferramenta de apagar**, e mover não sobrescreve um destino existente.
+O MCP oficial de arquivos (`@modelcontextprotocol/server-filesystem`) roda dentro do **supergateway**, que o expõe em `http://notes_escrita:8000/mcp` (Streamable HTTP), também só na rede `notes_mcp`. O container monta **apenas** `trabalho/` e `estudos/`: o vault Pessoal e os arquivos do Nextcloud não existem para ele, então nenhuma instrução (nem uma nota maliciosa) consegue alterá-los. A pasta `.obsidian` de cada vault entra **só leitura** por cima: ela guarda os plugins do Obsidian, que rodam JavaScript no PC — uma injeção de prompt não pode instalar ou ligar um plugin. O playbook cria essas pastas antes do deploy (a montagem precisa delas). O resto do container é **só leitura** (`read_only: true`, com `/tmp` em memória): o cliente MCP pode pedir outras pastas (as *roots* do protocolo substituem as da linha de comando), mas fora de `trabalho/` e `estudos/` só existem os arquivos do sistema, e nenhum aceita escrita. Continua possível a IA escrever blocos `dataviewjs` ou de Templater numa nota; se você usa esses plugins, revise o que a IA escreveu antes de abrir a nota. Ferramentas: ler, listar, buscar por nome, criar, sobrescrever (`write_file`), editar trechos (`edit_file`, com prévia), criar pastas e mover — **não há ferramenta de apagar**, e mover não sobrescreve um destino existente.
 
 ```jinja title="ansible/templates/notes/Dockerfile.escrita.j2"
 # Imagem do MCP de escrita do segundo cérebro (página 12): server-filesystem exposto em HTTP pelo supergateway.
@@ -269,7 +270,7 @@ O `setup-notes-volumes.yml` gera as chaves e o `config.xml` antes do primeiro de
 ### Parear os aparelhos
 
 1. No servidor (painel `sync.`), em **Ações → Mostrar ID**, copie o ID do dispositivo.
-2. No PC e no celular, adicione o dispositivo com esse ID. Como o container não recebe a descoberta local, informe o endereço `tcp://<IP da ai-desktop-vm>:22000` (e deixe `dynamic` também, para fora de casa).
+2. No PC e no celular, adicione o dispositivo com esse ID. Como o container não recebe a descoberta local, informe o endereço `tcp://<IP da ai-desktop-vm>:22000` (e deixe `dynamic` também, para fora de casa). A porta `21027/udp` da descoberta local não é publicada de propósito: o broadcast da LAN não atravessa a ponte do Docker, e o endereço fixo resolve.
 3. No servidor, aceite os dispositivos e crie três pastas, com caminhos `/var/syncthing/notes/pessoal`, `/var/syncthing/notes/trabalho` e `/var/syncthing/notes/estudos`, compartilhadas com os dois aparelhos. Em cada aparelho, aceite a pasta e aponte para o vault correspondente do Obsidian.
 4. Nos aparelhos (não no servidor), ligue o **versionamento "Staggered"** em cada pasta: é ele que guarda a versão anterior quando uma edição chega de outro lugar — inclusive uma edição da IA no servidor.
 5. Em cada pasta, crie o `.stignore` com as linhas abaixo, para não sincronizar o estado da janela do Obsidian, que muda o tempo todo:
@@ -296,7 +297,7 @@ Dica: deixe só o conector de busca ligado na conversa e ligue o de escrita quan
 
 ## Conversão e indexação periódicas
 
-Dois timers systemd na `ai-desktop-vm`, instalados pelo `setup-notes-volumes.yml` (habilitados, mas só iniciados depois do deploy da stack): `notes-documentos` converte os documentos do Nextcloud a cada 10 minutos, e `notes-indice` roda `qmd update` (lê o que mudou) e `qmd embed` (gera os vetores) 5 minutos depois. O `flock` impede duas rodadas ao mesmo tempo — a primeira conversão e o primeiro `embed` podem levar horas; enquanto isso, as rodadas seguintes saem sem fazer nada. Se uma rodada falhar, o Alloy (coletor `systemd`) vê a unit em `failed` e o Grafana manda o alerta **notes-timer-falhou**.
+Dois timers systemd na `ai-desktop-vm`, instalados pelo `setup-notes-volumes.yml` (habilitados, mas só iniciados depois do deploy da stack): `notes-documentos` converte os documentos do Nextcloud a cada 10 minutos, e `notes-indice` roda `qmd update` (lê o que mudou) e `qmd embed` (gera os vetores) 5 minutos depois. O `flock` impede duas rodadas ao mesmo tempo — a primeira conversão e o primeiro `embed` podem levar horas; enquanto isso, as rodadas seguintes saem sem fazer nada. Se uma rodada falhar, o Alloy (coletor `systemd`) vê a unit em `failed` e o Grafana manda o alerta **timer-falhou** (uma vez: a regra olha os últimos 30 minutos, então a falha que se repete a cada rodada não gera um aviso novo a cada 10 minutos).
 
 ```jinja title="ansible/templates/notes/notes-documentos.service.j2"
 # Conversão dos documentos do Nextcloud (segundo cérebro, página 12). Origem só leitura.
@@ -304,6 +305,8 @@ Dois timers systemd na `ai-desktop-vm`, instalados pelo `setup-notes-volumes.yml
 Description=Converte os documentos do Nextcloud para Markdown (segundo cérebro)
 Requires=docker.service
 After=docker.service remote-fs.target
+# Sem o NFS do files montado, a unit nem começa (o conversor também se recusa a apagar com a origem vazia).
+RequiresMountsFor={{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}
 
 [Service]
 Type=oneshot
@@ -333,6 +336,8 @@ WantedBy=timers.target
 Description=Atualiza o índice do qmd (segundo cérebro)
 Requires=docker.service
 After=docker.service notes-documentos.service
+# Sem os vaults montados, o qmd veria as pastas vazias e tiraria tudo do índice.
+RequiresMountsFor={{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}
 
 [Service]
 Type=oneshot
@@ -370,7 +375,7 @@ O Syncthing propaga a versão restaurada para o PC e o celular. Nos aparelhos, o
 | Servidor fora | O Obsidian segue funcionando; o PC e o celular sincronizam direto entre si quando os dois estão ligados | Nada: o servidor recebe tudo ao voltar |
 | Conflito (você e a IA na mesma nota) | Syncthing cria `*.sync-conflict-*` | Juntar à mão e apagar a cópia |
 | Busca desatualizada ou estranha | Índice parado ou corrompido | `docker exec qmd sh -c 'qmd update && qmd embed'`; em último caso, pare o `qmd`, apague `/opt/local-data/qmd/qmd` e rode de novo |
-| Alerta `notes-timer-falhou` | Conversão ou indexação falhou | `journalctl -u notes-documentos` / `-u notes-indice`; código 2 no conversor = origem vazia (NFS do `files` não montou) |
+| Alerta `timer-falhou` (`notes-*`) | Conversão ou indexação falhou | `journalctl -u notes-documentos` / `-u notes-indice`; código 2 no conversor = origem vazia (NFS do `files` não montou) |
 | Vulkan não pega | O qmd usa a CPU (indexação mais lenta) | Nada; `docker logs qmd` mostra o backend |
 | Conector pede login de novo | Estado OAuth perdido ou `mcp_auth_hmac_secret` trocado | Conectar de novo no claude.ai / `/mcp` no Claude Code |
 | Login no conector recusado | Usuário fora do grupo `admins` do Authelia, ou redirect errado no cliente `mcp` | Conferir o grupo e o `configuration.yml` |

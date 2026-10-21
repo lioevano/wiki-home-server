@@ -238,6 +238,8 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
     state: directory
     mode: '0755'
 
+# default-address-pools: as redes Docker saem só de 172.16.0.0/12 (blocos /24). As regras de UFW que confiam
+# nessa faixa valem por construção, e o Docker nunca usa 192.168.0.0/16, onde está a LAN.
 - name: "Configurar o daemon do Docker sem o image store do containerd"
   ansible.builtin.copy:
     dest: /etc/docker/daemon.json
@@ -245,8 +247,30 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
       {
         "features": {
           "containerd-snapshotter": false
-        }
+        },
+        "default-address-pools": [
+          {"base": "172.16.0.0/12", "size": 24}
+        ]
       }
+    owner: root
+    group: root
+    mode: '0644'
+
+# Ordem de boot: o Docker sobe depois das montagens NFS (remote-fs.target), para nenhum container nascer com a
+# pasta vazia por baixo. Wants (e não Requires): com o NFS fora, a core ainda sobe Traefik e Authelia.
+- name: "Garantir o drop-in do serviço Docker"
+  ansible.builtin.file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    mode: '0755'
+
+- name: "Docker depois das montagens de rede"
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/docker.service.d/10-montagens.conf
+    content: |
+      [Unit]
+      After=remote-fs.target
+      Wants=remote-fs.target
     owner: root
     group: root
     mode: '0644'
@@ -266,6 +290,7 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
     name: docker
     state: started
     enabled: yes
+    daemon_reload: true # lê o drop-in de montagens
 
 - name: "Adicionar usuários ao grupo 'docker' do sistema para permitir execução de comandos Docker sem sudo"
   ansible.builtin.user:
@@ -656,13 +681,14 @@ loki.source.file "var_log" {
 }
 
 // ---------- Métricas do host ----------
-// O coletor systemd (além dos padrões) expõe o estado das units notes-* (timers do segundo cérebro, página 12),
-// usado pelo alerta notes-timer-falhou. Restrito a elas para não gerar uma série por unit do sistema.
+// O coletor systemd (além dos padrões) expõe o estado das units notes-* (timers do segundo cérebro, página 12)
+// e backup-* (dumps diários dos bancos), usado pelo alerta timer-falhou. Restrito a elas para não gerar uma
+// série por unit do sistema.
 prometheus.exporter.unix "host" {
   enable_collectors = ["systemd"]
 
   systemd {
-    unit_include = "notes-.+\\.service"
+    unit_include = "(notes|backup)-.+\\.service"
   }
 }
 

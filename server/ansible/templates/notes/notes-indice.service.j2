@@ -3,6 +3,8 @@
 Description=Atualiza o índice do qmd (segundo cérebro)
 Requires=docker.service
 After=docker.service notes-documentos.service
+# Sem os vaults montados, o qmd veria as pastas vazias e tiraria tudo do índice.
+RequiresMountsFor={{ vm_nfs_mount_base_path }}/{{ zfs_notes_dataset_name }}
 
 [Service]
 Type=oneshot

@@ -78,3 +78,32 @@ def test_repositorios_enterprise_nos_dois_formatos():
     antigo = _tarefa(bloco, "no-subscription (PVE 8")
     assert "ansible.builtin.apt_repository" in antigo
     assert deb822["when"] != antigo["when"]
+
+
+# --- Pendências menores (#21, #50) ---
+
+def _daemon_json():
+    import json
+    t = _tarefa(_yaml(DOCKER_TASKS), "daemon do Docker")
+    return json.loads(t["ansible.builtin.copy"]["content"])
+
+
+def test_pools_do_docker_fixos_fora_da_lan():
+    """#50: as regras de UFW para 172.16.0.0/12 valem por construção; nunca 192.168.0.0/16 (a LAN)."""
+    import ipaddress
+    d = _daemon_json()
+    assert d["features"]["containerd-snapshotter"] is False
+    pools = d["default-address-pools"]
+    assert pools == [{"base": "172.16.0.0/12", "size": 24}]
+    assert not ipaddress.ip_network(pools[0]["base"]).overlaps(ipaddress.ip_network("192.168.0.0/16"))
+
+
+def test_docker_depois_do_nfs_sem_exigir():
+    """#21: o Docker sobe depois das montagens de rede, mas o NFS fora não impede a core de subir."""
+    t = _tarefa(_yaml(DOCKER_TASKS), "Docker depois das montagens")
+    c = t["ansible.builtin.copy"]
+    assert c["dest"] == "/etc/systemd/system/docker.service.d/10-montagens.conf"
+    assert "After=remote-fs.target" in c["content"] and "Wants=remote-fs.target" in c["content"]
+    assert "Requires" not in c["content"]
+    servico = _tarefa(_yaml(DOCKER_TASKS), "serviço Docker está rodando")
+    assert servico["ansible.builtin.systemd_service"]["daemon_reload"] is True

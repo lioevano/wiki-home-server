@@ -3,6 +3,8 @@
 Description=Converte os documentos do Nextcloud para Markdown (segundo cérebro)
 Requires=docker.service
 After=docker.service remote-fs.target
+# Sem o NFS do files montado, a unit nem começa (o conversor também se recusa a apagar com a origem vazia).
+RequiresMountsFor={{ vm_nfs_mount_base_path }}/{{ zfs_files_dataset_name }}
 
 [Service]
 Type=oneshot

@@ -132,8 +132,9 @@ Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando se
     # Fotos e arquivos com cota (ajuste os tamanhos ao seu acervo; ver a página 11):
     root@pve:~# zfs create -o quota=150G data/photos
     root@pve:~# zfs create -o quota=75G data/files
-    # Vaults do Obsidian (segundo cérebro, página 12):
-    root@pve:~# zfs create -o quota=20G data/notes
+    # Vaults do Obsidian (segundo cérebro, página 12). refquota (não quota): os snapshots automáticos não
+    # contam no limite, então a IA e o Syncthing nunca têm a escrita recusada por causa deles.
+    root@pve:~# zfs create -o refquota=20G data/notes
     # A raiz de cada dataset nasce root:root 0755; com all_squash, toda escrita das VMs chega como o dockeruser
     # e seria recusada. Entregue as raízes a ele (use os valores de docker_puid e docker_pgid do vault):
     root@pve:~# chown <docker_puid>:<docker_pgid> /data/docker-volumes /data/media /data/rag_sources /data/photos /data/files /data/notes
