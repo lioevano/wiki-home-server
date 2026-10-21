@@ -10,7 +10,7 @@ depois `python tools/dev.py sync`. Consulte o `INDEX.md` para achar a página de
   `ai_desktop` (`ai-desktop-vm`), `virtual_machines` e `ubuntu_vms` (filhos: `core_services`, `ai_desktop`).
 - Variáveis globais não secretas: `inventories/home/group_vars/all/main.yml`.
   Segredos: `vault.yml` (criptografado com `ansible-vault`); modelo em `vault.yml.example`.
-- Roles por categoria: `roles/common/`, `roles/infra/<role>/`, `roles/apps/<role>/`, `roles/tools/<role>/`,
+- Roles por categoria: `roles/common/`, `roles/infra/<role>/`, `roles/apps/<role>/`,
   com `tasks/`, `handlers/`, `defaults/`, `templates/` conforme necessário.
 - Playbooks em `playbooks/`: `setup-<alvo>.yml` para configurar hosts, `setup-<stack>-volumes.yml` para
   preparar volumes/configs de uma stack, `vm-deploy.yml` (VMs no Proxmox), `full-deploy.yml` (orquestra tudo).

@@ -34,7 +34,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
     *   !!! critical "Este é o Passo Mais Importante e Não Pode Ser Ignorado!"
         Antes de iniciar qualquer migração:
         *   Garanta que você tem **backups completos e recentes de todas as suas VMs Proxmox**, salvos em um local acessível (idealmente no seu pool `/data/backups/vms` e também uma cópia off-site). Verifique se os backups foram concluídos com sucesso.
-        *   Faça um **backup completo dos seus dados do pool ZFS `/data`** (que contém `docker-volumes`, `media`, `rag_sources`, etc.). A melhor forma é usar [BorgBackup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#b-volumes-de-arquivos-configs-docker-mídia-modelos-rag) para um destino externo. Se não usa Borg, pelo menos `rsync` para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.
+        *   Faça um **backup completo dos seus dados do pool ZFS `/data`** (que contém `docker-volumes`, `media`, `photos`, `files`, `notes`, etc.). A melhor forma é usar [BorgBackup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#b-volumes-de-arquivos-configs-docker-mídia-modelos-rag) para um destino externo. Se não usa Borg, pelo menos `rsync` para um HD externo. Dumps de banco de dados também devem estar incluídos ou feitos separadamente.
         *   Faça um backup da [configuração do seu host Proxmox antigo](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#1-configuração-do-host-proxmox-ve) (arquivos de `/etc/`).
         *   Certifique-se de que seu **repositório `homeserver` está totalmente atualizado e enviado (`pushed`) para seu Git remote** (GitHub, GitLab, etc.).
         *   Tenha sua **senha do Ansible Vault** em local seguro.
@@ -115,7 +115,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         *   Preparar os diretórios e arquivos `.env` para as stacks Docker.
 
 8.  **Verificar e (Re)Implantar/Atualizar Stacks Docker no Portainer:**
-    *   Acesse sua instância Portainer (e.g., `https://portainer.{{ base_domain }}`).
+    *   Acesse sua instância Portainer (e.g., `https://portainer.seudominio.com`).
     *   Como os dados do volume `/data/docker-volumes/portainer/data` foram migrados com o pool ZFS, suas configurações de stacks, endpoints e usuários do Portainer **devem estar lá**.
     *   Navegue para "**Stacks**". Suas stacks devem estar listadas.
     *   Para cada stack, pode ser uma boa ideia:
@@ -179,7 +179,13 @@ Se você precisar alterar o esquema de IP da sua rede doméstica (e.g., seu rote
         ```
 7.  **Configurações de Aplicações Específicas que Referenciam IPs (Raro, mas Verifique):**
     *   Idealmente, nenhuma das suas aplicações Docker deve ter sido configurada para usar IPs fixos da sua LAN diretamente em suas configurações. Elas devem usar nomes de serviço Docker para comunicação interna ou serem acessadas via Traefik/DNS para acesso externo.
-    *   O único lugar onde um IP de VM é explicitamente usado em nossa configuração é no template `dynamic_rag_services.yml.j2` para o Traefik File Provider, que usa `{{ ai_desktop_vm_ip_var }}`. Como esta variável vem do inventário Ansible (`hosts.ini`), ela será atualizada automaticamente quando o Ansible gerar o arquivo dinâmico do Traefik (durante a execução de `setup-core-networking.yml`, que está incluído no `full-deploy.yml`).
+    *   Os IPs das VMs aparecem em vários lugares, mas **todos vêm do inventário**: o `ansible_host` no `hosts.ini` e as variáveis `core_services_vm_ip_var`/`ai_desktop_vm_ip_var` do `main.yml`, que devem bater com ele. São eles:
+        *   o roteamento do Traefik para a VM de IA (`dynamic_ai_services.yml.j2`);
+        *   as portas publicadas só no IP da LAN (`CORE_SERVICES_VM_IP_VAR` e `AI_DESKTOP_VM_IP` nos `.env`);
+        *   os `extra_hosts` de `auth.` e `nextcloud.`;
+        *   o export NFS do `notes`;
+        *   o UFW e o Alloy.
+    *   Depois de mudar o inventário, rode o `full-deploy.yml` ([CI/CD](03-cicd-basico-ansible.md)) e cole os `.env` novos nas stacks do Portainer (**Update the stack**). Se o Claude Code usa a rota de controle do hub, refaça o `claude mcp add` com o IP novo.
 8.  **Cloudflare DNS e Tunnel:**
     *   Geralmente, **não precisam de mudanças diretas** devido a uma alteração no esquema de IP da sua LAN. O Cloudflare Tunnel estabelece uma conexão de *saída* e não depende dos IPs internos da sua LAN para o acesso externo aos seus serviços (desde que o `cloudflared` agent e o Traefik consigam se comunicar dentro da VM).
 

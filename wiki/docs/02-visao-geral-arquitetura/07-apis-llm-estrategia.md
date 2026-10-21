@@ -20,41 +20,27 @@ A combinação de LLMs locais e em nuvem nos permite superar as limitações ine
 | **Disponibilidade** | Dependente da estabilidade do seu servidor e conexão. | Alta disponibilidade garantida pelo provedor de nuvem (SLA). |
 | **Manutenção** | Requer gerenciamento de modelos, drivers e atualizações. | Nenhuma manutenção de modelo ou infraestrutura necessária. |
 
-Nossa estratégia visa combinar esses pontos fortes. O diagrama a seguir ilustra o fluxo de decisão que o LiteLLM nos permite implementar:
+Nossa estratégia combina esses pontos fortes com **um gateway só**: todo cliente fala com o LiteLLM, com uma chave virtual própria, e escolhe um **apelido** pela intenção. O LiteLLM traduz o apelido no modelo real, cai para a reserva se o provedor falhar e registra o custo e o rastro de cada chamada:
 
 ```mermaid
-graph TD
-    A[Aplicação Cliente \n(Open WebUI, n8n, Script Custom)] -- Requisição API OpenAI-Compatible --> B(LiteLLM Proxy);
-
-    subgraph LiteLLM - Lógica de Roteamento
-        B -- Avalia a Requisição --> C{Qual modelo foi solicitado?};
-        C -- Modelo Específico \n(ex: "gpt-4o") --> D[Roteia para API Externa Específica];
-        C -- Modelo Genérico \n(ex: "modelo-chat") --> E{Roteamento Inteligente};
+flowchart LR
+    subgraph Clientes["Clientes (uma chave virtual cada)"]
+        owui[Open WebUI]
+        cc[Claude Code<br/>alias claude-gw]
+        n8n[n8n e agentes]
     end
-
-    subgraph Roteamento Inteligente
-        E -- Requisição Simples? \n(Baixo número de tokens, prompt curto) --> F[Ollama (Local)];
-        E -- Requisição Complexa? \n(Análise de documento, geração de código) --> G[API Externa (Fallback)];
-    end
-
-    subgraph Endpoints de IA
-        F -- Conecta-se via IP local --> H[Serviço Ollama \n(llama3, phi3, etc.)];
-        G -- Tenta o 1º da lista --> I(API do Google Gemini);
-        I -- Falhou ou Timeout? --> J(API da Anthropic);
-        J -- Falhou ou Timeout? --> K(API da OpenAI);
-    end
-
-    D --> I;
-    D --> J;
-    D --> K;
-
-    H -- Resposta --> B;
-    I -- Resposta --> B;
-    J -- Resposta --> B;
-    K -- Resposta --> B;
-
-    B -- Resposta Unificada --> A;
+    Clientes -- API OpenAI ou Anthropic --> litellm[LiteLLM<br/>llm_models / llm_fallbacks]
+    litellm -- principal --> sonnet[Anthropic<br/>Claude Sonnet]
+    litellm -- rapido --> haiku[Anthropic<br/>Claude Haiku]
+    litellm -- local --> ollama[Ollama na GPU<br/>llama3.2:3b]
+    litellm -- decisao --> jev[TypeSafe<br/>Jev]
+    sonnet -. falhou .-> gpt[OpenAI<br/>reserva]
+    haiku -. falhou .-> gpt
+    litellm -. custo e métricas .-> prom[Prometheus<br/>alerta llm-gasto-alto]
+    litellm -. cada chamada .-> lf[Langfuse]
 ```
+
+Os modelos e as reservas exatos estão em `llm_models` e `llm_fallbacks` (página 01), renderizados no `config.yaml` pelo template `ansible/templates/litellm_config.yaml.j2` ([Stack de IA](../01-manual-implementacao/08-stack-ia.md#modelos-e-apelidos)). O LiteLLM não decide sozinho pelo tamanho do prompt: quem escolhe é o cliente, pelo apelido.
 
 ## Estratégias de Roteamento e Casos de Uso
 
@@ -79,7 +65,7 @@ O maior risco de uma arquitetura híbrida é o custo inesperado com APIs externa
 
 *   **Orçamento por cliente:** cada cliente tem uma chave virtual própria (`litellm_client_keys`) com orçamento mensal (`litellm_key_budgets`), aplicado pelo `setup-ai-keys.yml`. Estourou, aquele cliente recebe erro; os outros seguem.
 *   **Alerta de gasto:** o Prometheus raspa as métricas do LiteLLM e o alerta `llm-gasto-alto` avisa no Telegram quando o gasto das últimas 24 h passa de `llm_gasto_diario_alerta`.
-*   **Observabilidade:** a tela do LiteLLM em `https://llm.seudominio.com` (atrás do Authelia) mostra gasto, tokens e chamadas por chave e por modelo. O rastreamento passo a passo de agentes (Langfuse) entra com os agentes.
+*   **Observabilidade:** a tela do LiteLLM em `https://llm.seudominio.com` (atrás do Authelia) mostra gasto, tokens e chamadas por chave e por modelo. O rastro de cada chamada (entrada, saída, custo e latência) fica no Langfuse, em `https://langfuse.seudominio.com`.
 *   **Cache:** o cache de respostas do LiteLLM não está ligado; pode ser acrescentado em `litellm_settings` se houver muitas perguntas repetidas.
 
 Ao adotar esta arquitetura de IA híbrida, seu home server se torna uma plataforma de IA resiliente e flexível, com um único lugar para trocar modelos, controlar custos e ver o uso.

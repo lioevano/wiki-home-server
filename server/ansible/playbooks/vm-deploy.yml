@@ -22,7 +22,7 @@
         vm_ipconfig: "ip={{ hostvars['core-services-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
         vm_tags: "docker,core_services,homelab,ansible_managed"
 
-    - name: "Deploy VM: ai-desktop-vm (Opcional, para LLM/RAG com GPU)"
+    - name: "Deploy VM: ai-desktop-vm (IA com GPU: Ollama, segundo cérebro, Langfuse)"
       ansible.builtin.include_role:
         name: infra/proxmox-vm
       vars:

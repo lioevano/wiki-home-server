@@ -94,8 +94,7 @@ homeserver/                 # repositório lioevano/wiki-home-server
 │   │   ├── roles/
 │   │   │   ├── common/
 │   │   │   ├── infra/          # docker, proxmox-host-config, proxmox-vm, traefik-config, authelia-config
-│   │   │   ├── apps/           # desktop-environment, ml-tools
-│   │   │   └── tools/          # ai-cli-tools
+│   │   │   └── apps/           # desktop-environment, ml-tools
 │   │   └── templates/          # prometheus, loki, grafana, homepage, litellm, portainer_stack_env
 │   ├── docker/stacks/
 │   │   ├── .env.template

@@ -164,7 +164,7 @@ Sonarr, Radarr, Lidarr, Prowlarr, Seerr e Jellyfin ([Mídia](10-midia.md#notific
    - `setup-core-networking.yml` — regra do Authelia que libera `/webhook/` (reinicie o Authelia: `sudo docker restart authelia`);
    - `setup-n8n-volumes.yml` e `setup-monitoring-stack-volumes.yml` — workflow, alertas, blackbox, Diun e Homepage; depois atualize a stack `apps` no Portainer (página 07);
    - `setup-ai-volumes.yml` — `diun_ai`; depois atualize a stack `ai`.
-   As variáveis `TELEGRAM_*` e `NOTIFICACOES_WEBHOOK_TOKEN` saem iguais no `n8n.env` e no `monitoring.env`; a junção no `apps.env` (página 07) mantém só a primeira de cada nome.
+   As variáveis `TELEGRAM_*` e `NOTIFICACOES_WEBHOOK_TOKEN` saem iguais no `n8n.env` e no `monitoring.env`; o `apps.env` que os playbooks montam (página 07) mantém só a primeira de cada nome.
 5. Importe e ative o workflow (na `core-services-vm`):
    ```bash
    sudo docker exec n8n_app n8n import:workflow --input=/home/node/.n8n/workflows/notificar.json

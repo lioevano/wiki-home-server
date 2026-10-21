@@ -1,0 +1,104 @@
+# ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2
+# (Copiado para /etc/traefik/dynamic_configs/ai_services.yml no container Traefik)
+# Define roteamento para serviços rodando na ai-desktop-vm (e.g., OpenWebUI).
+# Usa o File Provider do Traefik para definir serviços que não são descobertos via Docker (porque estão em outra VM).
+http:
+  routers:
+    openwebui-dynamic: # Roteador para OpenWebUI
+      entryPoints: ["websecure"] # Usa o entrypoint HTTPS
+      rule: "Host(`openwebui.{{ base_domain }}`)" # Subdomínio para OpenWebUI
+      service: "openwebui-svc-dynamic" # Nome do serviço Traefik definido abaixo
+      tls:
+        certResolver: "letsencrypt" # Usa Let's Encrypt
+      middlewares:
+        - "authelia-forwardauth@docker" # Protegido por Authelia (middleware definido no compose do Authelia)
+
+    litellm-dynamic: # Tela de uso e administração do LiteLLM (llm.); a API fica só na LAN
+      entryPoints: ["websecure"]
+      rule: "Host(`llm.{{ base_domain }}`)"
+      service: "litellm-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+      middlewares:
+        - "authelia-forwardauth@docker"
+
+    langfuse-dynamic: # Rastreio de LLM e ferramentas (página 13); login do Langfuse pelo OIDC do mesmo Authelia
+      entryPoints: ["websecure"]
+      rule: "Host(`langfuse.{{ base_domain }}`)"
+      service: "langfuse-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+      middlewares:
+        - "authelia-forwardauth@docker"
+
+    # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
+    # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
+    notas-dynamic:
+      entryPoints: ["websecure"]
+      rule: "Host(`notas.{{ base_domain }}`)"
+      service: "notas-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+
+    escrita-dynamic:
+      entryPoints: ["websecure"]
+      rule: "Host(`escrita.{{ base_domain }}`)"
+      service: "escrita-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+
+    syncthing-dynamic:
+      entryPoints: ["websecure"]
+      rule: "Host(`sync.{{ base_domain }}`)"
+      service: "syncthing-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+      middlewares:
+        - "authelia-forwardauth@docker"
+
+    # Adicione aqui roteadores para outros serviços da ai-desktop-vm se necessário
+    # Exemplo para um hipotético OpenNotebookLM
+    # opennotebooklm-dynamic:
+    #   entryPoints: ["websecure"]
+    #   rule: "Host(`notebooklm.{{ base_domain }}`)"
+    #   service: "opennotebooklm-svc-dynamic"
+    #   tls: { certResolver: "letsencrypt" }
+    #   middlewares: ["authelia-forwardauth@docker"]
+
+  services:
+    openwebui-svc-dynamic: # Serviço Traefik para OpenWebUI
+      loadBalancer:
+        servers:
+          # Aponta para o IP da ai-desktop-vm e a porta que o compose da stack ai publica (3000 -> 8080 no container).
+          # A variável ai_desktop_vm_ip_var vem do inventário Ansible (hosts.ini).
+          - url: "http://{{ ai_desktop_vm_ip_var }}:3000"
+
+    litellm-svc-dynamic:
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:4000"
+
+    langfuse-svc-dynamic:
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:3100"
+
+    notas-svc-dynamic: # mcp_auth_busca (stack notes)
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:8481"
+
+    escrita-svc-dynamic: # mcp_auth_escrita (stack notes)
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:8482"
+
+    syncthing-svc-dynamic:
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:8384"
+
+    # opennotebooklm-svc-dynamic:
+    #   loadBalancer:
+    #     servers:
+    #       - url: "http://{{ ai_desktop_vm_ip_var }}:7860" # Porta interna do Open-NotebookLM

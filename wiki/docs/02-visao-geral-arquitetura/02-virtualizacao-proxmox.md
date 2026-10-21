@@ -47,7 +47,7 @@ Nesta arquitetura, utilizamos principalmente VMs KVM para isolamento completo de
     *   **Recursos:** 6 vCPUs, 16GB RAM, 100GB disco.
     *   **Sistema Operacional:** Ubuntu Server (instalado via template Cloud-Init).
 *   **`ai-desktop-vm` (Opcional):**
-    *   **Propósito:** Dedicada a tarefas de Inteligência Artificial (LLMs com Ollama, RAG) que podem se beneficiar de GPU passthrough (RX 5600XT). Pode também ter um ambiente desktop para interação direta.
+    *   **Propósito:** Dedicada a tarefas de Inteligência Artificial (LLMs com Ollama, segundo cérebro) que podem se beneficiar de GPU passthrough (RX 5600XT). Pode também ter um ambiente desktop para interação direta.
     *   **Recursos:** 4 vCPUs, 16GB RAM, 200GB disco.
     *   **Sistema Operacional:** Ubuntu Server (ou Desktop, se GUI for primária).
     *   **GPU Passthrough:** Configurado no Proxmox para dar à VM controle direto da GPU RX 5600XT.

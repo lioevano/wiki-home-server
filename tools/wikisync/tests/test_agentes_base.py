@@ -404,7 +404,7 @@ def test_litellm_manda_para_o_langfuse():
 
 
 def test_rota_langfuse():
-    cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2",
+    cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2",
                                 base_domain=DOM, ai_desktop_vm_ip_var="192.168.15.68"))
     rot, srv = cfg["http"]["routers"], cfg["http"]["services"]
     r = next(r for r in rot.values() if r["rule"] == f"Host(`langfuse.{DOM}`)")

@@ -58,7 +58,7 @@ sequenceDiagram
 
 ### 1. Cloudflare DNS e Edge Network
 
-*   **Gerenciamento DNS:** Seu domínio (`{{ base_domain }}`) utiliza os nameservers da Cloudflare.
+*   **Gerenciamento DNS:** Seu domínio (`seudominio.com`) utiliza os nameservers da Cloudflare.
 *   **Ocultação de IP:** Os registros DNS para seus serviços não apontam para o seu IP doméstico, mas para a rede da Cloudflare. Isso protege seu IP de ser exposto diretamente na internet.
 *   **Proteção DDoS e WAF:** O tráfego passa pela infraestrutura da Cloudflare, que oferece mitigação de ataques DDoS e um Web Application Firewall (WAF) básico (configurações mais avançadas podem estar disponíveis em planos pagos).
 *   **Cache (Opcional):** Cloudflare pode armazenar em cache conteúdo estático dos seus sites, acelerando o carregamento para os usuários e reduzindo a carga no seu servidor.
@@ -78,7 +78,7 @@ Traefik é um componente central para gerenciar o tráfego interno para seus con
 
 *   **Entrypoints:** Traefik escuta em pontos de entrada definidos, como a porta `80` (HTTP) e `443` (HTTPS) na `core-services-vm`.
 *   **Redirecionamento HTTP para HTTPS:** Todo o tráfego chegando na porta `80` é automaticamente redirecionado para `HTTPS` na porta `443`.
-*   **Roteamento Baseado em Host:** Traefik examina o cabeçalho `Host` da requisição HTTP (e.g., `nextcloud.{{ base_domain }}`) para determinar para qual serviço interno a requisição deve ser encaminhada.
+*   **Roteamento Baseado em Host:** Traefik examina o cabeçalho `Host` da requisição HTTP (e.g., `nextcloud.seudominio.com`) para determinar para qual serviço interno a requisição deve ser encaminhada.
 *   **Descoberta de Serviços Docker:** Traefik monitora o socket Docker e automaticamente descobre novos containers que possuem *labels* específicas do Traefik. Essas labels definem como o tráfego deve ser roteado para aquele container (e.g., qual subdomínio, qual porta interna do container).
 *   **Provedor de Arquivos (File Provider):** Além da descoberta Docker, Traefik pode carregar configurações de roteamento de arquivos YAML. Isso é usado para rotear tráfego para serviços que não estão na mesma instância Docker que o Traefik (como o OpenWebUI rodando na `ai-desktop-vm`).
 *   **Gerenciamento de Certificados SSL/TLS (Let's Encrypt):**
@@ -97,7 +97,7 @@ Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e o
 *   **Integração com Traefik:** Traefik é configurado para usar Authelia como um [middleware de forward authentication](https://doc.traefik.io/traefik/middlewares/http/forwardauth/).
     *   Quando uma requisição chega para um serviço protegido, Traefik envia informações sobre a requisição para o endpoint `/api/verify` do Authelia.
     *   Authelia verifica se o usuário tem uma sessão válida (através de um cookie).
-*   **Portal de Login:** Se o usuário não estiver autenticado, Authelia instrui Traefik a redirecionar o navegador do usuário para o portal de login do Authelia (e.g., `https://auth.{{ base_domain }}`).
+*   **Portal de Login:** Se o usuário não estiver autenticado, Authelia instrui Traefik a redirecionar o navegador do usuário para o portal de login do Authelia (e.g., `https://auth.seudominio.com`).
 *   **Autenticação de Múltiplos Fatores (MFA):** Após fornecer credenciais válidas (usuário/senha), Authelia pode exigir um segundo fator (e.g., código TOTP de um app autenticador).
 *   **Políticas de Acesso:** Authelia permite definir políticas granulares em seu arquivo `configuration.yml` para determinar qual nível de autenticação é necessário para diferentes domínios ou redes.
 *   **Single Sign-On (SSO) Básico:** Uma vez que o usuário está logado no Authelia, ele pode acessar outros serviços protegidos pelo mesmo Authelia sem precisar logar novamente (dentro da validade da sessão Authelia).

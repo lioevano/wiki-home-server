@@ -56,3 +56,6 @@
           - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
+
+    - name: "Montar o apps.env da stack apps (página 07)"
+      ansible.builtin.include_tasks: tasks/apps-env.yml

@@ -65,7 +65,7 @@ Como torrents e biblioteca estão no mesmo sistema de arquivos, a importação �
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-media-stack-volumes.yml --ask-vault-pass
    ```
    O playbook `ansible/playbooks/setup-media-stack-volumes.yml` gera `<NFS>/recyclarr/config/recyclarr.yml` a partir de `ansible/templates/recyclarr.yml.j2` e o `/opt/portainer_stack_envs/media.env` (`0600`, contém as chaves).
-3. Portainer → **Stacks** → **Add Stack** → nome `media` → **Web editor** com `docker/stacks/media/docker-compose.yml` → em **Env**, carregue `/opt/portainer_stack_envs/media.env` → **Deploy the stack**.
+3. Portainer → **Stacks** → **Add Stack** → nome `media` → **Web editor** com `docker/stacks/media/docker-compose.yml` → em **Env** (**Advanced mode**), cole o `/opt/portainer_stack_envs/media.env` ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) → **Deploy the stack**.
 4. Rode de novo o `setup-monitoring-stack-volumes.yml` ([seção 9](09-painel-notificacoes.md)): ele já traz as sondas e os alertas da mídia (`qbittorrent-ou-vpn-fora`, `servico-fora-do-ar`), mas o Prometheus e o Grafana só os carregam depois de reiniciados com a stack `media` no ar (`sudo docker restart prometheus grafana`). Na primeira instalação, a seção 9 vem antes desta; os alertas da mídia ficam em "sem dados" (`OK`) até aqui.
 
 ### Variáveis da stack

@@ -238,7 +238,7 @@ Este playbook Ansible prepara os arquivos de configuração e faz o deploy da st
   2. **Executa Role `infra/traefik-config`:**
       * Cria os diretórios de configuração e dados para Traefik no volume NFS.
       * Copia o `traefik.yml` (config estática) templateado.
-      * Copia os arquivos de configuração dinâmica (middlewares como `security_headers.yml`, `nextcloud_middleware.yml`, e o roteamento para os serviços da VM de IA em `rag_services.yml`) para o diretório apropriado.
+      * Copia os arquivos de configuração dinâmica (middlewares como `security_headers.yml`, `nextcloud_middleware.yml`, e o roteamento para os serviços da VM de IA em `ai_services.yml`) para o diretório apropriado.
       * Garante que o arquivo `acme.json` (para certificados SSL) exista com as permissões corretas.
   3. **Executa Role `infra/authelia-config`:**
       * Cria os diretórios de configuração e do banco do Authelia no volume NFS.
@@ -289,14 +289,20 @@ Este role prepara os arquivos de configuração do Traefik.
     group: "{{ docker_pgid }}"
     mode: '0640'
 
-- name: "Copiar configuração dinâmica para serviços RAG (se ai-desktop-vm existir)"
+- name: "Copiar o roteamento dos serviços da ai-desktop-vm (se ela existir)"
   ansible.builtin.template:
-    src: dynamic_rag_services.yml.j2 # Para rotear para OpenWebUI na ai-desktop-vm
-    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/rag_services.yml"
+    src: dynamic_ai_services.yml.j2 # LiteLLM, Open WebUI, Langfuse e segundo cérebro, em outra VM
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/ai_services.yml"
     owner: "{{ docker_puid }}"
     group: "{{ docker_pgid }}"
     mode: '0640'
   when: "'ai-desktop-vm' in groups['virtual_machines']" # Só cria se a VM AI estiver no inventário
+
+# Nome antigo do mesmo arquivo (rag_services.yml): sairia em dobro no Traefik (routers repetidos).
+- name: "Remover o arquivo de roteamento com o nome antigo"
+  ansible.builtin.file:
+    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/rag_services.yml"
+    state: absent
 
 - name: "Copiar middleware para Nextcloud (dinâmico)"
   ansible.builtin.template:
@@ -436,11 +442,11 @@ http:
 !!! warning "Content-Security-Policy (CSP)"
     O `contentSecurityPolicy` é um header muito poderoso para mitigar XSS e outros ataques de injeção. No entanto, configurá-lo incorretamente pode quebrar a funcionalidade das suas aplicações. O exemplo acima é muito básico. Você precisará pesquisar e testar as diretivas CSP apropriadas para cada um dos seus serviços (Nextcloud, Grafana, etc.) ou começar com uma política menos restritiva e aumentá-la gradualmente.
 
-##### `templates/dynamic_rag_services.yml.j2` (Roteamento para VM de IA)
+##### `templates/dynamic_ai_services.yml.j2` (Roteamento para VM de IA)
 
-```yaml title="ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2"
-# ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2
-# (Copiado para /etc/traefik/dynamic_configs/rag_services.yml no container Traefik)
+```yaml title="ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2"
+# ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2
+# (Copiado para /etc/traefik/dynamic_configs/ai_services.yml no container Traefik)
 # Define roteamento para serviços rodando na ai-desktop-vm (e.g., OpenWebUI).
 # Usa o File Provider do Traefik para definir serviços que não são descobertos via Docker (porque estão em outra VM).
 http:
@@ -497,7 +503,7 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
-    # Adicione aqui roteadores para outros serviços RAG/AI na ai-desktop-vm se necessário
+    # Adicione aqui roteadores para outros serviços da ai-desktop-vm se necessário
     # Exemplo para um hipotético OpenNotebookLM
     # opennotebooklm-dynamic:
     #   entryPoints: ["websecure"]

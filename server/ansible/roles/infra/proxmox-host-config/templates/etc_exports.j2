@@ -22,11 +22,6 @@
 # Vaults do Obsidian (segundo cérebro, página 12): exportado só para a VM de IA, onde rodam o Syncthing e a busca
 {{ zfs_base_pool_path }}/{{ zfs_notes_dataset_name }} {{ ai_desktop_vm_ip_var }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
-# Compartilhamento para fontes RAG (condicional, se a VM AI existir e usar)
-{% if zfs_rag_sources_dataset_name is defined and 'ai-desktop-vm' in groups['virtual_machines'] %}
-{{ zfs_base_pool_path }}/{{ zfs_rag_sources_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
-{% endif %}
-
 # Compartilhamento para backups (geralmente não precisa ser montado por VMs,
 # a menos que uma VM específica precise ler backups. Pode ser 'ro' para VMs).
 # {{ zfs_base_pool_path }}/{{ zfs_backups_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(ro,sync,no_subtree_check)

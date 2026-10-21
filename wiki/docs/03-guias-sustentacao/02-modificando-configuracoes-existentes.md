@@ -58,7 +58,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   Definem os serviços, imagens, volumes, redes, portas, variáveis de ambiente e labels Traefik para cada stack de aplicação.
         *   **As modificações são feitas nestes arquivos e depois aplicadas via Portainer ("Update the stack").**
     *   **Variáveis de Ambiente e Secrets:**
-        *   Ao criar/editar uma stack no Portainer, carregue o arquivo `.env` gerado pelo Ansible na VM.
+        *   Ao criar/editar uma stack no Portainer, cole o `.env` gerado pelo Ansible na VM em **Advanced mode** ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
         *   **Secrets críticos** (senhas de banco de dados, tokens de API) ficam no vault e chegam ao `.env` pelo playbook da stack; para mudá-los, edite o vault e rode o playbook de novo. Nada é digitado na UI do Portainer.
     *   **Volumes Docker Persistentes (Mapeados para os Diretórios NFS):**
         *   Contêm os dados e arquivos de configuração internos das suas aplicações Docker (e.g., o `config.php` do Nextcloud dentro do seu volume de config, o banco de dados SQLite do Sonarr, a biblioteca do Jellyfin). As modificações de configuração *dentro* da aplicação são salvas aqui.
@@ -71,7 +71,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   **Mudanças aqui geralmente requerem um reinício do container Traefik para terem efeito.**
     *   **Configuração Dinâmica (Diretório de Arquivos):**
         *   Arquivos YAML localizados em `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/`.
-        *   Gerados pelo Ansible (e.g., `security_headers.yml`, `nextcloud_middleware.yml`, `rag_services.yml`).
+        *   Gerados pelo Ansible (e.g., `security_headers.yml`, `nextcloud_middleware.yml`, `ai_services.yml`).
         *   Contém definições de middlewares, e roteamento para serviços que não são descobertos automaticamente pelo Docker provider (como os da `ai-desktop-vm`).
         *   Traefik monitora este diretório e **recarrega automaticamente as mudanças** sem necessidade de reinício.
     *   **Certificados SSL (`acme.json`):**
@@ -112,20 +112,20 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         # No host Proxmox
         sudo zfs snapshot data/docker-volumes@antes_da_mudanca_X
         ```
-        Consulte o [Guia de Snapshots ZFS](12-guia-snapshots-zfs.md) para mais detalhes.
+        Consulte o [Guia de Snapshots ZFS](11-guia-snapshots-zfs.md) para mais detalhes.
     *   **Arquivos de Configuração Específicos:** Se for editar manualmente um arquivo de configuração crítico (o que deve ser raro se gerenciado por Ansible), faça uma cópia dele primeiro (e.g., `cp /caminho/arquivo.conf /caminho/arquivo.conf.bak`).
 
 4.  **Aplique a Mudança (Método Preferencial Primeiro):**
 
     *   **Se a Configuração é Gerenciada pelo Ansible (Ideal):**
-        1.  Edite o arquivo Ansible apropriado na sua máquina de controle (inventário, `main.yml`, `vault.yml`, um template `.j2`, ou as tasks de um role).
-        2.  Execute o playbook Ansible relevante para aplicar a mudança. Exemplo:
+        1.  **Comece pela wiki** (ela é a fonte da verdade). Ache no `INDEX.md` a página que documenta o arquivo. Se o arquivo tem bloco literal na página, edite o bloco; se não, descreva a mudança na página e edite o arquivo. Depois, `python tools/dev.py check`, `sync` (confira o diff) e `sync --yes`, e então `test`, `build` e `lint`. Os segredos são a exceção: `ansible-vault edit inventories/home/group_vars/all/vault.yml`, mas a chave nova entra antes no `vault.yml.example` da página 01.
+        2.  Execute o playbook Ansible relevante para aplicar a mudança (sempre `--check` antes). Exemplo:
             ```bash
             ansible-playbook -i inventories/home/hosts.ini playbooks/setup-core-networking.yml --ask-vault-pass
             ```
         3.  O Ansible aplicará a mudança de forma idempotente. Se a configuração já estiver no estado desejado, nenhuma alteração será feita.
     *   **Se a Mudança é em uma Stack Docker (via Portainer):**
-        1.  Edite o arquivo `docker-compose.yml` correspondente no seu projeto Git (`server/docker/stacks/.../`).
+        1.  Edite o arquivo `docker-compose.yml` correspondente no seu projeto Git (`server/docker/stacks/.../`), descrevendo a mudança na página da stack.
         2.  No Portainer, navegue até a stack que você deseja modificar.
         3.  Clique em "**Editor**".
         4.  Cole o conteúdo do `docker-compose.yml` atualizado.
@@ -152,8 +152,6 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
     *   Teste a funcionalidade que foi alterada para garantir que está funcionando como esperado.
     *   Verifique se outros serviços ou partes do sistema não foram impactados negativamente.
 
-6.  **Documente a Mudança (Opcional, mas Boa Prática):**
-    *   Se for uma alteração significativa, adicione uma nota nesta wiki (talvez uma subseção em "Modificando Configurações" ou em um log de mudanças).
-    *   Faça um `git commit` das suas alterações nos arquivos Ansible/Docker Compose com uma mensagem clara descrevendo a mudança.
+6.  **Feche no Git:** atualize o `INDEX.md` se surgiu ou saiu arquivo (skill `update-index`) e faça **um** commit com a wiki, o `server/` e o índice juntos. O push dispara o CI (`server-lint`) e publica a wiki.
 
 Lembre-se sempre de proceder com cautela, especialmente ao modificar configurações críticas ou que afetam a segurança. A abordagem de Infraestrutura como Código com Ansible, combinada com backups e snapshots, fornece uma base sólida para gerenciar mudanças de forma segura e recuperável.

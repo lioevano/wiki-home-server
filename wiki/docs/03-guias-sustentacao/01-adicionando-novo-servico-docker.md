@@ -1,233 +1,126 @@
 ---
-description: "Checklist e exemplo prático para adicionar um novo serviço Docker com volumes, Traefik, Authelia e Ansible."
+description: "Como adicionar uma aplicação Docker, numa stack nova ou existente: catálogo, integrações, compose, playbook de volumes, deploy e índice."
 ---
 
-# Adicionando um Novo Serviço Docker à Infraestrutura
+# Adicionando um Serviço Docker
 
-!!! info "Fonte do checklist: catálogo + índice de integrações"
-    A lista do que uma aplicação nova precisa (roteamento, autenticação, acesso externo, métricas, logs, dados, variáveis, LLM, documentação) é definida no [Catálogo de Aplicações](../02-visao-geral-arquitetura/09-catalogo-aplicacoes.md) e no [Índice de Integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md). Agentes de IA executam esse fluxo pela skill `add-app` (veja `AGENTS.md`). Este guia mostra o passo a passo manual com um exemplo.
+Uma aplicação nova entra no servidor sempre pelo mesmo caminho. Primeiro ela ganha uma **linha no catálogo**. A linha decide quais integrações ela recebe, a **página da wiki** descreve a aplicação e só então o `server/` é alterado. Agentes de IA executam esse fluxo pela skill `add-app` (veja o `AGENTS.md` na raiz do repositório), e este guia mostra o mesmo caminho feito à mão.
 
-Uma das grandes vantagens da nossa arquitetura baseada em Docker, Portainer e Traefik é a facilidade com que podemos adicionar novos serviços e aplicações ao nosso servidor doméstico. Este guia fornece um checklist detalhado e um exemplo prático para integrar uma nova aplicação containerizada de forma segura e consistente com o restante da infraestrutura.
+!!! info "Fontes da verdade"
+    - [Catálogo de Aplicações](../02-visao-geral-arquitetura/09-catalogo-aplicacoes.md): o que a aplicação é (stack, VM, exposição, subdomínio, dados, métricas).
+    - [Índice de Integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md): o que cada integração exige dela (regras ROT, AUT, EXT, MET, LOG, DAD, VAR, DOC, PNL, NTF…).
 
-O processo geral envolve planejar o serviço, preparar os volumes e configurações (idealmente com Ansible), definir o serviço em um arquivo `docker-compose.yml`, e então implantá-lo via Portainer.
+## 1. Pesquisar
 
-## Checklist Detalhado para Adicionar um Novo Serviço Docker
+Anote, com os links da documentação oficial (eles vão para a página da wiki):
 
-Siga estes passos para garantir uma integração suave e bem-sucedida:
+- imagem e **versão fixa** (nunca `:latest`), porta interna, variáveis obrigatórias, volumes persistentes e healthcheck;
+- se expõe métricas (`/metrics`), se aceita OIDC/SSO e se precisa de banco ou cache (viram serviços auxiliares na mesma stack);
+- se usa SQLite ou Postgres: banco **não** fica em NFS. Ele vai para o disco local da VM (`{{ vm_local_data_path }}`), com dump diário para o NFS (regra DAD-5).
 
-1.  **Fase de Planejamento e Pesquisa do Novo Serviço:**
-    *   **Identifique a Imagem Docker:**
-        *   Qual imagem Docker você usará? É uma imagem oficial, uma da [LinuxServer.io](https://fleet.linuxserver.io/) (lscr.io), do [GitHub Container Registry](https://ghcr.io), ou de outra fonte confiável?
-        *   Verifique a popularidade da imagem, a frequência de atualizações, e se há problemas conhecidos (issues no GitHub do projeto).
-        *   **Escolha uma tag de versão específica** (e.g., `imagem:v1.2.3` ou `imagem:stable`) em vez de `imagem:latest` para garantir implantações mais previsíveis e evitar quebras inesperadas quando `latest` for atualizado.
-    *   **Requisitos de Recursos:**
-        *   Avalie o consumo estimado de CPU, RAM e espaço em disco do novo serviço.
-        *   Ele se encaixa confortavelmente nos recursos da sua `core-services-vm`? Ou, se for uma aplicação muito pesada ou com requisitos especiais (como a stack de IA), ela deveria ir para a `ai-desktop-vm` ou até mesmo uma nova VM dedicada? (Veja [Gerenciando Recursos de VMs](06-gerenciando-recursos-vms.md)).
-    *   **Persistência de Dados (Volumes):**
-        *   O serviço precisa armazenar dados permanentemente (configurações, bancos de dados internos, arquivos de usuário)?
-        *   Se sim, identifique quais diretórios dentro do container precisam ser mapeados para volumes persistentes. A documentação da imagem Docker geralmente especifica isso.
-        *   Planeje onde esses volumes residirão no seu sistema de arquivos NFS. Uma boa prática é criar um subdiretório específico para o novo serviço dentro do seu dataset de volumes Docker:
-            `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/<nome_do_novo_servico>/config`
-            `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/<nome_do_novo_servico>/data` (etc.)
-    *   **Configuração de Rede:**
-        *   **Acesso Externo:** O serviço precisa ser acessível da internet?
-            *   Se sim, qual subdomínio você usará (e.g., `novoservico.{{ base_domain }}`)?
-        *   **Proteção com Authelia:** Se for acessível externamente, ele deve ser protegido pelo [Authelia](../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md#4-authelia-servidor-de-autenticação-e-autorização)? (Quase sempre sim, a menos que seja um serviço intencionalmente público como um blog).
-        *   **Comunicação Interna:** O novo serviço precisa se comunicar com outros containers existentes (e.g., um banco de dados, um serviço de API)? Se sim, a quais redes Docker ele precisará ser conectado (`proxy`, `internal_services`)?
-    *   **Variáveis de Ambiente:**
-        *   Quais variáveis de ambiente são **obrigatórias** ou **recomendadas** para configurar o serviço? Consulte a documentação da imagem Docker.
-        *   Comuns incluem: `PUID`, `PGID` (para permissões de arquivo), `TZ` (fuso horário), senhas, caminhos específicos dentro do container, opções de features.
-    *   **Portas Internas:** Em qual porta o serviço escuta *dentro* do container? Isso é necessário para a configuração do Traefik.
+## 2. Stack nova ou existente?
 
-2.  **Preparação de Volumes e Arquivo `.env` (Via Ansible - Recomendado):**
-    Para manter a consistência e automação (IaC):
-    *   No seu projeto `server/ansible/`:
-        *   Crie um novo playbook Ansible, por exemplo, `ansible/playbooks/setup-novoservico-volumes.yml`.
-        *   Este playbook deve ser direcionado à VM onde o novo serviço Docker rodará (e.g., `core-services-vm`).
-        *   **Tarefas do Playbook:**
-            1.  Usar o módulo `ansible.builtin.file` para criar os diretórios de volume necessários no caminho NFS (e.g., `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/novoservico/config`) com as permissões corretas (`owner: {{ docker_puid }}`, `group: {{ docker_pgid }}`, `mode: '0775'` ou `0750`).
-            2.  Usar o módulo `ansible.builtin.template` para gerar um arquivo `.env` para o novo serviço. Este arquivo será colocado em `{{ portainer_env_files_dest_path_on_vm }}/novoservico.env` na VM.
-                *   Use o template `ansible/templates/portainer_stack_env.j2` como base.
-                *   Adicione variáveis específicas para os caminhos de volume do novo serviço ao template ou ao playbook que chama o template, por exemplo:
-                    ```yaml
-                    # No playbook setup-novoservico-volumes.yml, ao chamar o template:
-                    # ...
-                    #   template:
-                    #     src: ../templates/portainer_stack_env.j2
-                    #     dest: "{{ portainer_env_files_dest_path_on_vm }}/novoservico.env"
-                    #   vars:
-                    #     stack_name: "novoservico" # Para lógica condicional no template
-                    #     NOVOSERVICO_CONFIG_PATH: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/novoservico/config"
-                    #     NOVOSERVICO_DATA_PATH: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/novoservico/data"
-                    ```
-    *   **Execute o novo playbook Ansible:**
-        ```bash
-        ansible-playbook -i inventories/home/hosts.ini playbooks/setup-novoservico-volumes.yml --ask-vault-pass
-        ```
-        Isso garante que os diretórios NFS e o arquivo `.env` com os caminhos corretos estejam prontos na VM antes de você tentar implantar a stack no Portainer.
+| Situação | Onde |
+|---|---|
+| Auxiliar de uma aplicação que já existe (exporter, cron, worker) | Na stack dela |
+| Aplicação do mesmo assunto de uma stack (ex.: mais uma *arr na `media`) | Na stack do assunto |
+| Assunto novo, ciclo de vida próprio ou VM diferente | Stack nova em `docker/stacks/<stack>/` |
 
-3.  **Escrever o Arquivo `docker-compose.yml` para a Nova Stack:**
-    *   No repositório, crie um novo diretório para a stack, por exemplo, `docker/stacks/novoservico/`.
-    *   Dentro dele, crie o arquivo `docker-compose.yml`.
-    *   **Estrutura Típica (Exemplo):**
-        ```yaml title="Exemplo: docker/stacks/novoservico/docker-compose.yml"
-        # docker/stacks/novoservico/docker-compose.yml
-        version: '3.9' # Ou a versão mais recente suportada pelo seu Docker Compose
+Uma stack existente ganha o serviço no próprio `docker-compose.yml` e as variáveis no playbook de volumes **dela**. Uma stack nova ganha compose, playbook `setup-<stack>-volumes.yml` e `.env` próprios.
 
-        networks:
-          proxy: # Necessário se o serviço for exposto via Traefik
-            external: true # Assumindo que a rede 'proxy' já foi criada pelo Ansible
-          internal_services: # Se o serviço precisar se comunicar com outros backends (e.g., DBs)
-            external: true # Assumindo que 'internal_services' também já existe
+## 3. Catálogo e página
 
-        services:
-          novoservico: # Nome lógico do serviço dentro deste compose
-            image: registry/nome_da_imagem:tag_especifica
-            container_name: nome_do_container_novoservico # Nome do container no Docker
-            restart: unless-stopped
-            networks: # Conecte às redes necessárias
-              - proxy # Se exposto via Traefik
-              # - internal_services # Se comunica com outros serviços internos
-            volumes:
-              # Use as variáveis de ambiente que serão definidas no arquivo .env carregado pelo Portainer
-              - "${NOVOSERVICO_CONFIG_PATH}:/config"  # Mapeia o volume de configuração do serviço
-              - "${NOVOSERVICO_DATA_PATH}:/data"    # Exemplo de volume de dados
-              # Adicione outros volumes conforme a documentação da imagem
-            environment:
-              - PUID=${DOCKER_PUID} # Do arquivo .env (valor do Ansible Vault)
-              - PGID=${DOCKER_PGID} # Do arquivo .env (valor do Ansible Vault)
-              - TZ=${SYSTEM_TIMEZONE} # Do arquivo .env (valor do Ansible Vault)
-              # - OUTRA_VARIAVEL_CONFIG=${VALOR_DA_VARIAVEL} # Pode vir do .env ou definida no Portainer
-              # - SENHA_ESPECIFICA_APP=${SENHA_DO_NOVOSERVICO_APP} # Esta será definida como secret no Portainer
-            labels: # Labels para Traefik (apenas se o serviço for exposto externamente)
-              # --- Labels Traefik ---
-              traefik.enable: "true" # Habilita o Traefik para este serviço
+1. Escreva a linha no catálogo com todas as colunas preenchidas. Exposição (`publica`, `protegida` ou `interna`), subdomínio e categoria são decisões suas; deixe `?` enquanto não decidir.
+2. Para cada integração do índice, veja em "Aplica-se a" se ela vale para a linha nova, e siga os passos de "Ao adicionar". Na prática:
 
-              # Roteador HTTP
-              traefik.http.routers.novoservico.rule: "Host(`novoservico.{{ base_domain }}`)" # Substitua {{ base_domain }} pelo seu domínio real
-              traefik.http.routers.novoservico.entrypoints: "websecure" # Usa o entrypoint HTTPS (porta 443)
-              traefik.http.routers.novoservico.tls.certresolver: "letsencrypt" # Usa Let's Encrypt para SSL
+    | Integração | O que entra |
+    |---|---|
+    | roteamento | labels do Traefik com ``Host(`<sub>.${BASE_DOMAIN_FROM_VAULT}`)`` na rede `proxy` (ou um router no `dynamic_ai_services.yml.j2`, se a aplicação estiver na `ai-desktop-vm`) |
+    | autenticacao | `protegida`: middleware `authelia-forwardauth@docker`, e o subdomínio em `authelia_dominios_admins` se for painel de administração. `publica`: regra `bypass` no Authelia antes do curinga |
+    | metricas | job no `ansible/templates/prometheus.yml.j2`, se houver `/metrics` |
+    | dados | diretórios criados pelo playbook de volumes; `*_PATH` apontando para o NFS (ou para o disco local, no caso de bancos) |
+    | variaveis | toda `${VAR}` do compose no `docker/stacks/.env.template` e produzida pelo playbook |
+    | painel e notificacoes | entrada no `ansible/templates/homepage/services.yaml.j2`, alvo do blackbox pela URL interna e webhook para o n8n, se a aplicação tiver |
 
-              # Middlewares (e.g., Authelia para proteção, headers de segurança)
-              # Se precisar de múltiplos middlewares, separe por vírgula: "authelia-forwardauth@docker,securityHeaders@file"
-              traefik.http.routers.novoservico.middlewares: "authelia-forwardauth@docker" # Se for proteger com Authelia
+3. Escreva a seção da aplicação na página da stack (ou uma página nova, pela skill `wiki-page-authoring`), com os links da pesquisa, as variáveis e o primeiro acesso.
 
-              # Serviço (como Traefik deve se conectar ao container internamente)
-              traefik.http.services.novoservico.loadbalancer.server.port: "8000" # Porta INTERNA que o container 'novoservico' escuta
-              # traefik.http.services.novoservico.loadbalancer.server.scheme: "http" # Se o container escuta em HTTP (padrão)
-        ```
-    !!! tip "Nomenclatura Consistente para Labels Traefik"
-        Use nomes consistentes e descritivos para seus roteadores e serviços Traefik (e.g., `traefik.http.routers.nomedoservico...`). O placeholder `{{ base_domain }}` nas labels será substituído pelo valor real se o container Traefik tiver acesso a essa variável (o que ele tem, via `BASE_DOMAIN_FROM_VAULT` passada para ele).
+## 4. Compose e playbook
 
-4.  **Deploy da Nova Stack via Portainer:**
-    Siga o processo descrito em [Deploy de Apps](../01-manual-implementacao/07-deploy-apps.md) (a stack `core` não passa pelo Portainer; ver [Deploy Core](../01-manual-implementacao/06-deploy-core.md)):
-    *   Acesse o Portainer, selecione o **endpoint Docker correto** (e.g., `local` para `core-services-vm`).
-    *   Vá para "Stacks" -> "+ Add stack".
-    *   **Nome:** Dê um nome para a stack (e.g., `novoservico-stack`).
-    *   **Build method:** "Web editor". Cole o conteúdo do seu `docker-stacks/novoservico/docker-compose.yml`.
-    *   **Environment variables (Advanced mode):**
-        *   **Load variables from .env file:** Forneça o caminho **DENTRO DA VM** para o arquivo `.env` que foi preparado pelo Ansible (e.g., `/opt/portainer_stack_envs/novoservico.env`).
-        *   **Segredos:** senhas e tokens de API (e.g., `SENHA_DO_NOVOSERVICO_APP` referenciada no compose) entram no vault e são gravados no `.env` pelo playbook da stack; não os digite no Portainer nem os coloque no `docker-compose.yml`.
-    *   Clique em "**Deploy the stack**".
+Exemplo: um gerenciador de arquivos simples, protegido pelo Authelia, numa stack nova `ferramentas` da `core-services-vm`.
 
-5.  **Configuração de DNS na Cloudflare (se o serviço for exposto externamente):**
-    *   Se você usa uma Ingress Rule wildcard (`*.{{ base_domain }}`) no seu Cloudflare Tunnel que aponta para o Traefik (conforme recomendado na [Seção 5.5](../01-manual-implementacao/05-rede-segura.md#55-configuração-de-dns-na-cloudflare)), este passo pode não ser estritamente necessário, pois o novo subdomínio (`novoservico.{{ base_domain }}`) já será coberto e roteado para o Traefik.
-    *   Caso contrário, ou se você quiser uma entrada explícita, adicione manualmente um registro **CNAME** no painel DNS da Cloudflare:
-        *   **Type:** `CNAME`
-        *   **Name:** `novoservico` (o subdomínio do seu novo serviço, sem o domínio base).
-        *   **Target:** O hostname do seu Cloudflare Tunnel (e.g., `SEU_TUNNEL_UUID.cfargotunnel.com`).
-        *   **Proxy Status:** Certifique-se de que está **Laranja (Proxied)**.
-    *   Aguarde alguns minutos para a propagação do DNS.
+```yaml title="Exemplo: compose da stack ferramentas"
+networks:
+  proxy:
+    name: proxy
+    external: true
 
-6.  **Teste e Pós-Configuração:**
-    *   Acesse `https://novoservico.{{ base_domain }}` no seu navegador.
-    *   Se o serviço estiver protegido por Authelia, você será redirecionado para o portal de login do Authelia.
-    *   Verifique os logs do novo container no Portainer para quaisquer erros de inicialização ou operacionais.
-    *   Realize qualquer configuração inicial necessária dentro da interface do próprio novo serviço (e.g., criar um usuário administrador, configurar preferências).
+services:
+  filebrowser:
+    image: filebrowser/filebrowser:v2.31.2 # versão fixa (o Diun avisa quando sair outra)
+    container_name: filebrowser
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    networks:
+      - proxy
+    volumes:
+      - "${FERRAMENTAS_FILEBROWSER_CONFIG_PATH}:/config"
+    environment:
+      - TZ=${SYSTEM_TIMEZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.filebrowser.rule: "Host(`arquivos.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.filebrowser.entrypoints: "websecure"
+      traefik.http.routers.filebrowser.tls.certresolver: "letsencrypt"
+      traefik.http.routers.filebrowser.middlewares: "authelia-forwardauth@docker"
+      traefik.http.services.filebrowser-svc.loadbalancer.server.port: "80"
+```
 
-## Exemplo Prático: Adicionando `FileBrowser` (Revisitado)
+```yaml title="Exemplo: playbook setup-ferramentas-volumes.yml"
+- name: Volumes e variáveis da stack ferramentas
+  hosts: core_services
+  become: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  tasks:
+    - name: Diretório de configuração do File Browser
+      ansible.builtin.file:
+        path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/config"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0750'
 
-FileBrowser é um gerenciador de arquivos web simples e eficaz. Vamos revisitar o exemplo, focando no fluxo completo.
+    - name: ferramentas.env
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/ferramentas.env"
+        owner: root
+        group: root
+        mode: '0600'
+      vars:
+        stack_name: ferramentas
+        stack_configs:
+          - { name: 'FERRAMENTAS_FILEBROWSER_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/config" }
+```
 
-1.  **Planejamento:**
-    *   Imagem: `filebrowser/filebrowser:v2.29.0` (ou mais recente estável).
-    *   Recursos: Leve, roda bem na `core-services-vm`.
-    *   Persistência:
-        *   Configuração: `/config` dentro do container. Mapear para `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/config`.
-        *   Dados (arquivos a serem gerenciados): `/srv` dentro do container. Mapearemos para um diretório no NFS, e.g., `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/shared_files` ou até mesmo para `{{ vm_nfs_mount_base_path }}/{{ zfs_media_dataset_name }}/` se quisermos que ele navegue na nossa biblioteca de mídia.
-    *   Rede: Expor em `files.{{ base_domain }}`, proteger com Authelia. Conectar à rede `proxy`.
-    *   Variáveis: PUID, PGID, TZ. FileBrowser usa a porta 80 internamente por padrão.
+Acrescente `FERRAMENTAS_FILEBROWSER_CONFIG_PATH=` ao `docker/stacks/.env.template`: o `python tools/dev.py lint` falha se o compose usar uma variável fora dele. Segredos vêm do vault pelo playbook, nunca digitados no Portainer.
 
-2.  **Preparação Ansible (`setup-filebrowser-volumes.yml`):**
-    *   Crie o playbook.
-    *   Tasks para criar os diretórios NFS:
-        *   `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/config`
-        *   `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/shared_files` (exemplo para dados)
-    *   Task para gerar `/opt/portainer_stack_envs/filebrowser.env` na `core-services-vm` com:
-        ```env
-        # /opt/portainer_stack_envs/filebrowser.env (Gerado por Ansible)
-        DOCKER_PUID={{ docker_puid }}
-        DOCKER_PGID={{ docker_pgid }}
-        SYSTEM_TIMEZONE={{ system_timezone }}
-        # Note: BASE_DOMAIN não é estritamente necessário aqui se as labels Traefik usam {{ base_domain }}
-        # que o Traefik resolve, mas pode ser útil para consistência.
-        BASE_DOMAIN={{ base_domain }}
-        CORE_SERVICES_VM_IP_VAR={{ core_services_vm_ip_var }} # Se precisar para algo específico
-        FILEBROWSER_CONFIG_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/config
-        FILEBROWSER_SHARED_DATA_PATH={{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/filebrowser/shared_files
-        ```
-    *   Execute o playbook: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-filebrowser-volumes.yml --ask-vault-pass`.
+## 5. Validar e implantar
 
-3.  **`docker-compose.yml` para FileBrowser (`docker/stacks/filebrowser/docker-compose.yml`):**
-    ```yaml
-    version: '3.9'
-    networks: { proxy: { external: true } }
-    services:
-      filebrowser:
-        image: filebrowser/filebrowser:v2.29.0 # Verifique a tag mais recente e estável
-        container_name: filebrowser_app
-        restart: unless-stopped
-        # user: "${DOCKER_PUID}:${DOCKER_PGID}" # Filebrowser geralmente roda como root e gerencia permissões internas.
-                                             # Se usar PUID/PGID, garanta que ele tenha acesso aos volumes.
-                                             # Para simplicidade inicial, pode-se omitir, mas teste as permissões.
-        networks: [proxy]
-        volumes:
-          - "${FILEBROWSER_CONFIG_PATH}:/config" # Configuração do FileBrowser (inclui filebrowser.db)
-          - "${FILEBROWSER_SHARED_DATA_PATH}:/srv" # Diretório raiz que o FileBrowser servirá
-        environment:
-          - PUID=${DOCKER_PUID} # Para o processo interno se a imagem suportar
-          - PGID=${DOCKER_PGID}
-          - TZ=${SYSTEM_TIMEZONE}
-          - FB_BASEURL=/ # Se FileBrowser estiver na raiz do subdomínio
-          # FB_ADDRESS=0.0.0.0 # Padrão, escuta em todas as interfaces dentro do container
-          # FB_PORT=80 # Porta interna padrão do container FileBrowser
-        labels:
-          traefik.enable: "true"
-          traefik.http.routers.filebrowser.rule: "Host(`files.{{ base_domain }}`)"
-          traefik.http.routers.filebrowser.entrypoints: "websecure"
-          traefik.http.routers.filebrowser.tls.certresolver: "letsencrypt"
-          traefik.http.routers.filebrowser.middlewares: "authelia-forwardauth@docker" # Protegido por Authelia
-          traefik.http.services.filebrowser.loadbalancer.server.port: "80" # FileBrowser escuta na porta 80 internamente
-    ```
+1. `python tools/dev.py check`, `sync` e `sync --yes`; depois `test`, `build` e `lint`.
+2. Skill `audit-integrations` para a aplicação (sem `❌`/`⚠️`), `update-index` e um commit único com a wiki, o server e o índice.
+3. Na máquina de controle: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ferramentas-volumes.yml --check`, depois sem `--check`.
+4. Portainer → **Stacks** → **Add Stack** (ou, numa stack existente, **Editor** + **Update the stack**) com o compose do repositório e o `.env` gerado em **Env**.
+5. O hostname curinga do túnel já leva o subdomínio novo ao Traefik. Se a aplicação tiver regra ou router novo no Authelia ou no Traefik, rode também o `setup-core-networking.yml`.
+6. Rode o `setup-monitoring-stack-volumes.yml` se a aplicação entrou no Prometheus, no blackbox ou na Homepage.
 
-4.  **Deploy via Portainer:**
-    *   Endpoint: `local`.
-    *   Stack Name: `filebrowser-stack`.
-    *   Cole o compose.
-    *   Carregue `/opt/portainer_stack_envs/filebrowser.env`.
-    *   Não há secrets adicionais para FileBrowser por padrão.
-    *   "Deploy the stack".
+## Erros comuns
 
-5.  **DNS Cloudflare:**
-    *   Se o wildcard `*.{{ base_domain }}` já estiver configurado no seu Cloudflare Tunnel apontando para Traefik, nenhuma ação de DNS é necessária.
-    *   Caso contrário, adicione CNAME `files` para `{{ base_domain }}` apontando para seu túnel.
-
-6.  **Teste e Pós-Configuração:**
-    *   Acesse `https://files.{{ base_domain }}`.
-    *   Autentique com Authelia.
-    *   Você verá a tela de login do FileBrowser. O login padrão é `admin` / `admin`.
-    *   !!! critical "MUDE A SENHA PADRÃO DO FILEBROWSER!"
-        Após o primeiro login no FileBrowser, vá para "Settings" -> "User Management" e **altere a senha do usuário `admin` imediatamente!**
-    *   Configure usuários adicionais, permissões e outras preferências dentro do FileBrowser conforme necessário.
-
-Seguindo este processo estruturado, você pode expandir seu servidor doméstico com uma vasta gama de aplicações e serviços auto-hospedados, mantendo a organização e a segurança.
+| Erro | Correção |
+|---|---|
+| Jinja do Ansible nas labels do compose | O compose usa `${BASE_DOMAIN_FROM_VAULT}`; as chaves duplas só existem nos templates do Ansible |
+| Banco de dados no NFS | Disco local + dump (DAD-5) |
+| Variável no compose e não no `.env.template` | O `lint` acusa; acrescente ao template e ao playbook |
+| Middleware com outro nome | Sempre `authelia-forwardauth@docker` |
+| Serviço novo sem linha no catálogo | O `audit-integrations` acusa DOC-4 |

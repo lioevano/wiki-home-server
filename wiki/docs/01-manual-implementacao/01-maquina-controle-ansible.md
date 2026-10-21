@@ -517,7 +517,6 @@ zfs_base_pool_path: "/data"
 # Estes serão montados em, por exemplo, /data/docker-volumes, /data/media, etc.
 zfs_docker_volumes_dataset_name: "docker-volumes"
 zfs_media_dataset_name: "media"             # Mídia e torrents no mesmo dataset (/data na stack media; hardlinks).
-zfs_rag_sources_dataset_name: "rag_sources"       # Para a VM de IA, se usada.
 zfs_backups_dataset_name: "backups"
 zfs_photos_dataset_name: "photos"           # Fotos do Immich (uploads, miniaturas e dumps do banco). Criado com cota.
 zfs_files_dataset_name: "files"             # Diretório de dados do Nextcloud. Criado com cota.

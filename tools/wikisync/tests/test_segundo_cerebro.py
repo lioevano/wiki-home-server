@@ -39,7 +39,7 @@ def test_montagens_da_vm_de_ia():
     files_ia = [i for i in mount["loop"] if i["dataset_name"] == "{{ zfs_files_dataset_name }}"
                 and "'ai_desktop' in group_names" in i.get("when_condition", "")]
     assert len(files_ia) == 1 and files_ia[0]["opts"].startswith("ro,")
-    assert "'ai_desktop' in group_names" in itens["{{ zfs_rag_sources_dataset_name }}"]["when_condition"]
+    assert not any("rag_sources" in i["dataset_name"] for i in mount["loop"])  # nome legado, sem uso (rodada de arrumação)
     assert "item.opts | default(" in mount["ansible.posix.mount"]["opts"]
     assert "'ai-desktop-vm' in group_names" not in COMMON.read_text(encoding="utf-8")
 
@@ -457,7 +457,7 @@ def test_bypass_notas_e_escrita():
 
 
 def test_rotas_notes():
-    cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2",
+    cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2",
                                 base_domain=DOM, ai_desktop_vm_ip_var=AI_IP))
     rot, srv = cfg["http"]["routers"], cfg["http"]["services"]
     por_host = {r["rule"]: r for r in rot.values()}

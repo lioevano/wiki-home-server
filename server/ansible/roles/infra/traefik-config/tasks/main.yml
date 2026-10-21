@@ -29,14 +29,20 @@
     group: "{{ docker_pgid }}"
     mode: '0640'
 
-- name: "Copiar configuração dinâmica para serviços RAG (se ai-desktop-vm existir)"
+- name: "Copiar o roteamento dos serviços da ai-desktop-vm (se ela existir)"
   ansible.builtin.template:
-    src: dynamic_rag_services.yml.j2 # Para rotear para OpenWebUI na ai-desktop-vm
-    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/rag_services.yml"
+    src: dynamic_ai_services.yml.j2 # LiteLLM, Open WebUI, Langfuse e segundo cérebro, em outra VM
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/ai_services.yml"
     owner: "{{ docker_puid }}"
     group: "{{ docker_pgid }}"
     mode: '0640'
   when: "'ai-desktop-vm' in groups['virtual_machines']" # Só cria se a VM AI estiver no inventário
+
+# Nome antigo do mesmo arquivo (rag_services.yml): sairia em dobro no Traefik (routers repetidos).
+- name: "Remover o arquivo de roteamento com o nome antigo"
+  ansible.builtin.file:
+    path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/rag_services.yml"
+    state: absent
 
 - name: "Copiar middleware para Nextcloud (dinâmico)"
   ansible.builtin.template:

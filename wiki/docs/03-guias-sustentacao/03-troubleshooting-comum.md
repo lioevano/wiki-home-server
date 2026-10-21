@@ -11,8 +11,9 @@ Mesmo com uma configuração cuidadosa e automatizada, problemas podem (e irão!
 Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o troubleshooting:
 
 1.  **Logs de Containers Docker:**
+    *   **Via Grafana (Loki), o primeiro lugar a olhar:** o Alloy de cada VM manda os logs de **todos** os containers e do journal para o Loki. Em `https://grafana.seudominio.com` → **Explore** → fonte **Loki**, filtre por `{container_name="traefik"}` (ou `{unit="notes-documentos.service"}` para uma tarefa agendada) e busque texto com `|= "error"`. Dá para ver as duas VMs e o host Proxmox na mesma tela, com o histórico de antes do reinício do container. Os alertas que chegam no Telegram também ficam em *Alerting* ([seção 9](../01-manual-implementacao/09-painel-notificacoes.md)).
     *   **Via Portainer:** A maneira mais fácil de visualizar logs de containers individuais.
-        1.  Acesse o Portainer (`https://portainer.{{ base_domain }}`).
+        1.  Acesse o Portainer (`https://portainer.seudominio.com`).
         2.  Navegue até o endpoint Docker correto (e.g., `local` para `core-services-vm`).
         3.  Vá para "Containers", selecione o container problemático.
         4.  Clique no ícone de "Logs" (📄).
@@ -33,7 +34,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
         ```
 
 2.  **Dashboard e Logs do Traefik:**
-    *   **Dashboard Traefik:** Acessível em `https://traefik.{{ base_domain }}` (protegido por Authelia).
+    *   **Dashboard Traefik:** Acessível em `https://traefik.seudominio.com` (protegido por Authelia).
         *   **Routers:** Verifique se o roteador para o seu serviço problemático existe, está ativo (verde), e se a regra (`Rule`) corresponde ao hostname esperado.
         *   **Services:** Verifique se o serviço backend associado ao roteador está saudável e aponta para o(s) container(es) correto(s) e a porta interna correta.
         *   **Middlewares:** Verifique se os middlewares esperados (e.g., Authelia, headers) estão aplicados ao roteador e se não há erros neles.
@@ -67,9 +68,9 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
 
 5.  **Ferramentas de Rede (Execute na sua máquina de controle, ou dentro de uma VM/container para testes específicos):**
     *   **`ping <hostname_ou_IP>`:** Testa a conectividade de rede básica (ICMP).
-    *   **`nslookup <hostname>`** ou **`dig <hostname>`:** Verifica a resolução DNS. Essencial para ver se `meuservico.{{ base_domain }}` está resolvendo para IPs da Cloudflare.
+    *   **`nslookup <hostname>`** ou **`dig <hostname>`:** Verifica a resolução DNS. Essencial para ver se `meuservico.seudominio.com` está resolvendo para IPs da Cloudflare.
     *   **`curl -vL <URL>`:** Faz uma requisição HTTP/S e mostra detalhes verbosos da conexão, incluindo headers HTTP, códigos de status e redirecionamentos. Extremamente útil para testar Traefik, Authelia e o serviço backend.
-        *   Exemplo: `curl -vL https://nextcloud.{{ base_domain }}`
+        *   Exemplo: `curl -vL https://nextcloud.seudominio.com`
     *   **`traceroute <hostname_ou_IP>`** (Linux/macOS) ou **`tracert <hostname_ou_IP>`** (Windows): Mostra o caminho (saltos de rede) que os pacotes levam para alcançar um destino.
     *   **`mtr <hostname_ou_IP>`:** Combina ping e traceroute, fornecendo uma visão contínua da qualidade da conexão em cada salto.
     *   **`ss -tulnp`** (Linux) ou **`netstat -tulnp`:** Mostra quais portas estão abertas e escutando em um sistema e quais processos as estão usando. Útil para verificar se um serviço está escutando na porta esperada dentro de uma VM ou container.
@@ -85,16 +86,16 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
 
 ## Problemas Comuns e Estratégias de Solução
 
-### 1. Serviço Web Inacessível Externamente (`https://meuservico.{{ base_domain }}`)
+### 1. Serviço Web Inacessível Externamente (`https://meuservico.seudominio.com`)
 
 *   **Sintomas Comuns:** Erro "Site não pode ser alcançado" no navegador, timeout, erro 5xx da Cloudflare (e.g., 502 Bad Gateway, 503 Service Unavailable), erro 404 "Not Found" do Traefik, página de login do Authelia não aparece ou dá erro.
 *   **Checklist de Diagnóstico (Siga a ordem do fluxo de tráfego):**
     1.  **DNS Público (Cloudflare):**
         *   O subdomínio (`meuservico`) está configurado corretamente no seu painel DNS da Cloudflare?
         *   Se usa CNAME, ele aponta para o hostname correto do seu Cloudflare Tunnel (e.g., `UUID.cfargotunnel.com`)?
-        *   Se usa Ingress Rules/Public Hostnames no Zero Trust Dashboard, a regra para `meuservico.{{ base_domain }}` existe e aponta para o serviço `https://traefik:443` (com *No TLS Verify*)? `http://traefik:80` causa redirecionamento em loop.
+        *   Se usa Ingress Rules/Public Hostnames no Zero Trust Dashboard, a regra para `meuservico.seudominio.com` existe e aponta para o serviço `https://traefik:443` (com *No TLS Verify*)? `http://traefik:80` causa redirecionamento em loop.
         *   O "Proxy status" (nuvem laranja) está **habilitado** para o registro DNS?
-        *   Use uma ferramenta online de DNS lookup (ou `nslookup meuservico.{{ base_domain }}` na sua máquina) para verificar se ele resolve para endereços IP da Cloudflare.
+        *   Use uma ferramenta online de DNS lookup (ou `nslookup meuservico.seudominio.com` na sua máquina) para verificar se ele resolve para endereços IP da Cloudflare.
     2.  **Cloudflare Tunnel (`cloudflared` Agent):**
         *   O container `cloudflared` está rodando na `core-services-vm`? Verifique no Portainer.
         *   Examine os logs do `cloudflared`: `docker logs cloudflared`. Procure por:
@@ -103,15 +104,15 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
         *   No dashboard Cloudflare Zero Trust (Access -> Tunnels), verifique o status do seu túnel. Deve estar "Healthy".
     3.  **Traefik (Proxy Reverso):**
         *   O container `traefik` está rodando na `core-services-vm`?
-        *   Acesse o **Dashboard do Traefik** (`https://traefik.{{ base_domain }}` - você precisará autenticar com Authelia).
-            *   **Routers:** O roteador para `meuservico.{{ base_domain }}` existe e está com status verde? A `Rule` está correta (`Host(\`meuservico.{{ base_domain }}\`)`)? Os `EntryPoints` (`websecure`) estão corretos?
+        *   Acesse o **Dashboard do Traefik** (`https://traefik.seudominio.com` - você precisará autenticar com Authelia).
+            *   **Routers:** O roteador para `meuservico.seudominio.com` existe e está com status verde? A `Rule` está correta (`Host(\`meuservico.seudominio.com\`)`)? Os `EntryPoints` (`websecure`) estão corretos?
             *   **Services:** O serviço backend associado ao roteador está saudável? Ele aponta para o(s) container(es) correto(s) do `meuservico` e para a porta interna correta que o `meuservico` escuta?
             *   **Middlewares:** Os middlewares aplicados ao roteador (e.g., `authelia-forwardauth@docker`, `securityHeaders@file`) estão corretos e sem erros?
         *   Verifique as **labels Docker** do container `meuservico` no seu `docker-compose.yml`. Estão corretas quanto ao nome do host, entrypoint, nome do serviço Traefik, e a porta interna do container (`loadbalancer.server.port`)?
         *   Examine os **logs do Traefik** (`docker logs traefik`) para erros específicos relacionados a este serviço, problemas com certificados SSL, ou falhas ao conectar ao backend.
     4.  **Authelia (se o serviço estiver protegido por ele):**
         *   O container `authelia` e seu banco de dados (`authelia_db`) estão rodando?
-        *   Você consegue acessar o portal Authelia (`https://auth.{{ base_domain }}`)?
+        *   Você consegue acessar o portal Authelia (`https://auth.seudominio.com`)?
         *   Examine os **logs do Authelia** (`docker logs authelia`) para erros de autenticação, problemas com as regras de acesso (`access_control` no `configuration.yml`), ou falhas de conexão com o banco de dados.
         *   A configuração do middleware `authelia-forwardauth@docker` no Traefik (definida no `docker-compose.yml` do Authelia) está correta?
     5.  **Container do Serviço de Destino (`meuservico`):**
@@ -170,7 +171,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
             mount | grep nfs
             ```
             Você deve ver seus datasets (e.g., `/data/docker-volumes`) montados em `/mnt/pve_data_zfs/docker-volumes` (ou seu `{{ vm_nfs_mount_base_path }}`).
-        *   O arquivo `/etc/fstab` na VM contém as entradas corretas para montar os compartilhamentos NFS automaticamente no boot, com as opções corretas (e.g., `rw,sync,hard,intr,bg,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2`)?
+        *   O arquivo `/etc/fstab` na VM contém as entradas corretas para montar os compartilhamentos NFS automaticamente no boot, com as opções corretas (`rw,sync,hard,intr,_netdev,x-systemd.mount-timeout=60s,noatime,nodiratime,rsize=1048576,wsize=1048576,vers=4.2`, do role `common`)?
         *   Você consegue listar, criar e deletar arquivos (como root ou como `{{ vm_ansible_user_name }}`) nos pontos de montagem NFS dentro da VM?
             Exemplo: `ls -l /mnt/pve_data_zfs/docker-volumes/`
             `sudo touch /mnt/pve_data_zfs/docker-volumes/testfile && sudo rm /mnt/pve_data_zfs/docker-volumes/testfile`
@@ -192,15 +193,15 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
     1.  **Logs do Authelia:** `docker logs authelia` na `core-services-vm`. Este é o primeiro lugar para procurar. Aumente o nível de log no `configuration.yml` do Authelia se precisar de mais detalhes.
     2.  **Configuração do Authelia (`authelia/config/configuration.yml`):**
         *   **`jwt_secret` e `session.secret`:** Estão definidos, são complexos e são os mesmos que Authelia está usando? (Se você os define via variáveis de ambiente no compose, certifique-se que estão sendo passados corretamente).
-        *   **`session.domain`:** Está configurado para o seu domínio pai (e.g., `{{ base_domain }}`), e **NÃO** para um subdomínio como `auth.{{ base_domain }}`? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.
+        *   **`session.domain`:** Está configurado para o seu domínio pai (e.g., `seudominio.com`), e **NÃO** para um subdomínio como `auth.seudominio.com`? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.
         *   **`storage` (PostgreSQL):** A configuração do banco de dados (host `authelia_db`, usuário, senha, nome do DB) está correta e o container `authelia_db` está rodando e saudável?
-        *   **`access_control.rules`:** As regras estão definidas como você espera? A `default_policy` está correta? As regras para domínios específicos e a regra `bypass` para `auth.{{ base_domain }}` estão presentes e corretas?
+        *   **`access_control.rules`:** As regras estão definidas como você espera? A `default_policy` está correta? As regras para domínios específicos e a regra `bypass` para `auth.seudominio.com` estão presentes e corretas?
         *   **`notifier` (SMTP):** Se configurado, está correto? Problemas aqui podem impedir o reset de senha.
     3.  **Conectividade com o Banco de Dados PostgreSQL do Authelia:**
         *   O container `authelia` consegue alcançar o container `authelia_db` na rede `internal_services`?
         *   Verifique os logs do `authelia_db` também.
     4.  **Cookies do Navegador:**
-        *   Tente limpar os cookies do seu navegador para o seu `{{ base_domain }}` e para `auth.{{ base_domain }}` e tente logar novamente.
+        *   Tente limpar os cookies do seu navegador para o seu `seudominio.com` e para `auth.seudominio.com` e tente logar novamente.
         *   Use as Developer Tools do navegador (F12 -> Aba Application/Storage -> Cookies) para inspecionar o cookie de sessão do Authelia (geralmente chamado `homelab_authelia_session` ou o que você definiu em `session.name`). Ele está sendo definido para o domínio correto?
     5.  **Sincronia de Relógio:**
         *   Certifique-se de que o relógio na `core-services-vm` (e, portanto, nos containers) está sincronizado corretamente com um servidor NTP. Desvios significativos de tempo podem afetar a validação de códigos TOTP para 2FA.
@@ -218,7 +219,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
         *   O `storage` para o `acme.json` (e.g., `/data/acme.json` dentro do container Traefik) está correto e o container Traefik tem permissão de **escrita** nesse caminho no volume NFS? (Verifique as permissões do diretório `traefik/data` no NFS).
         *   Para o `dnsChallenge` com `provider: "cloudflare"`:
             *   A variável de ambiente `CF_DNS_API_TOKEN` está sendo passada corretamente para o container Traefik (verifique o `docker-compose.yml` da stack `core` e o `.env` carregado)?
-            *   O token API da Cloudflare que você gerou é válido e tem as permissões corretas (geralmente "Zone:DNS:Edit" para o seu `{{ base_domain }}`)?
+            *   O token API da Cloudflare que você gerou é válido e tem as permissões corretas (geralmente "Zone:DNS:Edit" para o seu `seudominio.com`)?
     3.  **Arquivo `acme.json`:**
         *   Localização: `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/data/acme.json` na `core-services-vm`.
         *   Verifique o conteúdo (é um arquivo JSON). Ele contém entradas para seus domínios e os certificados? Há mensagens de erro dentro dele?

@@ -266,7 +266,7 @@ Consumidores ficam sem LLM: remover `+llm` de todos e decidir com o usuário se 
 |---|---|
 | Provedor | `authelia` (OIDC; o OAuth exigido pelos clientes MCP é feito pelo `mcp-auth-proxy` de cada consumidor) |
 | Aplica-se a | `+mcp` |
-| Arquivos | compose do consumidor (serviço principal `mcp-auth-proxy` e o servidor MCP); `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` (cliente `mcp`); `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` |
+| Arquivos | compose do consumidor (serviço principal `mcp-auth-proxy` e o servidor MCP); `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` (cliente `mcp`); `ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2` |
 | Páginas | `01-manual-implementacao/12-segundo-cerebro.md`; `01-manual-implementacao/05-rede-segura.md` |
 | Manual | conectar o cliente (claude.ai: Conectores; Claude Code: `claude mcp add --transport http`) — página da aplicação |
 
@@ -385,4 +385,4 @@ Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão 
 
 Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (coleta de logs na VM de IA — hoje pelo Alloy, que substituiu o Promtail em 2026-10-19 —, Open WebUI `protegida`, job `glances` removido).
 
-**Fora das regras** (para a reestruturação): a stack `apps` é um compose único, mas recebe cinco `.env` separados (hoje unidos à mão num `apps.env`, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.
+**Fora das regras** (para a reestruturação): a stack `apps` é um compose único, mas recebe quatro `.env` separados (os playbooks os juntam no `apps.env`, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW — a restrição real é a LAN. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.

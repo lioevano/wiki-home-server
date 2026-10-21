@@ -22,8 +22,8 @@ Manter uma infraestrutura dinâmica e auto-hospedada é uma jornada contínua de
 
 Esta seção está organizada nos seguintes guias práticos para ajudá-lo a operar e evoluir seu servidor doméstico:
 
-1.  **[Adicionando um Novo Serviço Docker à Infraestrutura](01-adicionando-novo-servico-docker.md):**
-    Um checklist detalhado e um exemplo prático de como integrar uma nova aplicação containerizada ao seu setup, desde o planejamento até o deploy e configuração de acesso.
+1.  **[Adicionando um Serviço Docker](01-adicionando-novo-servico-docker.md):**
+    O caminho de uma aplicação nova, numa stack nova ou existente: catálogo, integrações, página, compose, playbook de volumes, deploy e índice.
 2.  **[Modificando Configurações Existentes](02-modificando-configuracoes-existentes.md):**
     Um guia essencial sobre onde encontrar as principais configurações da sua infraestrutura e dos seus serviços, e o processo seguro para alterá-las, mantendo a consistência com sua IaC.
 3.  **[Troubleshooting Comum](03-troubleshooting-comum.md):**
@@ -38,15 +38,11 @@ Esta seção está organizada nos seguintes guias práticos para ajudá-lo a ope
     Explorando a criação de máquinas virtuais para propósitos mais específicos, como um firewall/roteador dedicado (e.g., pfSense/OPNsense), ambientes de teste isolados, ou VMs Windows.
 8.  **[Compartilhando Recursos Entre VMs ou com a Rede Local](08-compartilhando-recursos-entre-vms.md):**
     Diferentes métodos para compartilhar arquivos, bancos de dados ou outros recursos entre suas VMs ou com outros dispositivos na sua rede local (NFS, Samba, VirtIO-FS).
-9.  **[Integrando Novos Serviços a Stacks Docker Existentes](09-integrando-novos-servicos-stacks-existentes.md):**
-    Como adicionar um novo container a um arquivo `docker-compose.yml` já existente, em vez de criar uma stack totalmente nova para cada pequeno serviço.
-10. **[Atualização Segura de Componentes Críticos da Infraestrutura](10-atualizacao-segura-componentes-criticos.md):**
+9.  **[Atualização Segura de Componentes Críticos da Infraestrutura](09-atualizacao-segura-componentes-criticos.md):**
     Estratégias e pontos de atenção para atualizar componentes fundamentais como Proxmox VE, Docker Engine, Traefik e Authelia de forma mais segura e controlada.
-11. **[Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)](11-hospedando-aplicacao-publica-dominio-raiz.md):**
+10. **[Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog)](10-hospedando-aplicacao-publica-dominio-raiz.md):**
     Considerações de segurança e configuração no Traefik para expor uma aplicação (idealmente um site estático) diretamente no seu domínio principal (e.g., `https://seudominio.com`).
-12. **[Guia Prático de Snapshots ZFS](12-guia-snapshots-zfs.md):**
+11. **[Guia Prático de Snapshots ZFS](11-guia-snapshots-zfs.md):**
     Um guia detalhado sobre como criar, listar, gerenciar e utilizar os poderosos snapshots ZFS para recuperação rápida de dados e proteção local no seu host Proxmox.
-13. **[Uso do Gemini CLI para Operações Assistidas por IA](13-usando-geminicli.md):**
-    Como instalar, configurar e utilizar o Gemini CLI com segurança para troubleshooting, análise de logs e apoio operacional no homelab.
 
 Estes guias são projetados para serem suas referências rápidas e acionáveis para as operações do dia-a-dia e para a evolução contínua do seu servidor doméstico. Lembre-se sempre da importância de testar as mudanças em ambientes menos críticos quando possível e de manter seus [backups atualizados e testados](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)!

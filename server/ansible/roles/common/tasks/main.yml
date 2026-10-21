@@ -64,9 +64,8 @@
     # Fotos (Immich) e arquivos (Nextcloud) na core-services-vm, onde rodam as stacks photos e cloud.
     - { dataset_name: "{{ zfs_photos_dataset_name }}", when_condition: "'core_services' in group_names" }
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'core_services' in group_names" }
-    # Vaults do Obsidian (segundo cérebro, página 12) e fontes RAG: só na VM de IA (grupo 'ai_desktop' do inventário).
+    # Vaults do Obsidian (segundo cérebro, página 12): só na VM de IA (grupo 'ai_desktop' do inventário).
     - { dataset_name: "{{ zfs_notes_dataset_name }}", when_condition: "'ai_desktop' in group_names" }
-    - { dataset_name: "{{ zfs_rag_sources_dataset_name }}", when_condition: "'ai_desktop' in group_names and zfs_rag_sources_dataset_name is defined" }
   when: item.when_condition is not defined or item.when_condition # Permite loop condicional
   # NOTA: O dataset de backups (zfs_backups_dataset_name) geralmente não precisa ser montado nas VMs.
 

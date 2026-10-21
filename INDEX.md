@@ -107,7 +107,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `02-visao-geral-arquitetura/09-catalogo-aplicacoes.md` | Catálogo de Aplicações | Catálogo de aplicações do servidor: fatos de cada aplicação (stack, serviços, exposição, dados, métricas, integrações providas) que guiam as integrações. |
 | `02-visao-geral-arquitetura/10-indice-integracoes.md` | Índice de Integrações | Índice declarativo das integrações entre aplicações: provedor, a quem se aplica, regras verificáveis e passos para adicionar ou remover. |
 | `02-visao-geral-arquitetura/index.md` | 💡 Visão Geral da Arquitetura | Visão conceitual de como virtualização, armazenamento, automação, containers, rede e segurança se integram no servidor. |
-| `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` | Adicionando um Novo Serviço Docker à Infraestrutura | Checklist e exemplo prático para adicionar um novo serviço Docker com volumes, Traefik, Authelia e Ansible. |
+| `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` | Adicionando um Serviço Docker | Como adicionar uma aplicação Docker, numa stack nova ou existente: catálogo, integrações, compose, playbook de volumes, deploy e índice. |
 | `03-guias-sustentacao/02-modificando-configuracoes-existentes.md` | Modificando Configurações Existentes | Onde ficam as configurações (Ansible, compose, Portainer) e como alterá-las com segurança e rastreabilidade. |
 | `03-guias-sustentacao/03-troubleshooting-comum.md` | Guia de Troubleshooting Comum | Ferramentas e soluções para os problemas mais comuns: rede, containers, NFS, Traefik, Authelia e VMs. |
 | `03-guias-sustentacao/04-gerenciando-redes-docker.md` | Gerenciando Redes Docker | Redes Docker da arquitetura (proxy e internal_services): como funcionam, como conectar serviços e diagnosticar. |
@@ -115,15 +115,13 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `03-guias-sustentacao/06-gerenciando-recursos-vms.md` | Gerenciando Recursos de Máquinas Virtuais (VMs) | Ajuste de CPU, RAM e disco das VMs no Proxmox mantendo o Ansible como fonte da verdade. |
 | `03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md` | Cenários Específicos de Criação de Máquinas Virtuais (VMs) | Cenários para criar VMs com propósito específico além da core-services-vm e da ai-desktop-vm. |
 | `03-guias-sustentacao/08-compartilhando-recursos-entre-vms.md` | Compartilhando Recursos Entre VMs ou com a Rede Local | Compartilhamento de arquivos, bancos de dados e serviços entre VMs e com a rede local (NFS, Samba, PostgreSQL). |
-| `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` | Integrando Novos Serviços a Stacks Docker Existentes | Quando e como adicionar um container a uma stack Docker existente em vez de criar uma stack nova. |
-| `03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md` | Atualização Segura de Componentes Críticos da Infraestrutura | Como atualizar com segurança Proxmox VE, Docker, Traefik, Authelia e outros componentes críticos. |
-| `03-guias-sustentacao/11-hospedando-aplicacao-publica-dominio-raiz.md` | Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog) | Como publicar uma aplicação (ex.: blog) no domínio raiz com Cloudflare Tunnel e Traefik, sem passar pelo Authelia. |
-| `03-guias-sustentacao/12-guia-snapshots-zfs.md` | Guia Prático de Snapshots ZFS | Guia prático de snapshots ZFS: criar, listar, reverter, automatizar e usá-los antes de mudanças arriscadas. |
-| `03-guias-sustentacao/13-usando-geminicli.md` | Usando o Gemini CLI para Interação Inteligente com o Servidor | Instala o Gemini CLI nas VMs via Ansible e mostra como usá-lo no terminal para manutenção e troubleshooting. |
+| `03-guias-sustentacao/09-atualizacao-segura-componentes-criticos.md` | Atualização Segura de Componentes Críticos da Infraestrutura | Como atualizar com segurança Proxmox VE, Docker, Traefik, Authelia e outros componentes críticos. |
+| `03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz.md` | Hospedando uma Aplicação Pública no Domínio Raiz (e.g., Blog) | Como publicar uma aplicação (ex.: blog) no domínio raiz com Cloudflare Tunnel e Traefik, sem passar pelo Authelia. |
+| `03-guias-sustentacao/11-guia-snapshots-zfs.md` | Guia Prático de Snapshots ZFS | Guia prático de snapshots ZFS: criar, listar, reverter, automatizar e usá-los antes de mudanças arriscadas. |
 | `03-guias-sustentacao/index.md` | 🛠️ Guias de Sustentação e Modificação da Infraestrutura | Guias para modificar, expandir e manter a infraestrutura depois da implementação inicial. |
 | `04-manutencao-recuperacao/01-rotinas-manutencao.md` | Rotinas de Manutenção Essenciais | Rotinas periódicas de manutenção (atualizações, ZFS scrub, logs, certificados) e scripts de validação do server. |
 | `04-manutencao-recuperacao/02-backup-restore-estrategia.md` | Estratégia de Backup e Procedimentos de Restauração | Estratégia de backup 3-2-1 e procedimentos de restauração de VMs, volumes e configurações. |
-| `04-manutencao-recuperacao/03-cicd-basico-ansible.md` | CI/CD Básico para Infraestrutura como Código (Ansible) | CI/CD básico para a infraestrutura como código: lint, testes e execução controlada dos playbooks Ansible. |
+| `04-manutencao-recuperacao/03-cicd-basico-ansible.md` | CI/CD Básico para Infraestrutura como Código | Fluxo de mudança e CI do repositório: dev.py, workflows docs e server-lint, simulação com --check e o deploy completo pelo full-deploy.yml. |
 | `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` | Reconstruindo a Infraestrutura Após uma Falha Grave | Como reconstruir a infraestrutura após falha grave do disco do sistema, usando Git, Ansible e o pool ZFS. |
 | `04-manutencao-recuperacao/05-migrando-hardware-rede.md` | Adaptando a Infraestrutura para Novo Hardware ou Mudanças de Rede | Como adaptar a infraestrutura a um novo hardware ou a mudanças de rede (novo IP, sub-rede ou roteador). |
 | `04-manutencao-recuperacao/index.md` | ⚙️ Manutenção Preventiva e Recuperação de Desastres | Manutenção preventiva e recuperação de desastres: rotinas, backups, CI/CD, reconstrução e migração. |
@@ -147,15 +145,16 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/playbooks/setup-cloud-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/playbooks/setup-core-networking.yml` | playbook | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md` |
 | `ansible/playbooks/setup-langfuse-volumes.yml` | playbook | `01-manual-implementacao/13-agentes-base.md` |
-| `ansible/playbooks/setup-media-stack-volumes.yml` | playbook | `01-manual-implementacao/10-midia.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
+| `ansible/playbooks/setup-media-stack-volumes.yml` | playbook | `01-manual-implementacao/10-midia.md` |
 | `ansible/playbooks/setup-monitoring-stack-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/playbooks/setup-n8n-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
 | `ansible/playbooks/setup-notes-volumes.yml` | playbook | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/playbooks/setup-photos-stack-volumes.yml` | playbook | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/playbooks/setup-productivity-automation-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/setup-proxmox-host.yml` | playbook | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
+| `ansible/playbooks/tasks/apps-env.yml` | outro | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/vm-deploy.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `03-guias-sustentacao/06-gerenciando-recursos-vms.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
-| `ansible/requirements.yml` | outro | `01-manual-implementacao/01-maquina-controle-ansible.md` |
+| `ansible/requirements.yml` | outro | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/roles/apps/desktop-environment/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/apps/ml-tools/tasks/main.yml` | role-tasks | `01-manual-implementacao/08-stack-ia.md` |
 | `ansible/roles/apps/ml-tools/templates/Dockerfile.ollama-vulkan.j2` | role-template | `01-manual-implementacao/08-stack-ia.md` |
@@ -182,12 +181,11 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/traefik-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
-| `ansible/roles/infra/traefik-config/templates/dynamic_rag_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/traefik.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
-| `ansible/roles/tools/ai-cli-tools/tasks/main.yml` | role-tasks | `03-guias-sustentacao/13-usando-geminicli.md` |
-| `ansible/templates/agents/agentgateway.yaml.j2` | template | `01-manual-implementacao/13-agentes-base.md` |
+| `ansible/templates/agents/agentgateway.yaml.j2` | template | `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/agents/ops-requirements.txt.j2` | template | `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/templates/backup-postgres.sh.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/templates/blackbox.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
@@ -195,10 +193,10 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/grafana/alerting/policies.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/grafana/alerting/rules.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/homepage/docker.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
-| `ansible/templates/homepage/services.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/homepage/services.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/homepage/settings.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/immich/immich.json.j2` | template | `01-manual-implementacao/11-fotos-arquivos.md` |
-| `ansible/templates/litellm_config.yaml.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/litellm_config.yaml.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/07-apis-llm-estrategia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/loki-local-config.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/nextcloud/10-homeserver.sh.j2` | template | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `ansible/templates/notes/Dockerfile.conversor.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
@@ -211,30 +209,31 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/notes/notes-indice.service.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/templates/notes/notes-indice.timer.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
-| `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/recyclarr.yml.j2` | template | `01-manual-implementacao/10-midia.md` |
 | `docker/images/ops/.dockerignore` | outro | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/Dockerfile` | outro | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/__init__.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/auditoria.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/autenticacao.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/config.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/ferramentas.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/politica.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/portainer.py` | script | `01-manual-implementacao/13-agentes-base.md` |
-| `docker/images/ops/ops/runner.py` | script | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/images/ops/ops/runner.py` | script | `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/images/ops/ops/server.py` | script | `01-manual-implementacao/13-agentes-base.md` |
-| `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `docker/stacks/agents/docker-compose.yml` | stack | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` |
-| `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md`, `03-guias-sustentacao/09-integrando-novos-servicos-stacks-existentes.md` |
+| `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md` |
 | `docker/stacks/cloud/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
-| `docker/stacks/core/docker-compose.yml` | stack | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md` |
+| `docker/stacks/core/docker-compose.yml` | stack | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/06-deploy-core.md`, `03-guias-sustentacao/09-atualizacao-segura-componentes-criticos.md` |
 | `docker/stacks/langfuse/docker-compose.yml` | stack | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/stacks/media/docker-compose.yml` | stack | `01-manual-implementacao/10-midia.md` |
 | `docker/stacks/notes/docker-compose.yml` | stack | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `docker/stacks/photos/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `scripts/bootstrap.sh` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` |
-| `scripts/notify.sh` | script | `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
+| `scripts/notify.sh` | script | `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `04-manutencao-recuperacao/01-rotinas-manutencao.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `scripts/restore.sh` | script | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `scripts/validation/check_nfs_permissions.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |
 | `scripts/validation/check_yaml_integrity.py` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |

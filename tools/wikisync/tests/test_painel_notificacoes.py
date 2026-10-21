@@ -57,17 +57,23 @@ def test_publicar_workflow_no_n8n_2():
     assert "update:workflow" not in texto
 
 
-def test_apps_env_sem_nomes_repetidos(tmp_path):
-    """#54: os .env da stack apps repetem as variáveis comuns e as do Telegram; a junção fica com a primeira."""
-    linha = next(l for l in P07.read_text(encoding="utf-8").splitlines() if "> apps.env" in l)
-    assert "awk" in linha and "!visto[" in linha
-    for nome, conteudo in {"productivity.env": "# x\nTZ=1\nA=1\n", "automation.env": "TZ=1\n",
-                           "n8n.env": "TELEGRAM_BOT_TOKEN=t\nB=2\n", "monitoring.env": "TELEGRAM_BOT_TOKEN=t\nC=3\n"}.items():
+TASK_APPS_ENV = ROOT / "server/ansible/playbooks/tasks/apps-env.yml"
+
+
+def test_apps_env_montado_pelos_playbooks(tmp_path):
+    """#54 e rodada de arrumação: os playbooks da stack apps montam o apps.env sozinhos, sem nomes repetidos."""
+    tarefas = yaml.safe_load(TASK_APPS_ENV.read_text(encoding="utf-8"))
+    sh = tarefas[0]["ansible.builtin.shell"].replace("{{ portainer_env_files_dest_path_on_vm }}", str(tmp_path))
+    assert tarefas[0]["no_log"] is True and tarefas[0]["check_mode"] is False
+    assert tarefas[1]["ansible.builtin.copy"]["mode"] == "0600" and tarefas[1]["no_log"] is True
+    for nome, conteudo in {"productivity.env": "# x\nTZ=1\nA=1\n", "n8n.env": "TELEGRAM_BOT_TOKEN=t\nB=2\n",
+                           "monitoring.env": "TELEGRAM_BOT_TOKEN=t\nC=3\n"}.items():  # automation.env ainda não existe
         (tmp_path / nome).write_text(conteudo, encoding="utf-8")
-    comando = linha.split("sudo sh -c '", 1)[1].rsplit("'", 1)[0].replace("cd /opt/portainer_stack_envs", f"cd {tmp_path}")
-    subprocess.run(["sh", "-c", comando], check=True)
-    linhas = (tmp_path / "apps.env").read_text(encoding="utf-8").split()
-    assert linhas == ["TZ=1", "A=1", "TELEGRAM_BOT_TOKEN=t", "B=2", "C=3"]
+    r = subprocess.run(["bash", "-c", sh], capture_output=True, text=True, check=True)
+    assert r.stdout.split() == ["TZ=1", "A=1", "TELEGRAM_BOT_TOKEN=t", "B=2", "C=3"]
+    for pb in ("setup-productivity-automation-volumes.yml", "setup-n8n-volumes.yml", "setup-monitoring-stack-volumes.yml"):
+        play = yaml.safe_load((ROOT / "server/ansible/playbooks" / pb).read_text(encoding="utf-8"))[0]
+        assert play["tasks"][-1].get("ansible.builtin.include_tasks") == "tasks/apps-env.yml", pb
 
 
 def test_diun_pelo_socket_proxy():

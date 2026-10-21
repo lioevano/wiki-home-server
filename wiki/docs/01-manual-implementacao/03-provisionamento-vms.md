@@ -9,7 +9,7 @@ Com o host Proxmox VE devidamente configurado ([Seção 2](02-proxmox-ve-host.md
 Nesta arquitetura, com 48GB de RAM disponíveis no host, temos flexibilidade para alocar recursos de forma mais confortável para nossas VMs principais:
 
 * **`core-services-vm`:** Esta VM será o cavalo de batalha, hospedando a maioria dos seus serviços Docker, incluindo Traefik, Portainer, Authelia, Nextcloud, a stack de mídia, a stack de monitoramento, e outros serviços essenciais.
-* **`ai-desktop-vm`:** Esta VM é opcional, mas planejada para tarefas de Inteligência Artificial (LLMs com Ollama, aplicações RAG) que podem se beneficiar de um ambiente isolado e, crucialmente, do passthrough da GPU AMD RX 5600XT para aceleração de hardware.
+* **`ai-desktop-vm`:** Esta VM é opcional, mas planejada para tarefas de Inteligência Artificial (LLMs com Ollama, busca nas notas do segundo cérebro) que podem se beneficiar de um ambiente isolado e, crucialmente, do passthrough da GPU AMD RX 5600XT para aceleração de hardware.
 
 ## 3.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)
 
@@ -381,7 +381,7 @@ Certifique-se de que o arquivo `ansible/playbooks/vm-deploy.yml` exista com o se
         vm_ipconfig: "ip={{ hostvars['core-services-vm']['ansible_host'] }}/24,gw={{ vm_cloud_init_gateway }}"
         vm_tags: "docker,core_services,homelab,ansible_managed"
 
-    - name: "Deploy VM: ai-desktop-vm (Opcional, para LLM/RAG com GPU)"
+    - name: "Deploy VM: ai-desktop-vm (IA com GPU: Ollama, segundo cérebro, Langfuse)"
       ansible.builtin.include_role:
         name: infra/proxmox-vm
       vars:

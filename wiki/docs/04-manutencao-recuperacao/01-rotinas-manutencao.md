@@ -64,7 +64,7 @@ Manter todo o software atualizado é uma das tarefas de manutenção mais críti
 
 Manter suas imagens Docker e as aplicações rodando dentro dos containers atualizadas é tão crucial quanto atualizar os sistemas operacionais.
 
-Consulte a seção [Atualização Segura de Componentes Críticos da Infraestrutura](../03-guias-sustentacao/10-atualizacao-segura-componentes-criticos.md) para detalhes sobre como atualizar Traefik, Authelia e outras aplicações Docker individuais, incluindo os avisos de versão nova do **Diun** e o processo manual via Portainer (ou pelo Ansible, no caso da stack `core`).
+Consulte a seção [Atualização Segura de Componentes Críticos da Infraestrutura](../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos.md) para detalhes sobre como atualizar Traefik, Authelia e outras aplicações Docker individuais, incluindo os avisos de versão nova do **Diun** e o processo manual via Portainer (ou pelo Ansible, no caso da stack `core`).
 
 **Princípios Chave para Atualizar Containers:**
 1.  **Leia as Notas de Release da Aplicação/Imagem:** Verifique por breaking changes ou passos de migração.

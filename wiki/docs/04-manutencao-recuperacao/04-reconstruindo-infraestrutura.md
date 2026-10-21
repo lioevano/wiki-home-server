@@ -108,14 +108,14 @@ Siga estes passos metodicamente:
         *   Executar os playbooks `setup-<stack>-volumes.yml` (produtividade/automação, mídia, monitoramento, n8n e IA): Garantir que os diretórios NFS para as stacks Docker estejam com as permissões corretas e que os arquivos `.env` sejam recriados nas VMs.
 
 8.  **Implantar (ou Verificar) as Stacks Docker via Portainer:**
-    *   Acesse sua instância Portainer (em `https://portainer.{{ base_domain }}`).
+    *   Acesse sua instância Portainer (em `https://portainer.seudominio.com`).
     *   **Se os dados do volume `docker-volumes/portainer/data` foram restaurados com o pool ZFS,** suas configurações de stacks, endpoints e usuários do Portainer podem já estar lá.
         *   Navegue para "Stacks". Se suas stacks estiverem listadas, você pode precisar "Update the stack" para algumas delas (sem mudar o compose, apenas para forçar o Portainer a reconciliar com o estado atual do Docker e carregar os `.env` recriados).
     *   **Se você está recriando as stacks do zero no Portainer (ou se a config do Portainer foi perdida):**
         Para cada stack do Portainer (`apps` na `core-services-vm`, `ai` na `ai-desktop-vm`; a `core` já foi implantada pelo `setup-core-networking.yml`):
         1.  Vá para "Stacks" -> "+ Add stack".
         2.  Cole o conteúdo do arquivo `docker-compose.yml` da respectiva stack.
-        3.  Em **Env**, carregue o `.env` que o Ansible recriou na VM (`/opt/portainer_stack_envs/apps.env`, montado como na [seção 7](../01-manual-implementacao/07-deploy-apps.md), ou `/opt/portainer_stack_envs/ai.env`). Ele já traz os segredos do vault.
+        3.  Em **Env** (**Advanced mode**), cole o `.env` que o Ansible recriou na VM (`/opt/portainer_stack_envs/<stack>.env`; [como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)). Ele já traz os segredos do vault.
         4.  Clique em "**Deploy the stack**".
     *   **Dados das Aplicações:** Como o conteúdo do dataset `/data/docker-volumes` (e outros como `/data/media`) foi restaurado (seja pela importação do pool ZFS original ou de um backup off-site), suas aplicações Docker, ao serem reiniciadas com seus volumes corretamente mapeados, devem encontrar seus dados e configurações anteriores.
         *   **Restauração de Dumps de DB:** Se você tem dumps de banco de dados mais recentes do que o estado dos volumes ZFS restaurados, ou se a restauração do volume do DB não foi perfeita, você pode precisar restaurar os dumps de banco de dados manualmente (conforme descrito na [Estratégia de Backup](02-backup-restore-estrategia.md#a-bancos-de-dados-das-aplicações-postgresql-para-authelia-nextcloud-grafana)).

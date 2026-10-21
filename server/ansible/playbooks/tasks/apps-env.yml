@@ -1,0 +1,26 @@
+# ansible/playbooks/tasks/apps-env.yml
+# Monta o apps.env da stack apps (página 07) a partir dos .env que os playbooks dela geram: productivity,
+# automation, n8n e monitoring. Todos repetem as variáveis comuns e alguns as do Telegram com o mesmo valor;
+# fica só a primeira de cada nome, sem comentários. Incluído no fim de cada um desses playbooks.
+- name: "apps.env: juntar os .env da stack apps sem nomes repetidos"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    cd "{{ portainer_env_files_dest_path_on_vm }}"
+    for f in productivity.env automation.env n8n.env monitoring.env; do
+      if [ -f "$f" ]; then cat "$f"; fi
+    done | awk -F= '/^[A-Za-z_]/ && !visto[$1]++'
+  args:
+    executable: /bin/bash
+  register: apps_env_conteudo
+  changed_when: false
+  check_mode: false # só lê; no --check o resultado alimenta o diff da tarefa seguinte
+  no_log: true # contém segredos
+
+- name: "apps.env: gravar (0600, contém segredos)"
+  ansible.builtin.copy:
+    content: "{{ apps_env_conteudo.stdout }}\n"
+    dest: "{{ portainer_env_files_dest_path_on_vm }}/apps.env"
+    owner: root
+    group: root
+    mode: '0600'
+  no_log: true

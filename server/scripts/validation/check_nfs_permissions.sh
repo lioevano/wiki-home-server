@@ -119,7 +119,7 @@ if [[ -d "${NFS_MOUNT_PATH}" ]]; then
     echo "Permissions: ${MOUNT_PERMS}"
     
     # Check common subdirectories
-    for subdir in docker-volumes rag_sources databases; do
+    for subdir in docker-volumes media photos files notes; do
         FULL_PATH="${NFS_MOUNT_PATH}/${subdir}"
         if [[ -d "${FULL_PATH}" ]]; then
             OWNER=$(stat -c "%U:%G (%u:%g)" "${FULL_PATH}")

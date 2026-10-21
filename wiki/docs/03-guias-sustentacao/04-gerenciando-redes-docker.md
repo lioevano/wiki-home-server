@@ -36,7 +36,7 @@ Entender como essas redes funcionam e como gerenciá-las é importante para a co
           - proxy # Conecta este serviço à rede proxy
         labels: # Labels para Traefik descobrir e rotear para este serviço
           - "traefik.enable=true"
-          - "traefik.http.routers.meuservicoweb.rule=Host(`meuservico.{{ base_domain }}`)"
+          - "traefik.http.routers.meuservicoweb.rule=Host(`meuservico.${BASE_DOMAIN_FROM_VAULT}`)"
           # ... outras labels Traefik ...
     ```
 *   **Comunicação:**

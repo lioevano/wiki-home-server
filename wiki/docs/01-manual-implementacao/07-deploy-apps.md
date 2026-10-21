@@ -13,6 +13,24 @@ As aplicações ficam em um único compose: `docker/stacks/apps/docker-compose.y
 | Monitoramento | Prometheus, Grafana (+ Postgres), Loki, blackbox-exporter, Diun, Homepage, docker-socket-proxy | `prometheus.`, `grafana.`, `home.` |
 | Automação | n8n, Home Assistant | `n8n.`, `hass.` |
 
+## Primeiro acesso ao Portainer
+
+O Portainer CE foi instalado na `core-services-vm` pelo role `infra/docker` ([seção 4](04-configuracao-base-vms-ubuntu.md)), e o Portainer Agent na `ai-desktop-vm`. Esta é a primeira vez que você o usa, então faça antes de qualquer stack:
+
+1. **Crie o administrador logo.** Abra `https://portainer.seudominio.com` (atrás do Authelia) ou, na LAN, `https://<IP da core-services-vm>:9443` (certificado autoassinado). O Portainer só aceita criar o administrador nos **5 minutos** depois de subir; passou do prazo, rode `sudo docker restart portainer` e tente de novo. Use uma senha forte (o Authelia fica na frente, mas a API também é alcançável pela LAN).
+2. **Ambiente local.** Em **Environments**, o ambiente da própria core aparece como `local`. Se o assistente perguntar, escolha **Get Started** (Docker local, pelo socket).
+3. **Ambiente da VM de IA.** **Environments → Add environment → Docker Standalone → Agent**: nome `ai-desktop-vm` e endereço `<IP da ai-desktop-vm>:9001`. O agente só atende quem conhece o `AGENT_SECRET` (`portainer_agent_secret` do vault), que o Portainer server já recebeu do Ansible. Os nomes `local` e `ai-desktop-vm` são os que o MCP `ops` procura (`ops_endpoints`, página 01); se usar outros, ajuste a variável.
+4. **Token de API** (para a [base dos agentes](13-agentes-base.md)): *My account → Access tokens → Add access token* → guarde em `portainer_api_key` no vault.
+
+### Como as stacks recebem as variáveis
+
+Cada stack do Portainer usa o compose do repositório e um `.env` que o playbook dela gerou na VM, em `/opt/portainer_stack_envs/`. O botão **Load variables from .env file** do Portainer lê um arquivo **do seu computador**, não da VM. Por isso, faça assim:
+
+1. Na VM da stack: `sudo cat /opt/portainer_stack_envs/<stack>.env`.
+2. Em **Environment variables**, troque para **Advanced mode** e cole o conteúdo. O arquivo tem segredos: não o salve no computador nem o mande por chat.
+
+Ao mudar uma variável, rode o playbook de novo, cole o `.env` atualizado na stack (**Editor** → **Advanced mode**) e clique em **Update the stack**.
+
 ## Deploy via Portainer
 
 1. Acesse o Portainer em `https://portainer.seudominio.com`
@@ -20,7 +38,7 @@ As aplicações ficam em um único compose: `docker/stacks/apps/docker-compose.y
 3. Nome: `apps`
 4. Selecione **Web editor**
 5. Cole o conteúdo de `docker/stacks/apps/docker-compose.yml`
-6. Em **Env**, carregue o arquivo `/opt/portainer_stack_envs/apps.env` montado conforme os passos manuais abaixo
+6. Em **Environment variables → Advanced mode**, cole o `/opt/portainer_stack_envs/apps.env`, que os playbooks da stack montam (veja abaixo e [como as stacks recebem as variáveis](#como-as-stacks-recebem-as-variáveis))
 7. Clique em **Deploy the stack**
 
 ### Variáveis da stack
@@ -44,11 +62,7 @@ A stack `apps` é um único compose, mas cada playbook gera o seu `.env` em `/op
    done
    # sem erros? repita o laço sem --check
    ```
-   Depois junte os arquivos num só `apps.env` para o Portainer (contém segredos: `0600`). Os quatro repetem as variáveis comuns e as do Telegram com o mesmo valor; o `awk` mantém só a primeira de cada nome e tira os comentários:
-   ```bash
-   # na core-services-vm
-   sudo sh -c 'umask 077; cd /opt/portainer_stack_envs && cat productivity.env automation.env n8n.env monitoring.env | awk -F= "/^[A-Za-z_]/ && !visto[\$1]++" > apps.env && chmod 600 apps.env'
-   ```
+   No fim, cada um desses playbooks monta o `/opt/portainer_stack_envs/apps.env` (`0600`) com as tarefas de `ansible/playbooks/tasks/apps-env.yml`: junta os quatro `.env`, mantém só a primeira ocorrência de cada nome (as variáveis comuns e as do Telegram se repetem com o mesmo valor) e tira os comentários. Não é preciso juntar à mão.
 3. No Portainer, abra a stack `apps`, recarregue `apps.env` em **Env** e clique em **Update the stack**.
 
 ### Versões fixadas

@@ -122,15 +122,14 @@ Para máxima segurança, performance e mínimo consumo de recursos ao hospedar u
               # --- Labels Traefik para o Domínio Raiz ---
               traefik.enable: "true"
               # Roteador para o domínio raiz (sem www)
-              traefik.http.routers.meu_blog_raiz.rule: "Host(`{{ base_domain }}`)"
+              traefik.http.routers.meu_blog_raiz.rule: "Host(`${BASE_DOMAIN_FROM_VAULT}`)"
               traefik.http.routers.meu_blog_raiz.entrypoints: "websecure"
               traefik.http.routers.meu_blog_raiz.tls.certresolver: "letsencrypt"
               # Prioridade ALTA para garantir que esta regra mais específica (domínio raiz)
-              # seja correspondida antes de quaisquer regras wildcard (e.g., para Authelia em *.{{ base_domain }}).
+              # seja correspondida antes de quaisquer regras mais genéricas.
               traefik.http.routers.meu_blog_raiz.priority: "100" # Um número alto significa maior prioridade
-              # Middlewares: NÃO inclua 'authelia-forwardauth@docker' para um blog público.
-              # Você PODE (e deve) incluir seus headers de segurança globais.
-              traefik.http.routers.meu_blog_raiz.middlewares: "securityHeaders@file"
+              # Sem middlewares: NÃO inclua 'authelia-forwardauth@docker' num blog público. Os headers de
+              # segurança (securityHeaders@file) já valem para todo o entrypoint websecure (página 05).
               # Serviço Traefik (como Traefik se conecta ao container Nginx)
               traefik.http.services.meu_blog_raiz.loadbalancer.server.port: "80" # Nginx escuta na porta 80 dentro do container por padrão
         ```
@@ -145,15 +144,14 @@ Independentemente de você usar um blog estático ou uma aplicação dinâmica (
 
 *   **Roteador Específico para o Domínio Raiz:**
     No `docker-compose.yml` do seu blog (ou do servidor web Nginx/Caddy que o serve), as labels Traefik são cruciais. Veja o exemplo do Nginx acima. Os pontos chave são:
-    *   `traefik.http.routers.NOMEDOROUTEADOR.rule: "Host(\`{{ base_domain }}\`)"`
+    *   `traefik.http.routers.NOMEDOROUTEADOR.rule: "Host(\`${BASE_DOMAIN_FROM_VAULT}\`)"`
         *   Certifique-se de usar crases (`) em volta do valor da regra Host.
-        *   Use seu `{{ base_domain }}` aqui (sem `www` ou outros subdomínios).
+        *   No compose, o domínio vem de `${BASE_DOMAIN_FROM_VAULT}` (sem `www` ou outros subdomínios).
     *   `traefik.http.routers.NOMEDOROUTEADOR.priority: "100"` (ou outro número alto)
-        *   Isso é importante se você tem outras regras mais genéricas (como uma regra wildcard `HostS(\`*.{{ base_domain }}\`)` que pode ser usada pelo Authelia ou outros serviços). A prioridade mais alta garante que a regra específica para o domínio raiz seja avaliada e correspondida primeiro.
+        *   Isso é importante se você tem outras regras mais genéricas. A prioridade mais alta garante que a regra específica para o domínio raiz seja avaliada e correspondida primeiro.
     *   **Middlewares:**
         *   **NÃO inclua `authelia-forwardauth@docker`** para um blog ou site que deve ser publicamente acessível sem login.
-        *   Você **DEVE** incluir seus middlewares de segurança globais (e.g., `securityHeaders@file`, que foi definido na [Seção 5.4](../01-manual-implementacao/05-rede-segura.md#templatessecurity_headersymlj2-middleware-de-segurança)) para aplicar headers de segurança importantes.
-            Exemplo: `traefik.http.routers.meu_blog_raiz.middlewares: "securityHeaders@file"`
+        *   Os headers de segurança (`securityHeaders@file`, [Seção 5.4](../01-manual-implementacao/05-rede-segura.md#templatessecurity_headersymlj2-middleware-de-segurança)) já são aplicados a todo o entrypoint `websecure`; não repita o middleware no router.
 
 *   **Redirecionamento de `www` para não-`www` (ou vice-versa) - Opcional, mas Recomendado para SEO:**
     É uma boa prática escolher uma forma canônica para o seu domínio (com `www` ou sem `www`) e redirecionar a outra para ela. Suponha que você queira que `https://www.seudominio.com` redirecione para `https://seudominio.com`.
@@ -170,7 +168,7 @@ Independentemente de você usar um blog estático ou uma aplicação dinâmica (
       traefik.http.middlewares.redirect-www-to-nonwww.redirectregex.permanent: "true"             # Usa redirecionamento 301 (permanente)
 
       # --- Roteador para www.seudominio.com que USA o middleware de redirecionamento ---
-      traefik.http.routers.blog_www_redirect.rule: "Host(`www.{{ base_domain }}`)"
+      traefik.http.routers.blog_www_redirect.rule: "Host(`www.${BASE_DOMAIN_FROM_VAULT}`)"
       traefik.http.routers.blog_www_redirect.entrypoints: "websecure"
       traefik.http.routers.blog_www_redirect.tls.certresolver: "letsencrypt"
       traefik.http.routers.blog_www_redirect.middlewares: "redirect-www-to-nonwww@docker"
@@ -178,7 +176,11 @@ Independentemente de você usar um blog estático ou uma aplicação dinâmica (
       # Para versões mais recentes do Traefik (v2.10+), pode ser necessário especificar um serviço "noop" (no operation):
       traefik.http.routers.blog_www_redirect.service: "noop@internal"
     ```
-    E no seu DNS da Cloudflare, certifique-se de que tanto `seudominio.com` quanto `www.seudominio.com` apontam para o seu Cloudflare Tunnel (e.g., ambos como CNAMEs ou cobertos pela Ingress Rule do túnel).
+    O `www.` já é coberto pelo hostname curinga do túnel; o domínio raiz não (veja abaixo).
+
+*   **Hostname do domínio raiz no túnel (obrigatório):**
+    O hostname curinga `*` do Cloudflare Tunnel ([seção 5.5](../01-manual-implementacao/05-rede-segura.md#55-configuração-de-dns-na-cloudflare)) só cobre subdomínios: `seudominio.com` sozinho não casa com `*.seudominio.com`. Em **Zero Trust → Networks → Tunnels → (seu túnel) → Public Hostname → Add a public hostname**, crie um com **Subdomain vazio**, **Domain** `seudominio.com`, serviço `HTTPS` → `traefik:443` e, em *Additional application settings → TLS*, **No TLS Verify** ligado (o mesmo dos outros). A Cloudflare cria o CNAME do domínio raiz para o túnel (o *CNAME flattening* resolve o apex).
+*   **Authelia:** o domínio raiz não casa com a regra curinga `*.seudominio.com` e cairia na `default_policy: deny`. Isso só importa se o router do blog usar o middleware do Authelia, o que ele **não** deve fazer; sem o middleware, o Authelia nem é consultado.
 
 ## 4. Se Optar por uma Aplicação de Blog Dinâmica (WordPress, Ghost, etc.)
 

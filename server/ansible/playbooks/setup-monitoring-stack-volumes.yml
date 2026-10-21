@@ -228,3 +228,6 @@
           - { name: 'MONITORING_BLACKBOX_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/blackbox/config" }
           - { name: 'GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_db_password }}" }
           - { name: 'GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_admin_initial_password }}" }
+
+    - name: "Montar o apps.env da stack apps (página 07)"
+      ansible.builtin.include_tasks: tasks/apps-env.yml

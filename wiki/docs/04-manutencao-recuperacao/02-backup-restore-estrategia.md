@@ -344,7 +344,7 @@ Estes são os diretórios e arquivos dentro dos seus datasets ZFS (`/data/docker
 
 ### 4. ZFS Snapshots (Proteção Local Rápida no Host Proxmox)
 
-Como detalhado no [Guia Prático de Snapshots ZFS](../03-guias-sustentacao/12-guia-snapshots-zfs.md), os snapshots ZFS são uma forma rápida e eficiente de proteger seus datasets (`/data/docker-volumes`, `/data/media`, etc.) contra erros humanos (deleção acidental) ou corrupção de software.
+Como detalhado no [Guia Prático de Snapshots ZFS](../03-guias-sustentacao/11-guia-snapshots-zfs.md), os snapshots ZFS são uma forma rápida e eficiente de proteger seus datasets (`/data/docker-volumes`, `/data/media`, etc.) contra erros humanos (deleção acidental) ou corrupção de software.
 
 *   **Como Fazer Snapshots:**
     *   **Manual (para ações pontuais):** `sudo zfs snapshot data/docker-volumes@antes_de_uma_mudanca_arriscada`

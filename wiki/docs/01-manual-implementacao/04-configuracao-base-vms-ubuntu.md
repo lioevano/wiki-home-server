@@ -96,9 +96,8 @@ Este arquivo contém as tarefas principais do role `common`.
     # Fotos (Immich) e arquivos (Nextcloud) na core-services-vm, onde rodam as stacks photos e cloud.
     - { dataset_name: "{{ zfs_photos_dataset_name }}", when_condition: "'core_services' in group_names" }
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'core_services' in group_names" }
-    # Vaults do Obsidian (segundo cérebro, página 12) e fontes RAG: só na VM de IA (grupo 'ai_desktop' do inventário).
+    # Vaults do Obsidian (segundo cérebro, página 12): só na VM de IA (grupo 'ai_desktop' do inventário).
     - { dataset_name: "{{ zfs_notes_dataset_name }}", when_condition: "'ai_desktop' in group_names" }
-    - { dataset_name: "{{ zfs_rag_sources_dataset_name }}", when_condition: "'ai_desktop' in group_names and zfs_rag_sources_dataset_name is defined" }
   when: item.when_condition is not defined or item.when_condition # Permite loop condicional
   # NOTA: O dataset de backups (zfs_backups_dataset_name) geralmente não precisa ser montado nas VMs.
 
@@ -214,7 +213,7 @@ Handlers para o role `common`.
   * Configurar o fuso horário da VM usando a variável `{{ system_timezone }}`.
   * **Configurar Cliente NFS:**
     * Criar o ponto de montagem base na VM (e.g., `/mnt/pve_data_zfs`, definido por `{{ vm_nfs_mount_base_path }}`).
-    * Montar os datasets ZFS compartilhados pelo host Proxmox (e.g., `docker-volumes`, `media`, `rag_sources`) nos subdiretórios correspondentes, adicionando entradas ao `/etc/fstab` para persistência.
+    * Montar os datasets ZFS compartilhados pelo host Proxmox (`docker-volumes` e `media` em todas; `photos` e `files` na core; `notes` e `files` só leitura na VM de IA) nos subdiretórios correspondentes, adicionando entradas ao `/etc/fstab` para persistência.
   * **Criar Usuário e Grupo Docker:**
     * Criar o grupo `{{ docker_group_name_on_vm }}` com o GID `{{ docker_pgid }}`.
     * Criar o usuário `{{ docker_user_name_on_vm }}` com o UID `{{ docker_puid }}`, associado ao grupo acima, e com uma senha definida.
