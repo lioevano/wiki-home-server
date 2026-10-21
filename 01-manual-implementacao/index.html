@@ -554,6 +554,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#a-conferir-no-primeiro-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A conferir no primeiro deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2049,6 +2060,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#a-conferir-no-primeiro-deploy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A conferir no primeiro deploy
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -2089,6 +2111,64 @@
 <li><strong><a href="13-agentes-base/">Agentes: Base</a>:</strong> hub de MCPs com leitura pública e controle na LAN, operações (containers, stacks, Ansible) e rastreio no Langfuse.</li>
 </ol>
 <p>A lista completa de aplicações, com stack, exposição e dados de cada uma, está no <a href="../02-visao-geral-arquitetura/09-catalogo-aplicacoes/">Catálogo de Aplicações</a>; as integrações entre elas, no <a href="../02-visao-geral-arquitetura/10-indice-integracoes/">Índice de Integrações</a>.</p>
+<h2 id="a-conferir-no-primeiro-deploy">A conferir no primeiro deploy<a class="headerlink" href="#a-conferir-no-primeiro-deploy" title="Permanent link">¶</a></h2>
+<p>Estes pontos foram desenhados e testados no repositório, mas só dá para confirmar com o servidor rodando. Na primeira subida de cada seção, confira o item correspondente:</p>
+<table>
+<thead>
+<tr>
+<th>Seção</th>
+<th>O que conferir</th>
+<th>Como</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="05-rede-segura/">5</a></td>
+<td>Um usuário fora do grupo <code>admins</code> é recusado nos painéis de administração (<code>authelia_dominios_admins</code>) e não ganha conta no Open WebUI nem no Langfuse</td>
+<td>Crie um usuário de teste só com o grupo <code>users</code> e tente abrir <code>grafana.</code> e <code>llm.</code></td>
+</tr>
+<tr>
+<td><a href="09-painel-notificacoes/">9</a></td>
+<td>O Diun lê as imagens pelo <code>docker-socket-proxy</code> (se faltar uma permissão do proxy, o log do Diun mostra <code>403</code>)</td>
+<td><code>docker logs diun</code>, <code>docker logs diun_ai</code></td>
+</tr>
+<tr>
+<td><a href="09-painel-notificacoes/">9</a></td>
+<td>O alerta <code>timer-falhou</code> dispara uma vez por falha</td>
+<td><code>sudo systemctl start backup-litellm-db.service</code> com o banco parado</td>
+</tr>
+<tr>
+<td><a href="10-midia/">10</a></td>
+<td>Widget <code>jellyseerr</code> da Homepage com o Seerr (mesma API); se a Homepage fixada ganhar o widget <code>seerr</code>, troque</td>
+<td>Homepage, grupo Mídia</td>
+</tr>
+<tr>
+<td><a href="11-fotos-arquivos/">11</a></td>
+<td>O editor do Collabora abre dentro do Nextcloud apesar do <code>X-Frame-Options: SAMEORIGIN</code> global (o <code>frame-ancestors</code> do Collabora deve prevalecer)</td>
+<td>Abrir um <code>.docx</code> no Nextcloud; console do navegador</td>
+</tr>
+<tr>
+<td><a href="11-fotos-arquivos/">11</a>, <a href="08-stack-ia/">8</a>, <a href="12-segundo-cerebro/">12</a>, <a href="13-agentes-base/">13</a></td>
+<td>Login OIDC pela LAN (<code>extra_hosts</code> de <code>auth.</code> para o Traefik da <code>core-services-vm</code>)</td>
+<td>Entrar no Immich, no Open WebUI e no Langfuse; <code>docker logs</code> sem erro de TLS ou de descoberta</td>
+</tr>
+<tr>
+<td><a href="12-segundo-cerebro/">12</a></td>
+<td>Módulos nativos do qmd no <code>node:22-bookworm-slim</code>, <code>HOME</code> gravável do markitdown com <code>--user</code>, a "Default Folder" criada pelo <code>generate</code> do Syncthing e o <code>notes_escrita</code> com sistema de arquivos só leitura (<code>read_only</code>)</td>
+<td><code>docker logs qmd</code>, primeira rodada do <code>notes-documentos</code>, painel do Syncthing, uma nota criada pela escrita</td>
+</tr>
+<tr>
+<td><a href="13-agentes-base/">13</a></td>
+<td>agentgateway em execução: lista de leitura, chaves, tokens em arquivo, <code>statefulMode: stateless</code>, traces no Langfuse e o campo <code>cliente</code> nos logs e no registro do <code>ops</code></td>
+<td>Teste de ponta a ponta da seção 13; <code>docker logs agentgateway</code>, <code>docker logs ops_controle</code></td>
+</tr>
+<tr>
+<td><a href="13-agentes-base/">13</a></td>
+<td><code>PUT /api/stacks</code> do Portainer 2.19 (redeploy pelo <code>ops</code>) e o alerta <code>ops-acao-falhou</code> com o formato do Loki</td>
+<td><code>ops_stack_redeploy</code> de uma stack de teste; uma ação recusada</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -2109,7 +2189,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 15:10:39 -03">20 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="20 de outubro de 2026 21:38:02 -03">20 de outubro de 2026</span>
   </span>
 
     
