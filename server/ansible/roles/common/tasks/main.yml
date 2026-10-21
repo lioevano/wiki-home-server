@@ -97,21 +97,44 @@
     append: yes
   # O usuário Ansible já é sudo por padrão via Cloud-Init.
 
-# --- Configuração do Firewall UFW (Uncomplicated Firewall) ---
-# Aplicado condicionalmente:
-# - Sempre na 'core-services-vm'.
-# - Na 'ai-desktop-vm' apenas se a flag GUI_ENABLED for true para ela no inventário.
-- name: "Configurar e Habilitar Firewall UFW"
+# --- Firewall UFW (Uncomplicated Firewall) ---
+# Em todas as VMs: entrada negada por padrão, saída liberada. Vale para os serviços do próprio host (SSH,
+# Alloy na 12345, VNC). Portas publicadas pelo Docker não passam pelo UFW: elas são protegidas pelo bind
+# no IP da LAN e pela autenticação de cada serviço.
+- name: "UFW: liberar SSH (antes de ligar, para não perder a conexão)"
+  community.general.ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+    comment: "SSH"
+
+- name: "UFW: liberar HTTP e HTTPS do Traefik na core-services-vm"
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    comment: "Traefik"
+  loop: ['80', '443']
+  when: inventory_hostname in groups['core_services']
+
+- name: "UFW: liberar o VNC na VM com ambiente gráfico (GUI_ENABLED)"
+  community.general.ufw:
+    rule: allow
+    port: '5901'
+    proto: tcp
+    comment: "VNC :1"
+  when: hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool
+
+- name: "UFW: negar entrada por padrão"
+  community.general.ufw:
+    default: deny
+    direction: incoming
+
+- name: "UFW: liberar saída por padrão"
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: "UFW: ligar"
   community.general.ufw:
     state: enabled
-    policy: deny # Política padrão: negar todo tráfego de entrada
-    rules:
-      # Regras básicas
-      - { rule: 'allow', name: 'ssh' } # Ou port: '22', proto: 'tcp'
-      - { rule: 'allow', port: '80', proto: 'tcp', comment: 'Allow HTTP for Traefik redirect and local services' }
-      - { rule: 'allow', port: '443', proto: 'tcp', comment: 'Allow HTTPS for Traefik' }
-      # Para VNC na ai-desktop-vm se GUI_ENABLED=true
-      # Esta regra só será efetiva se o UFW for aplicado na ai-desktop-vm.
-      - { rule: 'allow', port: '5901', proto: 'tcp', comment: 'Allow VNC :1 (TCP port for display 1)' }
-    default_outgoing_policy: allow # Permite todo tráfego de saída por padrão
-  when: inventory_hostname == 'core-services-vm' or (inventory_hostname == 'ai-desktop-vm' and hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool)

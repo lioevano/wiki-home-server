@@ -163,3 +163,10 @@ Blocos, com `host`/`instance` = `{{ inventory_hostname }}`:
 - **PVE Firewall passa a valer pela primeira vez:** uma regra faltando corta acesso (ex.: outra porta usada por alguma VM). Mitigação: regras antes do `DROP`, `--check` antes, e o roteiro confere SSH, Web UI e NFS logo após o playbook.
 - **Cardinalidade do cAdvisor:** `docker_only` e `store_container_labels = false` limitam as séries; `disabled_metrics` fica no padrão.
 - **Versão do Alloy:** componentes e argumentos conferidos na documentação da versão fixada ao escrever o plano.
+
+## 11. Atualização (2026-10-20, pendências menores)
+
+O que foi implementado difere deste texto em dois pontos. Vale o que está no repositório (página 04):
+
+- **Validação:** a tarefa usa `validate: alloy validate %s`, não `alloy fmt`. O `fmt` só formata e não pega um componente ou argumento inexistente.
+- **Permissão nas VMs:** o Alloy roda como **root** (drop-in `alloy.service.d/override.conf`) em vez de entrar no grupo `docker`. O cAdvisor precisa ler `/var/lib/docker`, que o grupo não libera. No host Proxmox, segue como o usuário `alloy`, nos grupos `adm` e `systemd-journal`.

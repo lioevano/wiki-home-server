@@ -105,8 +105,8 @@ O `dev.py lint` roda `docker compose config -q` em cada stack **sem variáveis**
 
 | # | Pendência | Decisão | Como |
 |---|---|---|---|
-| 45 | UFW da `ai-desktop-vm` só liga com `GUI_ENABLED` | corrigir | O UFW liga sempre: SSH, as portas de LAN de cada serviço e 12345 só a partir da core. |
-| 46 | 9090 na LAN expõe `/-/quit`/`/-/reload` e aceita séries injetadas | corrigir | UFW da core: 9090 só para o host Proxmox e a `ai-desktop-vm` (os únicos que fazem `remote_write`). Sem `--web.enable-lifecycle`. |
+| 45 | UFW da `ai-desktop-vm` só liga com `GUI_ENABLED` | corrigir | O UFW liga em todas as VMs: SSH, 80/443 só na core, VNC só com `GUI_ENABLED`, 12345 só a partir da core (role `alloy`). Achado na execução: a tarefa antiga usava parâmetros que o `community.general.ufw` não tem (`rules`, `policy`, `default_outgoing_policy`) e falharia na primeira execução. Foi reescrita em tarefas simples. |
+| 46 | 9090 na LAN expõe `/-/quit`/`/-/reload` e aceita séries injetadas | corrigir / adiar | Sai o `--web.enable-lifecycle` (ninguém usava; config nova = `docker restart prometheus`). O UFW não serve: a 9090 é publicada pelo Docker, que passa por fora dele. A restrição de origem (só o host Proxmox e a `ai-desktop-vm`) exige regras na cadeia `DOCKER-USER` e fica para o sub-projeto VPN/firewall. Até lá, quem está na LAN consegue injetar séries. |
 | 47 | `test_alloy_validate` pula em silêncio | corrigir | `pytest -rs` no `dev.py test`: o motivo do pulo aparece. |
 | 48 | Spec do Alloy cita `alloy fmt` e grupo `docker` | corrigir | Nota de atualização na spec. |
 | 49 | Página 09 chama `textfile` de argumento | corrigir | Texto. |

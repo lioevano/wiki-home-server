@@ -42,7 +42,7 @@ O `setup-monitoring-stack-volumes.yml` gera em `<NFS>/grafana/provisioning/alert
 Os segredos não ficam nos arquivos: o Grafana recebe `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` e `NOTIFICACOES_WEBHOOK_TOKEN` pelo `monitoring.env` e o provisioning os interpola. Por isso as anotações usam `$$labels` (escape de `$`).
 
 !!! warning "Pool ZFS"
-    A regra `zfs-degradado` usa a métrica `node_zfs_zpool_state`, enviada pelo Alloy do host Proxmox (coletor `zfs` do `prometheus.exporter.unix`). Confira no Prometheus se ela existe: `node_zfs_zpool_state{instance="proxmox_main_host"}`. Se não existir, a regra fica sem dados (não dispara); a alternativa é publicar o estado do pool por arquivo de texto (argumento `textfile` do `prometheus.exporter.unix`).
+    A regra `zfs-degradado` usa a métrica `node_zfs_zpool_state`, enviada pelo Alloy do host Proxmox (coletor `zfs` do `prometheus.exporter.unix`). Confira no Prometheus se ela existe: `node_zfs_zpool_state{instance="proxmox_main_host"}`. Se não existir, a regra fica sem dados (não dispara); a alternativa é publicar o estado do pool por arquivo de texto (coletor `textfile`: bloco `textfile { directory = "..." }` dentro do `prometheus.exporter.unix`, com `"textfile"` em `enable_collectors`).
 
 ### Workflow `notificar` (n8n)
 

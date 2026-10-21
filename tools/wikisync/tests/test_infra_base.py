@@ -107,3 +107,44 @@ def test_docker_depois_do_nfs_sem_exigir():
     assert "Requires" not in c["content"]
     servico = _tarefa(_yaml(DOCKER_TASKS), "serviço Docker está rodando")
     assert servico["ansible.builtin.systemd_service"]["daemon_reload"] is True
+
+
+# --- Pendências menores (#45, #46) ---
+
+COMMON_TASKS = ANS / "roles/common/tasks/main.yml"
+UFW_PARAMS = {"state", "default", "direction", "logging", "insert", "insert_relative_to", "rule", "log", "from_ip",
+              "from_port", "to_ip", "to_port", "proto", "name", "delete", "interface", "interface_in",
+              "interface_out", "route", "comment", "port"}
+
+
+def _ufw_tarefas():
+    return [t for t in _yaml(COMMON_TASKS) if "community.general.ufw" in t]
+
+
+def test_ufw_so_com_parametros_do_modulo():
+    """O módulo community.general.ufw não tem 'rules', 'policy' nem 'default_outgoing_policy' (falhava na execução)."""
+    for t in _ufw_tarefas():
+        assert set(t["community.general.ufw"]) <= UFW_PARAMS, t["name"]
+
+
+def test_ufw_em_todas_as_vms():
+    """#45: o UFW liga em todas as VMs (o Alloy nativo da ai-desktop-vm escuta na 12345), não só com GUI_ENABLED."""
+    tarefas = _ufw_tarefas()
+    ligar = next(t for t in tarefas if t["community.general.ufw"].get("state") == "enabled")
+    assert "when" not in ligar
+    padrao = next(t for t in tarefas if t["community.general.ufw"].get("default") == "deny")
+    assert padrao["community.general.ufw"]["direction"] == "incoming"
+    ssh = next(t for t in tarefas if t["community.general.ufw"].get("port") == "22")
+    assert "when" not in ssh
+    nomes = [t["name"] for t in tarefas]
+    assert nomes.index(ssh["name"]) < nomes.index(ligar["name"])  # SSH liberado antes de ligar: sem se trancar fora
+    web = next(t for t in tarefas if "80" in str(t.get("loop", "")) or t["community.general.ufw"].get("port") == "80")
+    assert "core_services" in str(web["when"])
+    vnc = next(t for t in tarefas if t["community.general.ufw"].get("port") == "5901")
+    assert "GUI_ENABLED" in str(vnc["when"])
+
+
+def test_prometheus_sem_api_de_ciclo_de_vida():
+    """#46: com a 9090 na LAN (remote write), /-/quit e /-/reload ficam desligados."""
+    svc = _yaml(ROOT / "server/docker/stacks/apps/docker-compose.yml")["services"]["prometheus"]
+    assert "--web.enable-lifecycle" not in svc["command"]

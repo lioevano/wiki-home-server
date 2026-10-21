@@ -27,8 +27,8 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--web.enable-lifecycle'
       - '--web.listen-address=:9090'
+      # Sem --web.enable-lifecycle: com a 9090 na LAN, /-/quit e /-/reload ficariam abertos. Config nova: docker restart prometheus.
       - '--web.enable-remote-write-receiver' # Recebe as métricas enviadas pelos Alloys (remote_write)
     ports:
       - "${CORE_SERVICES_VM_IP_VAR}:9090:9090" # Remote write dos Alloys (host Proxmox e VMs); só na LAN, sem rota no Traefik
