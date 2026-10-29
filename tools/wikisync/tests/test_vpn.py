@@ -42,8 +42,9 @@ def test_portas_restritas():
     core = {r["porta"]: r["origens"] for r in regras["core-services-vm"]}
     assert core[9090] == core[3100] == ["192.168.15.66", "192.168.15.68"]
     assert core[4100] == []  # rota de controle do hub: só pela VPN
+    assert core[4200] == ["192.168.15.68"]  # rota dos autônomos: só a VM de IA (página 16)
     ai = {r["porta"]: r["origens"] for r in regras["ai-desktop-vm"]}
-    assert ai == {9001: ["192.168.15.67"], 3100: ["192.168.15.67"]}
+    assert ai == {9001: ["192.168.15.67"], 3100: ["192.168.15.67"], 3005: ["192.168.15.67"]}
     assert all(r["motivo"] for r in regras["core-services-vm"] + regras["ai-desktop-vm"])
 
 

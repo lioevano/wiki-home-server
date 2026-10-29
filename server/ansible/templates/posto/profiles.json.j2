@@ -1,0 +1,12 @@
+{#- ansible/templates/posto/profiles.json.j2 — perfis do Claude Code no Vibe Kanban (página 16). Gravado uma
+    vez (force: false): mudanças feitas na tela do Vibe Kanban ficam. DEFAULT pede aprovação na tela para os
+    comandos e arquivos do agente; AUTONOMO (escolhido na criação da tarefa) não pede. As ações no servidor
+    pedem aprovação nos dois (ops). -#}
+{{ {
+  "executors": {
+    "CLAUDE_CODE": {
+      "DEFAULT": {"CLAUDE_CODE": {"approvals": true, "dangerously_skip_permissions": false}},
+      "AUTONOMO": {"CLAUDE_CODE": {"dangerously_skip_permissions": true}}
+    }
+  }
+} | to_nice_json }}

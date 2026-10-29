@@ -118,6 +118,8 @@ litellm_client_keys:
   claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
   n8n: "sk-CHAVE_DO_N8N"
   observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 15)
+  agentes: "sk-CHAVE_DOS_AGENTES" # posto de agentes (página 16)
+  assistente: "sk-CHAVE_DO_ASSISTENTE" # assistente do Telegram (página 17)
 # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
 openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -168,7 +170,10 @@ homepage_widget_keys:
 # Chaves dos clientes da rota de controle do hub (LAN): "ag-" + openssl rand -hex 24. No config do hub só vai o hash.
 agents_api_keys:
   claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
+# Chaves da rota dos autônomos do hub (porta 4200; página 16): as ações deles esperam a sua aprovação.
+agents_autonomos_keys:
   agentes: "ag-CHAVE_DOS_AGENTES"
+  assistente: "ag-CHAVE_DO_ASSISTENTE"
 # Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends), mcp_auth_servidor → rota de leitura
 # (proxy) e observador → rota de leitura (observador, página 15).
 # As redes Docker são compartilhadas: sem eles, qualquer container chamaria as ferramentas direto.
@@ -178,6 +183,15 @@ agents_tokens_internos:
   observador: "TOKEN_INTERNO_DO_OBSERVADOR"
 # Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 15.
 observador_token: "TOKEN_DO_GRAFANA_PARA_O_OBSERVADOR"
+# Aprovador (página 16): token que só o ops_controle usa na API, e o segredo que só o Traefik injeta na tela
+# (openssl rand -hex 32 cada).
+aprovador_token: "TOKEN_DO_OPS_PARA_O_APROVADOR"
+aprovador_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_A_TELA_DE_APROVACOES"
+# Posto (página 16): token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios do posto,
+# Contents e Pull requests); "" deixa sem.
+posto_github_token: ""
+# Assistente (página 17): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
+hermes_telegram_bot_token: "TOKEN_DO_BOT_DO_ASSISTENTE"
 # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
 grafana_sa_tokens:
   leitura: "glsa_TOKEN_VIEWER"

@@ -1,0 +1,108 @@
+# ansible/playbooks/setup-posto-volumes.yml
+# Posto de agentes (página 16): compila o Vibe Kanban do código-fonte na tag fixada (sem telemetria, sem o CDN
+# do projeto), constrói a imagem do posto (Node, git, gh, Claude Code em cache), cria os diretórios no disco
+# local da ai-desktop-vm, gera os MCPs gerenciados e o posto.env. Roda antes do deploy da stack no Portainer.
+# A primeira compilação leva dezenas de minutos; depois, só quando posto_vibe_kanban_tag muda.
+- name: Preparar a stack posto
+  hosts: ai_desktop
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    posto_dir: "{{ vm_local_data_path }}/posto"
+    posto_fontes: /opt/posto-src/vibe-kanban
+    posto_imagem: /opt/posto-image
+
+  tasks:
+    - name: Criar os diretórios do posto
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.dono }}"
+        group: "{{ item.dono }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "{{ posto_dir }}", dono: "{{ docker_puid }}", mode: '0750' }
+        - { path: "{{ posto_dir }}/vibe-kanban", dono: "{{ docker_puid }}", mode: '0750' }
+        - { path: "{{ posto_dir }}/claude", dono: "{{ docker_puid }}", mode: '0700' }
+        - { path: "{{ posto_dir }}/repos", dono: "{{ docker_puid }}", mode: '0750' }
+        - { path: "{{ posto_imagem }}", dono: root, mode: '0755' }
+
+    # --- Vibe Kanban do código-fonte (Dockerfile do próprio projeto; BuildKit pelo buildx) ---
+    - name: Baixar o Vibe Kanban na tag fixada
+      ansible.builtin.git:
+        repo: https://github.com/BloopAI/vibe-kanban.git
+        dest: "{{ posto_fontes }}"
+        version: "{{ posto_vibe_kanban_tag }}"
+        depth: 1
+        force: true
+
+    - name: Compilar o Vibe Kanban (servidor local + interface; sem chaves de telemetria)
+      community.docker.docker_image_build:
+        name: localhost/homeserver/vibe-kanban
+        tag: "{{ posto_vibe_kanban_tag }}"
+        path: "{{ posto_fontes }}"
+        rebuild: never # a tag identifica o código; mudou a tag, compila de novo
+      when: not ansible_check_mode
+
+    # --- Imagem do posto ---
+    - name: Copiar o Dockerfile do posto
+      ansible.builtin.copy:
+        src: ../../docker/images/posto/
+        dest: "{{ posto_imagem }}/"
+        mode: preserve
+      register: posto_codigo
+
+    - name: Construir a imagem do posto
+      community.docker.docker_image:
+        name: localhost/homeserver/posto
+        tag: "{{ posto_version }}"
+        source: build
+        build:
+          path: "{{ posto_imagem }}"
+          pull: false # a base é a imagem local do Vibe Kanban
+          args:
+            VIBE_KANBAN_IMAGE: "localhost/homeserver/vibe-kanban:{{ posto_vibe_kanban_tag }}"
+            CLAUDE_CODE_VERSION: "{{ posto_claude_code_version }}"
+            UID: "{{ docker_puid }}"
+            GID: "{{ docker_pgid }}"
+        force_source: "{{ posto_codigo.changed }}"
+      when: not ansible_check_mode
+
+    # --- Config dos agentes ---
+    - name: Gerar os MCPs gerenciados dos agentes (contém a chave do hub)
+      ansible.builtin.template:
+        src: ../templates/posto/managed-mcp.json.j2
+        dest: "{{ posto_dir }}/managed-mcp.json"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0600'
+      no_log: true
+
+    - name: Gravar os perfis do Claude Code no Vibe Kanban (uma vez; a tela pode mudar depois)
+      ansible.builtin.template:
+        src: ../templates/posto/profiles.json.j2
+        dest: "{{ posto_dir }}/vibe-kanban/profiles.json"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0640'
+        force: false
+
+    - name: Gerar posto.env para Portainer
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/posto.env"
+        owner: root
+        group: root
+        mode: '0600'
+      vars:
+        stack_name: posto
+        stack_configs:
+          - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
+          - { name: 'POSTO_IMAGE', value: "localhost/homeserver/posto:{{ posto_version }}" }
+          - { name: 'POSTO_DATA_PATH', value: "{{ posto_dir }}" }
+          - { name: 'LITELLM_KEY_AGENTES', value: "{{ litellm_client_keys.agentes }}" }
+          - { name: 'POSTO_GITHUB_TOKEN', value: "{{ posto_github_token | default('') }}" }
+      no_log: true

@@ -35,8 +35,10 @@ Portas publicadas pelo Docker (`ports:`) passam por fora do UFW. Para cada porta
 | core | 9090 (Prometheus) | host Proxmox e `ai-desktop-vm` | `remote_write` dos Alloys; sem isso, qualquer aparelho da LAN injetaria métricas |
 | core | 3100 (Loki) | host Proxmox e `ai-desktop-vm` | Logs dos Alloys; o Loki não tem autenticação |
 | core | 4100 (hub, rota de controle) | ninguém (só pela VPN) | Ações no servidor só por canal cifrado e com a chave do cliente |
+| core | 4200 (hub, rota dos autônomos) | `ai-desktop-vm` | Agentes do posto e o assistente rodam lá ([seção 16](16-posto-agentes.md)) |
 | ai | 9001 (Portainer Agent) | `core-services-vm` | Só o Portainer central gerencia a VM |
 | ai | 3100 (Langfuse) | `core-services-vm` | O Traefik e o hub ficam na core |
+| ai | 3005 (Vibe Kanban) | `core-services-vm` | Sem login próprio: só o Traefik, com o Authelia na frente ([seção 16](16-posto-agentes.md)) |
 
 O LiteLLM (4000), a Open WebUI (3000), o painel e a sincronização do Syncthing (8384, 22000) continuam abertos na LAN: o PC e o celular os usam em casa, cada um com o próprio login.
 
@@ -267,7 +269,7 @@ $IPT -A "$CADEIA" -j RETURN
 | Rota não aprovada no painel | O aparelho entra na VPN mas não alcança as VMs | Painel → Machines → `homeserver` → *Edit route settings* |
 | Nome não resolve pela VPN | `fotos.seudominio.com` cai na Cloudflare (limite de 100 MB) | Confira o nameserver restrito ao domínio no painel e `docker logs coredns` |
 | Claude Code sem as ferramentas do hub | A 4100 só responde pela VPN | Ligue o Tailscale no PC |
-| Uma aplicação da LAN parou de alcançar a 9090, 3100, 4100 ou 9001 | Bloqueada pelo `firewall_docker_portas` | Acrescente a origem à lista (página 01) e rode o `setup-base-ubuntu.yml` |
+| Uma aplicação da LAN parou de alcançar a 9090, 3100, 3005, 4100, 4200 ou 9001 | Bloqueada pelo `firewall_docker_portas` | Acrescente a origem à lista (página 01) e rode o `setup-base-ubuntu.yml` |
 
 ## Teste de ponta a ponta
 

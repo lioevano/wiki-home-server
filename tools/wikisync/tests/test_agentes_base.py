@@ -55,7 +55,9 @@ def test_variaveis_agentes():
 
 def test_vault_agentes():
     v = _vault()
-    assert set(v["agents_api_keys"]) == {"claude_code", "agentes"}
+    # Os agentes saíram da rota de controle: eles e o assistente usam a rota dos autônomos (página 16).
+    assert set(v["agents_api_keys"]) == {"claude_code"}
+    assert set(v["agents_autonomos_keys"]) == {"agentes", "assistente"}
     assert all(str(x).startswith("ag-") for x in v["agents_api_keys"].values())
     assert set(v["grafana_sa_tokens"]) == {"leitura", "controle"}
     for chave in ("homeassistant_mcp_token", "n8n_mcp_token", "portainer_api_key", "ops_ssh_private_key",
@@ -167,7 +169,8 @@ import subprocess  # noqa: E402
 import pytest  # noqa: E402
 
 HUB_TPL = "templates/agents/agentgateway.yaml.j2"
-CHAVES = {"claude_code": "ag-CHAVE-CLAUDE-123", "agentes": "ag-CHAVE-AGENTES-456"}
+CHAVES = {"claude_code": "ag-CHAVE-CLAUDE-123"}
+AUTONOMOS = {"agentes": "ag-CHAVE-AGENTES-456", "assistente": "ag-CHAVE-ASSIST-789"}
 SEGREDOS_ALVOS = {"homeassistant_mcp_token": "HA-TOKEN-SECRETO", "n8n_mcp_token": "N8N-TOKEN-SECRETO"}
 
 
@@ -176,7 +179,7 @@ TOKENS_INTERNOS = {"backends": "INTERNO-BACKENDS-789", "proxy": "INTERNO-PROXY-0
 
 def _hub_txt() -> str:
     return render(HUB_TPL, agents_leitura=_main()["agents_leitura"], agents_api_keys=CHAVES,
-                  agents_tokens_internos=TOKENS_INTERNOS, ai_desktop_vm_ip_var="192.168.15.68", **SEGREDOS_ALVOS)
+                  agents_autonomos_keys=AUTONOMOS, agents_tokens_internos=TOKENS_INTERNOS, ai_desktop_vm_ip_var="192.168.15.68", **SEGREDOS_ALVOS)
 
 
 def _hub() -> dict:
@@ -233,9 +236,10 @@ def test_rota_controle_com_chave():
 
 def test_hub_sem_segredos_e_tolerante():
     txt = _hub_txt()
-    for segredo in list(CHAVES.values()) + list(SEGREDOS_ALVOS.values()) + list(TOKENS_INTERNOS.values()):
+    for segredo in (list(CHAVES.values()) + list(AUTONOMOS.values()) + list(SEGREDOS_ALVOS.values())
+                    + list(TOKENS_INTERNOS.values())):
         assert segredo not in txt, segredo
-    for porta in (4000, 4100):
+    for porta in (4000, 4100, 4200):
         mcp = _rota(porta)["backends"][0]["mcp"]
         assert mcp["failureMode"] == "failOpen" and mcp["prefixMode"] == "always"
         alvos = _alvos(porta)
@@ -252,7 +256,7 @@ def test_hub_sem_segredos_e_tolerante():
 def test_hub_no_compose():
     hub = _svc(AGENTS)["agentgateway"]
     assert hub["image"] == "cr.agentgateway.dev/agentgateway:v1.6.0"
-    assert hub["ports"] == ["${CORE_SERVICES_VM_IP_VAR}:4100:4100"]
+    assert hub["ports"] == ["${CORE_SERVICES_VM_IP_VAR}:4100:4100", "${CORE_SERVICES_VM_IP_VAR}:4200:4200"]
     assert set(hub["networks"]) == {"agents_internal", "proxy"}
     assert "${AGENTGATEWAY_CONFIG_PATH}:/config/config.yaml:ro" in _vols(hub)
     assert "${AGENTGATEWAY_DATA_PATH}/segredos:/segredos:ro" in _vols(hub)
@@ -570,3 +574,27 @@ def test_langfuse_em_utc():
     """#5: o Langfuse compara timestamps em UTC; a tela converte para o fuso do navegador."""
     for nome in ("langfuse_web", "langfuse_worker"):
         assert _env(_svc(LANGFUSE)[nome])["TZ"] == "UTC", nome
+
+
+def test_rota_dos_autonomos():
+    """Página 16: agentes e assistente leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e
+    agem só pelo ops_controle, que exige a aprovação para essas chaves."""
+    alvos = _alvos(4200)
+    assert alvos["grafana"]["mcp"]["host"] == "http://mcp_grafana_leitura:8000/mcp"
+    assert alvos["ops"]["mcp"]["host"] == "http://ops_controle:8000/mcp"
+    assert alvos["ops"]["policies"]["transformations"]["request"]["set"]["x-homeserver-cliente"] == "apiKey.cliente"
+    assert _rota(4200)["policies"]["mcpAuthorization"] == _rota(4000)["policies"]["mcpAuthorization"]
+    pol = _rota(4200)["policies"]["apiKey"]
+    assert {k["metadata"]["cliente"] for k in pol["keys"]} == {"agentes", "assistente"}
+    controle = {k["metadata"]["cliente"] for k in _rota(4100)["policies"]["apiKey"]["keys"]}
+    assert controle.isdisjoint({"agentes", "assistente"})
+    import sys
+    sys.path.insert(0, str(ROOT / "server/docker/images/ops"))
+    from ops.config import Config as ConfigOps
+    padrao = ConfigOps.do_ambiente({"OPS_MODO": "controle", "PORTAINER_URL": "x", "PORTAINER_API_KEY": "y"})
+    assert padrao.clientes_com_aprovacao == {"agentes", "assistente"}
+    assert _main()["ops_clientes_com_aprovacao"] == ["agentes", "assistente"]
+    env = _env(_svc(AGENTS)["ops_controle"])
+    assert env["OPS_CLIENTES_COM_APROVACAO"] == "${OPS_CLIENTES_COM_APROVACAO}"
+    assert env["APROVADOR_URL"] == "http://aprovador:8080" and env["APROVADOR_TOKEN"] == "${APROVADOR_TOKEN}"
+    assert "APROVADOR_TOKEN" not in _env(_svc(AGENTS)["ops_leitura"])

@@ -11,7 +11,7 @@ A IA (Claude Code, app Claude, agentes) alcança o homeserver por um **hub de MC
 ```mermaid
 flowchart LR
     claude[claude.ai / celular] -- OAuth + Authelia 2FA --> proxy[mcp_auth_servidor<br/>servidor.]
-    code[Claude Code / agentes<br/>pela VPN] -- chave Bearer --> controle[agentgateway :4100<br/>rota controle]
+    code[Claude Code<br/>pela VPN] -- chave Bearer --> controle[agentgateway :4100<br/>rota controle]
     proxy --> leitura[agentgateway :4000<br/>rota leitura]
     leitura --> gl[mcp_grafana_leitura]
     leitura --> ol[ops_leitura]
@@ -28,9 +28,10 @@ flowchart LR
 | Rota | Onde | Quem usa | Alcança |
 |---|---|---|---|
 | `leitura` | `https://servidor.<domínio>/mcp` (túnel → Traefik → `mcp_auth_servidor`) | claude.ai, app do celular | Grafana (Prometheus, Loki, alertas, painéis) só leitura; containers, logs, stacks e playbooks (listar); estado da casa; lista de workflows |
-| `controle` | `http://<IP da core-services-vm>:4100/mcp` (só pela VPN: a LAN não alcança a 4100, [seção 14](14-vpn-tailscale.md)) | Claude Code com o Tailscale ligado (em casa ou fora), agentes (4c3) | tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (`ansible_check` → `ansible_aplicar`), comandar a casa, executar e editar workflows liberados |
+| `controle` | `http://<IP da core-services-vm>:4100/mcp` (só pela VPN: a LAN não alcança a 4100, [seção 14](14-vpn-tailscale.md)) | Claude Code com o Tailscale ligado (em casa ou fora) | tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (`ansible_check` → `ansible_aplicar`), comandar a casa, executar e editar workflows liberados |
+| `autonomos` | `http://<IP da core-services-vm>:4200/mcp` (pela LAN, só da `ai-desktop-vm`) | agentes do posto ([seção 16](16-posto-agentes.md)) e o assistente ([seção 17](17-assistente.md)), cada um com a sua chave (`agents_autonomos_keys`) | o mesmo que a leitura + reiniciar containers, redeploy de stacks e Ansible, **cada ação esperando a sua aprovação** no Telegram ou na tela `aprovacoes.` |
 
-Por que duas rotas: a internet só alcança **código que não sabe escrever** (as instâncias `*_leitura` nem registram ferramentas de escrita) **e** uma lista fechada de ferramentas (`agents_leitura`); as ações ficam num endereço que só a VPN alcança (cifrado pelo WireGuard), com uma chave por cliente.
+Por que essas rotas: a internet só alcança **código que não sabe escrever** (as instâncias `*_leitura` nem registram ferramentas de escrita) **e** uma lista fechada de ferramentas (`agents_leitura`); as ações ficam num endereço que só a VPN alcança (cifrado pelo WireGuard), com uma chave por cliente. Quem trabalha sem você olhando (agentes e assistente) tem uma rota própria: lê tudo, não mexe em Grafana, casa nem workflows, e só age pelo `ops`, que para essas chaves exige um pedido aprovado ([seção 16](16-posto-agentes.md#aprovação-humana)).
 
 !!! warning "Fora dos snapshots ZFS"
     O config do hub, os segredos do runner, o clone do repositório e o estado OAuth do `mcp_auth_servidor` ficam no disco local da `core-services-vm` (`/opt/local-data/agentgateway`, `/opt/local-data/ops`, `/opt/local-data/mcp-auth-servidor`), e os dados do Langfuse no disco local da `ai-desktop-vm` (`/opt/local-data/langfuse`): **fora dos snapshots ZFS e sem backup**. Tudo é regerável pelos playbooks a partir do vault; os traces do Langfuse são descartáveis.
@@ -68,7 +69,7 @@ ansible-core=={{ ops_ansible_core_version }}
 
 ## Hub de MCPs (agentgateway)
 
-O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na rede interna, com tokens internos: o do `mcp_auth_servidor` e o do observador, [seção 15](15-ia-observa.md)) recebe o conector **Servidor** e o observador e só alcança instâncias que não sabem escrever (`mcp_grafana_leitura`, `ops_leitura`), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (`agents_leitura`). A **rota `controle`** (porta 4100, publicada só no IP da `core-services-vm` e alcançável só pela VPN) alcança tudo e exige a chave de um cliente (`agents_api_keys`); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o `ops` e o `mcp-grafana` exigem (`agents_tokens_internos.backends`: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos `0400` montados no container, e a autenticação do rastreio no Langfuse vem da variável `OTEL_EXPORTER_OTLP_TRACES_HEADERS` — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (`failOpen`). O hub não guarda sessão com os alvos (`statefulMode: stateless`): cada requisição abre e fecha a sua, e um alvo reiniciado volta sem deixar sessão órfã. Cada linha de log do hub traz o campo `cliente` (o metadado da chave: `claude_code`, `agentes`, `mcp_auth_servidor` ou `observador`), e o mesmo valor vai para o `ops` no cabeçalho `x-homeserver-cliente`, que entra no registro de auditoria. O cabeçalho é confiável porque só o hub tem o token interno do `ops`.
+O hub junta os MCPs em três endereços (a rota `autonomos`, dos agentes e do assistente, está na [seção 16](16-posto-agentes.md)). A **rota `leitura`** (porta 4000, só na rede interna, com tokens internos: o do `mcp_auth_servidor` e o do observador, [seção 15](15-ia-observa.md)) recebe o conector **Servidor** e o observador e só alcança instâncias que não sabem escrever (`mcp_grafana_leitura`, `ops_leitura`), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (`agents_leitura`). A **rota `controle`** (porta 4100, publicada só no IP da `core-services-vm` e alcançável só pela VPN) alcança tudo e exige a chave de um cliente (`agents_api_keys`); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o `ops` e o `mcp-grafana` exigem (`agents_tokens_internos.backends`: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos `0400` montados no container, e a autenticação do rastreio no Langfuse vem da variável `OTEL_EXPORTER_OTLP_TRACES_HEADERS` — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (`failOpen`). O hub não guarda sessão com os alvos (`statefulMode: stateless`): cada requisição abre e fecha a sua, e um alvo reiniciado volta sem deixar sessão órfã. Cada linha de log do hub traz o campo `cliente` (o metadado da chave: `claude_code`, `agentes`, `mcp_auth_servidor` ou `observador`), e o mesmo valor vai para o `ops` no cabeçalho `x-homeserver-cliente`, que entra no registro de auditoria. O cabeçalho é confiável porque só o hub tem o token interno do `ops`.
 
 ```jinja title="ansible/templates/agents/agentgateway.yaml.j2"
 # Hub de MCPs da base dos agentes (página 13). Gerado pelo setup-agents-volumes.yml em
@@ -79,19 +80,19 @@ O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na
   'homeassistant': {'host': 'http://homeassistant:8123/api/mcp', 'token': '/segredos/homeassistant_token'},
   'n8n': {'host': 'http://n8n:5678/mcp-server/http', 'token': '/segredos/n8n_token'},
 } %}
-{% macro alvos(sufixo) %}
+{% macro alvos(grafana, ops) %}
           targets:
           # ops e mcp-grafana só aceitam o token interno do hub (as redes Docker são compartilhadas).
           - name: grafana
             mcp:
-              host: http://mcp_grafana_{{ sufixo }}:8000/mcp
+              host: http://mcp_grafana_{{ grafana }}:8000/mcp
             policies:
               backendAuth:
                 key:
                   file: /segredos/backends_token
           - name: ops
             mcp:
-              host: http://ops_{{ sufixo }}:8000/mcp
+              host: http://ops_{{ ops }}:8000/mcp
             policies:
               backendAuth:
                 key:
@@ -118,7 +119,7 @@ config:
     format: json
     fields:
       add:
-        cliente: 'apiKey.cliente' # qual chave chamou (claude_code, agentes, mcp_auth_servidor)
+        cliente: 'apiKey.cliente' # qual chave chamou (claude_code, mcp_auth_servidor, observador, agentes, assistente)
   tracing:
     otlpEndpoint: http://{{ ai_desktop_vm_ip_var }}:3100/api/public/otel
     otlpProtocol: http
@@ -161,7 +162,7 @@ binds:
           statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)
           prefixMode: always
           failureMode: failOpen
-{{ alvos('leitura') }}
+{{ alvos('leitura', 'leitura') }}
 # Rota de controle: porta publicada no IP da core-services-vm, que a LAN não alcança (firewall_docker_portas):
 # só pela VPN (página 14), com a chave de cada cliente.
 - port: 4100
@@ -187,7 +188,43 @@ binds:
           statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)
           prefixMode: always
           failureMode: failOpen
-{{ alvos('controle') }}
+{{ alvos('controle', 'controle') }}
+# Rota dos autônomos (página 16): agentes do posto e o assistente, na ai-desktop-vm (a 4200 só aceita a VM de IA
+# pela LAN). Leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e agem só pelo ops_controle,
+# que exige a aprovação do Léo para estes clientes (OPS_CLIENTES_COM_APROVACAO).
+- port: 4200
+  listeners:
+  - name: autonomos
+    routes:
+    - name: autonomos
+      policies:
+        apiKey:
+          mode: strict
+          location:
+            header:
+              name: Authorization
+              prefix: "Bearer "
+          keys:
+{% for cliente, chave in agents_autonomos_keys.items() %}
+          - keyHash: "sha256:{{ chave | hash('sha256') }}"
+            metadata:
+              cliente: {{ cliente }}
+{% endfor %}
+        mcpAuthorization:
+          rules:
+{% for alvo, ferramentas in agents_leitura.items() %}
+{% if ferramentas == '*' %}
+          - allow: 'mcp.tool.target == "{{ alvo }}"'
+{% else %}
+          - allow: 'mcp.tool.target == "{{ alvo }}" && mcp.tool.name in {{ ferramentas | to_json }}'
+{% endif %}
+{% endfor %}
+      backends:
+      - mcp:
+          statefulMode: stateless
+          prefixMode: always
+          failureMode: failOpen
+{{ alvos('leitura', 'controle') }}
 ```
 
 ## Rastreio (Langfuse)
@@ -212,7 +249,7 @@ Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):
 3. **n8n:** *Settings → Instance-level MCP* → **Enable MCP access** → aba **API key** → `n8n_mcp_token`. Libere os workflows que a IA pode ver e executar (*Available in MCP* em cada workflow, ou **Workflows enabled**); nenhum fica liberado sem você marcar.
 4. **Portainer:** *My account → Access tokens → Add access token* → `portainer_api_key`. Confira os nomes dos ambientes em *Environments* (`local` para a core e o agente da VM de IA) e ajuste `ops_endpoints` se forem outros.
 5. **Runner do Ansible:** `ssh-keygen -t ed25519 -C ops-runner -f ops-runner` na máquina de controle → a privada vai para `ops_ssh_private_key`; a pública (`ops-runner.pub`) entra no `~/.ssh/authorized_keys` do usuário Ansible das VMs (`vm_ansible_user_name`). **Não** a coloque no host Proxmox: nenhum playbook liberado para o runner roda nele. `ops_vault_password` é a senha do `ansible-vault` deste repositório. O runner só funciona depois que o `vault.yml` criptografado existir no repositório (ele clona do GitHub).
-6. **Clientes do hub:** `agents_api_keys.claude_code` e `agents_api_keys.agentes` (`ag-` + `openssl rand -hex 24`), e os tokens internos `agents_tokens_internos.backends` (hub → `ops`/`mcp-grafana`) e `agents_tokens_internos.proxy` (`mcp_auth_servidor` → rota de leitura), com `openssl rand -hex 32`.
+6. **Clientes do hub:** `agents_api_keys.claude_code` (`ag-` + `openssl rand -hex 24`; as chaves `agents_autonomos_keys` dos agentes e do assistente estão nas seções 16 e 17), e os tokens internos `agents_tokens_internos.backends` (hub → `ops`/`mcp-grafana`) e `agents_tokens_internos.proxy` (`mcp_auth_servidor` → rota de leitura), com `openssl rand -hex 32`.
 7. **Langfuse:** `langfuse_secrets` (salt e segredos com `openssl rand -base64 32`, `encryption_key` com `openssl rand -hex 32`, chaves do projeto `pk-lf-…`/`sk-lf-…`) e o cliente OIDC `langfuse` (`oidc_clients.langfuse`, digest como nos outros clientes, página 05).
 
 ## Deploy
@@ -228,7 +265,7 @@ Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):
 |---|---|
 | claude.ai (navegador e celular) | **Configurações → Conectores → Adicionar conector personalizado** com `https://servidor.<domínio>/mcp` (nome `Servidor`). **Conectar** abre o login do Authelia (2FA, só o grupo `admins`). Só leitura. |
 | Claude Code (PC, com o Tailscale ligado) | `claude mcp add --transport http servidor http://<IP da core-services-vm>:4100/mcp --header "Authorization: Bearer <agents_api_keys.claude_code>"`. A chave fica no `~/.claude.json` do seu usuário, nunca em repositório. Sem o Tailscale, a 4100 não responde (nem em casa): use a rota de leitura (`https://servidor.<domínio>/mcp`). |
-| Agentes (4c3) | Mesma rota de controle, com a chave `agents_api_keys.agentes`. Eles rodam na `ai-desktop-vm`, que não tem Tailscale: quando a 4c3 chegar, o IP da ai entra nas `origens` da 4100 em `firewall_docker_portas` (página 01). |
+| Agentes e assistente | Rota `autonomos` (porta 4200), com as chaves `agents_autonomos_keys.agentes` e `.assistente`: já configurada no posto ([seção 16](16-posto-agentes.md)) e no assistente ([seção 17](17-assistente.md)). |
 
 As ferramentas aparecem com o prefixo do alvo: `grafana_…`, `ops_…`, `homeassistant_…`, `n8n_…`.
 

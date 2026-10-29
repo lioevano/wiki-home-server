@@ -89,6 +89,9 @@ scrape_configs:
       # ...e o próprio hub (métricas no :15020, sem login): o proxy responde mesmo com o hub fora.
       - targets: ['http://agentgateway:15020/metrics']
         labels: {app: 'agentgateway'}
+      # Aprovação humana dos agentes (página 16).
+      - targets: ['http://aprovador:8080/saude']
+        labels: {app: 'aprovador'}
 {% if 'ai_desktop' in groups %}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:3000/health']
         labels: {app: 'open-webui'}
@@ -104,6 +107,9 @@ scrape_configs:
       # Rastreio (base dos agentes, página 13).
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:3100/api/public/health']
         labels: {app: 'langfuse'}
+      # Posto de agentes (página 16): a 3005 aceita a core, onde o blackbox roda.
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:3005/health']
+        labels: {app: 'vibe-kanban'}
 {% endif %}
     relabel_configs:
       - source_labels: [__address__]

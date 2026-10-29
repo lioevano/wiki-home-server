@@ -1,0 +1,14 @@
+{#- ansible/templates/posto/managed-mcp.json.j2 — MCPs de todo agente do posto (página 16). Gerado pelo
+    setup-posto-volumes.yml em <dados do posto>/managed-mcp.json (0600) e montado só leitura em
+    /etc/claude-code/managed-mcp.json: o Claude Code usa só estes, e nenhum agente os troca. -#}
+{{ {
+  "mcpServers": {
+    "servidor": {
+      "type": "http",
+      "url": "http://" ~ core_services_vm_ip_var ~ ":4200/mcp",
+      "headers": {"Authorization": "Bearer " ~ agents_autonomos_keys.agentes}
+    },
+    "notas": {"type": "http", "url": "http://qmd:8181/mcp"},
+    "escrita": {"type": "http", "url": "http://notes_escrita:8000/mcp"}
+  }
+} | to_nice_json }}

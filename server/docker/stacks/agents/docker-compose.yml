@@ -34,9 +34,11 @@ services:
       - ${AGENTGATEWAY_CONFIG_PATH}:/config/config.yaml:ro
       - ${AGENTGATEWAY_DATA_PATH}/segredos:/segredos:ro # tokens do Home Assistant e do n8n (0400)
     ports:
-      # Só a rota de controle, só no IP da LAN (Docker não passa pelo UFW; a proteção é o bind + a chave).
+      # Só no IP da LAN; quem chega é decidido pelo firewall das portas do Docker (página 14) e pela chave:
+      # controle (4100) só pela VPN; autônomos (4200) só da ai-desktop-vm (página 16).
       # A rota de leitura (4000) e as métricas (15020) ficam na rede interna.
       - "${CORE_SERVICES_VM_IP_VAR}:4100:4100"
+      - "${CORE_SERVICES_VM_IP_VAR}:4200:4200"
     networks:
       - agents_internal
       - proxy # Home Assistant, n8n e o Prometheus
@@ -134,12 +136,51 @@ services:
       OPS_INVENTARIO: inventories/home/hosts.ini
       OPS_CHAVE_SSH: /segredos/id_ed25519
       ANSIBLE_VAULT_PASSWORD_FILE: /segredos/vault_pass
+      # Ações dos clientes autônomos (rota 4200) só com pedido aprovado no aprovador (página 16).
+      OPS_CLIENTES_COM_APROVACAO: ${OPS_CLIENTES_COM_APROVACAO}
+      APROVADOR_URL: http://aprovador:8080
+      APROVADOR_TOKEN: ${APROVADOR_TOKEN}
     volumes:
       - ${OPS_DATA_PATH}/segredos:/segredos:ro
       - ${OPS_DATA_PATH}/repo:/repo
     networks:
       - agents_internal
       - proxy
+
+  # Aprovação humana das ações dos agentes autônomos (página 16): pedidos com botões no Telegram (bot de avisos,
+  # lido por getUpdates) e a tela aprovacoes. (Traefik + Authelia, grupo admins). A tela só aceita requisições com
+  # o segredo que o Traefik injeta (X-Aprovador-Chave): outro container da rede proxy não decide no seu lugar.
+  aprovador:
+    image: ${APROVADOR_IMAGE}
+    pull_policy: never
+    container_name: aprovador
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    environment:
+      APROVADOR_TOKEN: ${APROVADOR_TOKEN} # só o ops_controle tem
+      APROVADOR_CHAVE_PROXY: ${APROVADOR_CHAVE_PROXY}
+      APROVADOR_URL_PUBLICA: https://aprovacoes.${BASE_DOMAIN_FROM_VAULT}
+      APROVADOR_VALIDADE_MIN: ${APROVADOR_VALIDADE_MIN}
+      APROVADOR_TELEGRAM_USUARIOS: ${APROVADOR_TELEGRAM_USUARIOS}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+    volumes:
+      - ${APROVADOR_DATA_PATH}:/data # pedidos (JSON); disco local da VM
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      diun.enable: "false" # imagem local
+      traefik.enable: "true"
+      traefik.docker.network: proxy
+      traefik.http.routers.aprovacoes.rule: "Host(`aprovacoes.${BASE_DOMAIN_FROM_VAULT}`)"
+      traefik.http.routers.aprovacoes.entrypoints: websecure
+      traefik.http.routers.aprovacoes.tls.certresolver: letsencrypt
+      traefik.http.routers.aprovacoes.middlewares: authelia-forwardauth@docker,aprovador-chave@docker
+      traefik.http.routers.aprovacoes.service: aprovacoes-svc
+      traefik.http.services.aprovacoes-svc.loadbalancer.server.port: "8080"
+      traefik.http.middlewares.aprovador-chave.headers.customrequestheaders.X-Aprovador-Chave: ${APROVADOR_CHAVE_PROXY}
+    networks:
+      - agents_internal # ops_controle → API
+      - proxy # Traefik → tela
 
   # IA que observa o servidor (página 15): lê pela rota de leitura do hub (chave própria), pensa pelo LiteLLM
   # da ai-desktop-vm e conta no Telegram, via n8n. Recebe os alertas do Grafana em POST /alerta (porta 8080,

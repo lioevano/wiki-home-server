@@ -193,3 +193,14 @@
         description: Rastreio de LLM e ferramentas
         href: https://langfuse.{{ base_domain }}
         siteMonitor: http://{{ ai_desktop_vm_ip_var }}:3100/api/public/health
+    - vibe-kanban:
+        icon: mdi-view-column
+        description: Posto de agentes (Claude Code em paralelo)
+        href: https://kanban.{{ base_domain }}
+        siteMonitor: http://{{ ai_desktop_vm_ip_var }}:3005/health
+    - aprovador:
+        icon: mdi-check-decagram
+        description: Aprovações das ações dos agentes
+        href: https://aprovacoes.{{ base_domain }}
+        server: core
+        container: aprovador

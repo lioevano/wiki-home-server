@@ -79,7 +79,7 @@ def _ferr(cfg=None, falso=None, enviar=None):
     cfg = cfg or _cfg()
     falso = falso or PortainerFalso()
     avisos = []
-    fs = ferramentas(cfg, Portainer(cfg, falso), None, enviar or avisos.append)
+    fs = ferramentas(cfg, Portainer(cfg, falso), None, enviar or avisos.append, cliente=lambda: "claude_code")
     return fs, falso, avisos
 
 
@@ -305,7 +305,7 @@ def test_saida_do_ansible_limpa():
 def test_ferramentas_ansible_pelo_runner(capsys):
     cfg = _cfg()
     avisos = []
-    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), _runner(), avisos.append)
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), _runner(), avisos.append, cliente=lambda: "claude_code")
     texto = fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml")
     plano = texto.splitlines()[0].split(": ", 1)[1]
     assert "PLAY RECAP" in fs["ansible_aplicar"].funcao(plano_id=plano)
@@ -399,7 +399,8 @@ def test_playbook_que_falha_registra_erro(capsys):
             return (2, "fatal: [core-services-vm]: FAILED!") if argv[0] == "ansible-playbook" and "--check" not in argv else (rc, out)
     cfg = _cfg()
     avisos = []
-    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), Runner(cfg, Falha(), Relogio()), avisos.append)
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), Runner(cfg, Falha(), Relogio()), avisos.append,
+                     cliente=lambda: "claude_code")
     plano = fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml").splitlines()[0].split(": ", 1)[1]
     texto = fs["ansible_aplicar"].funcao(plano_id=plano)
     assert "FAILED" in texto
@@ -466,11 +467,16 @@ def test_cliente_no_registro_e_no_aviso(capsys):
     assert "claude_code" in avisos[-1]["titulo"]
 
 
-def test_cliente_padrao_desconhecido(capsys):
-    fs, _, _ = _ferr()
-    fs["container_reiniciar"].funcao(nome="jellyfin")
+def test_cliente_desconhecido_falha_fechado(capsys):
+    """Sem o cabeçalho do hub, não dá para saber se é um agente autônomo: a ação exige aprovação (página 16)."""
+    cfg = _cfg()
+    falso = PortainerFalso()
+    fs = ferramentas(cfg, Portainer(cfg, falso), None, None)  # cliente padrão: ""
+    with pytest.raises(Recusado, match="aprovação humana"):
+        fs["container_reiniciar"].funcao(nome="jellyfin")
     registro = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
-    assert registro["cliente"] == "desconhecido"
+    assert registro["cliente"] == "desconhecido" and registro["resultado"] == "recusado"
+    assert not any(metodo == "POST" for metodo, _, _ in falso.chamadas)
 
 
 def test_servidor_le_o_cliente_do_cabecalho_do_hub():

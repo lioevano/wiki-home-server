@@ -79,6 +79,8 @@ Para o primeiro deploy ou para reconstruir tudo ([Reconstruindo a infraestrutura
 - import_playbook: setup-notes-volumes.yml
 - import_playbook: setup-langfuse-volumes.yml
 - import_playbook: setup-agents-volumes.yml
+- import_playbook: setup-posto-volumes.yml
+- import_playbook: setup-assistente-volumes.yml
 ```
 
 O `scripts/restore.sh` só entra em `server/ansible` e roda o `full-deploy.yml` pedindo a senha do vault:

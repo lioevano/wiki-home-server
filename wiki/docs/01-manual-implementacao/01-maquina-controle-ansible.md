@@ -307,6 +307,8 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
       n8n: "sk-CHAVE_DO_N8N"
       observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 15)
+      agentes: "sk-CHAVE_DOS_AGENTES" # posto de agentes (página 16)
+      assistente: "sk-CHAVE_DO_ASSISTENTE" # assistente do Telegram (página 17)
     # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
     openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -357,7 +359,10 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     # Chaves dos clientes da rota de controle do hub (LAN): "ag-" + openssl rand -hex 24. No config do hub só vai o hash.
     agents_api_keys:
       claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
+    # Chaves da rota dos autônomos do hub (porta 4200; página 16): as ações deles esperam a sua aprovação.
+    agents_autonomos_keys:
       agentes: "ag-CHAVE_DOS_AGENTES"
+      assistente: "ag-CHAVE_DO_ASSISTENTE"
     # Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends), mcp_auth_servidor → rota de leitura
     # (proxy) e observador → rota de leitura (observador, página 15).
     # As redes Docker são compartilhadas: sem eles, qualquer container chamaria as ferramentas direto.
@@ -367,6 +372,15 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       observador: "TOKEN_INTERNO_DO_OBSERVADOR"
     # Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 15.
     observador_token: "TOKEN_DO_GRAFANA_PARA_O_OBSERVADOR"
+    # Aprovador (página 16): token que só o ops_controle usa na API, e o segredo que só o Traefik injeta na tela
+    # (openssl rand -hex 32 cada).
+    aprovador_token: "TOKEN_DO_OPS_PARA_O_APROVADOR"
+    aprovador_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_A_TELA_DE_APROVACOES"
+    # Posto (página 16): token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios do posto,
+    # Contents e Pull requests); "" deixa sem.
+    posto_github_token: ""
+    # Assistente (página 17): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
+    hermes_telegram_bot_token: "TOKEN_DO_BOT_DO_ASSISTENTE"
     # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
     grafana_sa_tokens:
       leitura: "glsa_TOKEN_VIEWER"
@@ -563,9 +577,11 @@ firewall_docker_portas:
     - { porta: 9090, origens: ["{{ proxmox_host_ip_var }}", "{{ ai_desktop_vm_ip_var }}"], motivo: "Prometheus: remote write dos Alloys" }
     - { porta: 3100, origens: ["{{ proxmox_host_ip_var }}", "{{ ai_desktop_vm_ip_var }}"], motivo: "Loki: logs dos Alloys" }
     - { porta: 4100, origens: [], motivo: "rota de controle do hub de MCPs: só pela VPN" }
+    - { porta: 4200, origens: ["{{ ai_desktop_vm_ip_var }}"], motivo: "rota dos autônomos do hub: agentes e assistente, na VM de IA" }
   ai-desktop-vm:
     - { porta: 9001, origens: ["{{ core_services_vm_ip_var }}"], motivo: "Portainer Agent: só o Portainer da core" }
     - { porta: 3100, origens: ["{{ core_services_vm_ip_var }}"], motivo: "Langfuse: Traefik e hub, na core" }
+    - { porta: 3005, origens: ["{{ core_services_vm_ip_var }}"], motivo: "Vibe Kanban: sem login próprio, só o Traefik (Authelia)" }
 
 # --- Backup com restic no host Proxmox (página 04/02) ---
 # Datasets copiados (a mídia fica de fora: dá para baixar de novo e não cabe na nuvem).
@@ -614,7 +630,7 @@ n8n_subdomain: "n8n"
 # Painéis de administração: o Authelia só deixa entrar quem está no grupo admins (página 05). Os demais
 # subdomínios protegidos (home., hass.) aceitam qualquer usuário com 2FA.
 authelia_dominios_admins: [traefik, portainer, grafana, prometheus, n8n, llm, openwebui, langfuse, sync,
-                           sonarr, radarr, lidarr, prowlarr, bazarr, qbittorrent]
+                           sonarr, radarr, lidarr, prowlarr, bazarr, qbittorrent, kanban, aprovacoes]
 
 # --- Grafana Alloy (coletor de logs e métricas; role infra/alloy) ---
 # Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.
@@ -659,6 +675,8 @@ litellm_key_budgets:
   claude_code: 50
   n8n: 10
   observador: 5 # IA que observa o servidor (página 15): estourou, ela para e o alerta observador-falhou avisa
+  agentes: 50 # agentes do posto (Claude Code pelo Vibe Kanban, página 16)
+  assistente: 15 # assistente do Telegram (Hermes, página 17)
 # Modelos que uma chave não enxerga (setup-ai-keys.yml). O 'decisao' (Jev) devolve decisões tipadas para
 # automações e não serve para conversa. Cliente fora daqui vê todos.
 litellm_key_models_ocultos:
@@ -704,7 +722,7 @@ agents_leitura:
 # O ops recusa reiniciar estes containers e redeployar estas stacks (o caminho de controle da própria IA;
 # o n8n leva os avisos das ações dela ao Telegram).
 ops_containers_protegidos: [traefik, authelia, authelia_db, cloudflared, portainer, portainer_agent, agentgateway, mcp_auth_servidor,
-                            ops_leitura, ops_controle, n8n_app]
+                            ops_leitura, ops_controle, n8n_app, aprovador]
 ops_stacks_protegidas: [core, agents]
 # Playbooks que a IA pode simular (ansible_check) e aplicar (ansible_aplicar). Fora da lista: criação de VMs,
 # host Proxmox, rede core (Traefik/Authelia), base das VMs (Docker/NFS/Alloy da core, onde roda o ops) e o deploy completo.
@@ -730,6 +748,29 @@ observador_version: "1.0.0"
 observador_modelo: "rapido"
 # Hora do boletim de saúde no Telegram (HH:MM, fuso da VM); "" desliga.
 observador_boletim_hora: "07:30"
+
+# --- Posto de agentes e aprovação humana (página 16) ---
+# Vibe Kanban construído do código-fonte nesta tag (sem telemetria, sem depender do CDN do projeto).
+posto_vibe_kanban_tag: "v0.1.45-20260919085201"
+# Versão do Claude Code que esta tag do Vibe Kanban chama (npx); a imagem do posto já a traz em cache.
+posto_claude_code_version: "2.1.119"
+# Versão da imagem localhost/homeserver/posto (mude ao trocar o Dockerfile do posto).
+posto_version: "1.0.0"
+# Clientes do hub cujas ações no ops esperam o "aprovar" do Léo.
+ops_clientes_com_aprovacao: [agentes, assistente]
+# Versão da imagem local do aprovador (código em docker/images/aprovador).
+aprovador_version: "1.0.0"
+# Minutos para decidir um pedido (e para usá-lo depois de aprovado).
+aprovador_validade_min: 30
+# Ids do Telegram que podem decidir, além do telegram_chat_id (precisa de pelo menos um se o chat for um grupo).
+aprovador_telegram_usuarios: []
+
+# --- Assistente sempre ligado (página 17) ---
+hermes_version: "v0.22.5"
+# Apelido do LiteLLM do assistente (as conversas pedem um modelo melhor que o do observador).
+assistente_modelo: "principal"
+# Quem pode falar com o assistente no Telegram (ids de usuário; o chat privado do Léo tem o id dele).
+assistente_telegram_usuarios: ["{{ telegram_chat_id }}"]
 
 # Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
 ops_endpoints:

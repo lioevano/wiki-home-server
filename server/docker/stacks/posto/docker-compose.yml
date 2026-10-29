@@ -1,0 +1,44 @@
+# docker/stacks/posto/docker-compose.yml
+# Posto de agentes (sub-projeto 4c3, página 16), na ai-desktop-vm: Vibe Kanban (tela) e os agentes Claude Code
+# que ele roda, cada tarefa num worktree. Os agentes usam o LiteLLM (chave agentes) e os MCPs do servidor (rota
+# dos autônomos do hub, ações só com aprovação) e das notas. Sem login próprio: a porta só aceita a core
+# (firewall das portas do Docker), onde o Traefik exige o Authelia (kanban., grupo admins).
+# Variáveis: /opt/portainer_stack_envs/posto.env, gerado por ansible/playbooks/setup-posto-volumes.yml.
+version: '3.9'
+
+networks:
+  ai_network: # LiteLLM (http://litellm:4000)
+    external: true
+  notes_mcp: # MCPs das notas (qmd e escrita), sem autenticação própria: só nesta rede
+    external: true
+
+services:
+  posto:
+    image: ${POSTO_IMAGE}
+    pull_policy: never
+    container_name: posto
+    restart: unless-stopped
+    labels:
+      diun.enable: "false" # imagem local
+    networks:
+      - ai_network
+      - notes_mcp
+    ports:
+      - "${AI_DESKTOP_VM_IP}:3005:3000" # alvo do Traefik (kanban.); a LAN não alcança (firewall_docker_portas)
+    environment:
+      TZ: ${SYSTEM_TIMEZONE}
+      # Claude Code pelo LiteLLM (chave e orçamento dos agentes); nomes reais dos modelos Claude (página 08).
+      ANTHROPIC_BASE_URL: http://litellm:4000
+      ANTHROPIC_AUTH_TOKEN: ${LITELLM_KEY_AGENTES}
+      ANTHROPIC_DEFAULT_OPUS_MODEL: claude-opus-5-5
+      ANTHROPIC_DEFAULT_SONNET_MODEL: claude-sonnet-5-5
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: claude-haiku-5-5
+      CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS: "1" # campos novos que o LiteLLM ainda não repassa
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1" # sem telemetria nem verificação de atualização
+      CLAUDE_CONFIG_DIR: /home/posto/.claude
+      GH_TOKEN: ${POSTO_GITHUB_TOKEN} # vazio: sem PR pelo gh
+    volumes:
+      - ${POSTO_DATA_PATH}/vibe-kanban:/home/posto/.local/share/vibe-kanban # projetos, tarefas e config (SQLite)
+      - ${POSTO_DATA_PATH}/claude:/home/posto/.claude # estado do Claude Code
+      - ${POSTO_DATA_PATH}/repos:/repos # clones em que os agentes trabalham
+      - ${POSTO_DATA_PATH}/managed-mcp.json:/etc/claude-code/managed-mcp.json:ro # MCPs de todo agente

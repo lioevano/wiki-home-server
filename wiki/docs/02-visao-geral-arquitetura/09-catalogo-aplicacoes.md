@@ -36,6 +36,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 |---|---|---|---|---|---|---|---|---|---|---|
 | `agentgateway` | ia | agents / core-services-vm | `mcp_auth_servidor`, `agentgateway`, `mcp_grafana_leitura`, `mcp_grafana_controle`, `ops_leitura`, `ops_controle` | publica | `servidor` | local | sim | — | `+mcp` | [Agentes: base](../01-manual-implementacao/13-agentes-base.md) |
 | `alloy` | monitoramento | ansible:infra/alloy / proxmox_main_host; ansible:infra/alloy / core-services-vm; ansible:infra/alloy / ai-desktop-vm | `alloy` | interna | — | nenhum | sim | `logs`, `metricas` | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy) |
+| `aprovador` | ia | agents / core-services-vm | `aprovador` | protegida | `aprovacoes` | local | não | — | — | [Posto de agentes](../01-manual-implementacao/16-posto-agentes.md) |
 | `authelia` | infra | core / core-services-vm | `authelia`, `authelia_db` | publica | `auth` | nfs | não | `autenticacao`, `mcp` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
 | `bazarr` | mídia | media / core-services-vm | `bazarr` | protegida | `bazarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `blackbox-exporter` | monitoramento | apps / core-services-vm | `blackbox-exporter` | interna | — | nfs | sim | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
@@ -47,6 +48,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `flaresolverr` | mídia | media / core-services-vm | `flaresolverr` | interna | — | nenhum | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `gluetun` | mídia | media / core-services-vm | `gluetun` | interna | — | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `grafana` | monitoramento | apps / core-services-vm | `grafana`, `grafana_db` | protegida | `grafana` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
+| `hermes` | ia | assistente / ai-desktop-vm | `assistente` | interna | — | local | não | — | `+llm` | [Assistente (Hermes)](../01-manual-implementacao/17-assistente.md) |
 | `homeassistant` | automação | apps / core-services-vm | `homeassistant` | protegida | `hass` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `homepage` | infra | apps / core-services-vm | `homepage` | protegida | `home` | nfs | não | `painel` | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `immich` | produtividade | photos / core-services-vm | `immich_server`, `immich_ml`, `immich_redis`, `immich_db` | publica | `fotos` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
@@ -73,3 +75,4 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `syncthing` | produtividade | notes / ai-desktop-vm | `syncthing` | protegida | `sync` | nfs | não | — | — | [Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md) |
 | `tailscale` | infra | ansible:infra/tailscale / core-services-vm | `tailscaled` | interna | — | nenhum | não | — | — | [VPN (Tailscale)](../01-manual-implementacao/14-vpn-tailscale.md) |
 | `traefik` | infra | core / core-services-vm | `traefik` | protegida | `traefik` | nfs | não | `roteamento` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
+| `vibe-kanban` | ia | posto / ai-desktop-vm | `posto` | protegida | `kanban` | local | não | — | `+llm` | [Posto de agentes](../01-manual-implementacao/16-posto-agentes.md) |

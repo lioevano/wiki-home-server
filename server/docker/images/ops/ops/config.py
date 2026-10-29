@@ -29,6 +29,10 @@ class Config:
     inventario: str
     chave_ssh: str
     plano_validade_s: int
+    # Clientes do hub (metadado da chave) cujas ações esperam o "aprovar" do Léo no aprovador (página 16).
+    clientes_com_aprovacao: frozenset[str] = frozenset()
+    aprovador_url: str = ""
+    aprovador_token: str = ""
 
     @classmethod
     def do_ambiente(cls, env: Mapping[str, str]) -> "Config":
@@ -51,4 +55,7 @@ class Config:
             inventario=env.get("OPS_INVENTARIO", "server/ansible/inventories/home/hosts.ini"),
             chave_ssh=env.get("OPS_CHAVE_SSH", "/segredos/id_ed25519"),
             plano_validade_s=int(env.get("OPS_PLANO_VALIDADE_MIN", "30")) * 60,
+            clientes_com_aprovacao=_lista(env.get("OPS_CLIENTES_COM_APROVACAO", "agentes,assistente")),
+            aprovador_url=env.get("APROVADOR_URL", ""),
+            aprovador_token=env.get("APROVADOR_TOKEN", ""),
         )

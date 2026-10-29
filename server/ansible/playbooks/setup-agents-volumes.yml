@@ -13,6 +13,7 @@
     ops_dir: "{{ vm_local_data_path }}/ops"
     ops_imagem: /opt/ops-image
     observador_imagem: /opt/observador-image
+    aprovador_imagem: /opt/aprovador-image
 
   tasks:
     # --- Diretórios (disco local: segredos e clone regerável) ---
@@ -132,6 +133,38 @@
             GID: "{{ docker_pgid }}"
         force_source: "{{ observador_codigo.changed }}"
 
+    # --- Aprovador (página 16): imagem local (só a biblioteca padrão) e o diretório dos pedidos ---
+    - name: Criar os diretórios do aprovador
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ item.dono }}"
+        group: "{{ item.dono }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "{{ aprovador_imagem }}", dono: root, mode: '0755' }
+        - { path: "{{ vm_local_data_path }}/aprovador", dono: "{{ docker_puid }}", mode: '0750' }
+
+    - name: Copiar o código e o Dockerfile do aprovador
+      ansible.builtin.copy:
+        src: ../../docker/images/aprovador/
+        dest: "{{ aprovador_imagem }}/"
+        mode: preserve
+      register: aprovador_codigo
+
+    - name: Construir a imagem local do aprovador
+      community.docker.docker_image:
+        name: localhost/homeserver/aprovador
+        tag: "{{ aprovador_version }}"
+        source: build
+        build:
+          path: "{{ aprovador_imagem }}"
+          pull: true
+          args:
+            UID: "{{ docker_puid }}"
+            GID: "{{ docker_pgid }}"
+        force_source: "{{ aprovador_codigo.changed }}"
+
     # --- Hub (agentgateway): config sem segredos e tokens dos alvos em arquivos ---
     - name: Criar os diretórios do hub
       ansible.builtin.file:
@@ -209,6 +242,15 @@
           - { name: 'AGENTS_TOKEN_PROXY', value: "{{ agents_tokens_internos.proxy }}" }
           - { name: 'AGENTS_TOKEN_OBSERVADOR', value: "{{ agents_tokens_internos.observador }}" }
           - { name: 'OBSERVADOR_IMAGE', value: "localhost/homeserver/observador:{{ observador_version }}" }
+          - { name: 'APROVADOR_IMAGE', value: "localhost/homeserver/aprovador:{{ aprovador_version }}" }
+          - { name: 'APROVADOR_TOKEN', value: "{{ aprovador_token }}" }
+          - { name: 'APROVADOR_CHAVE_PROXY', value: "{{ aprovador_chave_proxy }}" }
+          - { name: 'APROVADOR_DATA_PATH', value: "{{ vm_local_data_path }}/aprovador" }
+          - { name: 'APROVADOR_VALIDADE_MIN', value: "{{ aprovador_validade_min }}" }
+          - { name: 'APROVADOR_TELEGRAM_USUARIOS', value: "{{ aprovador_telegram_usuarios | join(',') }}" }
+          - { name: 'OPS_CLIENTES_COM_APROVACAO', value: "{{ ops_clientes_com_aprovacao | join(',') }}" }
+          - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
+          - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'OBSERVADOR_TOKEN', value: "{{ observador_token }}" }
           - { name: 'OBSERVADOR_MODELO', value: "{{ observador_modelo }}" }
           - { name: 'OBSERVADOR_BOLETIM_HORA', value: "{{ observador_boletim_hora }}" }

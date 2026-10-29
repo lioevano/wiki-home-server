@@ -440,6 +440,16 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
+    # Posto de agentes (página 16): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta.
+    kanban-dynamic:
+      entryPoints: ["websecure"]
+      rule: "Host(`kanban.{{ base_domain }}`)"
+      service: "kanban-svc-dynamic"
+      tls:
+        certResolver: "letsencrypt"
+      middlewares:
+        - "authelia-forwardauth@docker"
+
     # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
     # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
     notas-dynamic:
@@ -491,6 +501,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://{{ ai_desktop_vm_ip_var }}:3100"
+
+    kanban-svc-dynamic: # stack posto; a porta 3005 só aceita a core (firewall das portas do Docker)
+      loadBalancer:
+        servers:
+          - url: "http://{{ ai_desktop_vm_ip_var }}:3005"
 
     notas-svc-dynamic: # mcp_auth_busca (stack notes)
       loadBalancer:

@@ -87,6 +87,11 @@ class Runner:
             self._planos[plano_id] = {"playbook": playbook, "limite": limite, "commit": commit, "criado": self.agora()}
         return {"plano_id": plano_id, "commit": commit, "rc": rc, "saida": limpar_saida(saida, self.cfg.limite_saida)}
 
+    def ver(self, plano_id: str) -> dict | None:
+        """O plano sem consumi-lo (para descrever o pedido de aprovação)."""
+        plano = self._planos.get(plano_id)
+        return dict(plano) if plano else None
+
     def aplicar(self, plano_id: str) -> dict:
         trava = self._exclusivo()  # antes de consumir o plano: a recusa por concorrência não o queima
         try:

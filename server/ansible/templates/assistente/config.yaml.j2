@@ -1,0 +1,58 @@
+# ansible/templates/assistente/config.yaml.j2
+# Assistente sempre ligado (Hermes Agent, página 17). Gerado pelo setup-assistente-volumes.yml em
+# <dados do assistente>/config.yaml a cada execução: o que mudar pela conversa volta ao que a wiki diz.
+# Sem segredos: ${VAR} vem do .env do mesmo diretório (0600).
+
+# Modelo pelo LiteLLM da mesma VM (rede ai_network), com a chave e o orçamento do assistente.
+model:
+  provider: custom
+  default: "{{ assistente_modelo }}"
+  base_url: http://litellm:4000/v1
+  api_key: ${LITELLM_KEY_ASSISTENTE}
+  context_length: 200000
+
+# MCPs: o servidor pela rota dos autônomos do hub (lê tudo; ações só com a sua aprovação no ops) e as notas
+# pela rede interna notes_mcp (busca em todos os vaults; escrita só em Trabalho e Estudos).
+mcp_servers:
+  servidor:
+    url: "http://{{ core_services_vm_ip_var }}:4200/mcp"
+    headers:
+      Authorization: "Bearer ${HUB_CHAVE_ASSISTENTE}"
+    timeout: 120
+  notas:
+    url: http://qmd:8181/mcp
+    timeout: 60
+  escrita:
+    url: http://notes_escrita:8000/mcp
+    timeout: 60
+
+# Ferramentas embutidas que um assistente aberto a mensagens não precisa e que seriam o caminho de um ataque
+# (terminal, código, arquivos do container, navegador, internet, novas conexões MCP, skills). Ficam memória,
+# lembretes (cronjob), lista de tarefas, perguntas de esclarecimento, busca nas conversas e os MCPs acima.
+agent:
+  disabled_toolsets:
+    - terminal
+    - code_execution
+    - file
+    - browser
+    - computer_use
+    - web
+    - search
+    - x_search
+    - connections
+    - delegation
+    - skills
+    - image_gen
+    - video_gen
+    - video
+    - tts
+    - vision
+    - kanban
+    - project
+    - catalog
+    - desktop_ui
+    - feishu_doc
+    - feishu_drive
+    - discord
+    - discord_admin
+    - yuanbao

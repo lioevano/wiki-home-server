@@ -1,0 +1,29 @@
+# docker/stacks/assistente/docker-compose.yml
+# Assistente sempre ligado (Hermes Agent, página 17), na ai-desktop-vm. Conversa só pelo Telegram (bot próprio,
+# só com os usuários de TELEGRAM_ALLOWED_USERS); sem porta, sem painel, sem API e sem o socket do Docker.
+# Config e segredos em ${ASSISTENTE_DATA_PATH} (config.yaml e .env, gerados por setup-assistente-volumes.yml).
+version: '3.9'
+
+networks:
+  ai_network: # LiteLLM (http://litellm:4000)
+    external: true
+  notes_mcp: # MCPs das notas (qmd e escrita)
+    external: true
+
+services:
+  assistente:
+    image: nousresearch/hermes-agent:v0.22.5 # = hermes_version (group_vars)
+    container_name: assistente
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      HERMES_UID: ${DOCKER_PUID} # o s6 da imagem troca para este usuário
+      HERMES_GID: ${DOCKER_PGID}
+      TZ: ${SYSTEM_TIMEZONE}
+    volumes:
+      - ${ASSISTENTE_DATA_PATH}:/opt/data # config, .env, memória e sessões (disco local da VM)
+    networks:
+      - ai_network
+      - notes_mcp

@@ -6,19 +6,19 @@
   'homeassistant': {'host': 'http://homeassistant:8123/api/mcp', 'token': '/segredos/homeassistant_token'},
   'n8n': {'host': 'http://n8n:5678/mcp-server/http', 'token': '/segredos/n8n_token'},
 } %}
-{% macro alvos(sufixo) %}
+{% macro alvos(grafana, ops) %}
           targets:
           # ops e mcp-grafana só aceitam o token interno do hub (as redes Docker são compartilhadas).
           - name: grafana
             mcp:
-              host: http://mcp_grafana_{{ sufixo }}:8000/mcp
+              host: http://mcp_grafana_{{ grafana }}:8000/mcp
             policies:
               backendAuth:
                 key:
                   file: /segredos/backends_token
           - name: ops
             mcp:
-              host: http://ops_{{ sufixo }}:8000/mcp
+              host: http://ops_{{ ops }}:8000/mcp
             policies:
               backendAuth:
                 key:
@@ -45,7 +45,7 @@ config:
     format: json
     fields:
       add:
-        cliente: 'apiKey.cliente' # qual chave chamou (claude_code, agentes, mcp_auth_servidor)
+        cliente: 'apiKey.cliente' # qual chave chamou (claude_code, mcp_auth_servidor, observador, agentes, assistente)
   tracing:
     otlpEndpoint: http://{{ ai_desktop_vm_ip_var }}:3100/api/public/otel
     otlpProtocol: http
@@ -88,7 +88,7 @@ binds:
           statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)
           prefixMode: always
           failureMode: failOpen
-{{ alvos('leitura') }}
+{{ alvos('leitura', 'leitura') }}
 # Rota de controle: porta publicada no IP da core-services-vm, que a LAN não alcança (firewall_docker_portas):
 # só pela VPN (página 14), com a chave de cada cliente.
 - port: 4100
@@ -114,4 +114,40 @@ binds:
           statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)
           prefixMode: always
           failureMode: failOpen
-{{ alvos('controle') }}
+{{ alvos('controle', 'controle') }}
+# Rota dos autônomos (página 16): agentes do posto e o assistente, na ai-desktop-vm (a 4200 só aceita a VM de IA
+# pela LAN). Leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e agem só pelo ops_controle,
+# que exige a aprovação do Léo para estes clientes (OPS_CLIENTES_COM_APROVACAO).
+- port: 4200
+  listeners:
+  - name: autonomos
+    routes:
+    - name: autonomos
+      policies:
+        apiKey:
+          mode: strict
+          location:
+            header:
+              name: Authorization
+              prefix: "Bearer "
+          keys:
+{% for cliente, chave in agents_autonomos_keys.items() %}
+          - keyHash: "sha256:{{ chave | hash('sha256') }}"
+            metadata:
+              cliente: {{ cliente }}
+{% endfor %}
+        mcpAuthorization:
+          rules:
+{% for alvo, ferramentas in agents_leitura.items() %}
+{% if ferramentas == '*' %}
+          - allow: 'mcp.tool.target == "{{ alvo }}"'
+{% else %}
+          - allow: 'mcp.tool.target == "{{ alvo }}" && mcp.tool.name in {{ ferramentas | to_json }}'
+{% endif %}
+{% endfor %}
+      backends:
+      - mcp:
+          statefulMode: stateless
+          prefixMode: always
+          failureMode: failOpen
+{{ alvos('leitura', 'controle') }}

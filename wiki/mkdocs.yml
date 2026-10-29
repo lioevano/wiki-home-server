@@ -100,6 +100,8 @@ nav:
     - 'Agentes: Base': '01-manual-implementacao/13-agentes-base.md'
     - 'VPN (Tailscale)': '01-manual-implementacao/14-vpn-tailscale.md'
     - 'IA que observa o servidor': '01-manual-implementacao/15-ia-observa.md'
+    - 'Posto de agentes': '01-manual-implementacao/16-posto-agentes.md'
+    - 'Assistente (Hermes)': '01-manual-implementacao/17-assistente.md'
   - '💡 Arquitetura':
     - 'Visão Geral': '02-visao-geral-arquitetura/index.md'
     - 'Fluxo de Rede': '02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md'

@@ -1,0 +1,50 @@
+# ansible/playbooks/setup-assistente-volumes.yml
+# Assistente sempre ligado (Hermes Agent, página 17): diretório de dados no disco local da ai-desktop-vm,
+# config.yaml e .env (0600) a partir da wiki, e o assistente.env da stack. Roda antes do deploy no Portainer.
+- name: Preparar a stack assistente
+  hosts: ai_desktop
+  become: true
+  gather_facts: false
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+    - ../inventories/home/group_vars/all/vault.yml
+  vars:
+    assistente_dir: "{{ vm_local_data_path }}/hermes"
+
+  tasks:
+    - name: Criar o diretório de dados do assistente
+      ansible.builtin.file:
+        path: "{{ assistente_dir }}"
+        state: directory
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0700'
+
+    - name: Gerar o config.yaml do Hermes
+      ansible.builtin.template:
+        src: ../templates/assistente/config.yaml.j2
+        dest: "{{ assistente_dir }}/config.yaml"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0640'
+
+    - name: Gerar o .env do Hermes (segredos)
+      ansible.builtin.template:
+        src: ../templates/assistente/env.j2
+        dest: "{{ assistente_dir }}/.env"
+        owner: "{{ docker_puid }}"
+        group: "{{ docker_pgid }}"
+        mode: '0600'
+      no_log: true
+
+    - name: Gerar assistente.env para Portainer
+      ansible.builtin.template:
+        src: ../templates/portainer_stack_env.j2
+        dest: "{{ portainer_env_files_dest_path_on_vm }}/assistente.env"
+        owner: root
+        group: root
+        mode: '0600'
+      vars:
+        stack_name: assistente
+        stack_configs:
+          - { name: 'ASSISTENTE_DATA_PATH', value: "{{ assistente_dir }}" }

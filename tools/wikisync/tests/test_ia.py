@@ -129,7 +129,7 @@ def test_variaveis_ai_no_env():
 
 VAULT_EX = ROOT / "server/ansible/inventories/home/group_vars/all/vault.yml.example"
 PB_KEYS = ROOT / "server/ansible/playbooks/setup-ai-keys.yml"
-CLIENTES = {"openwebui", "claude_code", "n8n", "observador"}
+CLIENTES = {"openwebui", "claude_code", "n8n", "observador", "agentes", "assistente"}
 
 
 def test_chaves_por_cliente():

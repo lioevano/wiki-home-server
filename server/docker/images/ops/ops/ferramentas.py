@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable
 
 from . import auditoria
+from .aprovacao import Aprovador
 from .config import Config
 from .politica import Recusado, checar_container, checar_stack, limpar_saida
 from .portainer import Portainer
@@ -29,7 +30,10 @@ def _tabela(linhas: list[dict], campos: list[str]) -> str:
 
 
 def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
-                enviar: auditoria.Enviar | None, cliente: Callable[[], str] = lambda: "") -> dict[str, Ferramenta]:
+                enviar: auditoria.Enviar | None, cliente: Callable[[], str] = lambda: "",
+                aprovador: Aprovador | None = None) -> dict[str, Ferramenta]:
+    aprovador = aprovador or Aprovador(cfg.aprovador_url, cfg.aprovador_token)
+
     def quem() -> str:
         return cliente() or "desconhecido"
 
@@ -48,6 +52,30 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
         auditoria.registrar(nome_acao, alvo, "ok" if ok else "erro", time.monotonic() - inicio, texto[-300:], enviar,
                             quem())
         return texto
+
+    def aprovada(nome_acao: str, alvo: str, argumentos: dict, aprovacao_id: str | None, descricao: str,
+                 checar: Callable[[], None], executar: Callable[[], "str | tuple[str, bool, str]"]) -> str:
+        """Clientes autônomos (OPS_CLIENTES_COM_APROVACAO): a 1ª chamada cria o pedido e devolve o id; a 2ª, com
+        aprovacao_id, só executa se o pedido estiver aprovado e for desta mesma ação. Os outros clientes (Claude
+        Code, com aprovação na própria interface) executam direto."""
+        # Falha fechada: sem saber quem chamou (cabeçalho do hub ausente), trata como autônomo.
+        if cliente() and cliente() not in cfg.clientes_com_aprovacao:
+            return acao(nome_acao, alvo, executar)
+        try:
+            checar()  # protegidos e afins: recusa antes de incomodar o Léo
+            if not aprovacao_id:
+                p = aprovador.pedir(quem(), nome_acao, alvo, argumentos, descricao)
+            else:
+                aprovador.usar(aprovacao_id, nome_acao, alvo, argumentos)
+        except Recusado as erro:
+            auditoria.registrar(nome_acao, alvo, "recusado", 0.0, str(erro), enviar, quem())
+            raise
+        if aprovacao_id:
+            return acao(nome_acao, alvo, executar)
+        auditoria.registrar(nome_acao, alvo, "aguardando", 0.0, f"pedido {p['id']}", None, quem())
+        return (f"Aguardando aprovação humana: pedido {p['id']}. O Léo decide pelo Telegram ou na tela de "
+                f"aprovações (vale {p.get('validade_min', 30)} min). Depois de aprovado, chame esta mesma ferramenta "
+                f"com os mesmos argumentos e aprovacao_id=\"{p['id']}\". Se for recusado, não tente de novo.")
 
     # --- leitura ---
     def containers_listar(vm: str | None = None) -> str:
@@ -75,22 +103,28 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
     ]
 
     if cfg.modo == "controle":
-        def container_reiniciar(nome: str, vm: str | None = None) -> str:
+        def container_reiniciar(nome: str, vm: str | None = None, aprovacao_id: str | None = None) -> str:
             """Reinicia um container. Containers do caminho de controle (Traefik, Authelia, Portainer, hub) são recusados.
-            vm ('core' ou 'ai') só é exigida quando o mesmo nome existe nas duas VMs."""
+            vm ('core' ou 'ai') só é exigida quando o mesmo nome existe nas duas VMs. Agentes autônomos recebem um
+            pedido de aprovação e repetem a chamada com aprovacao_id depois que o Léo aprovar."""
             def fazer() -> str:
                 checar_container(nome, cfg)
                 portainer.reiniciar(nome, vm)
                 return f"container {nome} reiniciado"
-            return acao("container_reiniciar", nome, fazer)
+            return aprovada("container_reiniciar", nome, {"nome": nome, "vm": vm}, aprovacao_id,
+                            f"reiniciar o container {nome}" + (f" na VM {vm}" if vm else ""),
+                            lambda: checar_container(nome, cfg), fazer)
 
-        def stack_redeploy(nome: str, puxar_imagens: bool = False) -> str:
-            """Redeploy de uma stack do Portainer com o mesmo compose e variáveis; puxar_imagens baixa as versões do compose."""
+        def stack_redeploy(nome: str, puxar_imagens: bool = False, aprovacao_id: str | None = None) -> str:
+            """Redeploy de uma stack do Portainer com o mesmo compose e variáveis; puxar_imagens baixa as versões do compose.
+            Agentes autônomos recebem um pedido de aprovação e repetem a chamada com aprovacao_id."""
             def fazer() -> str:
                 checar_stack(nome, cfg)
                 portainer.redeploy(nome, puxar_imagens)
                 return f"stack {nome} redeployada" + (" (imagens atualizadas)" if puxar_imagens else "")
-            return acao("stack_redeploy", nome, fazer)
+            return aprovada("stack_redeploy", nome, {"nome": nome, "puxar_imagens": puxar_imagens}, aprovacao_id,
+                            f"redeploy da stack {nome}" + (" baixando as imagens" if puxar_imagens else ""),
+                            lambda: checar_stack(nome, cfg), fazer)
 
         def _runner() -> "Runner":
             if runner is None:
@@ -105,13 +139,22 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
                 return texto, r["rc"] == 0, playbook
             return acao("ansible_check", playbook, fazer)
 
-        def ansible_aplicar(plano_id: str) -> str:
-            """Aplica de verdade o playbook simulado pelo ansible_check (mesmo playbook, limite e commit; vale 30 min)."""
+        def ansible_aplicar(plano_id: str, aprovacao_id: str | None = None) -> str:
+            """Aplica de verdade o playbook simulado pelo ansible_check (mesmo playbook, limite e commit; vale 30 min).
+            Agentes autônomos recebem um pedido de aprovação e repetem a chamada com aprovacao_id."""
             def fazer() -> str:
                 r = _runner().aplicar(plano_id)
                 texto = f"playbook: {r['playbook']}\ncommit: {r['commit']}\nrc: {r['rc']}\n{r['saida']}"
                 return texto, r["rc"] == 0, r["playbook"]
-            return acao("ansible_aplicar", plano_id, fazer)
+
+            def checar() -> None:
+                if _runner().ver(plano_id) is None:
+                    raise Recusado("plano inexistente ou já usado; rode ansible_check")
+            plano = (runner.ver(plano_id) if runner else None) or {}
+            descricao = (f"aplicar o playbook {plano.get('playbook', '?')}"
+                         + (f" (limite {plano['limite']})" if plano.get("limite") else "")
+                         + f" no commit {str(plano.get('commit', '?'))[:8]}, simulado pelo ansible_check")
+            return aprovada("ansible_aplicar", plano_id, {"plano_id": plano_id}, aprovacao_id, descricao, checar, fazer)
 
         lista += [
             Ferramenta("container_reiniciar", container_reiniciar, True, container_reiniciar.__doc__),
