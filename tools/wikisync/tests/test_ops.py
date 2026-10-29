@@ -11,6 +11,7 @@ import pytest
 from test_observabilidade import ROOT
 
 sys.path.insert(0, str(ROOT / "server/docker/images/ops"))
+sys.dont_write_bytecode = True  # sem __pycache__ em docker/images (o copy do playbook o levaria)
 
 from ops import auditoria  # noqa: E402
 from ops.config import Config  # noqa: E402

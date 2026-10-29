@@ -15,6 +15,8 @@ import pytest
 from test_observabilidade import ROOT, render
 
 sys.path.insert(0, str(ROOT / "server/docker/images/observador"))
+# Sem __pycache__ dentro de docker/images: o copy do playbook o levaria e forçaria a reconstrução da imagem.
+sys.dont_write_bytecode = True
 
 from observador import agente, prompts, saida  # noqa: E402
 from observador.config import Config, ConfigInvalida  # noqa: E402
@@ -43,6 +45,8 @@ def test_config_padroes_e_obrigatorias():
     c = _cfg()
     assert (c.modelo, c.boletim_hora, c.max_passos, c.max_por_hora, c.reanalise_h, c.porta) == ("rapido", "07:30", 8, 6, 12, 8080)
     assert "observador-falhou" in c.ignorar
+    assert c.excluir == ("homeassistant_", "n8n_")  # o estado da casa não sai para o LLM à toa
+    assert _cfg(OBSERVADOR_EXCLUIR="").excluir == ()
     with pytest.raises(ConfigInvalida, match="OBSERVADOR_HUB_TOKEN"):
         Config.do_ambiente({**AMBIENTE, "OBSERVADOR_HUB_TOKEN": ""})
     with pytest.raises(ConfigInvalida, match="HH:MM"):
@@ -217,6 +221,7 @@ def test_investigar_chama_ferramentas_e_responde():
         ultimo = llm.pedidos[-1][2]
         assert ultimo["model"] == "rapido" and ultimo["metadata"] == {"trace_name": "observador-alerta"}
         assert ultimo["tool_choice"] == "auto" and len(ultimo["tools"]) == 2
+        assert ultimo["cache_control_injection_points"] == [{"location": "message", "role": "system"}]
         saidas = [m for m in ultimo["messages"] if m["role"] == "tool"]
         assert saidas[0]["content"] == "grafana_query_prometheus: 97.5"
         assert len(saidas[1]["content"]) < 600 and "cortado" in saidas[1]["content"]  # 10.000 → 500 + aviso
@@ -506,3 +511,170 @@ def test_comando_boletim(monkeypatch, capsys):
     finally:
         hub.fechar()
         llm.fechar()
+
+
+def test_exclui_prefixos_de_ferramentas():
+    mcp = [{"name": "homeassistant_GetLiveContext"}, {"name": "n8n_search_workflows"}, {"name": "ops_containers_listar"}]
+    nomes = [f["function"]["name"] for f in agente.ferramentas_para_llm(mcp, ("homeassistant_", "n8n_"))]
+    assert nomes == ["ops_containers_listar"]
+
+
+def test_erro_http_do_hub_traz_o_motivo():
+    falso = _Falso(lambda c, corpo, h: (400, {"Content-Type": "application/json"},
+                                        {"jsonrpc": "2.0", "id": corpo.get("id"), "error": {"message": "Unknown tool: ops_x"}}))
+    try:
+        with pytest.raises(ErroMCP, match="400 em tools/call: Unknown tool: ops_x"):
+            ClienteMCP(falso.url, "x").chamar("ops_x", {})
+    finally:
+        falso.fechar()
+
+
+def test_test_alert_do_grafana_nao_e_deduplicado():
+    obs = Observador(_cfg(), enviar=lambda a: None)
+    teste = {"status": "firing", "labels": {"alertname": "TestAlert", "instance": "Grafana"}}
+    assert obs.receber_alerta({"alerts": [teste]})["aceitos"] == ["TestAlert"]
+    assert obs.receber_alerta({"alerts": [teste]})["aceitos"] == ["TestAlert"]
+
+
+def test_content_length_invalido_e_saude():
+    import socket
+    obs = Observador(_cfg(), enviar=lambda a: None)
+    srv = ThreadingHTTPServer(("127.0.0.1", 0), fazer_handler(obs))
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    porta = srv.server_address[1]
+    try:
+        with socket.create_connection(("127.0.0.1", porta), timeout=5) as s:
+            s.sendall(b"POST /alerta HTTP/1.1\r\nHost: x\r\nAuthorization: Bearer tok-grafana\r\n"
+                      b"Content-Length: abc\r\n\r\n")
+            assert s.recv(100).startswith(b"HTTP/1.0 400")
+        morta = threading.Thread(target=lambda: None)
+        morta.start()
+        morta.join()
+        obs.threads.append(morta)  # o trabalhador morreu: o healthcheck do Docker precisa ver
+        with pytest.raises(urllib.error.HTTPError) as erro:
+            urllib.request.urlopen(f"http://127.0.0.1:{porta}/saude", timeout=5)
+        assert erro.value.code == 503
+    finally:
+        srv.shutdown()
+
+
+def test_boletim_sai_com_erro_se_o_aviso_falhar(monkeypatch):
+    from observador import __main__ as principal
+    hub = _hub()
+    llm = _llm([{"role": "assistant", "content": "Situação: ok."}])
+
+    def falhar(aviso):
+        raise OSError("n8n fora")
+    original = Observador.__init__
+    monkeypatch.setattr(principal.Observador, "__init__", lambda self, cfg: original(self, cfg, enviar=falhar))
+    for k, v in {**AMBIENTE, "OBSERVADOR_HUB_URL": hub.url, "OBSERVADOR_LLM_URL": llm.url}.items():
+        monkeypatch.setenv(k, v)
+    try:
+        assert principal.main(["boletim"]) == 1
+    finally:
+        hub.fechar()
+        llm.fechar()
+
+
+# --- Contra o agentgateway de verdade (a mesma forma da rota de leitura: stateless, prefixo, lista fechada) ---
+
+def _alvo_mcp(sse: bool):
+    """Alvo MCP falso, como o mcp-grafana/ops: responde em SSE ou em JSON e sempre devolve sessão própria."""
+    ferramentas = [{"name": "query_prometheus", "description": "PromQL", "inputSchema": {
+        "type": "object", "properties": {"expr": {"type": "string"}}}},
+                   {"name": "escrever", "description": "fora da lista", "inputSchema": {"type": "object", "properties": {}}}]
+
+    def responder(caminho, corpo, cab):
+        if "id" not in corpo:
+            return 202, {}, ""
+        m = corpo["method"]
+        if m == "initialize":
+            res = {"protocolVersion": corpo["params"].get("protocolVersion", "2025-06-18"),
+                   "capabilities": {"tools": {}}, "serverInfo": {"name": "alvo", "version": "1"}}
+        elif m == "tools/list":
+            res = {"tools": ferramentas}
+        else:
+            res = {"content": [{"type": "text", "text": f"{corpo['params']['name']} = 42"}]}
+        msg = {"jsonrpc": "2.0", "id": corpo["id"], "result": res}
+        if sse:
+            return 200, {"Content-Type": "text/event-stream", "Mcp-Session-Id": "s"}, f"event: message\ndata: {json.dumps(msg)}\n\n"
+        return 200, {"Content-Type": "application/json", "Mcp-Session-Id": "s"}, msg
+    return _Falso(responder)
+
+
+def _porta_livre() -> int:
+    import socket
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+@pytest.mark.skipif(__import__("shutil").which("agentgateway") is None, reason="binário agentgateway ausente")
+def test_cliente_mcp_contra_o_agentgateway(tmp_path):
+    import hashlib
+    import subprocess
+    import time
+    graf, ops = _alvo_mcp(sse=True), _alvo_mcp(sse=False)
+    porta = _porta_livre()
+    hash_ = hashlib.sha256(b"tok-obs").hexdigest()
+    cfg = f"""config:
+  statsAddr: 127.0.0.1:{_porta_livre()}
+  readinessAddr: 127.0.0.1:{_porta_livre()}
+  adminAddr: 127.0.0.1:{_porta_livre()}
+  enableIpv6: false
+binds:
+- port: {porta}
+  listeners:
+  - name: leitura
+    routes:
+    - name: leitura
+      policies:
+        apiKey:
+          mode: strict
+          location: {{header: {{name: Authorization, prefix: "Bearer "}}}}
+          keys:
+          - keyHash: "sha256:{hash_}"
+            metadata: {{cliente: observador}}
+        mcpAuthorization:
+          rules:
+          - allow: 'mcp.tool.target == "grafana"'
+          - allow: 'mcp.tool.target == "ops" && mcp.tool.name in ["query_prometheus"]'
+      backends:
+      - mcp:
+          statefulMode: stateless
+          prefixMode: always
+          failureMode: failOpen
+          targets:
+          - name: grafana
+            mcp: {{host: "{graf.url}/mcp"}}
+          - name: ops
+            mcp: {{host: "{ops.url}/mcp"}}
+"""
+    (tmp_path / "config.yaml").write_text(cfg, encoding="utf-8")
+    hub = subprocess.Popen(["agentgateway", "-f", str(tmp_path / "config.yaml")],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    url = f"http://127.0.0.1:{porta}/mcp"
+    try:
+        for _ in range(100):
+            try:
+                c = ClienteMCP(url, "tok-obs", timeout=5)
+                c.iniciar()
+                break
+            except ErroMCP:
+                time.sleep(0.1)
+        else:
+            pytest.fail("agentgateway não subiu")
+        nomes = {f["name"] for f in c.ferramentas()}
+        assert {"grafana_query_prometheus", "grafana_escrever", "ops_query_prometheus"} <= nomes
+        assert "ops_escrever" not in nomes  # fora da lista: some do tools/list
+        assert c.chamar("grafana_query_prometheus", {"expr": "up"}) == "query_prometheus = 42"  # alvo em SSE
+        assert c.chamar("ops_query_prometheus", {}) == "query_prometheus = 42"  # alvo em JSON
+        with pytest.raises(ErroMCP):
+            c.chamar("ops_escrever", {})
+        with pytest.raises(ErroMCP, match="401"):
+            ClienteMCP(url, "errado", timeout=5).iniciar()
+    finally:
+        hub.terminate()
+        hub.wait(timeout=10)
+        graf.fechar()
+        ops.fechar()

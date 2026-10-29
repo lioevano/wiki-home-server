@@ -30,6 +30,9 @@ class ClienteLLM:
             corpo["tool_choice"] = escolha
         if metadata:
             corpo["metadata"] = metadata  # o LiteLLM repassa ao Langfuse (trace_name, tags, session_id)
+        # Cache de prompt: o LiteLLM marca a mensagem de sistema (com a Anthropic, o prefixo inclui as definições das
+        # ferramentas), e as rodadas seguintes da mesma análise pagam bem menos por esse trecho.
+        corpo["cache_control_injection_points"] = [{"location": "message", "role": "system"}]
         req = urllib.request.Request(self.url, data=json.dumps(corpo).encode(), method="POST", headers={
             "Content-Type": "application/json", "Authorization": f"Bearer {self.chave}"})
         try:

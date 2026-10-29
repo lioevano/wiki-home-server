@@ -47,6 +47,7 @@ class Observador:
         self.vistos: dict[str, float] = {}
         self.inicios: deque = deque()
         self._trava = threading.Lock()
+        self.threads: list[threading.Thread] = []  # trabalhador e agendador; o /saude confere se estão vivos
 
     # --- Entrada dos alertas ---
 
@@ -57,7 +58,8 @@ class Observador:
         if nome in self.cfg.ignorar:
             return "alerta ignorado (OBSERVADOR_IGNORAR)"
         visto = self.vistos.get(impressao(alerta))
-        if visto is not None and agora - visto < self.cfg.reanalise_h * 3600:
+        # O "Test" do ponto de contato do Grafana manda sempre o mesmo TestAlert: sem isso, o 2º teste sumiria.
+        if nome != "TestAlert" and visto is not None and agora - visto < self.cfg.reanalise_h * 3600:
             return "já analisado nas últimas horas"
         while self.inicios and agora - self.inicios[0] > 3600:
             self.inicios.popleft()
@@ -103,7 +105,8 @@ class Observador:
         reg = {"gatilho": gatilho, "alerta": nome, "sessao": sessao}
         try:
             res = agente.investigar(prompts.SISTEMA, tarefa, self.fazer_mcp(), self.fazer_llm(),
-                                    self.cfg.max_passos, self.cfg.limite_saida, self.cfg.tempo_max_s, metadata)
+                                    self.cfg.max_passos, self.cfg.limite_saida, self.cfg.tempo_max_s, metadata,
+                                    excluir=self.cfg.excluir)
             aviso = saida.aviso_alerta(alerta or {}, res.texto) if gatilho == "alerta" else saida.aviso_boletim(res.texto)
             reg.update(resultado="ok", passos=res.passos, ferramentas=res.ferramentas, tokens=res.uso)
             try:
@@ -145,6 +148,7 @@ class Observador:
 def fazer_handler(obs: Observador):
     class Handler(BaseHTTPRequestHandler):
         server_version = "observador"
+        timeout = 10  # corpo menor que o Content-Length não prende a thread
 
         def _responder(self, codigo: int, corpo: dict) -> None:
             dados = json.dumps(corpo).encode()
@@ -156,7 +160,8 @@ def fazer_handler(obs: Observador):
 
         def do_GET(self):  # noqa: N802
             if self.path == "/saude":
-                self._responder(200, {"ok": True, "fila": obs.fila.qsize()})
+                vivas = all(t.is_alive() for t in obs.threads)
+                self._responder(200 if vivas else 503, {"ok": vivas, "fila": obs.fila.qsize()})
             else:
                 self._responder(404, {"erro": "não encontrado"})
 
@@ -168,7 +173,10 @@ def fazer_handler(obs: Observador):
             if not hmac.compare_digest(recebido.encode(), f"Bearer {obs.cfg.token}".encode()):
                 self._responder(401, {"erro": "token inválido"})
                 return
-            tamanho = int(self.headers.get("Content-Length") or 0)
+            try:
+                tamanho = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                tamanho = -1
             if tamanho <= 0 or tamanho > LIMITE_CORPO:
                 self._responder(400, {"erro": "corpo vazio ou grande demais"})
                 return
@@ -187,5 +195,8 @@ def fazer_handler(obs: Observador):
 
 def servir(obs: Observador, parar: threading.Event) -> ThreadingHTTPServer:
     for alvo in (obs.trabalhar, obs.agendar_boletim):
-        threading.Thread(target=alvo, args=(parar,), daemon=True).start()
+        t = threading.Thread(target=alvo, args=(parar,), daemon=True)
+        t.start()
+        if alvo == obs.trabalhar or obs.cfg.boletim_hora:  # sem boletim, o agendador termina logo (normal)
+            obs.threads.append(t)
     return ThreadingHTTPServer(("0.0.0.0", obs.cfg.porta), fazer_handler(obs))

@@ -35,10 +35,12 @@ A segurança vem da 4c1, não do prompt:
 
 - O observador só conhece a **rota de leitura** do hub (porta 4000), com uma chave própria (`agents_tokens_internos.observador`) que não existe na rota de controle. Lá só respondem o `mcp_grafana_leitura` (`--disable-write`), o `ops_leitura` (que nem registra ferramentas de mudança) e as ferramentas de consulta da casa e do n8n.
 - O conteúdo que ela lê (logs, nomes de container) pode tentar mandar o modelo fazer algo ("injeção de prompt"). Como não há ferramenta de escrita ao alcance, o pior caso é um texto enganoso no Telegram. Toda mensagem termina com *(análise automática da IA, só leitura)*.
-- Os logs do hub e a auditoria do `ops` registram `cliente: observador` em cada leitura.
+- O log do hub registra `cliente: observador` em cada chamada. A auditoria do `ops` só registra ações, e o observador não tem nenhuma.
 
 !!! warning "Dados que saem de casa"
-    Para analisar, o observador manda ao provedor do apelido escolhido (Anthropic, no `rapido`) trechos de log, nomes de containers e métricas. Se não quiser isso, use `observador_modelo: "local"` (Ollama, na `ai-desktop-vm`): nada sai de casa, com análises mais fracas.
+    Para analisar, o observador manda ao provedor do apelido escolhido trechos de log, nomes de containers e métricas: no `rapido`, a Anthropic e, se ela falhar, o fallback da OpenAI (`llm_fallbacks`). As ferramentas da casa e do n8n (`homeassistant_…`, `n8n_…`) nem são oferecidas ao modelo (`OBSERVADOR_EXCLUIR`): o estado da casa não ajuda a analisar o servidor.
+
+    O `observador_modelo: "local"` (Ollama, na `ai-desktop-vm`) mantém tudo em casa, mas um modelo pequeno com dezenas de ferramentas e o contexto padrão do Ollama dá análises fracas. Na prática, serve para testar.
 
 ## Limites
 
@@ -47,14 +49,17 @@ O laço do agente é curto de propósito: custo e tempo previsíveis. Os padrõe
 | Variável | Padrão | O que limita |
 |---|---|---|
 | `OBSERVADOR_MAX_PASSOS` | 8 | Rodadas de ferramentas por análise; depois ela responde com o que tem e diz o que ficou sem verificar |
-| `OBSERVADOR_TEMPO_MAX_S` | 180 | Tempo de uma análise |
+| `OBSERVADOR_TEMPO_MAX_S` | 180 | Tempo de uma análise, conferido antes de cada chamada ao modelo (uma chamada em andamento termina: o teto é aproximado) |
 | `OBSERVADOR_LIMITE_SAIDA` | 6000 | Caracteres de cada resposta de ferramenta que vão ao modelo |
 | `OBSERVADOR_REANALISE_H` | 12 | O mesmo alerta (mesma impressão digital) não é analisado de novo antes disso; o Grafana o repete a cada 4 h |
 | `OBSERVADOR_MAX_POR_HORA` | 6 | Análises de alerta por hora; o excedente só é registrado |
 | `OBSERVADOR_FILA_MAX` | 10 | Análises esperando a vez (uma por vez) |
+| `OBSERVADOR_EXCLUIR` | `homeassistant_,n8n_` | Prefixos de ferramentas que o modelo nem vê (menos dados saindo de casa e menos tokens por chamada) |
 | `OBSERVADOR_IGNORAR` | `observador-falhou` | Alertas que ela não analisa (o próprio sempre fica de fora, senão ela analisaria a própria falha em laço) |
 
-Alertas resolvidos não são analisados. O teto de gasto é o orçamento da chave no LiteLLM (`litellm_key_budgets.observador`, US$ 5 por mês): se estourar, o LiteLLM recusa, a análise vira erro e o alerta **observador-falhou** avisa.
+Alertas resolvidos não são analisados; o `TestAlert` do botão *Test* do Grafana é analisado sempre (não entra na reanálise). O teto de gasto é o orçamento da chave no LiteLLM (`litellm_key_budgets.observador`, US$ 5 por mês): se estourar, o LiteLLM recusa, a análise vira erro e o alerta **observador-falhou** avisa.
+
+Cada chamada ao modelo leva as definições das ferramentas e o histórico da análise, e um boletim pode fazer até 9 chamadas. O observador pede ao LiteLLM o cache de prompt na mensagem de sistema (`cache_control_injection_points`; com a Anthropic, o prefixo inclui as ferramentas), o que barateia as rodadas seguintes. Mesmo assim, **meça no primeiro mês**: o campo `tokens` do registro de cada análise e a tela de uso do LiteLLM (`llm.`) mostram o gasto; ajuste o orçamento ou o `OBSERVADOR_MAX_PASSOS`.
 
 ## Arquivos
 
@@ -83,10 +88,10 @@ A ligação com o resto:
 Cada análise grava uma linha no log do container, coletada pelo Alloy:
 
 ```json title="Exemplo: registro de uma análise (docker logs observador)"
-{"evento": "observador", "gatilho": "alerta", "alerta": "disco-cheio", "sessao": "3f9c2a1b7d4e", "resultado": "ok", "passos": 3, "ferramentas": ["grafana_query_prometheus", "ops_container_listar", "grafana_query_loki_logs"], "tokens": {"prompt_tokens": 18400, "completion_tokens": 420, "total_tokens": 18820}, "aviso": "enviado", "duracao_s": 21.4}
+{"evento": "observador", "gatilho": "alerta", "alerta": "disco-cheio", "sessao": "3f9c2a1b7d4e", "resultado": "ok", "passos": 3, "ferramentas": ["grafana_query_prometheus", "ops_containers_listar", "grafana_query_loki_logs"], "tokens": {"prompt_tokens": 18400, "completion_tokens": 420, "total_tokens": 18820}, "aviso": "enviado", "duracao_s": 21.4}
 ```
 
-No Langfuse, cada análise é um trace (`observador-alerta` ou `observador-boletim`), com as rodadas de ferramentas.
+No Langfuse, cada chamada ao modelo vira um trace (`observador-alerta` ou `observador-boletim`), agrupado por análise no mesmo `session_id`; as chamadas de ferramenta aparecem nos traces do hub.
 
 ## Primeira configuração
 
@@ -97,9 +102,9 @@ No Langfuse, cada análise é um trace (`observador-alerta` ou `observador-bolet
 
 ## Teste de ponta a ponta
 
-1. `docker logs observador` sem erro de configuração; `docker inspect --format '{{.State.Health.Status}}' observador` → `healthy`.
-2. **Boletim agora:** `docker exec observador python -m observador boletim`. Em até 3 minutos chega ao Telegram o *Boletim do servidor*; o comando termina com código 0.
-3. **Alerta:** no Grafana, *Alerting → Contact points → n8n → Test*. Chegam duas mensagens: o aviso de teste do n8n e, logo depois, *IA analisou: TestAlert*.
+1. `docker logs observador` sem erro de configuração; `docker inspect --format '{{.State.Health.Status}}' observador` → `healthy` (o `/saude` responde 503 se o trabalhador ou o agendador pararem).
+2. **Boletim agora:** `docker exec observador python -m observador boletim`. Em até 3 minutos chega ao Telegram o *Boletim do servidor*; o comando termina com código 0 (1 se a análise ou o envio ao n8n falhar).
+3. **Alerta:** no Grafana, *Alerting → Contact points → n8n → Edit*, e use o *Test* da integração `observador-webhook` (a tela testa uma integração por vez). Chega *IA analisou: TestAlert*. O teste pode ser repetido: o `TestAlert` não entra na regra de reanálise.
 4. **Só leitura:** no log do hub (`docker logs agentgateway`), as chamadas com `"cliente":"observador"` só aparecem na rota `leitura`.
 5. **Langfuse:** os traces `observador-boletim` e `observador-alerta` aparecem no projeto.
 

@@ -21,11 +21,11 @@ class Resultado:
     uso: dict = field(default_factory=dict)
 
 
-def ferramentas_para_llm(ferramentas_mcp: list[dict]) -> list[dict]:
+def ferramentas_para_llm(ferramentas_mcp: list[dict], excluir: tuple = ()) -> list[dict]:
     convertidas = []
     for f in ferramentas_mcp:
         nome = f.get("name", "")
-        if not NOME_VALIDO.match(nome):
+        if not NOME_VALIDO.match(nome) or nome.startswith(excluir):
             continue
         esquema = f.get("inputSchema") or {"type": "object", "properties": {}}
         convertidas.append({"type": "function", "function": {
@@ -45,10 +45,12 @@ def _somar(uso: dict, novo: dict) -> None:
 
 
 def investigar(sistema: str, tarefa: str, mcp, llm, max_passos: int, limite_saida: int, tempo_max_s: float,
-               metadata: dict | None = None, relogio: Callable[[], float] = time.monotonic) -> Resultado:
+               metadata: dict | None = None, relogio: Callable[[], float] = time.monotonic,
+               excluir: tuple = ()) -> Resultado:
+    """tempo_max_s é conferido antes de cada chamada ao LLM: uma chamada em andamento termina (teto aproximado)."""
     inicio = relogio()
     mcp.iniciar()
-    ferramentas = ferramentas_para_llm(mcp.ferramentas())
+    ferramentas = ferramentas_para_llm(mcp.ferramentas(), excluir)
     mensagens = [{"role": "system", "content": sistema}, {"role": "user", "content": tarefa}]
     res = Resultado(texto="")
     for _ in range(max_passos):

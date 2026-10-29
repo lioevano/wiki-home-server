@@ -14,7 +14,8 @@ def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     cfg = Config.do_ambiente(dict(os.environ))
     if argv[:1] == ["boletim"]:
-        return 0 if Observador(cfg).processar("boletim")["resultado"] == "ok" else 1
+        reg = Observador(cfg).processar("boletim")
+        return 0 if reg["resultado"] == "ok" and reg.get("aviso") == "enviado" else 1
     if argv:
         print("uso: python -m observador [boletim]", file=sys.stderr)
         return 2

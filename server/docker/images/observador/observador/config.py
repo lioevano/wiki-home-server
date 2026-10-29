@@ -39,6 +39,9 @@ class Config:
     fila_max: int = 10
     porta: int = 8080
     ignorar: frozenset = field(default_factory=lambda: frozenset({"observador-falhou"}))
+    # Prefixos de ferramentas que o observador nem oferece ao modelo: o estado da casa não ajuda a analisar o
+    # servidor, sai de casa à toa e as definições custam tokens em cada chamada.
+    excluir: tuple = ("homeassistant_", "n8n_")
 
     @classmethod
     def do_ambiente(cls, env: dict) -> "Config":
@@ -66,4 +69,6 @@ class Config:
             fila_max=_int(env, "OBSERVADOR_FILA_MAX", 10),
             porta=_int(env, "OBSERVADOR_PORTA", 8080),
             ignorar=frozenset(ignorar | {"observador-falhou"}),  # nunca analisa a própria falha (laço)
+            excluir=tuple(p.strip() for p in env.get("OBSERVADOR_EXCLUIR", "homeassistant_,n8n_").split(",")
+                          if p.strip()),
         )

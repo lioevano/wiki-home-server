@@ -55,7 +55,14 @@ class ClienteMCP:
                 tipo = resp.headers.get("Content-Type", "")
                 corpo = resp.read().decode("utf-8", "replace")
         except urllib.error.HTTPError as erro:
-            raise ErroMCP(f"hub respondeu {erro.code} em {mensagem.get('method')}") from erro
+            detalhe = ""
+            try:  # o hub explica no corpo (ex.: "Unknown tool"): o modelo precisa ver o motivo
+                corpo_erro = json.loads(erro.read().decode("utf-8", "replace") or "{}")
+                detalhe = (corpo_erro.get("error") or {}).get("message", "") if isinstance(corpo_erro, dict) else ""
+            except (ValueError, OSError, AttributeError):
+                pass
+            raise ErroMCP(f"hub respondeu {erro.code} em {mensagem.get('method')}"
+                          + (f": {detalhe}" if detalhe else "")) from erro
         except (urllib.error.URLError, OSError) as erro:
             raise ErroMCP(f"hub inalcançável: {erro}") from erro
         if "id" not in mensagem:  # notificação: o hub responde 202 sem corpo
