@@ -14,6 +14,16 @@ contactPoints:
           httpMethod: POST
           authorization_scheme: Bearer
           authorization_credentials: "${NOTIFICACOES_WEBHOOK_TOKEN}"
+      # IA que observa o servidor (página 15): recebe o mesmo alerta, investiga pela rota de leitura do hub e
+      # manda a análise pelo n8n. Integração independente: se o observador estiver fora, o n8n recebe igual.
+      - uid: observador-webhook
+        type: webhook
+        disableResolveMessage: true # só analisa o que dispara
+        settings:
+          url: http://observador:8080/alerta
+          httpMethod: POST
+          authorization_scheme: Bearer
+          authorization_credentials: "${OBSERVADOR_TOKEN}"
   # Rota de reserva: só para o alerta "n8n fora do ar", que não pode depender do n8n.
   - orgId: 1
     name: telegram-direto

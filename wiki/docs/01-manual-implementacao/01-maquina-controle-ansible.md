@@ -306,6 +306,7 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
       openwebui: "sk-CHAVE_DO_OPEN_WEBUI"
       claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
       n8n: "sk-CHAVE_DO_N8N"
+      observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 15)
     # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
     openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -357,11 +358,15 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     agents_api_keys:
       claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
       agentes: "ag-CHAVE_DOS_AGENTES"
-    # Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends) e mcp_auth_servidor → rota de leitura (proxy).
+    # Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends), mcp_auth_servidor → rota de leitura
+    # (proxy) e observador → rota de leitura (observador, página 15).
     # As redes Docker são compartilhadas: sem eles, qualquer container chamaria as ferramentas direto.
     agents_tokens_internos:
       backends: "TOKEN_INTERNO_DOS_BACKENDS"
       proxy: "TOKEN_INTERNO_DO_PROXY"
+      observador: "TOKEN_INTERNO_DO_OBSERVADOR"
+    # Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 15.
+    observador_token: "TOKEN_DO_GRAFANA_PARA_O_OBSERVADOR"
     # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
     grafana_sa_tokens:
       leitura: "glsa_TOKEN_VIEWER"
@@ -653,6 +658,7 @@ litellm_key_budgets:
   openwebui: 20
   claude_code: 50
   n8n: 10
+  observador: 5 # IA que observa o servidor (página 15): estourou, ela para e o alerta observador-falhou avisa
 # Modelos que uma chave não enxerga (setup-ai-keys.yml). O 'decisao' (Jev) devolve decisões tipadas para
 # automações e não serve para conversa. Cliente fora daqui vê todos.
 litellm_key_models_ocultos:
@@ -714,6 +720,17 @@ ops_playbooks_permitidos:
   - { nome: setup-notes-volumes.yml, descricao: "Segundo cérebro: Syncthing, qmd, conversor e timers" }
   - { nome: setup-agents-volumes.yml, descricao: "Base dos agentes: config do hub, imagem do ops e agents.env" }
   - { nome: setup-langfuse-volumes.yml, descricao: "Langfuse: diretórios e langfuse.env" }
+
+# --- IA que observa o servidor (página 15) ---
+# Versão da imagem local localhost/homeserver/observador (código em docker/images/observador; só a biblioteca
+# padrão do Python). Mude ao alterar o código, para o Portainer pegar a imagem nova.
+observador_version: "1.0.0"
+# Apelido do LiteLLM que o observador usa: "rapido" (barato) ou "local" (Ollama: nada sai de casa, com
+# qualidade menor).
+observador_modelo: "rapido"
+# Hora do boletim de saúde no Telegram (HH:MM, fuso da VM); "" desliga.
+observador_boletim_hora: "07:30"
+
 # Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
 ops_endpoints:
   core: "local"

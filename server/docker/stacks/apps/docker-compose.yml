@@ -92,6 +92,7 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - NOTIFICACOES_WEBHOOK_TOKEN=${NOTIFICACOES_WEBHOOK_TOKEN}
+      - OBSERVADOR_TOKEN=${OBSERVADOR_TOKEN} # ponto de contato do observador (página 15)
       - TZ=${SYSTEM_TIMEZONE}
     depends_on:
       grafana_db:

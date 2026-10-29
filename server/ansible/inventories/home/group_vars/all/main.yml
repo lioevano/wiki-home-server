@@ -164,6 +164,7 @@ litellm_key_budgets:
   openwebui: 20
   claude_code: 50
   n8n: 10
+  observador: 5 # IA que observa o servidor (página 15): estourou, ela para e o alerta observador-falhou avisa
 # Modelos que uma chave não enxerga (setup-ai-keys.yml). O 'decisao' (Jev) devolve decisões tipadas para
 # automações e não serve para conversa. Cliente fora daqui vê todos.
 litellm_key_models_ocultos:
@@ -225,6 +226,17 @@ ops_playbooks_permitidos:
   - { nome: setup-notes-volumes.yml, descricao: "Segundo cérebro: Syncthing, qmd, conversor e timers" }
   - { nome: setup-agents-volumes.yml, descricao: "Base dos agentes: config do hub, imagem do ops e agents.env" }
   - { nome: setup-langfuse-volumes.yml, descricao: "Langfuse: diretórios e langfuse.env" }
+
+# --- IA que observa o servidor (página 15) ---
+# Versão da imagem local localhost/homeserver/observador (código em docker/images/observador; só a biblioteca
+# padrão do Python). Mude ao alterar o código, para o Portainer pegar a imagem nova.
+observador_version: "1.0.0"
+# Apelido do LiteLLM que o observador usa: "rapido" (barato) ou "local" (Ollama: nada sai de casa, com
+# qualidade menor).
+observador_modelo: "rapido"
+# Hora do boletim de saúde no Telegram (HH:MM, fuso da VM); "" desliga.
+observador_boletim_hora: "07:30"
+
 # Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
 ops_endpoints:
   core: "local"

@@ -68,7 +68,7 @@ ansible-core=={{ ops_ansible_core_version }}
 
 ## Hub de MCPs (agentgateway)
 
-O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na rede interna, com o token interno que só o `mcp_auth_servidor` tem) recebe o conector **Servidor** e só alcança instâncias que não sabem escrever (`mcp_grafana_leitura`, `ops_leitura`), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (`agents_leitura`). A **rota `controle`** (porta 4100, publicada só no IP da `core-services-vm` na LAN) alcança tudo e exige a chave de um cliente (`agents_api_keys`); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o `ops` e o `mcp-grafana` exigem (`agents_tokens_internos.backends`: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos `0400` montados no container, e a autenticação do rastreio no Langfuse vem da variável `OTEL_EXPORTER_OTLP_TRACES_HEADERS` — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (`failOpen`). O hub não guarda sessão com os alvos (`statefulMode: stateless`): cada requisição abre e fecha a sua, e um alvo reiniciado volta sem deixar sessão órfã. Cada linha de log do hub traz o campo `cliente` (o metadado da chave: `claude_code`, `agentes` ou `mcp_auth_servidor`), e o mesmo valor vai para o `ops` no cabeçalho `x-homeserver-cliente`, que entra no registro de auditoria. O cabeçalho é confiável porque só o hub tem o token interno do `ops`.
+O hub junta os MCPs em dois endereços. A **rota `leitura`** (porta 4000, só na rede interna, com tokens internos: o do `mcp_auth_servidor` e o do observador, [seção 15](15-ia-observa.md)) recebe o conector **Servidor** e o observador e só alcança instâncias que não sabem escrever (`mcp_grafana_leitura`, `ops_leitura`), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (`agents_leitura`). A **rota `controle`** (porta 4100, publicada só no IP da `core-services-vm` e alcançável só pela VPN) alcança tudo e exige a chave de um cliente (`agents_api_keys`); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o `ops` e o `mcp-grafana` exigem (`agents_tokens_internos.backends`: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos `0400` montados no container, e a autenticação do rastreio no Langfuse vem da variável `OTEL_EXPORTER_OTLP_TRACES_HEADERS` — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (`failOpen`). O hub não guarda sessão com os alvos (`statefulMode: stateless`): cada requisição abre e fecha a sua, e um alvo reiniciado volta sem deixar sessão órfã. Cada linha de log do hub traz o campo `cliente` (o metadado da chave: `claude_code`, `agentes`, `mcp_auth_servidor` ou `observador`), e o mesmo valor vai para o `ops` no cabeçalho `x-homeserver-cliente`, que entra no registro de auditoria. O cabeçalho é confiável porque só o hub tem o token interno do `ops`.
 
 ```jinja title="ansible/templates/agents/agentgateway.yaml.j2"
 # Hub de MCPs da base dos agentes (página 13). Gerado pelo setup-agents-volumes.yml em
@@ -143,6 +143,10 @@ binds:
           - keyHash: "sha256:{{ agents_tokens_internos.proxy | hash('sha256') }}"
             metadata:
               cliente: mcp_auth_servidor
+          # O observador (página 15) lê pela mesma rota, com chave própria (cliente observador nos logs).
+          - keyHash: "sha256:{{ agents_tokens_internos.observador | hash('sha256') }}"
+            metadata:
+              cliente: observador
         mcpAuthorization:
           rules:
 {% for alvo, ferramentas in agents_leitura.items() %}

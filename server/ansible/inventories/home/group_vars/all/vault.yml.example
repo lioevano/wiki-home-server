@@ -117,6 +117,7 @@ litellm_client_keys:
   openwebui: "sk-CHAVE_DO_OPEN_WEBUI"
   claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
   n8n: "sk-CHAVE_DO_N8N"
+  observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 15)
 # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
 openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -168,11 +169,15 @@ homepage_widget_keys:
 agents_api_keys:
   claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
   agentes: "ag-CHAVE_DOS_AGENTES"
-# Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends) e mcp_auth_servidor → rota de leitura (proxy).
+# Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends), mcp_auth_servidor → rota de leitura
+# (proxy) e observador → rota de leitura (observador, página 15).
 # As redes Docker são compartilhadas: sem eles, qualquer container chamaria as ferramentas direto.
 agents_tokens_internos:
   backends: "TOKEN_INTERNO_DOS_BACKENDS"
   proxy: "TOKEN_INTERNO_DO_PROXY"
+  observador: "TOKEN_INTERNO_DO_OBSERVADOR"
+# Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 15.
+observador_token: "TOKEN_DO_GRAFANA_PARA_O_OBSERVADOR"
 # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
 grafana_sa_tokens:
   leitura: "glsa_TOKEN_VIEWER"

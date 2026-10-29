@@ -70,6 +70,10 @@ binds:
           - keyHash: "sha256:{{ agents_tokens_internos.proxy | hash('sha256') }}"
             metadata:
               cliente: mcp_auth_servidor
+          # O observador (página 15) lê pela mesma rota, com chave própria (cliente observador nos logs).
+          - keyHash: "sha256:{{ agents_tokens_internos.observador | hash('sha256') }}"
+            metadata:
+              cliente: observador
         mcpAuthorization:
           rules:
 {% for alvo, ferramentas in agents_leitura.items() %}

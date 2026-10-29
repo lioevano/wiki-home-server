@@ -59,6 +59,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `nextcloud` | produtividade | cloud / core-services-vm | `nextcloud_app`, `nextcloud_cron`, `nextcloud_db`, `nextcloud_redis` | publica | `nextcloud` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `notas` | ia | notes / ai-desktop-vm | `mcp_auth_busca`, `qmd` | publica | `notas` | nfs | não | — | `+mcp` | [Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md) |
 | `notas-escrita` | ia | notes / ai-desktop-vm | `mcp_auth_escrita`, `notes_escrita` | publica | `escrita` | nfs | não | — | `+mcp` | [Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md) |
+| `observador` | ia | agents / core-services-vm | `observador` | interna | — | nenhum | não | — | `+llm` | [IA que observa o servidor](../01-manual-implementacao/15-ia-observa.md) |
 | `ollama` | ia | ai / ai-desktop-vm | `ollama` | interna | — | nfs | não | — | — | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `open-webui` | ia | ai / ai-desktop-vm | `open-webui` | protegida | `openwebui` | nfs | não | — | `+llm` | [Stack de IA](../01-manual-implementacao/08-stack-ia.md) |
 | `portainer` | infra | ansible:infra/docker / core-services-vm | `portainer` | protegida | `portainer` | nfs | não | — | — | [Configuração base das VMs](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md) |

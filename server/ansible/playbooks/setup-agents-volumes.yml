@@ -1,5 +1,6 @@
 # ansible/playbooks/setup-agents-volumes.yml
-# Base dos agentes (página 13): diretórios, segredos do runner, clone do repositório, imagem local do ops,
+# Base dos agentes (página 13): diretórios, segredos do runner, clone do repositório, imagens locais do ops e
+# do observador (página 15),
 # config do hub e agents.env da stack agents. Roda na core-services-vm antes do deploy da stack no Portainer.
 - name: Preparar a stack agents
   hosts: core_services
@@ -11,6 +12,7 @@
   vars:
     ops_dir: "{{ vm_local_data_path }}/ops"
     ops_imagem: /opt/ops-image
+    observador_imagem: /opt/observador-image
 
   tasks:
     # --- Diretórios (disco local: segredos e clone regerável) ---
@@ -102,6 +104,34 @@
             GID: "{{ docker_pgid }}"
         force_source: "{{ ops_codigo.changed or ops_requirements.changed or ops_colecoes.changed }}"
 
+    # --- Imagem local do observador (página 15): só a biblioteca padrão, sem requirements ---
+    - name: Criar o diretório de build do observador
+      ansible.builtin.file:
+        path: "{{ observador_imagem }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copiar o código e o Dockerfile do observador
+      ansible.builtin.copy:
+        src: ../../docker/images/observador/
+        dest: "{{ observador_imagem }}/"
+        mode: preserve
+      register: observador_codigo
+
+    # force_source: reconstrói quando o código muda, mesmo sem trocar observador_version.
+    - name: Construir a imagem local do observador
+      community.docker.docker_image:
+        name: localhost/homeserver/observador
+        tag: "{{ observador_version }}"
+        source: build
+        build:
+          path: "{{ observador_imagem }}"
+          pull: true
+          args:
+            UID: "{{ docker_puid }}"
+            GID: "{{ docker_pgid }}"
+        force_source: "{{ observador_codigo.changed }}"
+
     # --- Hub (agentgateway): config sem segredos e tokens dos alvos em arquivos ---
     - name: Criar os diretórios do hub
       ansible.builtin.file:
@@ -177,6 +207,12 @@
           - { name: 'AGENTGATEWAY_DATA_PATH', value: "{{ vm_local_data_path }}/agentgateway" }
           - { name: 'AGENTS_TOKEN_BACKENDS', value: "{{ agents_tokens_internos.backends }}" }
           - { name: 'AGENTS_TOKEN_PROXY', value: "{{ agents_tokens_internos.proxy }}" }
+          - { name: 'AGENTS_TOKEN_OBSERVADOR', value: "{{ agents_tokens_internos.observador }}" }
+          - { name: 'OBSERVADOR_IMAGE', value: "localhost/homeserver/observador:{{ observador_version }}" }
+          - { name: 'OBSERVADOR_TOKEN', value: "{{ observador_token }}" }
+          - { name: 'OBSERVADOR_MODELO', value: "{{ observador_modelo }}" }
+          - { name: 'OBSERVADOR_BOLETIM_HORA', value: "{{ observador_boletim_hora }}" }
+          - { name: 'LITELLM_KEY_OBSERVADOR', value: "{{ litellm_client_keys.observador }}" }
           - { name: 'MCP_AUTH_SERVIDOR_DATA_PATH', value: "{{ vm_local_data_path }}/mcp-auth-servidor" }
           - { name: 'MCP_OIDC_CLIENT_SECRET', value: "{{ oidc_clients.mcp.secret }}" }
           - { name: 'MCP_AUTH_HMAC_SECRET', value: "{{ mcp_auth_hmac_secret }}" }

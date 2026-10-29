@@ -227,6 +227,7 @@
           - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
+          - { name: 'OBSERVADOR_TOKEN', value: "{{ observador_token }}" } # Grafana → observador (página 15)
           - { name: 'MONITORING_HOMEPAGE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/homepage/config" }
           - { name: 'HOMEPAGE_VAR_JELLYFIN_KEY', value: "{{ homepage_widget_keys.jellyfin }}" }
           - { name: 'HOMEPAGE_VAR_RADARR_KEY', value: "{{ arr_api_keys.radarr }}" }

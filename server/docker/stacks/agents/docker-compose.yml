@@ -1,6 +1,7 @@
 # docker/stacks/agents/docker-compose.yml
 # Base dos agentes (página 13), na core-services-vm: hub de MCPs (agentgateway), MCP do Grafana e MCP de
-# operações (ops), cada um em par leitura/controle. A rota de leitura do hub só alcança as instâncias *_leitura,
+# operações (ops), cada um em par leitura/controle, e o observador (página 15). A rota de leitura do hub só
+# alcança as instâncias *_leitura,
 # que nem registram ferramentas de escrita. Variáveis em /opt/portainer_stack_envs/agents.env
 # (setup-agents-volumes.yml). Nenhum MCP publica porta: só o hub, e só a rota de controle, no IP da LAN.
 
@@ -139,6 +140,35 @@ services:
     networks:
       - agents_internal
       - proxy
+
+  # IA que observa o servidor (página 15): lê pela rota de leitura do hub (chave própria), pensa pelo LiteLLM
+  # da ai-desktop-vm e conta no Telegram, via n8n. Recebe os alertas do Grafana em POST /alerta (porta 8080,
+  # sem publicar: o Grafana está na rede proxy). Só a biblioteca padrão do Python; nada que escreva.
+  observador:
+    image: ${OBSERVADOR_IMAGE}
+    pull_policy: never
+    container_name: observador
+    restart: unless-stopped
+    user: "${DOCKER_PUID}:${DOCKER_PGID}"
+    labels:
+      diun.enable: "false" # imagem local: o Diun não tem onde procurar versão nova
+    environment:
+      OBSERVADOR_HUB_URL: http://agentgateway:4000/mcp # rota de leitura
+      OBSERVADOR_HUB_TOKEN: ${AGENTS_TOKEN_OBSERVADOR}
+      OBSERVADOR_LLM_URL: http://${AI_DESKTOP_VM_IP}:4000 # LiteLLM na ai-desktop-vm (porta aberta na LAN)
+      OBSERVADOR_LLM_CHAVE: ${LITELLM_KEY_OBSERVADOR}
+      OBSERVADOR_MODELO: ${OBSERVADOR_MODELO}
+      OBSERVADOR_BOLETIM_HORA: ${OBSERVADOR_BOLETIM_HORA}
+      OBSERVADOR_TOKEN: ${OBSERVADOR_TOKEN} # o Grafana manda no Authorization de cada alerta
+      NOTIFICACOES_WEBHOOK_URL: http://n8n:5678/webhook/notificar
+      NOTIFICACOES_WEBHOOK_TOKEN: ${NOTIFICACOES_WEBHOOK_TOKEN}
+    volumes:
+      - /etc/localtime:/etc/localtime:ro # hora do boletim no fuso da VM
+    depends_on:
+      - agentgateway
+    networks:
+      - agents_internal # hub (rota de leitura, porta 4000)
+      - proxy # Grafana chama o /alerta; webhook do n8n
 
 networks:
   agents_internal:

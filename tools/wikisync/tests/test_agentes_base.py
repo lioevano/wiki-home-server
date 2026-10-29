@@ -171,7 +171,7 @@ CHAVES = {"claude_code": "ag-CHAVE-CLAUDE-123", "agentes": "ag-CHAVE-AGENTES-456
 SEGREDOS_ALVOS = {"homeassistant_mcp_token": "HA-TOKEN-SECRETO", "n8n_mcp_token": "N8N-TOKEN-SECRETO"}
 
 
-TOKENS_INTERNOS = {"backends": "INTERNO-BACKENDS-789", "proxy": "INTERNO-PROXY-012"}
+TOKENS_INTERNOS = {"backends": "INTERNO-BACKENDS-789", "proxy": "INTERNO-PROXY-012", "observador": "INTERNO-OBS-345"}
 
 
 def _hub_txt() -> str:
@@ -212,7 +212,9 @@ def test_rota_leitura_so_le():
         'mcp.tool.target == "n8n" && mcp.tool.name in ["search_workflows"]',
     ]
     # o login é o OAuth do mcp_auth_servidor; a chave da rota é o token interno que só ele repassa (revisão final, C1)
-    assert [k["metadata"]["cliente"] for k in _rota(4000)["policies"]["apiKey"]["keys"]] == ["mcp_auth_servidor"]
+    # O observador (página 15) lê pela mesma rota, com chave própria; nenhum dos dois entra na rota de controle.
+    assert [k["metadata"]["cliente"] for k in _rota(4000)["policies"]["apiKey"]["keys"]] == ["mcp_auth_servidor", "observador"]
+    assert {k["metadata"]["cliente"] for k in _rota(4100)["policies"]["apiKey"]["keys"]}.isdisjoint({"mcp_auth_servidor", "observador"})
 
 
 def test_rota_controle_com_chave():
@@ -504,7 +506,7 @@ def test_backends_e_rota_de_leitura_exigem_token():
     leitura = next(b for b in hub["binds"] if b["port"] == 4000)["listeners"][0]["routes"][0]["policies"]
     assert leitura["apiKey"]["mode"] == "strict"
     assert [k["keyHash"] for k in leitura["apiKey"]["keys"]] == [
-        "sha256:" + hashlib.sha256(TOKENS_INTERNOS["proxy"].encode()).hexdigest()]
+        "sha256:" + hashlib.sha256(TOKENS_INTERNOS[n].encode()).hexdigest() for n in ("proxy", "observador")]
     s = _svc(AGENTS)
     assert _env(s["mcp_auth_servidor"])["PROXY_BEARER_TOKEN"] == "${AGENTS_TOKEN_PROXY}"
     for nome in ("mcp_grafana_leitura", "mcp_grafana_controle"):
@@ -515,7 +517,7 @@ def test_backends_e_rota_de_leitura_exigem_token():
               and str(t["ansible.builtin.copy"].get("dest", "")).endswith("/agentgateway/segredos/backends_token")]
     assert tokens and tokens[0]["ansible.builtin.copy"]["mode"] == "0400" and tokens[0].get("no_log") is True
     v = _vault()
-    assert set(v["agents_tokens_internos"]) == {"backends", "proxy"}
+    assert set(v["agents_tokens_internos"]) == {"backends", "proxy", "observador"}
 
 
 def test_runner_nao_reinicia_o_docker_da_core():

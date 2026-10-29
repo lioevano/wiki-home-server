@@ -49,6 +49,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `nextcloud` | cloud / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `notas` | notes / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, mcp, documentacao, notificacoes, painel | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `notas-escrita` | notes / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, mcp, documentacao, notificacoes, painel | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `observador` | agents / core-services-vm | logs, variaveis, llm, documentacao, notificacoes | `01-manual-implementacao/15-ia-observa.md` |
 | `ollama` | ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/08-stack-ia.md` |
 | `open-webui` | ai / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, llm, documentacao, notificacoes, painel | `01-manual-implementacao/08-stack-ia.md` |
 | `portainer` | ansible:infra/docker / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, documentacao, notificacoes, painel | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
@@ -99,6 +100,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/12-segundo-cerebro.md` | Seção 12: Segundo cérebro (Obsidian, Syncthing, busca local e MCP) | Stack notes na VM de IA: vaults do Obsidian sincronizados pelo Syncthing, busca local com qmd sobre as notas e os documentos do Nextcloud, e MCP para o Claude com escopo por vault. |
 | `01-manual-implementacao/13-agentes-base.md` | Seção 13: Agentes — base (hub de MCPs, operações e rastreio) | Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle só pela VPN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas. |
 | `01-manual-implementacao/14-vpn-tailscale.md` | Seção 14: VPN (Tailscale) e firewall das portas do Docker | VPN com Tailscale na core-services-vm: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker. |
+| `01-manual-implementacao/15-ia-observa.md` | Seção 15: IA que observa o servidor | Observador: IA que lê o servidor pela rota de leitura do hub, analisa cada alerta do Grafana e manda um boletim diário ao Telegram, sem agir. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -141,7 +143,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/inventories/home/group_vars/all/vault.yml.example` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md` |
 | `ansible/inventories/home/hosts.ini` | inventario | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `03-guias-sustentacao/02-modificando-configuracoes-existentes.md`, `03-guias-sustentacao/07-cenarios-especificos-criacao-vms.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` |
 | `ansible/playbooks/full-deploy.yml` | playbook | `03-guias-sustentacao/01-adicionando-novo-servico-docker.md`, `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
-| `ansible/playbooks/setup-agents-volumes.yml` | playbook | `01-manual-implementacao/13-agentes-base.md` |
+| `ansible/playbooks/setup-agents-volumes.yml` | playbook | `01-manual-implementacao/13-agentes-base.md`, `01-manual-implementacao/15-ia-observa.md` |
 | `ansible/playbooks/setup-ai-keys.yml` | playbook | `01-manual-implementacao/08-stack-ia.md` |
 | `ansible/playbooks/setup-ai-volumes.yml` | playbook | `01-manual-implementacao/08-stack-ia.md`, `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/playbooks/setup-base-ubuntu.yml` | playbook | `01-manual-implementacao/03-provisionamento-vms.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `01-manual-implementacao/06-deploy-core.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md`, `05-referencia-rapida.md` |
@@ -193,13 +195,13 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/traefik.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
-| `ansible/templates/agents/agentgateway.yaml.j2` | template | `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/agents/agentgateway.yaml.j2` | template | `01-manual-implementacao/13-agentes-base.md`, `01-manual-implementacao/15-ia-observa.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/agents/ops-requirements.txt.j2` | template | `01-manual-implementacao/13-agentes-base.md` |
 | `ansible/templates/backup-postgres.sh.j2` | template | `01-manual-implementacao/08-stack-ia.md`, `01-manual-implementacao/11-fotos-arquivos.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/templates/blackbox.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md` |
-| `ansible/templates/grafana/alerting/contact-points.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/grafana/alerting/contact-points.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `01-manual-implementacao/15-ia-observa.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/grafana/alerting/policies.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
-| `ansible/templates/grafana/alerting/rules.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
+| `ansible/templates/grafana/alerting/rules.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `01-manual-implementacao/15-ia-observa.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/homepage/docker.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/templates/homepage/services.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/homepage/settings.yaml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
@@ -219,6 +221,17 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/recyclarr.yml.j2` | template | `01-manual-implementacao/10-midia.md` |
+| `docker/images/observador/.dockerignore` | outro | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/Dockerfile` | outro | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/__init__.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/__main__.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/agente.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/config.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/llm.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/mcp.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/prompts.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/saida.py` | script | `01-manual-implementacao/15-ia-observa.md` |
+| `docker/images/observador/observador/servidor.py` | script | `01-manual-implementacao/15-ia-observa.md` |
 | `docker/images/ops/.dockerignore` | outro | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/Dockerfile` | outro | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/ops/ops/__init__.py` | script | `01-manual-implementacao/13-agentes-base.md` |
@@ -231,7 +244,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `docker/images/ops/ops/runner.py` | script | `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/images/ops/ops/server.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
-| `docker/stacks/agents/docker-compose.yml` | stack | `01-manual-implementacao/13-agentes-base.md` |
+| `docker/stacks/agents/docker-compose.yml` | stack | `01-manual-implementacao/13-agentes-base.md`, `01-manual-implementacao/15-ia-observa.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` |
 | `docker/stacks/apps/docker-compose.yml` | stack | `01-manual-implementacao/07-deploy-apps.md`, `03-guias-sustentacao/05-passthrough-hardware-adicional.md` |
 | `docker/stacks/cloud/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
