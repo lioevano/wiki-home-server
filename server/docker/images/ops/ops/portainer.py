@@ -1,4 +1,4 @@
-"""Cliente mínimo da API do Portainer (CE 2.19): containers das duas VMs e stacks."""
+"""Cliente mínimo da API do Portainer (CE 2.45): containers das duas VMs e stacks."""
 from __future__ import annotations
 
 import json

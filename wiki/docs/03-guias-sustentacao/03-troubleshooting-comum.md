@@ -192,7 +192,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
 *   **Checklist de Diagnóstico:**
     1.  **Logs do Authelia:** `docker logs authelia` na `core-services-vm`. Este é o primeiro lugar para procurar. Aumente o nível de log no `configuration.yml` do Authelia se precisar de mais detalhes.
     2.  **Configuração do Authelia (`authelia/config/configuration.yml`):**
-        *   **`jwt_secret` e `session.secret`:** Estão definidos, são complexos e são os mesmos que Authelia está usando? (Se você os define via variáveis de ambiente no compose, certifique-se que estão sendo passados corretamente).
+        *   **`identity_validation.reset_password.jwt_secret` e `session.secret`:** Estão definidos, são complexos e são os mesmos que Authelia está usando? (Se você os define via variáveis de ambiente no compose, certifique-se que estão sendo passados corretamente).
         *   **`session.cookies`:** O `domain` é o domínio pai (e.g., `seudominio.com`), e **NÃO** um subdomínio como `auth.seudominio.com`? O `authelia_url` é `https://auth.seudominio.com`? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.
         *   **`storage` (PostgreSQL):** A configuração do banco de dados (host `authelia_db`, usuário, senha, nome do DB) está correta e o container `authelia_db` está rodando e saudável?
         *   **`access_control.rules`:** As regras estão definidas como você espera? A `default_policy` está correta? As regras para domínios específicos e a regra `bypass` para `auth.seudominio.com` estão presentes e corretas?

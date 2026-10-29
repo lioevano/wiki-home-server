@@ -20,7 +20,7 @@ entryPoints:
           to: "websecure" # Nome do entrypoint HTTPS
           scheme: "https"
           permanent: true # Usa redirecionamento 301 (permanente)
-      aliasHeadersStrategy: delete # descarta cabeçalhos com '_' (ex.: Remote_User forjado); v3.7 avisa se faltar
+      aliasHeadersStrategy: delete # descarta nomes com '_', '.' etc. (ex.: Remote_User forjado); v3.7 avisa se faltar
   websecure: # Entrypoint principal para HTTPS na porta 443
     address: ":443"
     # O cloudflared chega pela rede Docker 'proxy' (172.16.0.0/12) e informa o IP real do visitante em
@@ -30,7 +30,7 @@ entryPoints:
       trustedIPs:
         - "172.16.0.0/12"
     http:
-      # Cabeçalhos com '_' ou outro caractere fora de letra/dígito/hífen são descartados: um Remote_User forjado
+      # Cabeçalhos com '_', '.' ou outro caractere fora de letra/dígito/hífen são descartados: um Remote_User forjado
       # não chega ao backend como se fosse o Remote-User do forward-auth do Authelia.
       aliasHeadersStrategy: delete
       tls:
@@ -41,6 +41,11 @@ entryPoints:
               - "*.{{ base_domain }}" # Wildcard para todos os subdomínios
       middlewares: # Middlewares globais aplicados a TODAS as rotas no entrypoint websecure
         - "securityHeaders@file" # Referencia o middleware de headers de segurança (definido em dynamic/security_headers.yml)
+
+  traefik: # Entrypoint interno do /ping (healthcheck do compose), na 8080 do container; não é publicado
+    address: ":8080"
+    http:
+      aliasHeadersStrategy: delete
 
 # Provedores de Configuração (Docker e Arquivos para configs dinâmicas)
 providers:
@@ -73,7 +78,7 @@ certificatesResolvers:
 
 # Configurações de Log (opcional, mas útil para debug)
 log:
-  level: INFO # Níveis: DEBUG, INFO, WARNING, ERROR, FATAL, PANIC
+  level: INFO # Níveis: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
   filePath: "/data/traefik.log" # Caminho DENTRO do container Traefik (mapeado para volume NFS)
   format: json # Ou common
 accessLog:

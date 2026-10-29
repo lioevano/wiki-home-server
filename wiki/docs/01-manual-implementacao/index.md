@@ -34,6 +34,7 @@ Estes pontos foram desenhados e testados no repositório, mas só dá para confi
 | Seção | O que conferir | Como |
 |---|---|---|
 | [5](05-rede-segura.md) | Authelia 4.39 sem erro nem aviso de chave obsoleta (`session.cookies`, `identity_validation`, `claims_policies`) e o Traefik v3.7 sem aviso de opção faltando; o forward-auth novo (`/api/authz/forward-auth`) manda ao portal quem não entrou e volta à página pedida | `docker logs authelia`, `docker logs traefik`; abrir `grafana.` numa janela anônima |
+| [5](05-rede-segura.md) | Um `X-Forwarded-Host` forjado não pula o Authelia (`trustForwardHeader: "false"`) | De fora de casa: `curl -sI -H 'X-Forwarded-Host: jellyfin.seudominio.com' https://prometheus.seudominio.com/` responde `302` para `auth.` |
 | [5](05-rede-segura.md) | Os clientes OIDC recebem e-mail, nome e grupos (política `legado` de claims no ID token) | Entrar no Immich, Nextcloud, Open WebUI, Langfuse e num conector MCP |
 | [5](05-rede-segura.md) | Um usuário fora do grupo `admins` é recusado nos painéis de administração (`authelia_dominios_admins`) e não ganha conta no Open WebUI nem no Langfuse | Crie um usuário de teste só com o grupo `users` e tente abrir `grafana.` e `llm.` |
 | [9](09-painel-notificacoes.md) | O Diun lê as imagens pelo `docker-socket-proxy` (se faltar uma permissão do proxy, o log do Diun mostra `403`) | `docker logs diun`, `docker logs diun_ai` |

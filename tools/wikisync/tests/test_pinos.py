@@ -38,14 +38,17 @@ def test_forward_auth_no_endpoint_novo():
     lab = _core()["authelia"]["labels"]
     pre = "traefik.http.middlewares.authelia-forwardauth.forwardauth."
     assert lab[pre + "address"] == "http://authelia:9091/api/authz/forward-auth"  # /api/verify é legado na 4.39
-    assert lab[pre + "trustForwardHeader"] == "true"  # explícito: a v3.6.14+ avisa quando falta
+    # false e explícito (a v3.6.14+ avisa quando falta): com true, um X-Forwarded-Host forjado pela internet
+    # faria o Authelia avaliar outro domínio (um bypass) e o Traefik entregar o domínio real.
+    assert lab[pre + "trustForwardHeader"] == "false"
     assert lab[pre + "maxResponseBodySize"] == "8192"
 
 
 def test_traefik_descarta_cabecalhos_com_underscore():
     cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/traefik.yml.j2", base_domain=DOM,
                                 letsencrypt_email="a@b.c"))
-    for ep in ("web", "websecure"):
+    assert cfg["entryPoints"]["traefik"]["address"] == ":8080"  # o do /ping, declarado para levar a opção
+    for ep in ("web", "websecure", "traefik"):
         assert cfg["entryPoints"][ep]["http"]["aliasHeadersStrategy"] == "delete", ep
     assert "delayBeforeCheck:" not in (ROOT / "server/ansible/roles/infra/traefik-config/templates/traefik.yml.j2").read_text()
 
@@ -71,3 +74,39 @@ def test_clientes_oidc_com_claims_no_id_token():
 def test_defaults_mortos_removidos():
     for role in ("traefik-config", "authelia-config"):
         assert not (ROOT / f"server/ansible/roles/infra/{role}/defaults/main.yml").exists(), role
+
+
+def _caminhos(valor, prefixo=""):
+    """Caminhos de chave no formato do schema do Authelia: listas de mapas viram '[]'."""
+    if isinstance(valor, dict):
+        for k, v in valor.items():
+            atual = f"{prefixo}.{k}" if prefixo else str(k)
+            yield atual
+            yield from _caminhos(v, atual)
+    elif isinstance(valor, list):
+        for item in valor:
+            if isinstance(item, (dict, list)):
+                yield from _caminhos(item, prefixo + "[]")
+
+
+def test_authelia_so_chaves_validas():
+    """Chave desconhecida é erro fatal no Authelia 4.39 (o validate-config da 4.38 saía com 0 mesmo assim).
+    A lista vem do schema da versão fixada; os mapas ('*') aceitam qualquer nome."""
+    import re
+    fixada = re.search(r"authelia/authelia:(\S+)", CORE.read_text(encoding="utf-8")).group(1)
+    arq = ROOT / f"tools/wikisync/tests/dados/authelia-{fixada}-chaves.txt"
+    assert arq.exists(), f"atualize a lista de chaves para a versão {fixada}"
+    chaves = [l for l in arq.read_text(encoding="utf-8").splitlines() if l and not l.startswith("#")]
+    # O schema lista as folhas; os nós intermediários (access_control, session.cookies[]...) são os prefixos delas.
+    nos = {c[:m.start()] for c in chaves for m in re.finditer(r"\.|\[\]", c)} | set(chaves)
+    padroes = [re.compile("^" + re.escape(n).replace(r"\*", r"[^.\[\]]+") + "$") for n in nos]
+    cfg = yaml.safe_load(_authelia())
+    invalidas = sorted({c for c in _caminhos(cfg) if not any(p.match(c) for p in padroes)})
+    assert invalidas == []
+
+
+def test_portainer_http_so_na_rede_docker():
+    """A 9000 (HTTP, usada pelo ops) não é publicada: senha e chave de API não passam em claro pela LAN."""
+    t = yaml.safe_load((ROOT / "server/ansible/roles/infra/docker/tasks/main.yml").read_text(encoding="utf-8"))
+    p = next(x for x in t if x.get("name") == "Deploy Portainer CE container")["community.docker.docker_container"]
+    assert not any(":9000:" in porta for porta in p["ports"])

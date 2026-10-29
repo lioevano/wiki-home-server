@@ -115,7 +115,8 @@
   community.docker.docker_container:
     name: portainer
     image: "{{ portainer_ce_image }}" # versão fixada em defaults/main.yml (a mesma do agente)
-    # HTTP na 9000 só na rede Docker 'proxy': é por onde o MCP ops (página 13) fala com a API do Portainer.
+    # HTTP na 9000 só dentro da rede Docker 'proxy' (não é publicada): é por onde o MCP ops (página 13) fala com a
+    # API do Portainer. Publicá-la mandaria senha e chave de API em texto claro pela LAN.
     command: ["--http-enabled"]
     restart_policy: unless-stopped
     security_opt: ["no-new-privileges:true"] # Boa prática de segurança
@@ -123,7 +124,6 @@
       # Mapeia portas apenas no IP da VM 'core-services-vm' para evitar conflitos e melhor controle.
       # Acesso principal via Traefik na porta 443. Estas são para acesso direto se necessário.
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9443:9443" # HTTPS principal do Portainer
-      - "{{ hostvars[inventory_hostname]['ansible_host'] }}:9000:9000" # HTTP (redireciona para 9443, pode ser omitido se só usar Traefik)
       - "{{ hostvars[inventory_hostname]['ansible_host'] }}:8000:8000" # Porta para o Edge Agent do Portainer (opcional)
     env:
       # Segredo compartilhado com o Portainer Agent das outras VMs: o agente só atende quem o conhece.

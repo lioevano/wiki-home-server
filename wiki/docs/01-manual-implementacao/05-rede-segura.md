@@ -146,7 +146,10 @@ services:
       traefik.http.routers.authelia-portal.service: authelia-svc
       traefik.http.services.authelia-svc.loadbalancer.server.port: "9091"
       traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/authz/forward-auth"
-      traefik.http.middlewares.authelia-forwardauth.forwardauth.trustForwardHeader: "true"
+      # false: o Traefik monta o X-Forwarded-Host/-Uri/-Method/-Proto do pedido real. Com true, um X-Forwarded-Host
+      # forjado pela internet (o cloudflared é proxy confiável e repassa os cabeçalhos do visitante) faria o
+      # Authelia avaliar outro domínio (ex.: um bypass) enquanto o Traefik entrega o domínio real.
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.trustForwardHeader: "false"
       traefik.http.middlewares.authelia-forwardauth.forwardauth.maxResponseBodySize: "8192"
       traefik.http.middlewares.authelia-forwardauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
 ```
@@ -166,11 +169,11 @@ Os serviços `authelia` e `authelia_db` estão no bloco da [seção 5.2](#52-doc
 
 | Item | Valor | Por quê |
 |---|---|---|
-| Imagem | `authelia/authelia:4.39.28` | Versão fixada (política de versões). A imagem não tem shell: comandos são `docker exec authelia authelia …` |
+| Imagem | `authelia/authelia:4.39.28` | Versão fixada (política de versões). Comandos do Authelia: `docker exec authelia authelia …` |
 | Middleware `authelia-forwardauth` | `http://authelia:9091/api/authz/forward-auth` | Endpoint atual do forward-auth (o `/api/verify` é legado). A URL do portal vem de `session.cookies[].authelia_url` |
-| `trustForwardHeader` | `true` | O Authelia precisa do `X-Forwarded-Host`/`-Uri` que o Traefik manda; o Traefik só aceita esses cabeçalhos de fora vindos da rede Docker (`forwardedHeaders.trustedIPs`) |
+| `trustForwardHeader` | `false` | O Traefik monta o `X-Forwarded-Host`, `-Uri`, `-Method` e `-Proto` que o Authelia avalia a partir do pedido real. Com `true`, um visitante mandaria um `X-Forwarded-Host` forjado (o cloudflared é proxy confiável e repassa os cabeçalhos) e o Authelia avaliaria outro domínio, por exemplo um com `bypass`, enquanto o Traefik entrega o domínio pedido. O preço: o Authelia vê o IP do cloudflared, não o do visitante (o bloqueio por tentativas erradas é por usuário) |
 | `maxResponseBodySize` | `8192` | Limite da resposta do Authelia (o exemplo oficial); sem ele, o Traefik aceitaria qualquer tamanho |
-| `authResponseHeaders` | `Remote-User,Remote-Groups,Remote-Name,Remote-Email` | Quem passou pelo Authelia chega ao backend com esses cabeçalhos (o Grafana usa o `Remote-User`) |
+| `authResponseHeaders` | `Remote-User,Remote-Groups,Remote-Name,Remote-Email` | Quem passou pelo Authelia chega ao backend com esses cabeçalhos (um app que confie no proxy pode usar o `Remote-User`) |
 | Banco | `postgres:17-alpine` em `${AUTHELIA_DB_PATH}`, só na rede `internal_services` | Disco local (DAD-5), dump diário no NFS |
 
 
@@ -295,7 +298,7 @@ entryPoints:
           to: "websecure" # Nome do entrypoint HTTPS
           scheme: "https"
           permanent: true # Usa redirecionamento 301 (permanente)
-      aliasHeadersStrategy: delete # descarta cabeçalhos com '_' (ex.: Remote_User forjado); v3.7 avisa se faltar
+      aliasHeadersStrategy: delete # descarta nomes com '_', '.' etc. (ex.: Remote_User forjado); v3.7 avisa se faltar
   websecure: # Entrypoint principal para HTTPS na porta 443
     address: ":443"
     # O cloudflared chega pela rede Docker 'proxy' (172.16.0.0/12) e informa o IP real do visitante em
@@ -305,7 +308,7 @@ entryPoints:
       trustedIPs:
         - "172.16.0.0/12"
     http:
-      # Cabeçalhos com '_' ou outro caractere fora de letra/dígito/hífen são descartados: um Remote_User forjado
+      # Cabeçalhos com '_', '.' ou outro caractere fora de letra/dígito/hífen são descartados: um Remote_User forjado
       # não chega ao backend como se fosse o Remote-User do forward-auth do Authelia.
       aliasHeadersStrategy: delete
       tls:
@@ -316,6 +319,11 @@ entryPoints:
               - "*.{{ base_domain }}" # Wildcard para todos os subdomínios
       middlewares: # Middlewares globais aplicados a TODAS as rotas no entrypoint websecure
         - "securityHeaders@file" # Referencia o middleware de headers de segurança (definido em dynamic/security_headers.yml)
+
+  traefik: # Entrypoint interno do /ping (healthcheck do compose), na 8080 do container; não é publicado
+    address: ":8080"
+    http:
+      aliasHeadersStrategy: delete
 
 # Provedores de Configuração (Docker e Arquivos para configs dinâmicas)
 providers:
@@ -348,7 +356,7 @@ certificatesResolvers:
 
 # Configurações de Log (opcional, mas útil para debug)
 log:
-  level: INFO # Níveis: DEBUG, INFO, WARNING, ERROR, FATAL, PANIC
+  level: INFO # Níveis: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
   filePath: "/data/traefik.log" # Caminho DENTRO do container Traefik (mapeado para volume NFS)
   format: json # Ou common
 accessLog:
@@ -596,9 +604,6 @@ Este role prepara os arquivos de configuração do Authelia.
 ```yaml title="ansible/roles/infra/authelia-config/templates/configuration.yml.j2"
 # ansible/roles/infra/authelia-config/templates/configuration.yml.j2
 # Configuração Principal do Authelia (gerada por Ansible)
-
-# Nome da instância exibido em alguns locais (e.g., título da página)
-instance_name: "Meu Servidor Doméstico"
 
 # Tema da interface Authelia (opções: light, dark, grey)
 theme: dark

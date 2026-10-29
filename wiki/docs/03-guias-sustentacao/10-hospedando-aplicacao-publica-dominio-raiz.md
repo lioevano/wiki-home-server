@@ -26,7 +26,7 @@ Hospedar uma aplicação publicamente, especialmente no domínio raiz que é fre
     *   **Risco:** Uma configuração incorreta no Traefik para o domínio raiz poderia acidentalmente expor outros serviços internos que não deveriam ser públicos, ou até mesmo o dashboard do Traefik se não estiver protegido corretamente por Authelia.
     *   **Mitigação:**
         1.  **Regra de Roteador Traefik Muito Específica:** Crie uma regra de roteador no Traefik **exclusivamente** para o domínio raiz (e.g., `Host(\`seudominio.com\`)`).
-        2.  **Prioridade de Roteadores:** Se você tiver outras regras mais genéricas (como um wildcard `HostRegexp(\`{sub:[a-z0-9-]+}.seudominio.com\`)` para Authelia), certifique-se de que a regra do domínio raiz tenha uma **prioridade mais alta** (um número maior no Traefik) para ser correspondida primeiro, evitando que a regra wildcard "capture" o tráfego do domínio raiz indevidamente.
+        2.  **Prioridade de Roteadores:** Se você tiver outras regras mais genéricas (como um wildcard `HostRegexp(\`^[a-z0-9-]+\.seudominio\.com$\`)` (na v3 do Traefik, regex pura) para Authelia), certifique-se de que a regra do domínio raiz tenha uma **prioridade mais alta** (um número maior no Traefik) para ser correspondida primeiro, evitando que a regra wildcard "capture" o tráfego do domínio raiz indevidamente.
         3.  **NÃO Aplicar Authelia ao Blog Público:** A menos que partes específicas do seu blog público exijam login (o que é incomum para a página principal de um blog), **não** aplique o middleware `authelia-forwardauth@docker` ao roteador do Traefik para o seu domínio raiz. Aplique apenas middlewares essenciais, como os de headers de segurança.
 
 *   **Ataques de Negação de Serviço (DDoS) ou Abuso na Aplicação Pública:**

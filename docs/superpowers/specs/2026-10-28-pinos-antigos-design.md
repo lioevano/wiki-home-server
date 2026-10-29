@@ -34,3 +34,13 @@
 - **Sem validação real do Authelia 4.39 neste ambiente:** o binário disponível aqui é o 4.38. A configuração segue a documentação da 4.39.28 (exemplos do próprio repositório do Authelia), e o roteiro "A conferir no primeiro deploy" ganha `docker logs authelia` sem erros nem avisos de chave obsoleta.
 - **Traefik v3 com o Cloudflare Tunnel:** nada muda no caminho (o túnel chega ao `https://traefik:443` com *No TLS Verify*).
 - **Portainer 2.45:** a primeira tela pede o admin como antes; o `ops` usa a API `/api/stacks` e `/api/endpoints`, estáveis nessas versões.
+
+## 4. Correções da revisão final (2026-10-28)
+
+- **`instance_name` não existe no schema** (nem na 4.38): na 4.39 a chave desconhecida é erro fatal e o Authelia não sobe. Saiu. O `validate-config` da 4.38 saía com 0 mesmo com erros, por isso o teste não pegou. Agora:
+  - `test_authelia_so_chaves_validas` confere cada chave do config renderizado contra o schema da versão fixada (`tools/wikisync/tests/dados/authelia-4.39.28-chaves.txt`);
+  - o `validate-config`, quando o binário da versão fixada existe, exige "loaded successfully without errors".
+- **Forward-auth com `trustForwardHeader: "false"`**: com `true`, um `X-Forwarded-Host` forjado pela internet passava pelo cloudflared (proxy confiável), e o Authelia avaliava outro domínio (um `bypass`) enquanto o Traefik entregava o domínio real. Isso expunha o Prometheus, o painel do Traefik, a Homepage e as *arr. O problema vinha de antes da migração. O preço: o Authelia vê o IP do cloudflared, e o bloqueio por tentativas erradas continua por usuário. O roteiro do primeiro deploy ganhou o teste com `curl`.
+- **Portainer:** a 9000 (HTTP, com `--http-enabled`) deixou de ser publicada na LAN; o `ops` a usa só pela rede `proxy`.
+- **Traefik:** o entrypoint `traefik` do `/ping` foi declarado com `aliasHeadersStrategy` (sem isso, a v3.7 avisa).
+- Textos: nível `WARN`, o que o `delete` descarta, `HostRegexp` da v3, `identity_validation` no troubleshooting e a docstring do `ops`.

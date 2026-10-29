@@ -115,7 +115,8 @@ def test_authelia_validate_config(tmp_path):
     # O binário precisa ser a versão do compose: um 4.38 recusaria as chaves da 4.39 (claims_policies).
     fixada = re.search(r"authelia/authelia:(\S+)", (ROOT / "server/docker/stacks/core/docker-compose.yml")
                        .read_text(encoding="utf-8")).group(1)
-    local = subprocess.run(["authelia", "--version"], capture_output=True, text=True).stdout.split()[-1].lstrip("v")
+    saida = subprocess.run(["authelia", "--version"], capture_output=True, text=True).stdout.split()
+    local = saida[-1].lstrip("v") if saida else "?"
     if local != fixada:
         pytest.skip(f"binário authelia {local} difere da versão fixada {fixada}")
     pem = subprocess.run(["openssl", "genrsa", "2048"], capture_output=True, text=True, check=True).stdout.strip()
@@ -132,7 +133,8 @@ def test_authelia_validate_config(tmp_path):
     cfg.write_text(_authelia(pem=pem, oidc=oidc).replace("/config/users_database.yml", str(users))
                    .replace("/config/notification.txt", str(tmp_path / "n.txt")))
     r = subprocess.run(["authelia", "validate-config", "--config", str(cfg)], capture_output=True, text=True)
-    assert r.returncode == 0, r.stdout + r.stderr
+    # A 4.38 saía com 0 mesmo com erros: a frase de sucesso é o que prova (e falha também com avisos).
+    assert r.returncode == 0 and "loaded successfully without errors" in r.stdout, r.stdout + r.stderr
 
 
 # --- Stack photos (Immich) ---

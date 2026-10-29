@@ -285,7 +285,7 @@ Se você e a IA editarem a mesma nota ao mesmo tempo, o Syncthing guarda as duas
 
 ## Conectores para o Claude
 
-Os dois MCPs são publicados pelo túnel em `https://notas.<domínio>/mcp` (busca) e `https://escrita.<domínio>/mcp` (escrita), cada um atrás de um **mcp-auth-proxy**. O claude.ai exige OAuth com registro dinâmico de cliente, que o Authelia 4.38 não oferece; o proxy faz esse papel e manda o login para o OIDC do Authelia (cliente `mcp`, com 2FA). Só quem está no grupo `admins` passa. Os proxies falam com o Authelia pela LAN (`extra_hosts` de `auth.` para o Traefik na `core-services-vm`). Por isso os dois subdomínios ficam fora do forward-auth do Authelia (regras `bypass` e routers sem middleware na [seção 5](05-rede-segura.md)); o hostname curinga `*` do túnel já os encaminha ao Traefik. O `sync.` fica atrás do Authelia como os demais.
+Os dois MCPs são publicados pelo túnel em `https://notas.<domínio>/mcp` (busca) e `https://escrita.<domínio>/mcp` (escrita), cada um atrás de um **mcp-auth-proxy**. O claude.ai exige OAuth com registro dinâmico de cliente, que o Authelia (4.39) não oferece; o proxy faz esse papel e manda o login para o OIDC do Authelia (cliente `mcp`, com 2FA). Só quem está no grupo `admins` passa. Os proxies falam com o Authelia pela LAN (`extra_hosts` de `auth.` para o Traefik na `core-services-vm`). Por isso os dois subdomínios ficam fora do forward-auth do Authelia (regras `bypass` e routers sem middleware na [seção 5](05-rede-segura.md)); o hostname curinga `*` do túnel já os encaminha ao Traefik. O `sync.` fica atrás do Authelia como os demais.
 
 | Cliente | Como conectar |
 |---|---|
