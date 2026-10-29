@@ -2,7 +2,7 @@
 <html class="no-js" lang="pt"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
-<meta content="Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e lembra você, sem terminal e com ações aprovadas." name="description"/>
+<meta content="Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal e com ações aprovadas." name="description"/>
 <meta content="Léo Ivan" name="author"/>
 <link href="https://wiki.lioevano.com/01-manual-implementacao/17-assistente/" rel="canonical"/>
 <link href="../16-posto-agentes/" rel="prev"/>
@@ -1028,7 +1028,7 @@
 <div class="md-content" data-md-component="content">
 <article class="md-content__inner md-typeset">
 <h1 id="seção-17-assistente-sempre-ligado-hermes-agent">Seção 17: Assistente sempre ligado (Hermes Agent)<a class="headerlink" href="#seção-17-assistente-sempre-ligado-hermes-agent" title="Permanent link">¶</a></h1>
-<p>O <strong>assistente</strong> é um agente que você chama pelo Telegram, de qualquer lugar: "como está o servidor?", "anota isso em estudos", "o que eu escrevi sobre o backup?", "me lembra amanhã às 9h de trocar o disco". Ele roda o <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a> (Nous Research) na <code>ai-desktop-vm</code>, em modo <em>gateway</em>, e conversa por um <strong>bot próprio</strong> do Telegram.</p>
+<p>O <strong>assistente</strong> é um agente que você chama pelo Telegram, de qualquer lugar: "como está o servidor?", "anota isso em estudos", "o que eu escrevi sobre o backup?", "o que eu pedi ontem sobre o backup?". Ele roda o <a href="https://github.com/NousResearch/hermes-agent">Hermes Agent</a> (Nous Research) na <code>ai-desktop-vm</code>, em modo <em>gateway</em>, e conversa por um <strong>bot próprio</strong> do Telegram.</p>
 <pre class="mermaid"><code>flowchart LR
     voce[Você no Telegram] -- bot do assistente --&gt; h[Hermes&lt;br/&gt;stack assistente]
     h -- chave assistente --&gt; llm[LiteLLM]
@@ -1049,7 +1049,7 @@
 <tr>
 <td><code>assistente</code></td>
 <td>stack <code>assistente</code>, <code>ai-desktop-vm</code> (imagem <code>nousresearch/hermes-agent:v0.22.5</code>)</td>
-<td>Conversa pelo Telegram, guarda memória e agenda lembretes</td>
+<td>Conversa pelo Telegram e guarda memória</td>
 </tr>
 <tr>
 <td>Bot do assistente</td>
@@ -1090,11 +1090,15 @@
 </tr>
 <tr>
 <td>Lembrar de você e do que conversaram</td>
-<td>Memória do Hermes (<code>memory</code>) e lembretes (<code>cronjob</code>), entregues no seu chat</td>
+<td>Memória do Hermes (<code>memory</code>) e a busca nas conversas</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Não pode:</strong> rodar comandos (<code>terminal</code>), executar código (<code>code_execution</code>), mexer em arquivos do container (<code>file</code>), navegar ou buscar na internet (<code>browser</code>, <code>web</code>, <code>search</code>), acrescentar MCPs (<code>connections</code>), instalar skills (<code>skills</code>), delegar a subagentes (<code>delegation</code>). Esses grupos estão em <code>agent.disabled_toolsets</code> no <code>config.yaml</code>. Um assistente aberto a mensagens e que lê conteúdo de notas e logs é alvo de injeção de prompt; sem terminal, código nem conexões novas, o pior caso fica restrito às notas de Trabalho e Estudos (com snapshots a cada 15 minutos) e a ações que você precisa aprovar.</p>
+<p><strong>Não pode:</strong> rodar comandos (<code>terminal</code>), executar código (<code>code_execution</code>), mexer em arquivos do container (<code>file</code>), navegar ou buscar na internet (<code>browser</code>, <code>web</code>, <code>search</code>), acrescentar MCPs (<code>connections</code>), instalar skills (<code>skills</code>), delegar a subagentes (<code>delegation</code>), agendar tarefas e lembretes (<code>cronjob</code>). Esses grupos estão em <code>agent.disabled_toolsets</code> no <code>config.yaml</code>. Um assistente aberto a mensagens e que lê conteúdo de notas e logs é alvo de injeção de prompt; sem terminal, código nem conexões novas, o pior caso fica restrito às notas de Trabalho e Estudos (com snapshots a cada 15 minutos) e a ações que você precisa aprovar.</p>
+<div class="admonition note">
+<p class="admonition-title">Por que sem lembretes</p>
+<p>As tarefas agendadas do Hermes (<code>cronjob</code>) buscam qualquer URL para "monitorar" e entregam o resultado em qualquer chat que o modelo escolher, fora das listas acima. Uma nota ou um log com instruções escondidas poderia agendar uma tarefa que manda dados para fora, sem você ver. Para lembretes, use o calendário do celular ou um fluxo do n8n. A API compatível com OpenAI do Hermes também fica desligada (<code>platforms.api_server.enabled: false</code>): a imagem gera uma chave sozinha e, sem isso, abriria uma porta.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">Só você conversa com ele</p>
 <p>O Hermes só responde a quem está em <code>TELEGRAM_ALLOWED_USERS</code> (<code>assistente_telegram_usuarios</code>, padrão: o seu <code>telegram_chat_id</code>). Mensagens de outras pessoas são ignoradas. Se o token do bot vazar, revogue no BotFather (<code>/revoke</code>) e troque no vault.</p>
@@ -1105,10 +1109,10 @@
 </div>
 <h2 id="arquivos">Arquivos<a class="headerlink" href="#arquivos" title="Permanent link">¶</a></h2>
 <ul>
-<li><code>docker/stacks/assistente/docker-compose.yml</code> — o serviço <code>assistente</code>: <code>gateway run</code>, sem porta, sem painel (<code>HERMES_DASHBOARD</code> desligado), sem API (<code>API_SERVER_ENABLED</code> desligado), sem o socket do Docker, <code>no-new-privileges</code>, usuário do dockeruser (<code>HERMES_UID</code>/<code>HERMES_GID</code>), redes <code>ai_network</code> e <code>notes_mcp</code>.</li>
+<li><code>docker/stacks/assistente/docker-compose.yml</code> — o serviço <code>assistente</code>: <code>gateway run</code>, sem porta, sem painel (<code>HERMES_DASHBOARD</code> desligado), sem API (<code>platforms.api_server.enabled: false</code> no <code>config.yaml</code>), sem o socket do Docker, <code>no-new-privileges</code>, usuário do dockeruser (<code>HERMES_UID</code>/<code>HERMES_GID</code>), redes <code>ai_network</code> e <code>notes_mcp</code>.</li>
 <li><code>ansible/playbooks/setup-assistente-volumes.yml</code> — cria <code>/opt/local-data/hermes</code> (disco local: SQLite), gera o <code>config.yaml</code> e o <code>.env</code> (0600) e o <code>assistente.env</code> da stack.</li>
-<li><code>ansible/templates/assistente/config.yaml.j2</code> — modelo pelo LiteLLM, os três MCPs e os grupos de ferramentas desligados. Sem segredos: <code>${VAR}</code> vem do <code>.env</code>.</li>
-<li><code>ansible/templates/assistente/env.j2</code> — token do bot, usuários permitidos, chat dos lembretes, chave do LiteLLM e chave do hub.</li>
+<li><code>ansible/templates/assistente/config.yaml.j2</code> — modelo pelo LiteLLM, os três MCPs, a API desligada e os grupos de ferramentas desligados. Sem segredos: <code>${VAR}</code> vem do <code>.env</code>.</li>
+<li><code>ansible/templates/assistente/env.j2</code> — token do bot, usuários permitidos, chat principal (<code>TELEGRAM_HOME_CHANNEL</code>), chave do LiteLLM e chave do hub.</li>
 </ul>
 <p>O <code>config.yaml</code> é regravado a cada execução do playbook: o que mudar por comando no Hermes (<code>/model</code>, por exemplo) volta ao que esta página diz. Para mudar de vez, mude aqui.</p>
 <h2 id="primeira-configuração">Primeira configuração<a class="headerlink" href="#primeira-configuração" title="Permanent link">¶</a></h2>
@@ -1124,10 +1128,10 @@
 <li><code>docker logs assistente</code> mostra o gateway conectado ao Telegram e os três MCPs (<code>servidor</code>, <code>notas</code>, <code>escrita</code>) com as ferramentas carregadas.</li>
 <li>"Como está o servidor?" → ele responde com dados reais (alertas, containers).</li>
 <li>"Anota em estudos/inbox.md: testar o assistente" → a nota aparece no Obsidian depois da sincronização. "Anota em pessoal/…" → ele não consegue (o vault Pessoal não existe para o <code>notes_escrita</code>).</li>
-<li>"Reinicie o container homepage" → chega o pedido com botões no <strong>bot de avisos</strong>; aprove, e ele confirma.</li>
+<li>"Reinicie o container homepage" → chega o pedido com botões no <strong>bot de avisos</strong>; aprove, responda "aprovei, pode seguir", e ele confirma.</li>
 <li>"Rode <code>ls /</code>" → ele diz que não tem como executar comandos.</li>
 <li>De outra conta do Telegram, mande uma mensagem ao bot: nenhuma resposta.</li>
-<li>"Me lembre em 5 minutos de beber água" → a mensagem chega no horário.</li>
+<li>"Me lembre em 5 minutos de beber água" → ele diz que não agenda lembretes.</li>
 </ol>
 <h2 id="falhas">Falhas<a class="headerlink" href="#falhas" title="Permanent link">¶</a></h2>
 <table>
@@ -1166,7 +1170,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="29 de outubro de 2026 02:32:15 -03">29 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="29 de outubro de 2026 03:01:45 -03">29 de outubro de 2026</span>
 </span>
 </aside>
 </article>

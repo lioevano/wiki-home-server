@@ -482,6 +482,15 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#porteiro-do-vibe-kanban">
+<span class="md-ellipsis">
+      
+        Porteiro do Vibe Kanban
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#aprovação-humana">
 <span class="md-ellipsis">
       
@@ -496,6 +505,15 @@
 <span class="md-ellipsis">
       
         Como um pedido funciona
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ansible-duas-aprovações">
+<span class="md-ellipsis">
+      
+        Ansible: duas aprovações
       
     </span>
 </a>
@@ -1016,6 +1034,15 @@
 </a>
 </li>
 <li class="md-nav__item">
+<a class="md-nav__link" href="#porteiro-do-vibe-kanban">
+<span class="md-ellipsis">
+      
+        Porteiro do Vibe Kanban
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
 <a class="md-nav__link" href="#aprovação-humana">
 <span class="md-ellipsis">
       
@@ -1030,6 +1057,15 @@
 <span class="md-ellipsis">
       
         Como um pedido funciona
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#ansible-duas-aprovações">
+<span class="md-ellipsis">
+      
+        Ansible: duas aprovações
       
     </span>
 </a>
@@ -1124,6 +1160,11 @@
 <td>Tarefas em colunas, um <em>worktree</em> e um terminal por tentativa, revisão de diff com comentários, PR</td>
 </tr>
 <tr>
+<td><code>posto_porteiro</code></td>
+<td>stack <code>posto</code>, mesma rede do container <code>posto</code> (imagem <code>caddy</code>)</td>
+<td>Atende a porta 3005 e só repassa ao Vibe Kanban o que veio pelo Traefik (<a href="#porteiro-do-vibe-kanban">abaixo</a>)</td>
+</tr>
+<tr>
 <td><code>aprovador</code></td>
 <td>stack <code>agents</code>, <code>core-services-vm</code> (imagem local <code>localhost/homeserver/aprovador</code>)</td>
 <td>Pedidos de ação com botões no Telegram e a tela <code>aprovacoes.</code>; o <code>ops</code> só executa com um pedido aprovado</td>
@@ -1136,7 +1177,19 @@
 </tbody>
 </table>
 <h2 id="por-que-compilar-o-vibe-kanban">Por que compilar o Vibe Kanban<a class="headerlink" href="#por-que-compilar-o-vibe-kanban" title="Permanent link">¶</a></h2>
-<p>O pacote npm do Vibe Kanban baixa um binário de um CDN da Bloop, que encerrou a nuvem paga em abril de 2026, e traz chaves de telemetria embutidas. O <code>ansible/playbooks/setup-posto-volumes.yml</code> baixa o código na tag fixada e usa o <code>Dockerfile</code> do próprio projeto, com os argumentos de telemetria vazios: nada sai para a PostHog nem para a Sentry, e o posto não depende do CDN. O custo é uma compilação Rust de dezenas de minutos na <code>ai-desktop-vm</code>, uma vez por versão. A imagem do posto (<code>docker/images/posto/Dockerfile</code>) copia o servidor dessa compilação para uma base Node e deixa no cache a versão do Claude Code que o Vibe Kanban chama (<code>posto_claude_code_version</code>).</p>
+<p>O pacote npm do Vibe Kanban baixa um binário de um CDN da Bloop, que encerrou a nuvem paga em abril de 2026, e traz chaves de telemetria embutidas. O <code>ansible/playbooks/setup-posto-volumes.yml</code> baixa o código na tag fixada e usa o <code>Dockerfile</code> do próprio projeto, com os argumentos de telemetria vazios: nada sai para a PostHog nem para a Sentry, e o posto não depende do CDN. O custo é uma compilação Rust de dezenas de minutos na <code>ai-desktop-vm</code>, uma vez por versão. A imagem do posto (<code>docker/images/posto/Dockerfile</code>) copia o servidor dessa compilação para uma base Node e deixa no cache a versão do Claude Code que o Vibe Kanban chama (<code>posto_claude_code_version</code>). A tag da imagem junta as três versões (<code>posto_version</code>, a tag do Vibe Kanban e a do Claude Code): mudou qualquer uma, o <code>posto.env</code> aponta para a imagem nova.</p>
+<div class="admonition note">
+<p class="admonition-title">\"Claude Code não detectado\"</p>
+<p>A tela de configurações do Vibe Kanban procura o Claude Code em <code>~/.claude</code>, e o posto o configura em <code>CLAUDE_CONFIG_DIR</code>. O aviso é só cosmético: as tarefas rodam o Claude Code normalmente.</p>
+</div>
+<h2 id="porteiro-do-vibe-kanban">Porteiro do Vibe Kanban<a class="headerlink" href="#porteiro-do-vibe-kanban" title="Permanent link">¶</a></h2>
+<p>O Vibe Kanban não tem login e aceita qualquer requisição que chegue nele. Por isso ele escuta só no <code>127.0.0.1</code> do próprio container (<code>HOST=127.0.0.1</code>), e quem atende a porta 3005 é o <strong>porteiro</strong>: um Caddy (<code>posto_porteiro</code>) que divide a rede do container <code>posto</code> (<code>network_mode: service:posto</code>). O porteiro:</p>
+<ul>
+<li>deixa passar <code>/api/health</code>, para as sondas do Prometheus e do painel;</li>
+<li>repassa o resto só se a requisição trouxer o cabeçalho <code>X-Posto-Chave</code> com o segredo <code>posto_chave_proxy</code>, que o Traefik injeta <strong>depois</strong> do Authelia (middleware <code>posto-chave</code>, <a href="../05-rede-segura/">seção 5</a>), e retira o cabeçalho antes de repassar;</li>
+<li>responde 403 a todo o resto, sem painel de administração (<code>admin off</code>).</li>
+</ul>
+<p>Assim, nenhum container das redes <code>ai_network</code> e <code>notes_mcp</code> (Open WebUI, LiteLLM, as notas, o assistente) chega ao Vibe Kanban, e a porta 3005 continua aceitando só a core (firewall das portas do Docker). O <code>Caddyfile</code> sai de <code>ansible/templates/posto/Caddyfile.j2</code>, com o segredo, em <code>0600</code>; o playbook para se o segredo tiver menos de 32 caracteres. O preço: a pré-visualização de apps do Vibe Kanban (outra porta, também no <code>127.0.0.1</code>) não abre de fora.</p>
 <div class="admonition warning">
 <p class="admonition-title">Futuro do projeto</p>
 <p>A Bloop encerrou o serviço em nuvem em abril de 2026; o repositório continua aberto (Apache-2.0) e recebeu a versão fixada aqui em setembro de 2026. Se o projeto parar, o posto (Claude Code), o <code>aprovador</code> e a rota <code>autonomos</code> continuam funcionando; só a tela muda.</p>
@@ -1159,7 +1212,7 @@
 </tr>
 <tr>
 <td><strong>Aprovador</strong></td>
-<td><strong>Ações no servidor</strong> pelo <code>ops</code>: <code>container_reiniciar</code>, <code>stack_redeploy</code>, <code>ansible_aplicar</code></td>
+<td><strong>Ações no servidor</strong> pelo <code>ops</code>: <code>container_reiniciar</code>, <code>stack_redeploy</code>, <code>ansible_check</code> e <code>ansible_aplicar</code></td>
 <td>Botões no Telegram ou <code>https://aprovacoes.seudominio.com</code></td>
 </tr>
 </tbody>
@@ -1169,12 +1222,19 @@
 <ol>
 <li>O agente chama, por exemplo, <code>ops_container_reiniciar</code> com <code>nome: jellyfin</code>.</li>
 <li>O <code>ops</code> confere as regras de sempre (containers e stacks protegidos são recusados na hora, sem incomodar você).</li>
-<li>Para os clientes de <code>ops_clientes_com_aprovacao</code> (<code>agentes</code>, <code>assistente</code>), ele cria o pedido no <code>aprovador</code> e responde ao agente: <em>aguardando aprovação: pedido X</em>. Sem saber quem chamou, ele também trata como autônomo.</li>
+<li>Todo cliente <strong>fora</strong> de <code>ops_clientes_sem_aprovacao</code> (padrão: só <code>claude_code</code>, que pede aprovação na própria tela) passa pelo <code>aprovador</code>: <code>agentes</code>, <code>assistente</code>, uma chave nova esquecida e uma chamada sem o cabeçalho do hub. A lista diz quem <strong>não</strong> precisa, e não quem precisa, para que uma variável perdida (lista vazia) faça todos pedirem aprovação em vez de nenhum. O <code>ops</code> cria o pedido e responde ao agente: <em>aguardando aprovação: pedido X</em>. Cada cliente tem no máximo 5 pedidos pendentes; o sexto é recusado até você decidir os outros.</li>
 <li>Chega no Telegram (bot de avisos) uma mensagem com o que o agente quer fazer e os botões <strong>✅ Aprovar</strong> e <strong>❌ Recusar</strong>. O mesmo pedido aparece na tela <code>aprovacoes.</code>.</li>
 <li>Você decide. A mensagem é atualizada com a decisão e quem decidiu.</li>
-<li>O agente chama de novo com <code>aprovacao_id: X</code>. O <code>ops</code> só executa se o pedido estiver aprovado, for <strong>da mesma ação, alvo e argumentos</strong>, ainda <strong>não tiver sido usado</strong> e estiver <strong>no prazo</strong> (<code>aprovador_validade_min</code>, 30 min). Depois de usado, ele não vale de novo.</li>
+<li><strong>Avise o agente</strong> na tarefa (ou na conversa, no assistente): "aprovei, pode seguir". Ele não fica perguntando sozinho; a resposta do <code>ops</code> manda esperar o seu aviso.</li>
+<li>O agente chama de novo com <code>aprovacao_id: X</code>. O <code>ops</code> só executa se o pedido estiver aprovado, for <strong>do mesmo cliente, ação, alvo e argumentos</strong>, ainda <strong>não tiver sido usado</strong> e estiver <strong>no prazo</strong> (<code>aprovador_validade_min</code>, 30 min). Depois de usado, ele não vale de novo.</li>
 </ol>
-<p>Quem pode decidir: no Telegram, só o seu usuário (<code>telegram_chat_id</code>, mais <code>aprovador_telegram_usuarios</code>); clique de outra pessoa num grupo responde "Sem permissão". Na tela, só quem passou pelo Authelia com 2FA e o grupo <code>admins</code>. A tela só responde a requisições com o segredo que o Traefik injeta (<code>aprovador_chave_proxy</code>), então outro container da rede <code>proxy</code> não decide no seu lugar, e o POST precisa vir da própria tela (<code>Origin</code>), então outra página aberta no navegador também não. Cada evento (criado, aprovado, recusado, expirado, usado) vira uma linha JSON no log do <code>aprovador</code>, coletada pelo Alloy.</p>
+<h3 id="ansible-duas-aprovações">Ansible: duas aprovações<a class="headerlink" href="#ansible-duas-aprovações" title="Permanent link">¶</a></h3>
+<p>Mesmo em <code>--check</code>, o Ansible roda código do repositório (lookups, templates, tarefas com <code>check_mode: false</code>) com a senha do vault. Por isso um agente autônomo pede aprovação <strong>para simular</strong> (<code>ansible_check</code>, depois do <code>git pull</code> da <code>main</code>) e <strong>de novo para aplicar</strong> (<code>ansible_aplicar</code>). O pedido de aplicar mostra o commit simulado com o <strong>autor e o assunto</strong> (<code>git log -1</code>) e o <strong>PLAY RECAP</strong> do <code>--check</code>: confira se o commit é o que você espera antes de aprovar. Playbook fora de <code>ops_playbooks_permitidos</code> é recusado sem virar pedido.</p>
+<div class="admonition danger">
+<p class="admonition-title">O repositório é a outra porta</p>
+<p>O <code>ops</code> aplica o que estiver na <code>main</code> do <code>wiki-home-server</code>. Nunca dê ao <code>posto_github_token</code> permissão de escrita (<em>Contents</em>) nesse repositório, e proteja a <code>main</code> no GitHub (<em>Settings → Branches</em>: exigir PR com revisão, sem <em>push</em> direto). Um agente que conseguisse escrever na <code>main</code> mudaria o que você aprova sem que a descrição do pedido parecesse diferente.</p>
+</div>
+<p>Quem pode decidir: no Telegram, só o seu usuário (<code>telegram_chat_id</code>, mais <code>aprovador_telegram_usuarios</code>); clique de outra pessoa num grupo responde "Sem permissão". Na tela, só quem passou pelo Authelia com 2FA e o grupo <code>admins</code>. A tela só responde a requisições com o segredo que o Traefik injeta (<code>aprovador_chave_proxy</code>, no middleware <code>aprovador-chave@file</code> de <code>ansible/roles/infra/traefik-config/templates/dynamic_agents.yml.j2</code>, e não num label que o <code>docker inspect</code> mostraria), então outro container da rede <code>proxy</code> não decide no seu lugar, e o POST precisa vir da própria tela (<code>Origin</code>), então outra página aberta no navegador também não. Cada evento (criado, aprovado, recusado, expirado, usado) vira uma linha JSON no log do <code>aprovador</code>, coletada pelo Alloy.</p>
 <div class="admonition info">
 <p class="admonition-title">Bot de avisos e o <code>aprovador</code></p>
 <p>O <code>aprovador</code> lê os cliques do bot de avisos (o mesmo das notificações) por <code>getUpdates</code>. O Grafana e o n8n só <strong>enviam</strong> por esse bot, então não há conflito. Não configure um <em>webhook</em> nesse bot, senão o <code>getUpdates</code> para de receber. O assistente tem um bot próprio pelo mesmo motivo.</p>
@@ -1212,14 +1272,20 @@
 <tr>
 <td>GitHub</td>
 <td><code>gh</code> com <code>GH_TOKEN=posto_github_token</code> (opcional)</td>
-<td>Token <em>fine-grained</em>, só os repositórios do posto, com <em>Contents</em> e <em>Pull requests</em></td>
+<td>Token <em>fine-grained</em>, só os repositórios de trabalho, com <em>Contents</em> e <em>Pull requests</em>; <strong>nunca</strong> escrita no <code>wiki-home-server</code></td>
+</tr>
+<tr>
+<td>Prometheus e Loki da core</td>
+<td>Portas 9090 e 3100 da core, abertas à <code>ai-desktop-vm</code> para o Alloy</td>
+<td>Limite conhecido: o firewall vê o IP da VM, não o container, então um agente com o perfil <code>AUTONOMO</code> também alcança essas portas (consultar métricas e mandar métricas ou logs falsos). Nada muda no servidor por elas; desconfie de métricas e logs estranhos com origem na VM de IA</td>
 </tr>
 </tbody>
 </table>
 <p>Os MCPs vêm de <code>/etc/claude-code/managed-mcp.json</code> (gerado de <code>ansible/templates/posto/managed-mcp.json.j2</code>, montado só leitura): todo agente usa esses três, e nenhum agente os troca. Os perfis do Claude Code no Vibe Kanban vêm de <code>ansible/templates/posto/profiles.json.j2</code>, gravado uma vez (o que você mudar na tela fica).</p>
 <h2 id="arquivos">Arquivos<a class="headerlink" href="#arquivos" title="Permanent link">¶</a></h2>
 <ul>
-<li><code>docker/stacks/posto/docker-compose.yml</code> — o serviço <code>posto</code> (porta 3005 só no IP da VM, aceita só da core).</li>
+<li><code>docker/stacks/posto/docker-compose.yml</code> — o serviço <code>posto</code> (Vibe Kanban em <code>127.0.0.1</code>) e o <code>posto_porteiro</code> (porta 3005 só no IP da VM, aceita só da core).</li>
+<li><code>ansible/templates/posto/Caddyfile.j2</code> — o porteiro: <code>/api/health</code> livre, o resto só com <code>X-Posto-Chave</code>.</li>
 <li><code>docker/images/posto/Dockerfile</code> — o servidor do Vibe Kanban sobre <code>node:22-bookworm-slim</code>, com git, <code>gh</code>, <code>tini</code> e o Claude Code em cache.</li>
 <li><code>ansible/playbooks/setup-posto-volumes.yml</code> — clona e compila o Vibe Kanban, constrói o posto, cria os diretórios e gera os MCPs, os perfis e o <code>posto.env</code>.</li>
 <li><code>ansible/templates/posto/managed-mcp.json.j2</code> e <code>ansible/templates/posto/profiles.json.j2</code> — acima.</li>
@@ -1236,20 +1302,21 @@
 </ul>
 <h2 id="primeira-configuração">Primeira configuração<a class="headerlink" href="#primeira-configuração" title="Permanent link">¶</a></h2>
 <ol>
-<li><strong>Vault</strong> (<a href="../01-maquina-controle-ansible/">seção 1</a>): <code>litellm_client_keys.agentes</code> (<code>echo sk-$(openssl rand -hex 24)</code>), <code>agents_autonomos_keys.agentes</code> (<code>ag-</code> + <code>openssl rand -hex 24</code>), <code>aprovador_token</code> e <code>aprovador_chave_proxy</code> (<code>openssl rand -hex 32</code> cada) e, se quiser PRs pelo <code>gh</code>, <code>posto_github_token</code>.</li>
+<li><strong>Vault</strong> (<a href="../01-maquina-controle-ansible/">seção 1</a>): <code>litellm_client_keys.agentes</code> (<code>echo sk-$(openssl rand -hex 24)</code>), <code>agents_autonomos_keys.agentes</code> (<code>ag-</code> + <code>openssl rand -hex 24</code>), <code>aprovador_token</code>, <code>aprovador_chave_proxy</code> e <code>posto_chave_proxy</code> (<code>openssl rand -hex 32</code> cada) e, se quiser PRs pelo <code>gh</code>, <code>posto_github_token</code> (sem escrita no <code>wiki-home-server</code>; proteja a <code>main</code>, veja acima).</li>
 <li><strong>Chave no LiteLLM:</strong> <code>ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-keys.yml --ask-vault-pass</code>.</li>
-<li><strong>Firewall, rotas e Authelia:</strong> <code>setup-base-ubuntu.yml</code> (portas 4200 e 3005, <a href="../14-vpn-tailscale/">seção 14</a>), <code>setup-core-networking.yml</code> (rota <code>kanban.</code> e os domínios <code>kanban</code>/<code>aprovacoes</code> só para <code>admins</code>) e <code>setup-monitoring-stack-volumes.yml</code> (sondas e painel).</li>
+<li><strong>Firewall, rotas e Authelia:</strong> <code>setup-base-ubuntu.yml</code> (portas 4200 e 3005, <a href="../14-vpn-tailscale/">seção 14</a>), <code>setup-core-networking.yml</code> (rota <code>kanban.</code> com o segredo do porteiro, o middleware <code>aprovador-chave</code> e os domínios <code>kanban</code>/<code>aprovacoes</code> só para <code>admins</code>) e <code>setup-monitoring-stack-volumes.yml</code> (sondas e painel).</li>
 <li><strong>Hub e aprovador:</strong> <code>setup-agents-volumes.yml</code>; no Portainer, <strong>Update the stack</strong> da <code>agents</code> com o <code>agents.env</code> novo em <em>Advanced mode</em>; depois <code>docker restart agentgateway</code>.</li>
 <li><strong>Posto:</strong> <code>ansible-playbook -i inventories/home/hosts.ini playbooks/setup-posto-volumes.yml --ask-vault-pass</code> (a primeira compilação demora). No Portainer, ambiente <code>ai-desktop-vm</code>: <strong>Add stack</strong> <code>posto</code> com <code>docker/stacks/posto/docker-compose.yml</code> e o <code>posto.env</code> em <em>Advanced mode</em>.</li>
 <li><strong>Primeiro uso:</strong> clone o repositório no posto (<code>docker exec -it posto git clone https://github.com/&lt;você&gt;/&lt;repo&gt;.git /repos/&lt;repo&gt;</code>), abra <code>https://kanban.seudominio.com</code>, crie o projeto apontando para <code>/repos/&lt;repo&gt;</code> e escolha o agente <strong>Claude Code</strong>.</li>
 </ol>
 <h2 id="teste-de-ponta-a-ponta">Teste de ponta a ponta<a class="headerlink" href="#teste-de-ponta-a-ponta" title="Permanent link">¶</a></h2>
 <ol>
-<li><code>https://kanban.seudominio.com</code> pede o login do Authelia; um usuário fora de <code>admins</code> é recusado. Na LAN, <code>curl http://&lt;IP da ai&gt;:3005/health</code> não conecta (só a core alcança).</li>
+<li><code>https://kanban.seudominio.com</code> pede o login do Authelia; um usuário fora de <code>admins</code> é recusado. Na LAN, <code>curl http://&lt;IP da ai&gt;:3005/api/health</code> não conecta (só a core alcança). Da core, <code>curl http://&lt;IP da ai&gt;:3005/api/health</code> responde e <code>curl http://&lt;IP da ai&gt;:3005/</code> dá 403 (sem o segredo). De outro container da VM de IA, <code>docker exec open-webui curl -m 3 http://posto:3000/</code> não conecta.</li>
 <li>Numa tarefa de teste, peça ao agente "liste os containers da core pelo MCP servidor": funciona sem aprovação (é leitura).</li>
-<li>Peça "reinicie o container <code>homepage</code>": o agente responde que está aguardando aprovação; no Telegram chega o pedido com botões. Aprove: o agente repete com <code>aprovacao_id</code> e o container reinicia. A mensagem mostra <em>Aprovado e executado</em>.</li>
+<li>Peça "reinicie o container <code>homepage</code>": o agente responde que está aguardando aprovação; no Telegram chega o pedido com botões. Aprove e diga ao agente "aprovei, pode seguir": ele repete com <code>aprovacao_id</code> e o container reinicia. A mensagem mostra <em>Aprovado e executado</em>.</li>
 <li>Peça "reinicie o <code>traefik</code>": recusado na hora (protegido), sem pedido.</li>
 <li>Crie um pedido e não decida: em 30 min a mensagem passa a <em>Expirado</em>. A tela <code>aprovacoes.</code> mostra o histórico.</li>
+<li>Peça "simule o playbook de mídia": chega um pedido para o <code>ansible_check</code>; aprovado, ele simula e devolve o <code>plano_id</code>. Peça para aplicar: o novo pedido mostra o autor, o assunto do commit e o PLAY RECAP.</li>
 </ol>
 <h2 id="falhas">Falhas<a class="headerlink" href="#falhas" title="Permanent link">¶</a></h2>
 <table>
@@ -1282,6 +1349,16 @@
 <td>Tela do LiteLLM (<code>llm.</code>); aumente <code>litellm_key_budgets.agentes</code> e rode o <code>setup-ai-keys.yml</code></td>
 </tr>
 <tr>
+<td><code>kanban.</code> responde 403</td>
+<td>O segredo do Traefik e o do porteiro diferem (vault mudou e só um playbook rodou)</td>
+<td>Rode <code>setup-core-networking.yml</code> e <code>setup-posto-volumes.yml</code> e reinicie o <code>posto_porteiro</code></td>
+</tr>
+<tr>
+<td>Agente diz "5 pedidos pendentes"</td>
+<td>Limite por cliente no <code>aprovador</code></td>
+<td>Decida (ou recuse) os pendentes em <code>aprovacoes.</code></td>
+</tr>
+<tr>
 <td>Vibe Kanban não compila</td>
 <td>O <code>setup-posto-volumes.yml</code> falha na tarefa de compilação</td>
 <td>Veja o log do build; mantenha a tag anterior em <code>posto_vibe_kanban_tag</code></td>
@@ -1293,7 +1370,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="29 de outubro de 2026 02:32:15 -03">29 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="29 de outubro de 2026 03:01:45 -03">29 de outubro de 2026</span>
 </span>
 </aside>
 </article>
