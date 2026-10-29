@@ -2636,7 +2636,7 @@
 </ol>
 <p>Se você e a IA editarem a mesma nota ao mesmo tempo, o Syncthing guarda as duas versões (<code>*.sync-conflict-*</code>): abra as duas, junte à mão e apague a cópia. A busca ignora esses arquivos.</p>
 <h2 id="conectores-para-o-claude">Conectores para o Claude<a class="headerlink" href="#conectores-para-o-claude" title="Permanent link">¶</a></h2>
-<p>Os dois MCPs são publicados pelo túnel em <code>https://notas.&lt;domínio&gt;/mcp</code> (busca) e <code>https://escrita.&lt;domínio&gt;/mcp</code> (escrita), cada um atrás de um <strong>mcp-auth-proxy</strong>. O claude.ai exige OAuth com registro dinâmico de cliente, que o Authelia 4.38 não oferece; o proxy faz esse papel e manda o login para o OIDC do Authelia (cliente <code>mcp</code>, com 2FA). Só quem está no grupo <code>admins</code> passa. Os proxies falam com o Authelia pela LAN (<code>extra_hosts</code> de <code>auth.</code> para o Traefik na <code>core-services-vm</code>). Por isso os dois subdomínios ficam fora do forward-auth do Authelia (regras <code>bypass</code> e routers sem middleware na <a href="../05-rede-segura/">seção 5</a>); o hostname curinga <code>*</code> do túnel já os encaminha ao Traefik. O <code>sync.</code> fica atrás do Authelia como os demais.</p>
+<p>Os dois MCPs são publicados pelo túnel em <code>https://notas.&lt;domínio&gt;/mcp</code> (busca) e <code>https://escrita.&lt;domínio&gt;/mcp</code> (escrita), cada um atrás de um <strong>mcp-auth-proxy</strong>. O claude.ai exige OAuth com registro dinâmico de cliente, que o Authelia (4.39) não oferece; o proxy faz esse papel e manda o login para o OIDC do Authelia (cliente <code>mcp</code>, com 2FA). Só quem está no grupo <code>admins</code> passa. Os proxies falam com o Authelia pela LAN (<code>extra_hosts</code> de <code>auth.</code> para o Traefik na <code>core-services-vm</code>). Por isso os dois subdomínios ficam fora do forward-auth do Authelia (regras <code>bypass</code> e routers sem middleware na <a href="../05-rede-segura/">seção 5</a>); o hostname curinga <code>*</code> do túnel já os encaminha ao Traefik. O <code>sync.</code> fica atrás do Authelia como os demais.</p>
 <table>
 <thead>
 <tr>
@@ -2800,7 +2800,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="21 de outubro de 2026 00:58:07 -03">21 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="28 de outubro de 2026 21:49:27 -03">28 de outubro de 2026</span>
   </span>
 
     
