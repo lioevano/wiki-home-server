@@ -566,6 +566,30 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../16-posto-agentes/">
+<span class="md-ellipsis">
+    
+  
+    Posto de agentes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../17-assistente/">
+<span class="md-ellipsis">
+    
+  
+    Assistente (Hermes)
+  
+
+    
+  </span>
+</a>
+</li>
 </ul>
 </nav>
 </li>
@@ -1124,7 +1148,7 @@
 <h2 id="arquitetura">Arquitetura<a class="headerlink" href="#arquitetura" title="Permanent link">¶</a></h2>
 <pre class="mermaid"><code>flowchart LR
     claude[claude.ai / celular] -- OAuth + Authelia 2FA --&gt; proxy[mcp_auth_servidor&lt;br/&gt;servidor.]
-    code[Claude Code / agentes&lt;br/&gt;pela VPN] -- chave Bearer --&gt; controle[agentgateway :4100&lt;br/&gt;rota controle]
+    code[Claude Code&lt;br/&gt;pela VPN] -- chave Bearer --&gt; controle[agentgateway :4100&lt;br/&gt;rota controle]
     proxy --&gt; leitura[agentgateway :4000&lt;br/&gt;rota leitura]
     leitura --&gt; gl[mcp_grafana_leitura]
     leitura --&gt; ol[ops_leitura]
@@ -1155,12 +1179,18 @@
 <tr>
 <td><code>controle</code></td>
 <td><code>http://&lt;IP da core-services-vm&gt;:4100/mcp</code> (só pela VPN: a LAN não alcança a 4100, <a href="../14-vpn-tailscale/">seção 14</a>)</td>
-<td>Claude Code com o Tailscale ligado (em casa ou fora), agentes (4c3)</td>
+<td>Claude Code com o Tailscale ligado (em casa ou fora)</td>
 <td>tudo da leitura + silenciar alertas e editar painéis, reiniciar containers, redeploy de stacks, Ansible (<code>ansible_check</code> → <code>ansible_aplicar</code>), comandar a casa, executar e editar workflows liberados</td>
+</tr>
+<tr>
+<td><code>autonomos</code></td>
+<td><code>http://&lt;IP da core-services-vm&gt;:4200/mcp</code> (pela LAN, só da <code>ai-desktop-vm</code>)</td>
+<td>agentes do posto (<a href="../16-posto-agentes/">seção 16</a>) e o assistente (<a href="../17-assistente/">seção 17</a>), cada um com a sua chave (<code>agents_autonomos_keys</code>)</td>
+<td>o mesmo que a leitura + reiniciar containers, redeploy de stacks e Ansible, <strong>cada ação esperando a sua aprovação</strong> no Telegram ou na tela <code>aprovacoes.</code></td>
 </tr>
 </tbody>
 </table>
-<p>Por que duas rotas: a internet só alcança <strong>código que não sabe escrever</strong> (as instâncias <code>*_leitura</code> nem registram ferramentas de escrita) <strong>e</strong> uma lista fechada de ferramentas (<code>agents_leitura</code>); as ações ficam num endereço que só a VPN alcança (cifrado pelo WireGuard), com uma chave por cliente.</p>
+<p>Por que essas rotas: a internet só alcança <strong>código que não sabe escrever</strong> (as instâncias <code>*_leitura</code> nem registram ferramentas de escrita) <strong>e</strong> uma lista fechada de ferramentas (<code>agents_leitura</code>); as ações ficam num endereço que só a VPN alcança (cifrado pelo WireGuard), com uma chave por cliente. Quem trabalha sem você olhando (agentes e assistente) tem uma rota própria: lê tudo, não mexe em Grafana, casa nem workflows, e só age pelo <code>ops</code>, que para essas chaves exige um pedido aprovado (<a href="../16-posto-agentes/#aprovação-humana">seção 16</a>).</p>
 <div class="admonition warning">
 <p class="admonition-title">Fora dos snapshots ZFS</p>
 <p>O config do hub, os segredos do runner, o clone do repositório e o estado OAuth do <code>mcp_auth_servidor</code> ficam no disco local da <code>core-services-vm</code> (<code>/opt/local-data/agentgateway</code>, <code>/opt/local-data/ops</code>, <code>/opt/local-data/mcp-auth-servidor</code>), e os dados do Langfuse no disco local da <code>ai-desktop-vm</code> (<code>/opt/local-data/langfuse</code>): <strong>fora dos snapshots ZFS e sem backup</strong>. Tudo é regerável pelos playbooks a partir do vault; os traces do Langfuse são descartáveis.</p>
@@ -1193,7 +1223,7 @@
 </span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="x">ansible-core==</span><span class="cp">{{</span> <span class="nv">ops_ansible_core_version</span> <span class="cp">}}</span>
 </span></code></pre></div>
 <h2 id="hub-de-mcps-agentgateway">Hub de MCPs (agentgateway)<a class="headerlink" href="#hub-de-mcps-agentgateway" title="Permanent link">¶</a></h2>
-<p>O hub junta os MCPs em dois endereços. A <strong>rota <code>leitura</code></strong> (porta 4000, só na rede interna, com tokens internos: o do <code>mcp_auth_servidor</code> e o do observador, <a href="../15-ia-observa/">seção 15</a>) recebe o conector <strong>Servidor</strong> e o observador e só alcança instâncias que não sabem escrever (<code>mcp_grafana_leitura</code>, <code>ops_leitura</code>), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (<code>agents_leitura</code>). A <strong>rota <code>controle</code></strong> (porta 4100, publicada só no IP da <code>core-services-vm</code> e alcançável só pela VPN) alcança tudo e exige a chave de um cliente (<code>agents_api_keys</code>); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o <code>ops</code> e o <code>mcp-grafana</code> exigem (<code>agents_tokens_internos.backends</code>: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos <code>0400</code> montados no container, e a autenticação do rastreio no Langfuse vem da variável <code>OTEL_EXPORTER_OTLP_TRACES_HEADERS</code> — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (<code>failOpen</code>). O hub não guarda sessão com os alvos (<code>statefulMode: stateless</code>): cada requisição abre e fecha a sua, e um alvo reiniciado volta sem deixar sessão órfã. Cada linha de log do hub traz o campo <code>cliente</code> (o metadado da chave: <code>claude_code</code>, <code>agentes</code>, <code>mcp_auth_servidor</code> ou <code>observador</code>), e o mesmo valor vai para o <code>ops</code> no cabeçalho <code>x-homeserver-cliente</code>, que entra no registro de auditoria. O cabeçalho é confiável porque só o hub tem o token interno do <code>ops</code>.</p>
+<p>O hub junta os MCPs em três endereços (a rota <code>autonomos</code>, dos agentes e do assistente, está na <a href="../16-posto-agentes/">seção 16</a>). A <strong>rota <code>leitura</code></strong> (porta 4000, só na rede interna, com tokens internos: o do <code>mcp_auth_servidor</code> e o do observador, <a href="../15-ia-observa/">seção 15</a>) recebe o conector <strong>Servidor</strong> e o observador e só alcança instâncias que não sabem escrever (<code>mcp_grafana_leitura</code>, <code>ops_leitura</code>), mais o Home Assistant e o n8n limitados a uma lista de ferramentas de consulta (<code>agents_leitura</code>). A <strong>rota <code>controle</code></strong> (porta 4100, publicada só no IP da <code>core-services-vm</code> e alcançável só pela VPN) alcança tudo e exige a chave de um cliente (<code>agents_api_keys</code>); no config vai só o hash. Os tokens do Home Assistant, do n8n e o token interno que o <code>ops</code> e o <code>mcp-grafana</code> exigem (<code>agents_tokens_internos.backends</code>: as redes Docker são compartilhadas com outras aplicações, então sem ele qualquer container chamaria as ferramentas) ficam em arquivos <code>0400</code> montados no container, e a autenticação do rastreio no Langfuse vem da variável <code>OTEL_EXPORTER_OTLP_TRACES_HEADERS</code> — o arquivo não tem nenhum segredo. Se um alvo cair, as ferramentas dele somem e o resto continua (<code>failOpen</code>). O hub não guarda sessão com os alvos (<code>statefulMode: stateless</code>): cada requisição abre e fecha a sua, e um alvo reiniciado volta sem deixar sessão órfã. Cada linha de log do hub traz o campo <code>cliente</code> (o metadado da chave: <code>claude_code</code>, <code>agentes</code>, <code>mcp_auth_servidor</code> ou <code>observador</code>), e o mesmo valor vai para o <code>ops</code> no cabeçalho <code>x-homeserver-cliente</code>, que entra no registro de auditoria. O cabeçalho é confiável porque só o hub tem o token interno do <code>ops</code>.</p>
 <div class="language-jinja highlight"><span class="filename">ansible/templates/agents/agentgateway.yaml.j2</span><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="x"># Hub de MCPs da base dos agentes (página 13). Gerado pelo setup-agents-volumes.yml em</span>
 </span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="x"># </span><span class="cp">{{</span> <span class="s1">'{{'</span> <span class="cp">}}</span><span class="x"> vm_local_data_path </span><span class="cp">{{</span> <span class="s1">'}}'</span> <span class="cp">}}</span><span class="x">/agentgateway/config.yaml. Sem segredos: chaves dos clientes só como hash;</span>
 </span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="x"># tokens dos alvos em arquivos (/segredos); autenticação do rastreio por variável de ambiente.</span>
@@ -1202,19 +1232,19 @@
 </span><span id="__span-1-6"><a href="#__codelineno-1-6" id="__codelineno-1-6" name="__codelineno-1-6"></a>  <span class="s1">'homeassistant'</span><span class="o">:</span> <span class="o">{</span><span class="s1">'host'</span><span class="o">:</span> <span class="s1">'http://homeassistant:8123/api/mcp'</span><span class="o">,</span> <span class="s1">'token'</span><span class="o">:</span> <span class="s1">'/segredos/homeassistant_token'</span><span class="o">},</span>
 </span><span id="__span-1-7"><a href="#__codelineno-1-7" id="__codelineno-1-7" name="__codelineno-1-7"></a>  <span class="s1">'n8n'</span><span class="o">:</span> <span class="o">{</span><span class="s1">'host'</span><span class="o">:</span> <span class="s1">'http://n8n:5678/mcp-server/http'</span><span class="o">,</span> <span class="s1">'token'</span><span class="o">:</span> <span class="s1">'/segredos/n8n_token'</span><span class="o">},</span>
 </span><span id="__span-1-8"><a href="#__codelineno-1-8" id="__codelineno-1-8" name="__codelineno-1-8"></a><span class="o">}</span> <span class="cp">%}</span>
-</span><span id="__span-1-9"><a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="cp">{%</span> <span class="k">macro</span> <span class="nv">alvos</span><span class="o">(</span><span class="nv">sufixo</span><span class="o">)</span> <span class="cp">%}</span>
+</span><span id="__span-1-9"><a href="#__codelineno-1-9" id="__codelineno-1-9" name="__codelineno-1-9"></a><span class="cp">{%</span> <span class="k">macro</span> <span class="nv">alvos</span><span class="o">(</span><span class="nv">grafana</span><span class="o">,</span> <span class="nv">ops</span><span class="o">)</span> <span class="cp">%}</span>
 </span><span id="__span-1-10"><a href="#__codelineno-1-10" id="__codelineno-1-10" name="__codelineno-1-10"></a><span class="x">          targets:</span>
 </span><span id="__span-1-11"><a href="#__codelineno-1-11" id="__codelineno-1-11" name="__codelineno-1-11"></a><span class="x">          # ops e mcp-grafana só aceitam o token interno do hub (as redes Docker são compartilhadas).</span>
 </span><span id="__span-1-12"><a href="#__codelineno-1-12" id="__codelineno-1-12" name="__codelineno-1-12"></a><span class="x">          - name: grafana</span>
 </span><span id="__span-1-13"><a href="#__codelineno-1-13" id="__codelineno-1-13" name="__codelineno-1-13"></a><span class="x">            mcp:</span>
-</span><span id="__span-1-14"><a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a><span class="x">              host: http://mcp_grafana_</span><span class="cp">{{</span> <span class="nv">sufixo</span> <span class="cp">}}</span><span class="x">:8000/mcp</span>
+</span><span id="__span-1-14"><a href="#__codelineno-1-14" id="__codelineno-1-14" name="__codelineno-1-14"></a><span class="x">              host: http://mcp_grafana_</span><span class="cp">{{</span> <span class="nv">grafana</span> <span class="cp">}}</span><span class="x">:8000/mcp</span>
 </span><span id="__span-1-15"><a href="#__codelineno-1-15" id="__codelineno-1-15" name="__codelineno-1-15"></a><span class="x">            policies:</span>
 </span><span id="__span-1-16"><a href="#__codelineno-1-16" id="__codelineno-1-16" name="__codelineno-1-16"></a><span class="x">              backendAuth:</span>
 </span><span id="__span-1-17"><a href="#__codelineno-1-17" id="__codelineno-1-17" name="__codelineno-1-17"></a><span class="x">                key:</span>
 </span><span id="__span-1-18"><a href="#__codelineno-1-18" id="__codelineno-1-18" name="__codelineno-1-18"></a><span class="x">                  file: /segredos/backends_token</span>
 </span><span id="__span-1-19"><a href="#__codelineno-1-19" id="__codelineno-1-19" name="__codelineno-1-19"></a><span class="x">          - name: ops</span>
 </span><span id="__span-1-20"><a href="#__codelineno-1-20" id="__codelineno-1-20" name="__codelineno-1-20"></a><span class="x">            mcp:</span>
-</span><span id="__span-1-21"><a href="#__codelineno-1-21" id="__codelineno-1-21" name="__codelineno-1-21"></a><span class="x">              host: http://ops_</span><span class="cp">{{</span> <span class="nv">sufixo</span> <span class="cp">}}</span><span class="x">:8000/mcp</span>
+</span><span id="__span-1-21"><a href="#__codelineno-1-21" id="__codelineno-1-21" name="__codelineno-1-21"></a><span class="x">              host: http://ops_</span><span class="cp">{{</span> <span class="nv">ops</span> <span class="cp">}}</span><span class="x">:8000/mcp</span>
 </span><span id="__span-1-22"><a href="#__codelineno-1-22" id="__codelineno-1-22" name="__codelineno-1-22"></a><span class="x">            policies:</span>
 </span><span id="__span-1-23"><a href="#__codelineno-1-23" id="__codelineno-1-23" name="__codelineno-1-23"></a><span class="x">              backendAuth:</span>
 </span><span id="__span-1-24"><a href="#__codelineno-1-24" id="__codelineno-1-24" name="__codelineno-1-24"></a><span class="x">                key:</span>
@@ -1241,7 +1271,7 @@
 </span><span id="__span-1-45"><a href="#__codelineno-1-45" id="__codelineno-1-45" name="__codelineno-1-45"></a><span class="x">    format: json</span>
 </span><span id="__span-1-46"><a href="#__codelineno-1-46" id="__codelineno-1-46" name="__codelineno-1-46"></a><span class="x">    fields:</span>
 </span><span id="__span-1-47"><a href="#__codelineno-1-47" id="__codelineno-1-47" name="__codelineno-1-47"></a><span class="x">      add:</span>
-</span><span id="__span-1-48"><a href="#__codelineno-1-48" id="__codelineno-1-48" name="__codelineno-1-48"></a><span class="x">        cliente: 'apiKey.cliente' # qual chave chamou (claude_code, agentes, mcp_auth_servidor)</span>
+</span><span id="__span-1-48"><a href="#__codelineno-1-48" id="__codelineno-1-48" name="__codelineno-1-48"></a><span class="x">        cliente: 'apiKey.cliente' # qual chave chamou (claude_code, mcp_auth_servidor, observador, agentes, assistente)</span>
 </span><span id="__span-1-49"><a href="#__codelineno-1-49" id="__codelineno-1-49" name="__codelineno-1-49"></a><span class="x">  tracing:</span>
 </span><span id="__span-1-50"><a href="#__codelineno-1-50" id="__codelineno-1-50" name="__codelineno-1-50"></a><span class="x">    otlpEndpoint: http://</span><span class="cp">{{</span> <span class="nv">ai_desktop_vm_ip_var</span> <span class="cp">}}</span><span class="x">:3100/api/public/otel</span>
 </span><span id="__span-1-51"><a href="#__codelineno-1-51" id="__codelineno-1-51" name="__codelineno-1-51"></a><span class="x">    otlpProtocol: http</span>
@@ -1284,7 +1314,7 @@
 </span><span id="__span-1-88"><a href="#__codelineno-1-88" id="__codelineno-1-88" name="__codelineno-1-88"></a><span class="x">          statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)</span>
 </span><span id="__span-1-89"><a href="#__codelineno-1-89" id="__codelineno-1-89" name="__codelineno-1-89"></a><span class="x">          prefixMode: always</span>
 </span><span id="__span-1-90"><a href="#__codelineno-1-90" id="__codelineno-1-90" name="__codelineno-1-90"></a><span class="x">          failureMode: failOpen</span>
-</span><span id="__span-1-91"><a href="#__codelineno-1-91" id="__codelineno-1-91" name="__codelineno-1-91"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'leitura'</span><span class="o">)</span> <span class="cp">}}</span>
+</span><span id="__span-1-91"><a href="#__codelineno-1-91" id="__codelineno-1-91" name="__codelineno-1-91"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'leitura'</span><span class="o">,</span> <span class="s1">'leitura'</span><span class="o">)</span> <span class="cp">}}</span>
 </span><span id="__span-1-92"><a href="#__codelineno-1-92" id="__codelineno-1-92" name="__codelineno-1-92"></a><span class="x"># Rota de controle: porta publicada no IP da core-services-vm, que a LAN não alcança (firewall_docker_portas):</span>
 </span><span id="__span-1-93"><a href="#__codelineno-1-93" id="__codelineno-1-93" name="__codelineno-1-93"></a><span class="x"># só pela VPN (página 14), com a chave de cada cliente.</span>
 </span><span id="__span-1-94"><a href="#__codelineno-1-94" id="__codelineno-1-94" name="__codelineno-1-94"></a><span class="x">- port: 4100</span>
@@ -1310,7 +1340,43 @@
 </span><span id="__span-1-114"><a href="#__codelineno-1-114" id="__codelineno-1-114" name="__codelineno-1-114"></a><span class="x">          statefulMode: stateless # cada requisição abre e fecha a sessão com os alvos (sem estado no hub)</span>
 </span><span id="__span-1-115"><a href="#__codelineno-1-115" id="__codelineno-1-115" name="__codelineno-1-115"></a><span class="x">          prefixMode: always</span>
 </span><span id="__span-1-116"><a href="#__codelineno-1-116" id="__codelineno-1-116" name="__codelineno-1-116"></a><span class="x">          failureMode: failOpen</span>
-</span><span id="__span-1-117"><a href="#__codelineno-1-117" id="__codelineno-1-117" name="__codelineno-1-117"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'controle'</span><span class="o">)</span> <span class="cp">}}</span>
+</span><span id="__span-1-117"><a href="#__codelineno-1-117" id="__codelineno-1-117" name="__codelineno-1-117"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'controle'</span><span class="o">,</span> <span class="s1">'controle'</span><span class="o">)</span> <span class="cp">}}</span>
+</span><span id="__span-1-118"><a href="#__codelineno-1-118" id="__codelineno-1-118" name="__codelineno-1-118"></a><span class="x"># Rota dos autônomos (página 16): agentes do posto e o assistente, na ai-desktop-vm (a 4200 só aceita a VM de IA</span>
+</span><span id="__span-1-119"><a href="#__codelineno-1-119" id="__codelineno-1-119" name="__codelineno-1-119"></a><span class="x"># pela LAN). Leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e agem só pelo ops_controle,</span>
+</span><span id="__span-1-120"><a href="#__codelineno-1-120" id="__codelineno-1-120" name="__codelineno-1-120"></a><span class="x"># que exige a aprovação do Léo para estes clientes (OPS_CLIENTES_COM_APROVACAO).</span>
+</span><span id="__span-1-121"><a href="#__codelineno-1-121" id="__codelineno-1-121" name="__codelineno-1-121"></a><span class="x">- port: 4200</span>
+</span><span id="__span-1-122"><a href="#__codelineno-1-122" id="__codelineno-1-122" name="__codelineno-1-122"></a><span class="x">  listeners:</span>
+</span><span id="__span-1-123"><a href="#__codelineno-1-123" id="__codelineno-1-123" name="__codelineno-1-123"></a><span class="x">  - name: autonomos</span>
+</span><span id="__span-1-124"><a href="#__codelineno-1-124" id="__codelineno-1-124" name="__codelineno-1-124"></a><span class="x">    routes:</span>
+</span><span id="__span-1-125"><a href="#__codelineno-1-125" id="__codelineno-1-125" name="__codelineno-1-125"></a><span class="x">    - name: autonomos</span>
+</span><span id="__span-1-126"><a href="#__codelineno-1-126" id="__codelineno-1-126" name="__codelineno-1-126"></a><span class="x">      policies:</span>
+</span><span id="__span-1-127"><a href="#__codelineno-1-127" id="__codelineno-1-127" name="__codelineno-1-127"></a><span class="x">        apiKey:</span>
+</span><span id="__span-1-128"><a href="#__codelineno-1-128" id="__codelineno-1-128" name="__codelineno-1-128"></a><span class="x">          mode: strict</span>
+</span><span id="__span-1-129"><a href="#__codelineno-1-129" id="__codelineno-1-129" name="__codelineno-1-129"></a><span class="x">          location:</span>
+</span><span id="__span-1-130"><a href="#__codelineno-1-130" id="__codelineno-1-130" name="__codelineno-1-130"></a><span class="x">            header:</span>
+</span><span id="__span-1-131"><a href="#__codelineno-1-131" id="__codelineno-1-131" name="__codelineno-1-131"></a><span class="x">              name: Authorization</span>
+</span><span id="__span-1-132"><a href="#__codelineno-1-132" id="__codelineno-1-132" name="__codelineno-1-132"></a><span class="x">              prefix: "Bearer "</span>
+</span><span id="__span-1-133"><a href="#__codelineno-1-133" id="__codelineno-1-133" name="__codelineno-1-133"></a><span class="x">          keys:</span>
+</span><span id="__span-1-134"><a href="#__codelineno-1-134" id="__codelineno-1-134" name="__codelineno-1-134"></a><span class="cp">{%</span> <span class="k">for</span> <span class="nv">cliente</span><span class="o">,</span> <span class="nv">chave</span> <span class="k">in</span> <span class="nv">agents_autonomos_keys.items</span><span class="o">()</span> <span class="cp">%}</span>
+</span><span id="__span-1-135"><a href="#__codelineno-1-135" id="__codelineno-1-135" name="__codelineno-1-135"></a><span class="x">          - keyHash: "sha256:</span><span class="cp">{{</span> <span class="nv">chave</span> <span class="o">|</span> <span class="nf">hash</span><span class="o">(</span><span class="s1">'sha256'</span><span class="o">)</span> <span class="cp">}}</span><span class="x">"</span>
+</span><span id="__span-1-136"><a href="#__codelineno-1-136" id="__codelineno-1-136" name="__codelineno-1-136"></a><span class="x">            metadata:</span>
+</span><span id="__span-1-137"><a href="#__codelineno-1-137" id="__codelineno-1-137" name="__codelineno-1-137"></a><span class="x">              cliente: </span><span class="cp">{{</span> <span class="nv">cliente</span> <span class="cp">}}</span>
+</span><span id="__span-1-138"><a href="#__codelineno-1-138" id="__codelineno-1-138" name="__codelineno-1-138"></a><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</span><span id="__span-1-139"><a href="#__codelineno-1-139" id="__codelineno-1-139" name="__codelineno-1-139"></a><span class="x">        mcpAuthorization:</span>
+</span><span id="__span-1-140"><a href="#__codelineno-1-140" id="__codelineno-1-140" name="__codelineno-1-140"></a><span class="x">          rules:</span>
+</span><span id="__span-1-141"><a href="#__codelineno-1-141" id="__codelineno-1-141" name="__codelineno-1-141"></a><span class="cp">{%</span> <span class="k">for</span> <span class="nv">alvo</span><span class="o">,</span> <span class="nv">ferramentas</span> <span class="k">in</span> <span class="nv">agents_leitura.items</span><span class="o">()</span> <span class="cp">%}</span>
+</span><span id="__span-1-142"><a href="#__codelineno-1-142" id="__codelineno-1-142" name="__codelineno-1-142"></a><span class="cp">{%</span> <span class="k">if</span> <span class="nv">ferramentas</span> <span class="o">==</span> <span class="s1">'*'</span> <span class="cp">%}</span>
+</span><span id="__span-1-143"><a href="#__codelineno-1-143" id="__codelineno-1-143" name="__codelineno-1-143"></a><span class="x">          - allow: 'mcp.tool.target == "</span><span class="cp">{{</span> <span class="nv">alvo</span> <span class="cp">}}</span><span class="x">"'</span>
+</span><span id="__span-1-144"><a href="#__codelineno-1-144" id="__codelineno-1-144" name="__codelineno-1-144"></a><span class="cp">{%</span> <span class="k">else</span> <span class="cp">%}</span>
+</span><span id="__span-1-145"><a href="#__codelineno-1-145" id="__codelineno-1-145" name="__codelineno-1-145"></a><span class="x">          - allow: 'mcp.tool.target == "</span><span class="cp">{{</span> <span class="nv">alvo</span> <span class="cp">}}</span><span class="x">" &amp;&amp; mcp.tool.name in </span><span class="cp">{{</span> <span class="nv">ferramentas</span> <span class="o">|</span> <span class="nf">to_json</span> <span class="cp">}}</span><span class="x">'</span>
+</span><span id="__span-1-146"><a href="#__codelineno-1-146" id="__codelineno-1-146" name="__codelineno-1-146"></a><span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span>
+</span><span id="__span-1-147"><a href="#__codelineno-1-147" id="__codelineno-1-147" name="__codelineno-1-147"></a><span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span>
+</span><span id="__span-1-148"><a href="#__codelineno-1-148" id="__codelineno-1-148" name="__codelineno-1-148"></a><span class="x">      backends:</span>
+</span><span id="__span-1-149"><a href="#__codelineno-1-149" id="__codelineno-1-149" name="__codelineno-1-149"></a><span class="x">      - mcp:</span>
+</span><span id="__span-1-150"><a href="#__codelineno-1-150" id="__codelineno-1-150" name="__codelineno-1-150"></a><span class="x">          statefulMode: stateless</span>
+</span><span id="__span-1-151"><a href="#__codelineno-1-151" id="__codelineno-1-151" name="__codelineno-1-151"></a><span class="x">          prefixMode: always</span>
+</span><span id="__span-1-152"><a href="#__codelineno-1-152" id="__codelineno-1-152" name="__codelineno-1-152"></a><span class="x">          failureMode: failOpen</span>
+</span><span id="__span-1-153"><a href="#__codelineno-1-153" id="__codelineno-1-153" name="__codelineno-1-153"></a><span class="cp">{{</span> <span class="nv">alvos</span><span class="o">(</span><span class="s1">'leitura'</span><span class="o">,</span> <span class="s1">'controle'</span><span class="o">)</span> <span class="cp">}}</span>
 </span></code></pre></div>
 <h2 id="rastreio-langfuse">Rastreio (Langfuse)<a class="headerlink" href="#rastreio-langfuse" title="Permanent link">¶</a></h2>
 <p>O <strong>Langfuse</strong> guarda cada chamada de LLM (o LiteLLM manda pelo callback <code>langfuse_otel</code>) e cada chamada de ferramenta pelo hub (traces OTLP), com custo, latência, entrada e saída. A tela fica em <code>https://langfuse.&lt;domínio&gt;</code>, atrás do Authelia; o login do próprio Langfuse é só pelo SSO (cliente OIDC <code>langfuse</code>, política <code>so_admins</code>): quem entra cai na organização <strong>Homeserver</strong> como admin. O <code>langfuse_web</code> e o <code>mcp_auth_servidor</code> falam com o Authelia pela LAN (<code>extra_hosts</code> de <code>auth.</code> para o Traefik na <code>core-services-vm</code>). A organização, o projeto e as chaves (<code>langfuse_secrets.public_key</code>/<code>secret_key</code>) são criados na primeira subida pelas variáveis <code>LANGFUSE_INIT_*</code> — não há passos na tela.</p>
@@ -1329,7 +1395,7 @@
 <li><strong>n8n:</strong> <em>Settings → Instance-level MCP</em> → <strong>Enable MCP access</strong> → aba <strong>API key</strong> → <code>n8n_mcp_token</code>. Libere os workflows que a IA pode ver e executar (<em>Available in MCP</em> em cada workflow, ou <strong>Workflows enabled</strong>); nenhum fica liberado sem você marcar.</li>
 <li><strong>Portainer:</strong> <em>My account → Access tokens → Add access token</em> → <code>portainer_api_key</code>. Confira os nomes dos ambientes em <em>Environments</em> (<code>local</code> para a core e o agente da VM de IA) e ajuste <code>ops_endpoints</code> se forem outros.</li>
 <li><strong>Runner do Ansible:</strong> <code>ssh-keygen -t ed25519 -C ops-runner -f ops-runner</code> na máquina de controle → a privada vai para <code>ops_ssh_private_key</code>; a pública (<code>ops-runner.pub</code>) entra no <code>~/.ssh/authorized_keys</code> do usuário Ansible das VMs (<code>vm_ansible_user_name</code>). <strong>Não</strong> a coloque no host Proxmox: nenhum playbook liberado para o runner roda nele. <code>ops_vault_password</code> é a senha do <code>ansible-vault</code> deste repositório. O runner só funciona depois que o <code>vault.yml</code> criptografado existir no repositório (ele clona do GitHub).</li>
-<li><strong>Clientes do hub:</strong> <code>agents_api_keys.claude_code</code> e <code>agents_api_keys.agentes</code> (<code>ag-</code> + <code>openssl rand -hex 24</code>), e os tokens internos <code>agents_tokens_internos.backends</code> (hub → <code>ops</code>/<code>mcp-grafana</code>) e <code>agents_tokens_internos.proxy</code> (<code>mcp_auth_servidor</code> → rota de leitura), com <code>openssl rand -hex 32</code>.</li>
+<li><strong>Clientes do hub:</strong> <code>agents_api_keys.claude_code</code> (<code>ag-</code> + <code>openssl rand -hex 24</code>; as chaves <code>agents_autonomos_keys</code> dos agentes e do assistente estão nas seções 16 e 17), e os tokens internos <code>agents_tokens_internos.backends</code> (hub → <code>ops</code>/<code>mcp-grafana</code>) e <code>agents_tokens_internos.proxy</code> (<code>mcp_auth_servidor</code> → rota de leitura), com <code>openssl rand -hex 32</code>.</li>
 <li><strong>Langfuse:</strong> <code>langfuse_secrets</code> (salt e segredos com <code>openssl rand -base64 32</code>, <code>encryption_key</code> com <code>openssl rand -hex 32</code>, chaves do projeto <code>pk-lf-…</code>/<code>sk-lf-…</code>) e o cliente OIDC <code>langfuse</code> (<code>oidc_clients.langfuse</code>, digest como nos outros clientes, página 05).</li>
 </ol>
 <h2 id="deploy">Deploy<a class="headerlink" href="#deploy" title="Permanent link">¶</a></h2>
@@ -1357,8 +1423,8 @@
 <td><code>claude mcp add --transport http servidor http://&lt;IP da core-services-vm&gt;:4100/mcp --header "Authorization: Bearer &lt;agents_api_keys.claude_code&gt;"</code>. A chave fica no <code>~/.claude.json</code> do seu usuário, nunca em repositório. Sem o Tailscale, a 4100 não responde (nem em casa): use a rota de leitura (<code>https://servidor.&lt;domínio&gt;/mcp</code>).</td>
 </tr>
 <tr>
-<td>Agentes (4c3)</td>
-<td>Mesma rota de controle, com a chave <code>agents_api_keys.agentes</code>. Eles rodam na <code>ai-desktop-vm</code>, que não tem Tailscale: quando a 4c3 chegar, o IP da ai entra nas <code>origens</code> da 4100 em <code>firewall_docker_portas</code> (página 01).</td>
+<td>Agentes e assistente</td>
+<td>Rota <code>autonomos</code> (porta 4200), com as chaves <code>agents_autonomos_keys.agentes</code> e <code>.assistente</code>: já configurada no posto (<a href="../16-posto-agentes/">seção 16</a>) e no assistente (<a href="../17-assistente/">seção 17</a>).</td>
 </tr>
 </tbody>
 </table>
@@ -1439,7 +1505,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="28 de outubro de 2026 21:44:47 -03">28 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="29 de outubro de 2026 02:32:15 -03">29 de outubro de 2026</span>
 </span>
 </aside>
 </article>

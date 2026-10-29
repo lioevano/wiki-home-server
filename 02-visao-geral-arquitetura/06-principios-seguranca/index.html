@@ -443,6 +443,30 @@
   </span>
 </a>
 </li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../01-manual-implementacao/16-posto-agentes/">
+<span class="md-ellipsis">
+    
+  
+    Posto de agentes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../01-manual-implementacao/17-assistente/">
+<span class="md-ellipsis">
+    
+  
+    Assistente (Hermes)
+  
+
+    
+  </span>
+</a>
+</li>
 </ul>
 </nav>
 </li>
@@ -1075,6 +1099,7 @@
 <li><strong>Portainer Agent (9001) na ai-desktop-vm:</strong> publicado só no IP da LAN e limitado à <code>core-services-vm</code> pela cadeia <code>HOMESERVER</code> (o UFW não filtra portas do Docker); além disso, o agente só aceita quem conhece o <code>AGENT_SECRET</code> (<code>portainer_agent_secret</code> do vault), e quem tem esse segredo controla o Docker da VM.</li>
 <li><strong>Jellyfin e Seerr públicos:</strong> ficam na internet pelo túnel, sem Authelia, porque os apps de TV e celular do Jellyfin não sabem passar por ele. Proteções: bloqueio após tentativas de login erradas no Jellyfin, senhas fortes, admin sem acesso remoto e usuários sem permissão de administração. Atenção: as regras de uso da Cloudflare restringem servir vídeo em volume pelo túnel; se a conta for advertida, a alternativa é assistir fora de casa pela VPN (<a href="../../01-manual-implementacao/14-vpn-tailscale/">Tailscale</a>) e tirar o Jellyfin do túnel.</li>
 <li><strong>Immich, Nextcloud e Collabora públicos:</strong> ficam na internet pelo túnel, sem o forward-auth do Authelia (os apps de celular e desktop não passam por ele), mas o login de cada um é o OIDC do próprio Authelia, com <code>two_factor</code>; o Immich não cria contas pelo OIDC (<code>autoRegister</code> desligado) e o login por senha é desligado depois do primeiro acesso. O Collabora só edita documentos deste Nextcloud (<code>aliasgroup1</code>) e cada documento exige um token WOPI. Ver <a href="../../01-manual-implementacao/11-fotos-arquivos/">Fotos e Arquivos</a>.</li>
+<li><strong>Agentes autônomos com aprovação humana:</strong> os agentes do posto e o assistente do Telegram trabalham sem ninguém olhando, então usam uma rota própria do hub (4200, só da <code>ai-desktop-vm</code>): leem tudo e agem só pelo <code>ops</code>, que transforma cada ação num pedido com botões no Telegram e na tela <code>aprovacoes.</code> (<a href="../../01-manual-implementacao/16-posto-agentes/">seção 16</a>). O assistente não tem terminal, código nem internet (<a href="../../01-manual-implementacao/17-assistente/">seção 17</a>).</li>
 <li><strong>VPN (Tailscale) e rota de controle:</strong> a <code>core-services-vm</code> é <em>subnet router</em> das duas VMs (<a href="../../01-manual-implementacao/14-vpn-tailscale/">seção 14</a>). A rota de controle do hub (4100), que age no servidor, não aceita ninguém pela LAN: só pela VPN, cifrada pelo WireGuard, e com a chave de cada cliente. A ACL do painel do Tailscale decide quem da VPN alcança o quê.</li>
 <li><strong>qBittorrent só pela VPN:</strong> ele usa a rede do gluetun (ProtonVPN); se o túnel cair, o firewall do gluetun corta a saída e o IP de casa não aparece no enxame.</li>
 <li><strong>Alloy como root nas VMs:</strong> necessário para o cAdvisor ler <code>/var/lib/docker</code> e para os logs dos containers; no host Proxmox ele roda como o usuário <code>alloy</code>.</li>
@@ -1114,7 +1139,7 @@
 <span class="md-icon" title="Última atualização">
 <svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
 </span>
-<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="28 de outubro de 2026 21:11:50 -03">28 de outubro de 2026</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="29 de outubro de 2026 02:32:15 -03">29 de outubro de 2026</span>
 </span>
 </aside>
 </article>
