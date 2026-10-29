@@ -13,7 +13,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v2.11.2
+    image: traefik:v3.7.16
     container_name: traefik
     restart: unless-stopped
     security_opt:
@@ -46,7 +46,7 @@ services:
       start_period: 15s
 
   cloudflared:
-    image: cloudflare/cloudflared:2024.5.0
+    image: cloudflare/cloudflared:2026.10.5
     container_name: cloudflared
     restart: unless-stopped
     networks:
@@ -57,7 +57,7 @@ services:
         condition: service_healthy
 
   authelia_db:
-    image: postgres:15.6-alpine
+    image: postgres:17-alpine
     labels:
       diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
       diun.include_tags: ".*"
@@ -80,7 +80,7 @@ services:
       retries: 5
 
   authelia:
-    image: authelia/authelia:4.38.0
+    image: authelia/authelia:4.39.28
     container_name: authelia
     restart: unless-stopped
     volumes:
@@ -103,6 +103,7 @@ services:
       traefik.http.routers.authelia-portal.tls.certresolver: letsencrypt
       traefik.http.routers.authelia-portal.service: authelia-svc
       traefik.http.services.authelia-svc.loadbalancer.server.port: "9091"
-      traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/verify?rd=https://auth.${BASE_DOMAIN_FROM_VAULT}/"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/authz/forward-auth"
       traefik.http.middlewares.authelia-forwardauth.forwardauth.trustForwardHeader: "true"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.maxResponseBodySize: "8192"
       traefik.http.middlewares.authelia-forwardauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"

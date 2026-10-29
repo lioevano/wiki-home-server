@@ -51,7 +51,7 @@ Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-v
 
 1. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`; modelo e comandos de geração no [`vault.yml.example`](01-maquina-controle-ansible.md)):
     * `authelia_oidc_hmac_secret` (`openssl rand -hex 32`) e `authelia_oidc_jwks_key` (`openssl genrsa 2048`);
-    * `oidc_clients.immich` e `oidc_clients.nextcloud`: `secret` (`openssl rand -hex 32`) e `secret_digest`, gerado com `docker run --rm authelia/authelia:4.38.0 authelia crypto hash generate pbkdf2 --variant sha512 --password <secret>` (o valor depois de `Digest: `);
+    * `oidc_clients.immich` e `oidc_clients.nextcloud`: `secret` (`openssl rand -hex 32`) e `secret_digest`, gerado com `docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate pbkdf2 --variant sha512 --password <secret>` (o valor depois de `Digest: `);
     * `immich_db_password`; `nextcloud_db_password` e `nextcloud_admin_initial_password` (já existiam).
 2. **Authelia:** rode o `setup-core-networking.yml` (gera o `configuration.yml` com o provedor OIDC e as regras) e reinicie o container: `docker restart authelia`. Confira no log que não há erro de configuração (`docker logs authelia | grep -i error`).
 3. **Volumes e `.env`** (cada um primeiro com `--check`):

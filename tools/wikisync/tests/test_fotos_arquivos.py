@@ -112,6 +112,12 @@ def test_bypass_dos_publicos():
 @pytest.mark.skipif(shutil.which("authelia") is None or shutil.which("openssl") is None,
                     reason="binário authelia ou openssl ausente")
 def test_authelia_validate_config(tmp_path):
+    # O binário precisa ser a versão do compose: um 4.38 recusaria as chaves da 4.39 (claims_policies).
+    fixada = re.search(r"authelia/authelia:(\S+)", (ROOT / "server/docker/stacks/core/docker-compose.yml")
+                       .read_text(encoding="utf-8")).group(1)
+    local = subprocess.run(["authelia", "--version"], capture_output=True, text=True).stdout.split()[-1].lstrip("v")
+    if local != fixada:
+        pytest.skip(f"binário authelia {local} difere da versão fixada {fixada}")
     pem = subprocess.run(["openssl", "genrsa", "2048"], capture_output=True, text=True, check=True).stdout.strip()
 
     def digest(s):

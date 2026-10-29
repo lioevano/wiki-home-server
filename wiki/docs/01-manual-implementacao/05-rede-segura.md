@@ -55,7 +55,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v2.11.2
+    image: traefik:v3.7.16
     container_name: traefik
     restart: unless-stopped
     security_opt:
@@ -88,7 +88,7 @@ services:
       start_period: 15s
 
   cloudflared:
-    image: cloudflare/cloudflared:2024.5.0
+    image: cloudflare/cloudflared:2026.10.5
     container_name: cloudflared
     restart: unless-stopped
     networks:
@@ -99,7 +99,7 @@ services:
         condition: service_healthy
 
   authelia_db:
-    image: postgres:15.6-alpine
+    image: postgres:17-alpine
     labels:
       diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
       diun.include_tags: ".*"
@@ -122,7 +122,7 @@ services:
       retries: 5
 
   authelia:
-    image: authelia/authelia:4.38.0
+    image: authelia/authelia:4.39.28
     container_name: authelia
     restart: unless-stopped
     volumes:
@@ -145,8 +145,9 @@ services:
       traefik.http.routers.authelia-portal.tls.certresolver: letsencrypt
       traefik.http.routers.authelia-portal.service: authelia-svc
       traefik.http.services.authelia-svc.loadbalancer.server.port: "9091"
-      traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/verify?rd=https://auth.${BASE_DOMAIN_FROM_VAULT}/"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/authz/forward-auth"
       traefik.http.middlewares.authelia-forwardauth.forwardauth.trustForwardHeader: "true"
+      traefik.http.middlewares.authelia-forwardauth.forwardauth.maxResponseBodySize: "8192"
       traefik.http.middlewares.authelia-forwardauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
 ```
 
@@ -161,80 +162,17 @@ Authelia fornecerá o portal de autenticação e o serviço de 2FA. O conteúdo 
 !!! warning "Banco do Authelia fora dos snapshots ZFS"
     O Postgres do Authelia (`authelia_db`: dispositivos 2FA, sessões e consentimentos OIDC) fica no disco local da `core-services-vm`, em `/opt/local-data/authelia-db`: o Postgres exige ser dono dos arquivos, o que o NFS com `all_squash` não permite (regra DAD-5). O backup é o dump diário `backup-authelia-db` (03:15) em `docker-volumes/authelia/db-dumps/`, instalado pelo `setup-core-networking.yml` ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#bancos-de-dados-dumps-diários)). Os usuários (`users_database.yml`) e a configuração ficam no NFS.
 
-```yaml title="Trecho: docker/stacks/core/docker-compose.yml (serviços Authelia)"
-# docker/stacks/core/docker-compose.yml (serviços Authelia)
-version: '3.9'
+Os serviços `authelia` e `authelia_db` estão no bloco da [seção 5.2](#52-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml). O que importa neles:
 
-networks:
-  proxy: # Para Traefik alcançar o portal Authelia e o endpoint de verificação
-    name: proxy
-    external: true
-  internal_services: # Rede para o banco de dados PostgreSQL do Authelia
-    name: internal_services
-    external: true
+| Item | Valor | Por quê |
+|---|---|---|
+| Imagem | `authelia/authelia:4.39.28` | Versão fixada (política de versões). A imagem não tem shell: comandos são `docker exec authelia authelia …` |
+| Middleware `authelia-forwardauth` | `http://authelia:9091/api/authz/forward-auth` | Endpoint atual do forward-auth (o `/api/verify` é legado). A URL do portal vem de `session.cookies[].authelia_url` |
+| `trustForwardHeader` | `true` | O Authelia precisa do `X-Forwarded-Host`/`-Uri` que o Traefik manda; o Traefik só aceita esses cabeçalhos de fora vindos da rede Docker (`forwardedHeaders.trustedIPs`) |
+| `maxResponseBodySize` | `8192` | Limite da resposta do Authelia (o exemplo oficial); sem ele, o Traefik aceitaria qualquer tamanho |
+| `authResponseHeaders` | `Remote-User,Remote-Groups,Remote-Name,Remote-Email` | Quem passou pelo Authelia chega ao backend com esses cabeçalhos (o Grafana usa o `Remote-User`) |
+| Banco | `postgres:17-alpine` em `${AUTHELIA_DB_PATH}`, só na rede `internal_services` | Disco local (DAD-5), dump diário no NFS |
 
-services:
-  authelia:
-    image: authelia/authelia:4.38.0 # Use uma versão específica e estável. Verifique por atualizações.
-    container_name: authelia
-    restart: unless-stopped
-    volumes:
-      # Caminho NFS para as configurações do Authelia.
-      # As variáveis ${VM_NFS_MOUNT_BASE_PATH} e ${ZFS_DOCKER_VOLUMES_DATASET_NAME} virão do .env.
-      - "${VM_NFS_MOUNT_BASE_PATH}/${ZFS_DOCKER_VOLUMES_DATASET_NAME}/authelia/config:/config"
-      - "/etc/localtime:/etc/localtime:ro" # Sincroniza fuso horário
-    networks:
-      - proxy
-      - internal_services
-    expose:
-      # Expõe a porta interna do Authelia para outros containers na mesma rede Docker,
-      # mas não a mapeia para o host da VM. Traefik acessará esta porta.
-      - "9091"
-    environment:
-      - TZ=${SYSTEM_TIMEZONE_FROM_VAULT} # Injetado pelo .env
-      # Outras variáveis de ambiente podem ser definidas aqui se o configuration.yml do Authelia
-      # estiver configurado para lê-las (e.g., segredos, embora seja melhor no config.yml).
-      # AUTHELIA_JWT_SECRET: ${AUTHELIA_JWT_SECRET_FROM_VAULT} # Exemplo
-      # AUTHELIA_SESSION_SECRET: ${AUTHELIA_SESSION_SECRET_FROM_VAULT} # Exemplo
-    depends_on: # Garante que o banco de dados esteja saudável antes de iniciar Authelia
-      authelia_db:
-        condition: service_healthy
-    labels: # Labels Traefik para expor o portal Authelia e definir o middleware de autenticação
-      traefik.enable: "true"
-      # --- Roteador para o portal Authelia (e.g., auth.seudominio.com) ---
-      traefik.http.routers.authelia-portal.rule: "Host(`auth.${BASE_DOMAIN_FROM_VAULT}`)"
-      traefik.http.routers.authelia-portal.entrypoints: "websecure"
-      traefik.http.routers.authelia-portal.tls.certresolver: "letsencrypt"
-      traefik.http.routers.authelia-portal.service: "authelia-svc"
-      # --- Serviço Traefik para o portal Authelia ---
-      traefik.http.services.authelia-svc.loadbalancer.server.port: "9091" # Porta interna do Authelia
-      # --- Middleware de Forward Authentication Authelia ---
-      # Este middleware será referenciado por outros serviços que precisam ser protegidos.
-      # O nome 'authelia-forwardauth@docker' é como outros containers (via suas labels) referenciarão este middleware.
-      traefik.http.middlewares.authelia-forwardauth.forwardauth.address: "http://authelia:9091/api/verify?rd=https://auth.${BASE_DOMAIN_FROM_VAULT}/"
-      traefik.http.middlewares.authelia-forwardauth.forwardauth.trustForwardHeader: "true" # Confia nos headers X-Forwarded-* do Traefik
-      traefik.http.middlewares.authelia-forwardauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email" # Headers a serem passados para o serviço backend após auth
-
-  authelia_db: # Banco de dados PostgreSQL para Authelia
-    image: postgres:15.6-alpine # Use uma versão específica e estável.
-    container_name: authelia_db
-    restart: unless-stopped
-    volumes:
-      # Disco local da VM (o Postgres não roda bem sobre NFS com all_squash); dump diário para o NFS (página 04/02).
-      - "${AUTHELIA_DB_PATH}:/var/lib/postgresql/data"
-    networks:
-      - internal_services # Apenas na rede interna, não acessível diretamente pelo Traefik ou externamente
-    environment:
-      - POSTGRES_DB=authelia
-      - POSTGRES_USER=authelia
-      - POSTGRES_PASSWORD=${AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT} # Injetado pelo .env
-      - TZ=${SYSTEM_TIMEZONE_FROM_VAULT} # Injetado pelo .env
-    healthcheck: # Verifica se o banco de dados PostgreSQL está pronto para aceitar conexões
-      test: ["CMD-SHELL", "pg_isready -U authelia -d authelia -h localhost"] # -h localhost pois roda dentro do container
-      interval: 10s
-      timeout: 5s
-      retries: 5
-```
 
 ## 5.4. Playbook `ansible/playbooks/setup-core-networking.yml`
 
@@ -259,6 +197,8 @@ Este playbook Ansible prepara os arquivos de configuração e faz o deploy da st
 ### Ações Preparatórias: Roles Ansible para Configuração
 
 Antes de criar o playbook, precisamos dos roles que preparam os arquivos de configuração.
+
+Os dois roles (`traefik-config` e `authelia-config`) só geram arquivos de configuração: não têm `defaults/`. As versões das imagens da stack `core` ficam num lugar só, o compose da [seção 5.2](#52-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml).
 
 #### Role: `ansible/roles/infra/traefik-config/`
 
@@ -355,6 +295,7 @@ entryPoints:
           to: "websecure" # Nome do entrypoint HTTPS
           scheme: "https"
           permanent: true # Usa redirecionamento 301 (permanente)
+      aliasHeadersStrategy: delete # descarta cabeçalhos com '_' (ex.: Remote_User forjado); v3.7 avisa se faltar
   websecure: # Entrypoint principal para HTTPS na porta 443
     address: ":443"
     # O cloudflared chega pela rede Docker 'proxy' (172.16.0.0/12) e informa o IP real do visitante em
@@ -364,6 +305,9 @@ entryPoints:
       trustedIPs:
         - "172.16.0.0/12"
     http:
+      # Cabeçalhos com '_' ou outro caractere fora de letra/dígito/hífen são descartados: um Remote_User forjado
+      # não chega ao backend como se fosse o Remote-User do forward-auth do Authelia.
+      aliasHeadersStrategy: delete
       tls:
         certResolver: "letsencrypt" # Resolvedor padrão para certificados TLS
         domains: # Opcional: Define domínios para os quais gerar certificados "on-demand"
@@ -396,7 +340,8 @@ certificatesResolvers:
       # O token é passado como variável de ambiente para o container Traefik.
       dnsChallenge:
         provider: "cloudflare"
-        # delayBeforeCheck: 0 # Padrão geralmente funciona bem
+        # propagation:
+        #   delayBeforeChecks: 0s # Padrão geralmente funciona bem (nome da v3.3+; antes, delayBeforeCheck)
         # resolvers: # Opcional: especificar servidores DNS para verificação do desafio
         #  - "1.1.1.1:53"
         #  - "8.8.8.8:53"
@@ -655,15 +600,13 @@ Este role prepara os arquivos de configuração do Authelia.
 # Nome da instância exibido em alguns locais (e.g., título da página)
 instance_name: "Meu Servidor Doméstico"
 
-# URL de redirecionamento padrão se Authelia não souber para onde enviar o usuário
-# Geralmente o próprio portal Authelia.
-default_redirection_url: "https://auth.{{ base_domain }}/"
-
 # Tema da interface Authelia (opções: light, dark, grey)
 theme: dark
 
-# Segredos JWT e de Sessão (do vault.yml)
-jwt_secret: "{{ authelia_jwt_secret }}"
+# Segredo do link de redefinição de senha (do vault.yml). Na 4.39 fica aqui, não mais na raiz (jwt_secret).
+identity_validation:
+  reset_password:
+    jwt_secret: "{{ authelia_jwt_secret }}"
 
 # Método 2FA padrão para novos usuários (pode ser sobrescrito por usuário)
 # Opções: "totp" (Time-based One-Time Password), "webauthn" (FIDO2/Passkeys)
@@ -675,9 +618,14 @@ session:
   secret: "{{ authelia_session_secret }}" # Secret para criptografar o cookie (do vault.yml)
   expiration: 1h # Duração da sessão (e.g., 1h, 8h, 30d). Aumente se desejar sessões mais longas.
   inactivity: 10m  # Duração da inatividade antes de exigir re-autenticação (login novamente).
-  # Domínio do cookie. Importante para SSO entre subdomínios.
-  # DEVE ser o domínio pai (e.g., seudominio.com, NÃO auth.seudominio.com).
-  domain: "{{ base_domain }}"
+  # Um cookie por domínio. O domínio é o pai (seudominio.com, não auth.seudominio.com): o login vale para todos
+  # os subdomínios. O authelia_url é o portal: o forward-auth (/api/authz/forward-auth) manda para ele quem
+  # ainda não entrou. O default_redirection_url é para onde vai quem abre o portal direto (o painel); não pode
+  # ser o próprio portal.
+  cookies:
+    - domain: "{{ base_domain }}"
+      authelia_url: "https://auth.{{ base_domain }}"
+      default_redirection_url: "https://home.{{ base_domain }}"
   # Se usar Redis para sessões distribuídas (não coberto neste guia simples):
   # redis:
   #   host: authelia_redis # Nome do serviço Docker do Redis
@@ -824,6 +772,13 @@ identity_providers:
           {{ authelia_oidc_jwks_key | indent(10) }}
     # Quem pode entrar em cada aplicação pelo OIDC (além do 2FA): sem a política, qualquer usuário do Authelia
     # ganharia conta no Nextcloud ou no Immich.
+    # Na 4.39 o ID token só traz os claims padrão; o resto fica no userinfo. Os clientes daqui foram configurados
+    # contra o comportamento da 4.38 (o Langfuse e o mcp-auth-proxy leem o perfil do ID token), então todos usam
+    # a política "legado", que devolve ao ID token os claims de antes (documentação do Authelia, "Restore
+    # Functionality Prior to Claims Parameter").
+    claims_policies:
+      legado:
+        id_token: ["rat", "groups", "email", "email_verified", "alt_emails", "preferred_username", "name"]
     authorization_policies:
       so_admins:
         default_policy: deny
@@ -841,6 +796,7 @@ identity_providers:
         client_secret: "{{ oidc_clients.immich.secret_digest }}"
         public: false
         authorization_policy: "familia"
+        claims_policy: "legado"
         pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"
@@ -858,6 +814,7 @@ identity_providers:
         client_secret: "{{ oidc_clients.nextcloud.secret_digest }}"
         public: false
         authorization_policy: "familia"
+        claims_policy: "legado"
         pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"
@@ -873,6 +830,7 @@ identity_providers:
         client_secret: "{{ oidc_clients.openwebui.secret_digest }}"
         public: false
         authorization_policy: "so_admins"
+        claims_policy: "legado"
         pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"
@@ -890,6 +848,7 @@ identity_providers:
         client_secret: "{{ oidc_clients.mcp.secret_digest }}"
         public: false
         authorization_policy: "so_admins"
+        claims_policy: "legado"
         pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: false
         redirect_uris:
@@ -907,6 +866,7 @@ identity_providers:
         client_secret: "{{ oidc_clients.langfuse.secret_digest }}"
         public: false
         authorization_policy: "so_admins"
+        claims_policy: "legado"
         pre_configured_consent_duration: "1y" # consentimento lembrado (sem tela a cada login)
         require_pkce: true
         pkce_challenge_method: "S256"

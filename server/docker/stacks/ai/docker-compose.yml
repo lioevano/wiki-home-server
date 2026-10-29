@@ -52,7 +52,7 @@ services:
 
   # Chaves virtuais, orçamentos e registro de uso. Disco local da VM (backup: dump diário no NFS).
   litellm_db:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     labels:
       diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
       diun.include_tags: ".*"

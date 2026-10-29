@@ -37,7 +37,7 @@ authelia_session_secret: "SEU_SECRET_DE_SESSAO_PARA_AUTHELIA_MUITO_LONGO_E_ALEAT
 # Usuário administrador inicial do Authelia.
 authelia_admin_user_initial: "admin" # Ou seu nome de admin preferido
 # Hash da senha do administrador do Authelia. Gere com o comando Docker:
-# docker run --rm authelia/authelia:latest authelia crypto hash generate argon2 --password 'SUA_SENHA_ADMIN_AUTHELIA_FORTE'
+# docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate argon2 --password 'SUA_SENHA_ADMIN_AUTHELIA_FORTE'
 # Copie a saída completa, incluindo o $argon2id$...
 authelia_admin_password_hash_initial: "$argon2id$v=19$m=65536,t=3,p=4$SEU_SALT_GERADO_PELO_COMANDO$SEU_HASH_GERADO_PELO_COMANDO"
 # Senha para o usuário 'authelia' no banco de dados PostgreSQL do Authelia.
@@ -55,7 +55,7 @@ authelia_oidc_jwks_key: |
   -----END PRIVATE KEY-----
 # Um cliente por app. 'secret' (só letras e números: openssl rand -hex 32) vai para o app;
 # 'secret_digest' é o hash do mesmo segredo, que o Authelia guarda. Gere o digest com a imagem fixada:
-#   docker run --rm authelia/authelia:4.38.0 authelia crypto hash generate pbkdf2 --variant sha512 --password <secret>
+#   docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate pbkdf2 --variant sha512 --password <secret>
 # e copie o valor depois de "Digest: ".
 oidc_clients:
   immich:

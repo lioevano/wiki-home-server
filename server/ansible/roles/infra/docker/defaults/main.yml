@@ -1,7 +1,7 @@
 # ansible/roles/infra/docker/defaults/main.yml
 docker_ce_version: "" # Deixe vazio para instalar a última versão disponível
-portainer_ce_image: "portainer/portainer-ce:2.19.4"
+portainer_ce_image: "portainer/portainer-ce:2.45.3" # LTS; servidor e agente na mesma versão
 docker_proxy_network_name: "proxy"
 # Portainer completo na core-services-vm; Portainer Agent nas demais VMs Ubuntu (gerenciadas pelo central).
 docker_portainer_mode: "{{ 'server' if inventory_hostname in groups['core_services'] else 'agent' }}"
-portainer_agent_image: "portainer/agent:2.19.4"
+portainer_agent_image: "portainer/agent:2.45.3"

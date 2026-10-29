@@ -20,6 +20,7 @@ entryPoints:
           to: "websecure" # Nome do entrypoint HTTPS
           scheme: "https"
           permanent: true # Usa redirecionamento 301 (permanente)
+      aliasHeadersStrategy: delete # descarta cabeçalhos com '_' (ex.: Remote_User forjado); v3.7 avisa se faltar
   websecure: # Entrypoint principal para HTTPS na porta 443
     address: ":443"
     # O cloudflared chega pela rede Docker 'proxy' (172.16.0.0/12) e informa o IP real do visitante em
@@ -29,6 +30,9 @@ entryPoints:
       trustedIPs:
         - "172.16.0.0/12"
     http:
+      # Cabeçalhos com '_' ou outro caractere fora de letra/dígito/hífen são descartados: um Remote_User forjado
+      # não chega ao backend como se fosse o Remote-User do forward-auth do Authelia.
+      aliasHeadersStrategy: delete
       tls:
         certResolver: "letsencrypt" # Resolvedor padrão para certificados TLS
         domains: # Opcional: Define domínios para os quais gerar certificados "on-demand"
@@ -61,7 +65,8 @@ certificatesResolvers:
       # O token é passado como variável de ambiente para o container Traefik.
       dnsChallenge:
         provider: "cloudflare"
-        # delayBeforeCheck: 0 # Padrão geralmente funciona bem
+        # propagation:
+        #   delayBeforeChecks: 0s # Padrão geralmente funciona bem (nome da v3.3+; antes, delayBeforeCheck)
         # resolvers: # Opcional: especificar servidores DNS para verificação do desafio
         #  - "1.1.1.1:53"
         #  - "8.8.8.8:53"

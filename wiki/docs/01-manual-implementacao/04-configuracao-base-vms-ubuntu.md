@@ -354,7 +354,9 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
 - name: "Deploy Portainer CE container"
   community.docker.docker_container:
     name: portainer
-    image: portainer/portainer-ce:2.19.4 # Use uma versão específica e estável. Verifique a mais recente.
+    image: "{{ portainer_ce_image }}" # versão fixada em defaults/main.yml (a mesma do agente)
+    # HTTP na 9000 só na rede Docker 'proxy': é por onde o MCP ops (página 13) fala com a API do Portainer.
+    command: ["--http-enabled"]
     restart_policy: unless-stopped
     security_opt: ["no-new-privileges:true"] # Boa prática de segurança
     ports:

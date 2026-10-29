@@ -39,6 +39,8 @@ def test_portainer_server_e_agente_por_modo():
     server = _tarefa(t, "Deploy Portainer CE")
     assert server["when"] == "docker_portainer_mode == 'server'"
     assert server["community.docker.docker_container"]["env"]["AGENT_SECRET"] == "{{ portainer_agent_secret }}"
+    assert server["community.docker.docker_container"]["image"] == "{{ portainer_ce_image }}"
+    assert server["community.docker.docker_container"]["command"] == ["--http-enabled"]  # o ops usa a 9000 (HTTP)
     for nome in ("dados persistentes do Portainer", "rede Docker 'proxy'"):
         assert _tarefa(t, nome)["when"] == "docker_portainer_mode == 'server'", nome
     agente = _tarefa(t, "Portainer Agent")
@@ -48,7 +50,9 @@ def test_portainer_server_e_agente_por_modo():
     assert c["ports"] == ["{{ hostvars[inventory_hostname]['ansible_host'] }}:9001:9001"]
     assert c["env"]["AGENT_SECRET"] == "{{ portainer_agent_secret }}"
     assert "/var/run/docker.sock:/var/run/docker.sock" in c["volumes"]
-    assert _yaml(DOCKER_DEFAULTS)["portainer_agent_image"] == "portainer/agent:2.19.4"
+    d = _yaml(DOCKER_DEFAULTS)
+    # Servidor e agente na mesma versão (o Docker 29 exige API ≥ 1.44: nada de 2.19).
+    assert d["portainer_agent_image"].split(":")[1] == d["portainer_ce_image"].split(":")[1] == "2.45.3"
 
 
 def test_segredo_do_agente_no_vault_example():

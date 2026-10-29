@@ -95,7 +95,7 @@ Traefik é um componente central para gerenciar o tráfego interno para seus con
 Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e opcionalmente 2FA) antes que os usuários possam acessar os serviços protegidos.
 
 *   **Integração com Traefik:** Traefik é configurado para usar Authelia como um [middleware de forward authentication](https://doc.traefik.io/traefik/middlewares/http/forwardauth/).
-    *   Quando uma requisição chega para um serviço protegido, Traefik envia informações sobre a requisição para o endpoint `/api/verify` do Authelia.
+    *   Quando uma requisição chega para um serviço protegido, Traefik envia informações sobre a requisição para o endpoint `/api/authz/forward-auth` do Authelia.
     *   Authelia verifica se o usuário tem uma sessão válida (através de um cookie).
 *   **Portal de Login:** Se o usuário não estiver autenticado, Authelia instrui Traefik a redirecionar o navegador do usuário para o portal de login do Authelia (e.g., `https://auth.seudominio.com`).
 *   **Autenticação de Múltiplos Fatores (MFA):** Após fornecer credenciais válidas (usuário/senha), Authelia pode exigir um segundo fator (e.g., código TOTP de um app autenticador).

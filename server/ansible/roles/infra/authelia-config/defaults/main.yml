@@ -1,4 +1,0 @@
-# ansible/roles/infra/authelia-config/defaults/main.yml
-authelia_portal_subdomain: "auth"
-authelia_db_image: "postgres:15.6-alpine"
-authelia_image: "authelia/authelia:4.38.0"

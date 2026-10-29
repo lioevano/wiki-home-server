@@ -169,7 +169,6 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/alloy/handlers/main.yml` | role-handlers | `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `ansible/roles/infra/alloy/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` |
 | `ansible/roles/infra/alloy/templates/config.alloy.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
-| `ansible/roles/infra/authelia-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
@@ -188,7 +187,6 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/restic/templates/backup-restic.sh.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/roles/infra/tailscale/tasks/main.yml` | role-tasks | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/tailscale/templates/Corefile.j2` | role-template | `01-manual-implementacao/14-vpn-tailscale.md` |
-| `ansible/roles/infra/traefik-config/defaults/main.yml` | role-defaults | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |

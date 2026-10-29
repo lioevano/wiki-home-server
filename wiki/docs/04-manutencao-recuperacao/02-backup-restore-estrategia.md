@@ -347,6 +347,6 @@ zfs destroy data/docker-volumes@antes-da-mudanca
 Um backup que nunca foi restaurado não é confiável. **A cada três meses:**
 
 1. Escolha um arquivo de cada dataset (`docker-volumes`, `photos`, `files`, `notes`) e restaure-o do repositório **da nuvem** em `/tmp/teste-restauro`. Compare com o original: `sha256sum`.
-2. Restaure o dump mais recente de um banco num Postgres descartável e apague o container: `docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:16-alpine`, espere o `docker exec pg-teste pg_isready`, rode `docker exec -i pg-teste pg_restore -U postgres -d postgres --no-owner --no-acl < <app>-<data>.dump` e faça uma consulta qualquer (`docker exec pg-teste psql -U postgres -c '\dt'`).
+2. Restaure o dump mais recente de um banco num Postgres descartável e apague o container: `docker run --rm -d --name pg-teste -e POSTGRES_PASSWORD=x postgres:17-alpine` (a mesma versão principal dos bancos; o `pg_restore` não lê dump de versão mais nova), espere o `docker exec pg-teste pg_isready`, rode `docker exec -i pg-teste pg_restore -U postgres -d postgres --no-owner --no-acl < <app>-<data>.dump` e faça uma consulta qualquer (`docker exec pg-teste psql -U postgres -c '\dt'`).
 3. Confira que `restic snapshots` mostra backups diários recentes nos dois repositórios, e que o `journalctl -u backup-restic` do último domingo tem o `check` sem erro.
 4. Anote a data do teste e qualquer passo que tenha faltado nesta página, e corrija a página.

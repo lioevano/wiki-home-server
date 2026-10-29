@@ -61,7 +61,7 @@ Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCH
 
 Três ajustes, por label no serviço (`diun.*`, que vale mais que o padrão):
 
-- **Tags de série** (os Postgres, Redis e Valkey, o Nextcloud `34-apache`, o ClickHouse `25.12`): o Diun pularia a imagem, porque a própria tag não casa com o filtro. Esses serviços vigiam o **digest da própria tag** (`diun.watch_repo: "false"`, `diun.include_tags: ".*"`, `diun.notify_on: "new;update"`): o aviso é um rebuild de segurança da série. Mudar de versão principal (Postgres 15 → 16) é uma migração planejada, não um aviso.
+- **Tags de série** (os Postgres, Redis e Valkey, o Nextcloud `34-apache`, o ClickHouse `25.12`): o Diun pularia a imagem, porque a própria tag não casa com o filtro. Esses serviços vigiam o **digest da própria tag** (`diun.watch_repo: "false"`, `diun.include_tags: ".*"`, `diun.notify_on: "new;update"`): o aviso é um rebuild de segurança da série. Mudar de versão principal (Postgres 17 → 18) é uma migração planejada, não um aviso.
 - **Jellyfin** (`12.2`) e **Collabora** (`26.04.5.1.1`): filtro próprio no `diun.include_tags`; o Jellyfin também avisa quando o digest da série muda (patch novo).
 - **Sem vigia** (`diun.enable: "false"`): imagens locais, o MinIO do Langfuse (só por digest) e o `nextcloud_cron` (mesma imagem do `nextcloud_app`).
 

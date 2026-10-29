@@ -36,7 +36,7 @@ x-nextcloud-env: &nextcloud-env
 
 services:
   nextcloud_db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     labels:
       diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
       diun.include_tags: ".*"

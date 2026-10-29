@@ -193,7 +193,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
     1.  **Logs do Authelia:** `docker logs authelia` na `core-services-vm`. Este é o primeiro lugar para procurar. Aumente o nível de log no `configuration.yml` do Authelia se precisar de mais detalhes.
     2.  **Configuração do Authelia (`authelia/config/configuration.yml`):**
         *   **`jwt_secret` e `session.secret`:** Estão definidos, são complexos e são os mesmos que Authelia está usando? (Se você os define via variáveis de ambiente no compose, certifique-se que estão sendo passados corretamente).
-        *   **`session.domain`:** Está configurado para o seu domínio pai (e.g., `seudominio.com`), e **NÃO** para um subdomínio como `auth.seudominio.com`? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.
+        *   **`session.cookies`:** O `domain` é o domínio pai (e.g., `seudominio.com`), e **NÃO** um subdomínio como `auth.seudominio.com`? O `authelia_url` é `https://auth.seudominio.com`? Isso é crucial para que o cookie de sessão funcione em todos os seus subdomínios.
         *   **`storage` (PostgreSQL):** A configuração do banco de dados (host `authelia_db`, usuário, senha, nome do DB) está correta e o container `authelia_db` está rodando e saudável?
         *   **`access_control.rules`:** As regras estão definidas como você espera? A `default_policy` está correta? As regras para domínios específicos e a regra `bypass` para `auth.seudominio.com` estão presentes e corretas?
         *   **`notifier` (SMTP):** Se configurado, está correto? Problemas aqui podem impedir o reset de senha.
@@ -206,7 +206,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
     5.  **Sincronia de Relógio:**
         *   Certifique-se de que o relógio na `core-services-vm` (e, portanto, nos containers) está sincronizado corretamente com um servidor NTP. Desvios significativos de tempo podem afetar a validação de códigos TOTP para 2FA.
     6.  **Configuração do Middleware `authelia-forwardauth@docker` no Traefik:**
-        *   No `docker-compose.yml` da stack `core` (serviço `authelia`, [seção 5.3](../01-manual-implementacao/05-rede-segura.md#53-authelia-parte-de-dockerstackscoredocker-composeyml)), a definição do middleware `traefik.http.middlewares.authelia-forwardauth.forwardauth.address` está correta, apontando para `http://authelia:9091/api/verify...`?
+        *   No `docker-compose.yml` da stack `core` (serviço `authelia`, [seção 5.3](../01-manual-implementacao/05-rede-segura.md#53-authelia-parte-de-dockerstackscoredocker-composeyml)), a definição do middleware `traefik.http.middlewares.authelia-forwardauth.forwardauth.address` está correta, apontando para `http://authelia:9091/api/authz/forward-auth`?
         *   Os serviços que você quer proteger no Traefik estão referenciando este middleware corretamente (e.g., `middlewares: "authelia-forwardauth@docker"`)?
 
 ### 5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)

@@ -157,7 +157,7 @@ Traefik e Authelia são componentes críticos da nossa camada de rede e seguran�
         *   Execute os playbooks Ansible relevantes para aplicar essas mudanças de configuração aos volumes NFS **ANTES** de atualizar a imagem do container.
     4.  **Atualize a Tag da Imagem Docker no `docker-compose.yml`:**
         *   Edite o arquivo `docker-compose.yml` da stack relevante (`docker/stacks/core/docker-compose.yml`, que contém Traefik, Cloudflared e Authelia).
-        *   Altere a tag da imagem para a nova versão desejada (e.g., de `image: traefik:v2.10.5` para `image: traefik:v2.11.2`).
+        *   Altere a tag da imagem para a nova versão desejada (e.g., de `image: traefik:v3.7.15` para `image: traefik:v3.7.16`). Troca de versão principal (Traefik v4, Authelia 5) é migração planejada, com spec própria, como a de 2026-10-28 (Traefik v2 → v3, Authelia 4.38 → 4.39).
     5.  **Reaplique a Stack `core` pelo Ansible** (ela não é gerenciada pelo Portainer). A partir de `server/ansible`:
         ```bash
         ansible-playbook -i inventories/home/hosts.ini playbooks/setup-core-networking.yml --ask-vault-pass --check
