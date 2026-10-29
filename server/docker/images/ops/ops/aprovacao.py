@@ -37,9 +37,10 @@ class Aprovador:
             raise Recusado(f"o aprovador recusou o pedido ({codigo}: {dados.get('erro', '')})")
         return dados
 
-    def usar(self, pedido: str, acao: str, alvo: str, argumentos: dict) -> None:
+    def usar(self, pedido: str, cliente: str, acao: str, alvo: str, argumentos: dict) -> None:
         if not pedido.isalnum() or len(pedido) > 32:
             raise Recusado("aprovacao_id inválido")
-        codigo, dados = self._post(f"/api/pedidos/{pedido}/usar", {"acao": acao, "alvo": alvo, "argumentos": argumentos})
+        codigo, dados = self._post(f"/api/pedidos/{pedido}/usar", {"cliente": cliente, "acao": acao, "alvo": alvo,
+                                                                   "argumentos": argumentos})
         if codigo != 200:
             raise Recusado(f"pedido {pedido} não autoriza esta ação: {dados.get('erro', codigo)}")

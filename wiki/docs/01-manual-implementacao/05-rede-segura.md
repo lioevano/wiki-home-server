@@ -249,6 +249,17 @@ Este role prepara os arquivos de configuração do Traefik.
     group: "{{ docker_pgid }}"
     mode: '0640'
   when: "'ai-desktop-vm' in groups['virtual_machines']" # Só cria se a VM AI estiver no inventário
+  no_log: true # contém o segredo do kanban. (posto_chave_proxy)
+
+# Middlewares dos agentes (página 16) com segredo: no arquivo, e não em label, para não aparecer no docker inspect.
+- name: "Copiar os middlewares dos agentes (segredo da tela de aprovações)"
+  ansible.builtin.template:
+    src: dynamic_agents.yml.j2
+    dest: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/traefik/config/dynamic/agents.yml"
+    owner: "{{ docker_puid }}"
+    group: "{{ docker_pgid }}"
+    mode: '0640'
+  no_log: true
 
 # Nome antigo do mesmo arquivo (rag_services.yml): sairia em dobro no Traefik (routers repetidos).
 - name: "Remover o arquivo de roteamento com o nome antigo"
@@ -440,7 +451,8 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
-    # Posto de agentes (página 16): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta.
+    # Posto de agentes (página 16): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta, e o
+    # segredo injetado depois dela é o que o Caddy do posto exige (sem ele, 403).
     kanban-dynamic:
       entryPoints: ["websecure"]
       rule: "Host(`kanban.{{ base_domain }}`)"
@@ -449,6 +461,7 @@ http:
         certResolver: "letsencrypt"
       middlewares:
         - "authelia-forwardauth@docker"
+        - "posto-chave"
 
     # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
     # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
@@ -484,6 +497,12 @@ http:
     #   tls: { certResolver: "letsencrypt" }
     #   middlewares: ["authelia-forwardauth@docker"]
 
+  middlewares:
+    posto-chave: # o Caddy do posto só repassa ao Vibe Kanban o que trouxer este segredo (página 16)
+      headers:
+        customRequestHeaders:
+          X-Posto-Chave: "{{ posto_chave_proxy }}"
+
   services:
     openwebui-svc-dynamic: # Serviço Traefik para OpenWebUI
       loadBalancer:
@@ -502,7 +521,7 @@ http:
         servers:
           - url: "http://{{ ai_desktop_vm_ip_var }}:3100"
 
-    kanban-svc-dynamic: # stack posto; a porta 3005 só aceita a core (firewall das portas do Docker)
+    kanban-svc-dynamic: # Caddy da stack posto; a porta 3005 só aceita a core (firewall das portas do Docker)
       loadBalancer:
         servers:
           - url: "http://{{ ai_desktop_vm_ip_var }}:3005"
@@ -526,6 +545,21 @@ http:
     #   loadBalancer:
     #     servers:
     #       - url: "http://{{ ai_desktop_vm_ip_var }}:7860" # Porta interna do Open-NotebookLM
+```
+
+##### `templates/dynamic_agents.yml.j2` (Segredo da tela de aprovações)
+
+O `aprovador` ([seção 16](16-posto-agentes.md#aprovação-humana)) declara o router `aprovacoes.` por labels, como qualquer serviço da core, mas o segredo que só o Traefik injeta mora neste arquivo: um label aparece para quem lê o `docker inspect` (o `ops` e o observador listam containers).
+
+```yaml title="ansible/roles/infra/traefik-config/templates/dynamic_agents.yml.j2"
+# ansible/roles/infra/traefik-config/templates/dynamic_agents.yml.j2
+# (Copiado para dynamic/agents.yml no container Traefik.) Middlewares dos agentes com segredo (página 16).
+http:
+  middlewares:
+    aprovador-chave: # a tela do aprovador só aceita requisições com este segredo (outro container da rede proxy não)
+      headers:
+        customRequestHeaders:
+          X-Aprovador-Chave: "{{ aprovador_chave_proxy }}"
 ```
 
 ##### `templates/nextcloud_middleware.yml.j2` (Middleware para Nextcloud)

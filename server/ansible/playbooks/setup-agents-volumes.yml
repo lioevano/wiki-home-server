@@ -248,7 +248,7 @@
           - { name: 'APROVADOR_DATA_PATH', value: "{{ vm_local_data_path }}/aprovador" }
           - { name: 'APROVADOR_VALIDADE_MIN', value: "{{ aprovador_validade_min }}" }
           - { name: 'APROVADOR_TELEGRAM_USUARIOS', value: "{{ aprovador_telegram_usuarios | join(',') }}" }
-          - { name: 'OPS_CLIENTES_COM_APROVACAO', value: "{{ ops_clientes_com_aprovacao | join(',') }}" }
+          - { name: 'OPS_CLIENTES_SEM_APROVACAO', value: "{{ ops_clientes_sem_aprovacao | join(',') }}" }
           - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'OBSERVADOR_TOKEN', value: "{{ observador_token }}" }

@@ -18,14 +18,16 @@ COPY --from=vibe /usr/local/bin/server /usr/local/bin/vibe-kanban
 ARG UID=1000
 ARG GID=1000
 RUN groupmod -o -g ${GID} node && usermod -o -u ${UID} -g ${GID} -d /home/posto -m -l posto node \
-    && mkdir -p /repos /etc/claude-code && chown posto:node /repos
+    && mkdir -p /repos /etc/claude-code /home/posto/.local/share \
+    && chown posto:node /repos /home/posto/.local /home/posto/.local/share
 USER posto
 # O Vibe Kanban chama "npx -y @anthropic-ai/claude-code@<versão>": deixa essa versão no cache do npm.
 ARG CLAUDE_CODE_VERSION
 RUN npx -y @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} --version
-ENV HOST=0.0.0.0 PORT=3000 HOME=/home/posto
+# Só no 127.0.0.1: quem atende de fora é o Caddy (posto_porteiro), que divide a rede deste container.
+ENV HOST=127.0.0.1 PORT=3000 HOME=/home/posto
 WORKDIR /repos
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/vibe-kanban"]

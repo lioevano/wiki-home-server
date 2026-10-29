@@ -29,8 +29,10 @@ class Config:
     inventario: str
     chave_ssh: str
     plano_validade_s: int
-    # Clientes do hub (metadado da chave) cujas ações esperam o "aprovar" do Léo no aprovador (página 16).
-    clientes_com_aprovacao: frozenset[str] = frozenset()
+    # Clientes do hub (metadado da chave) que agem SEM o aprovador: só o Claude Code, que pede aprovação na
+    # própria interface. Todo o resto (agentes, assistente, cliente desconhecido, lista vazia) passa pelo
+    # aprovador (página 16): uma variável perdida não abre a porta.
+    clientes_sem_aprovacao: frozenset[str] = frozenset({"claude_code"})
     aprovador_url: str = ""
     aprovador_token: str = ""
 
@@ -55,7 +57,7 @@ class Config:
             inventario=env.get("OPS_INVENTARIO", "server/ansible/inventories/home/hosts.ini"),
             chave_ssh=env.get("OPS_CHAVE_SSH", "/segredos/id_ed25519"),
             plano_validade_s=int(env.get("OPS_PLANO_VALIDADE_MIN", "30")) * 60,
-            clientes_com_aprovacao=_lista(env.get("OPS_CLIENTES_COM_APROVACAO", "agentes,assistente")),
+            clientes_sem_aprovacao=_lista(env.get("OPS_CLIENTES_SEM_APROVACAO", "claude_code")),
             aprovador_url=env.get("APROVADOR_URL", ""),
             aprovador_token=env.get("APROVADOR_TOKEN", ""),
         )

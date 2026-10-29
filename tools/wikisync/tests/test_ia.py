@@ -223,7 +223,7 @@ def test_dump_generico_nos_dois_bancos():
 
 def test_router_llm_com_authelia():
     out = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2",
-                                base_domain="exemplo.com", ai_desktop_vm_ip_var="192.168.15.68"))
+                                base_domain="exemplo.com", ai_desktop_vm_ip_var="192.168.15.68", posto_chave_proxy="x"))
     r = out["http"]["routers"]["litellm-dynamic"]
     assert r["rule"] == "Host(`llm.exemplo.com`)"
     assert r["middlewares"] == ["authelia-forwardauth@docker"]

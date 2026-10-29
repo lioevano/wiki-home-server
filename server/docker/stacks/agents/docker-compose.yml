@@ -136,8 +136,9 @@ services:
       OPS_INVENTARIO: inventories/home/hosts.ini
       OPS_CHAVE_SSH: /segredos/id_ed25519
       ANSIBLE_VAULT_PASSWORD_FILE: /segredos/vault_pass
-      # Ações dos clientes autônomos (rota 4200) só com pedido aprovado no aprovador (página 16).
-      OPS_CLIENTES_COM_APROVACAO: ${OPS_CLIENTES_COM_APROVACAO}
+      # Ações de todo cliente fora desta lista (agentes, assistente, desconhecido) só com pedido aprovado no
+      # aprovador (página 16). Lista vazia: todos pedem aprovação.
+      OPS_CLIENTES_SEM_APROVACAO: ${OPS_CLIENTES_SEM_APROVACAO}
       APROVADOR_URL: http://aprovador:8080
       APROVADOR_TOKEN: ${APROVADOR_TOKEN}
     volumes:
@@ -149,7 +150,8 @@ services:
 
   # Aprovação humana das ações dos agentes autônomos (página 16): pedidos com botões no Telegram (bot de avisos,
   # lido por getUpdates) e a tela aprovacoes. (Traefik + Authelia, grupo admins). A tela só aceita requisições com
-  # o segredo que o Traefik injeta (X-Aprovador-Chave): outro container da rede proxy não decide no seu lugar.
+  # o segredo que o Traefik injeta (X-Aprovador-Chave, middleware aprovador-chave@file da página 5, fora dos
+  # labels): outro container da rede proxy não decide no seu lugar.
   aprovador:
     image: ${APROVADOR_IMAGE}
     pull_policy: never
@@ -174,10 +176,9 @@ services:
       traefik.http.routers.aprovacoes.rule: "Host(`aprovacoes.${BASE_DOMAIN_FROM_VAULT}`)"
       traefik.http.routers.aprovacoes.entrypoints: websecure
       traefik.http.routers.aprovacoes.tls.certresolver: letsencrypt
-      traefik.http.routers.aprovacoes.middlewares: authelia-forwardauth@docker,aprovador-chave@docker
+      traefik.http.routers.aprovacoes.middlewares: authelia-forwardauth@docker,aprovador-chave@file
       traefik.http.routers.aprovacoes.service: aprovacoes-svc
       traefik.http.services.aprovacoes-svc.loadbalancer.server.port: "8080"
-      traefik.http.middlewares.aprovador-chave.headers.customrequestheaders.X-Aprovador-Chave: ${APROVADOR_CHAVE_PROXY}
     networks:
       - agents_internal # ops_controle → API
       - proxy # Traefik → tela

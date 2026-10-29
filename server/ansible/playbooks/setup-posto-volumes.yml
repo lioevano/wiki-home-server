@@ -14,8 +14,17 @@
     posto_dir: "{{ vm_local_data_path }}/posto"
     posto_fontes: /opt/posto-src/vibe-kanban
     posto_imagem: /opt/posto-image
+    # A tag junta as três versões: mudar o Vibe Kanban ou o Claude Code também gera imagem nova.
+    posto_tag: "{{ posto_version }}-{{ posto_vibe_kanban_tag }}-cc{{ posto_claude_code_version }}"
 
   tasks:
+    - name: Conferir o segredo do porteiro (sem ele o Caddy deixaria o kanban sem porta)
+      ansible.builtin.assert:
+        that: posto_chave_proxy | default('') | length >= 32
+        fail_msg: "Defina posto_chave_proxy no vault (openssl rand -hex 32)."
+        quiet: true
+      no_log: true
+
     - name: Criar os diretórios do posto
       ansible.builtin.file:
         path: "{{ item.path }}"
@@ -58,7 +67,7 @@
     - name: Construir a imagem do posto
       community.docker.docker_image:
         name: localhost/homeserver/posto
-        tag: "{{ posto_version }}"
+        tag: "{{ posto_tag }}"
         source: build
         build:
           path: "{{ posto_imagem }}"
@@ -81,6 +90,15 @@
         mode: '0600'
       no_log: true
 
+    - name: Gerar o Caddyfile do porteiro (contém o segredo do kanban.)
+      ansible.builtin.template:
+        src: ../templates/posto/Caddyfile.j2
+        dest: "{{ posto_dir }}/Caddyfile"
+        owner: root
+        group: root
+        mode: '0600' # o Caddy roda como root no container, sem capacidades
+      no_log: true
+
     - name: Gravar os perfis do Claude Code no Vibe Kanban (uma vez; a tela pode mudar depois)
       ansible.builtin.template:
         src: ../templates/posto/profiles.json.j2
@@ -101,7 +119,7 @@
         stack_name: posto
         stack_configs:
           - { name: 'AI_DESKTOP_VM_IP', value: "{{ ai_desktop_vm_ip_var }}" }
-          - { name: 'POSTO_IMAGE', value: "localhost/homeserver/posto:{{ posto_version }}" }
+          - { name: 'POSTO_IMAGE', value: "localhost/homeserver/posto:{{ posto_tag }}" }
           - { name: 'POSTO_DATA_PATH', value: "{{ posto_dir }}" }
           - { name: 'LITELLM_KEY_AGENTES', value: "{{ litellm_client_keys.agentes }}" }
           - { name: 'POSTO_GITHUB_TOKEN', value: "{{ posto_github_token | default('') }}" }

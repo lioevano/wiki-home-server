@@ -58,6 +58,12 @@ class Runner:
             raise Recusado("não foi possível ler o commit do repositório")
         return saida.strip()
 
+    def _autor_assunto(self, commit: str) -> str:
+        """Quem fez o commit e o assunto: vai para o pedido de aprovação (o Léo vê de quem é o código)."""
+        rc, saida = self.executar(["git", "-C", self.cfg.repo_dir, "log", "-1", "--format=%an <%ae>: %s", commit],
+                                  self.cfg.repo_dir, 30)
+        return limpar_saida(saida.strip(), 200) if rc == 0 else "?"
+
     def _argv(self, playbook: str, limite: str | None, simular: bool) -> list[str]:
         argv = ["ansible-playbook", "-i", self.cfg.inventario, f"playbooks/{playbook}",
                 "-e", f"ansible_ssh_private_key_file={self.cfg.chave_ssh}"]
@@ -78,14 +84,19 @@ class Runner:
         trava = self._exclusivo()
         try:
             commit = self._atualizar_repo()
+            autor_assunto = self._autor_assunto(commit)
             rc, saida = self.executar(self._argv(playbook, limite, True), self._cwd, TEMPO_CHECK_S)
         finally:
             trava.release()
         plano_id = ""
         if rc == 0:
             plano_id = secrets.token_hex(8)
-            self._planos[plano_id] = {"playbook": playbook, "limite": limite, "commit": commit, "criado": self.agora()}
-        return {"plano_id": plano_id, "commit": commit, "rc": rc, "saida": limpar_saida(saida, self.cfg.limite_saida)}
+            # O resumo do --check (PLAY RECAP) acompanha o pedido de aprovação do ansible_aplicar.
+            recap = saida[saida.rfind("PLAY RECAP"):] if "PLAY RECAP" in saida else ""
+            self._planos[plano_id] = {"playbook": playbook, "limite": limite, "commit": commit, "criado": self.agora(),
+                                      "autor_assunto": autor_assunto, "recap": limpar_saida(recap, 400)}
+        return {"plano_id": plano_id, "commit": commit, "rc": rc, "autor_assunto": autor_assunto,
+                "saida": limpar_saida(saida, self.cfg.limite_saida)}
 
     def ver(self, plano_id: str) -> dict | None:
         """O plano sem consumi-lo (para descrever o pedido de aprovação)."""

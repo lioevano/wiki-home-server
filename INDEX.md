@@ -105,7 +105,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/14-vpn-tailscale.md` | Seção 14: VPN (Tailscale) e firewall das portas do Docker | VPN com Tailscale na core-services-vm: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker. |
 | `01-manual-implementacao/15-ia-observa.md` | Seção 15: IA que observa o servidor | Observador: IA que lê o servidor pela rota de leitura do hub, analisa cada alerta do Grafana e manda um boletim diário ao Telegram, sem agir. |
 | `01-manual-implementacao/16-posto-agentes.md` | Seção 16: Posto de agentes e aprovação humana | Posto de agentes: Claude Code em paralelo pelo Vibe Kanban na ai-desktop-vm, e cada ação no servidor esperando a sua aprovação no Telegram ou na tela. |
-| `01-manual-implementacao/17-assistente.md` | Seção 17: Assistente sempre ligado (Hermes Agent) | Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e lembra você, sem terminal e com ações aprovadas. |
+| `01-manual-implementacao/17-assistente.md` | Seção 17: Assistente sempre ligado (Hermes Agent) | Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal e com ações aprovadas. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -198,6 +198,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/tailscale/templates/Corefile.j2` | role-template | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/tasks/main.yml` | role-tasks | `01-manual-implementacao/05-rede-segura.md` |
+| `ansible/roles/infra/traefik-config/templates/dynamic_agents.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/16-posto-agentes.md` |
 | `ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `ansible/roles/infra/traefik-config/templates/nextcloud_middleware.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
 | `ansible/roles/infra/traefik-config/templates/security_headers.yml.j2` | role-template | `01-manual-implementacao/05-rede-segura.md` |
@@ -228,6 +229,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/notes/notes-indice.service.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/templates/notes/notes-indice.timer.j2` | template | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `ansible/templates/portainer_stack_env.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/08-stack-ia.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
+| `ansible/templates/posto/Caddyfile.j2` | template | `01-manual-implementacao/16-posto-agentes.md` |
 | `ansible/templates/posto/managed-mcp.json.j2` | template | `01-manual-implementacao/16-posto-agentes.md` |
 | `ansible/templates/posto/profiles.json.j2` | template | `01-manual-implementacao/16-posto-agentes.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |

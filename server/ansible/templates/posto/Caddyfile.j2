@@ -1,0 +1,25 @@
+# ansible/templates/posto/Caddyfile.j2
+# Porteiro do Vibe Kanban (página 16), gerado pelo setup-posto-volumes.yml em <dados do posto>/Caddyfile (0600).
+# O Vibe Kanban não tem login: só passa o que veio pelo Traefik depois do Authelia, que injeta o X-Posto-Chave.
+{
+	admin off
+	persist_config off
+	auto_https off
+}
+
+:3005 {
+	# Sondas do Prometheus e do painel (a resposta não diz nada além de "ok").
+	handle /api/health {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	@traefik header X-Posto-Chave "{{ posto_chave_proxy }}"
+	handle @traefik {
+		request_header -X-Posto-Chave
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	handle {
+		respond "Use https://kanban.{{ base_domain }}" 403
+	}
+}

@@ -12,6 +12,7 @@ from typing import Callable
 
 ESTADOS_FINAIS = ("recusado", "expirado", "usado")
 MANTER = 300  # pedidos guardados (os mais recentes)
+MAX_PENDENTES_POR_CLIENTE = 5  # uma enxurrada de pedidos não vira uma enxurrada de mensagens
 
 
 class Conflito(Exception):
@@ -66,6 +67,12 @@ class Registro:
 
     def criar(self, cliente: str, acao: str, alvo: str, argumentos: dict, descricao: str) -> dict:
         with self._trava:
+            agora = self.relogio()
+            for p in self._pedidos.values():
+                self._vencer(p, agora)
+            pendentes = sum(1 for p in self._pedidos.values() if p["cliente"] == cliente and p["estado"] == "pendente")
+            if pendentes >= MAX_PENDENTES_POR_CLIENTE:
+                raise Conflito(f"{cliente} já tem {pendentes} pedidos pendentes; espere a decisão")
             pid = secrets.token_hex(4)
             while pid in self._pedidos:
                 pid = secrets.token_hex(4)
@@ -109,8 +116,9 @@ class Registro:
             registrar(p["estado"], p, por=p["decidido_por"])
             return dict(p)
 
-    def usar(self, pid: str, acao: str, alvo: str, argumentos: dict) -> dict:
-        """O ops chama antes de executar: só passa um pedido aprovado, no prazo, da mesma ação, uma vez."""
+    def usar(self, pid: str, cliente: str, acao: str, alvo: str, argumentos: dict) -> dict:
+        """O ops chama antes de executar: só passa um pedido aprovado, no prazo, do mesmo cliente e da mesma
+        ação, uma vez."""
         with self._trava:
             p = self._pedidos.get(pid)
             if p is None:
@@ -118,8 +126,8 @@ class Registro:
             self._vencer(p, self.relogio())
             if p["estado"] != "aprovado":
                 raise Conflito(f"pedido {p['estado']}")
-            if (p["acao"], p["alvo"], p["argumentos"]) != (acao, alvo, argumentos):
-                raise Conflito("o pedido aprovado é de outra ação, alvo ou argumentos")
+            if (p["cliente"], p["acao"], p["alvo"], p["argumentos"]) != (cliente, acao, alvo, argumentos):
+                raise Conflito("o pedido aprovado é de outro cliente, ação, alvo ou argumentos")
             p["estado"] = "usado"
             self._gravar()
             registrar("usado", p)

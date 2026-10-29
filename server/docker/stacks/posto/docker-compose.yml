@@ -1,8 +1,10 @@
 # docker/stacks/posto/docker-compose.yml
 # Posto de agentes (sub-projeto 4c3, página 16), na ai-desktop-vm: Vibe Kanban (tela) e os agentes Claude Code
 # que ele roda, cada tarefa num worktree. Os agentes usam o LiteLLM (chave agentes) e os MCPs do servidor (rota
-# dos autônomos do hub, ações só com aprovação) e das notas. Sem login próprio: a porta só aceita a core
-# (firewall das portas do Docker), onde o Traefik exige o Authelia (kanban., grupo admins).
+# dos autônomos do hub, ações só com aprovação) e das notas. O Vibe Kanban não tem login próprio e escuta só no
+# 127.0.0.1 do container; quem atende a porta é o Caddy ao lado (mesma rede do container), que só repassa o que
+# trouxer o segredo que o Traefik injeta depois do Authelia (kanban., grupo admins). A porta 3005 só aceita a core
+# (firewall das portas do Docker), e nenhum outro container das redes ai_network e notes_mcp chega ao Vibe Kanban.
 # Variáveis: /opt/portainer_stack_envs/posto.env, gerado por ansible/playbooks/setup-posto-volumes.yml.
 version: '3.9'
 
@@ -24,9 +26,11 @@ services:
       - ai_network
       - notes_mcp
     ports:
-      - "${AI_DESKTOP_VM_IP}:3005:3000" # alvo do Traefik (kanban.); a LAN não alcança (firewall_docker_portas)
+      - "${AI_DESKTOP_VM_IP}:3005:3005" # o Caddy (porteiro); a LAN não alcança (firewall_docker_portas)
     environment:
       TZ: ${SYSTEM_TIMEZONE}
+      HOST: 127.0.0.1 # Vibe Kanban (e o proxy de pré-visualização) só no próprio container
+      PORT: "3000"
       # Claude Code pelo LiteLLM (chave e orçamento dos agentes); nomes reais dos modelos Claude (página 08).
       ANTHROPIC_BASE_URL: http://litellm:4000
       ANTHROPIC_AUTH_TOKEN: ${LITELLM_KEY_AGENTES}
@@ -42,3 +46,25 @@ services:
       - ${POSTO_DATA_PATH}/claude:/home/posto/.claude # estado do Claude Code
       - ${POSTO_DATA_PATH}/repos:/repos # clones em que os agentes trabalham
       - ${POSTO_DATA_PATH}/managed-mcp.json:/etc/claude-code/managed-mcp.json:ro # MCPs de todo agente
+
+  # Porteiro do Vibe Kanban: divide a rede do posto e escuta na 3005. /api/health passa (sondas); o resto só com
+  # o X-Posto-Chave certo, que ele retira antes de repassar. Sem painel de administração (admin off).
+  posto_porteiro:
+    image: caddy:2.11.7-alpine
+    container_name: posto_porteiro
+    restart: unless-stopped
+    network_mode: service:posto
+    depends_on:
+      - posto
+    labels:
+      diun.include_tags: '^\d+\.\d+\.\d+-alpine$$'
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE] # o binário da imagem tem essa capacidade de arquivo; sem ela o exec falha
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /data
+      - /config
+    volumes:
+      - ${POSTO_DATA_PATH}/Caddyfile:/etc/caddy/Caddyfile:ro # gerado pelo Ansible (contém o segredo)

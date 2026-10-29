@@ -63,17 +63,19 @@ def test_registro_ciclo_e_persistencia(tmp_path, capsys):
     p = r.criar("agentes", "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None}, "reiniciar")
     assert p["estado"] == "pendente" and len(p["id"]) == 8
     with pytest.raises(Conflito, match="pedido pendente"):
-        r.usar(p["id"], "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None})
+        r.usar(p["id"], "agentes", "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None})
     r.decidir(p["id"], True, "tela:leo")
     with pytest.raises(Conflito, match="já está aprovado"):
         r.decidir(p["id"], False, "x")
-    with pytest.raises(Conflito, match="outra ação"):
-        r.usar(p["id"], "container_reiniciar", "traefik", {"nome": "traefik", "vm": None})
+    with pytest.raises(Conflito, match="outro cliente, ação"):
+        r.usar(p["id"], "agentes", "container_reiniciar", "traefik", {"nome": "traefik", "vm": None})
+    with pytest.raises(Conflito, match="outro cliente"):  # o pedido do agente não serve ao assistente
+        r.usar(p["id"], "assistente", "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None})
     # Sobrevive a um reinício (arquivo no disco) e só vale uma vez.
     r2 = Registro(arq, 1800, rel)
-    assert r2.usar(p["id"], "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None})["estado"] == "usado"
+    assert r2.usar(p["id"], "agentes", "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None})["estado"] == "usado"
     with pytest.raises(Conflito, match="pedido usado"):
-        r2.usar(p["id"], "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None})
+        r2.usar(p["id"], "agentes", "container_reiniciar", "jellyfin", {"nome": "jellyfin", "vm": None})
     eventos = [json.loads(l)["acao_registro"] for l in capsys.readouterr().out.splitlines()]
     assert eventos == ["criado", "aprovado", "usado"]
 
@@ -89,7 +91,21 @@ def test_registro_expira(tmp_path):
     with pytest.raises(Conflito, match="já está expirado"):
         r.decidir(pendente["id"], True, "x")
     with pytest.raises(Conflito, match="pedido expirado"):
-        r.usar(aprovado["id"], "a", "c", {})
+        r.usar(aprovado["id"], "agentes", "a", "c", {})
+
+
+def test_registro_limita_pendentes_por_cliente(tmp_path):
+    from aprovador.pedidos import MAX_PENDENTES_POR_CLIENTE
+    rel = Relogio()
+    r = Registro(str(tmp_path / "p.json"), 1800, rel)
+    primeiros = [r.criar("agentes", "a", str(i), {}, "") for i in range(MAX_PENDENTES_POR_CLIENTE)]
+    with pytest.raises(Conflito, match="pedidos pendentes"):
+        r.criar("agentes", "a", "x", {}, "")
+    r.criar("assistente", "a", "x", {}, "")  # o limite é por cliente
+    r.decidir(primeiros[0]["id"], False, "x")
+    r.criar("agentes", "a", "x", {}, "")  # decidido libera a vaga
+    rel.t += 1801  # vencidos também liberam
+    r.criar("agentes", "a", "y", {}, "")
 
 
 def test_registro_arquivo_ilegivel_nao_derruba(tmp_path):
@@ -212,9 +228,16 @@ def test_api_e_tela(servidor):
     assert registro.obter(pid)["decidido_por"] == "tela:leo"
     assert any(c[0] == "editMessageText" for c in bot.chamadas)  # a mensagem do Telegram acompanha
     usar = base + f"/api/pedidos/{pid}/usar"
-    assert _req(usar, "POST", {"acao": "container_reiniciar", "alvo": "jellyfin", "argumentos": {"nome": "x"}}, api)[0] == 409
-    assert _req(usar, "POST", {"acao": "container_reiniciar", "alvo": "jellyfin", "argumentos": {"nome": "jellyfin"}}, api)[0] == 200
+    certo = {"cliente": "agentes", "acao": "container_reiniciar", "alvo": "jellyfin", "argumentos": {"nome": "jellyfin"}}
+    assert _req(usar, "POST", {**certo, "argumentos": {"nome": "x"}}, api)[0] == 409
+    assert _req(usar, "POST", {**certo, "cliente": "assistente"}, api)[0] == 409
+    assert _req(usar, "POST", certo, api)[0] == 200
     assert json.loads(_req(base + f"/api/pedidos/{pid}", cab=api)[1])["estado"] == "usado"
+    # Uma enxurrada de pedidos de um cliente para no limite (429), sem virar enxurrada de mensagens.
+    novo = {"cliente": "agentes", "acao": "a", "alvo": "b", "argumentos": {}}
+    codigos = [_req(base + "/api/pedidos", "POST", {**novo, "alvo": str(i)}, api)[0] for i in range(6)]
+    assert codigos == [201] * 5 + [429]
+    assert "vencem em 30 min" in _req(base + "/", cab=TELA)[1]
 
 
 # --- O fluxo no ops, com o aprovador de verdade ---
@@ -236,7 +259,7 @@ def test_ops_agente_autonomo_precisa_de_aprovacao(servidor, capsys):
     with pytest.raises(Recusado, match="pedido pendente"):
         fs["container_reiniciar"].funcao(nome="jellyfin", aprovacao_id=pid)
     registro.decidir(pid, True, "telegram:leo")
-    with pytest.raises(Recusado, match="outra ação"):  # o pedido aprovado não serve para outro container
+    with pytest.raises(Recusado, match="outro cliente, ação"):  # o pedido aprovado não serve para outro container
         fs["container_reiniciar"].funcao(nome="litellm_proxy", aprovacao_id=pid)
     assert fs["container_reiniciar"].funcao(nome="jellyfin", aprovacao_id=pid) == "container jellyfin reiniciado"
     assert ("POST", "/api/endpoints/1/docker/containers/c1/restart", None) in falso.chamadas
@@ -261,13 +284,79 @@ def test_ops_claude_code_nao_passa_pelo_aprovador(servidor):
     assert registro.listar() == []
 
 
+def _aprovar_e_repetir(fs, registro, nome, **args):
+    """1ª chamada vira pedido; o Léo aprova; a 2ª, com o id, executa."""
+    texto = fs[nome].funcao(**args)
+    assert texto.startswith("Aguardando aprovação humana: pedido ") and "espere o Léo" in texto
+    pid = texto.split("pedido ")[1].split(".")[0]
+    registro.decidir(pid, True, "telegram:leo")
+    return pid, fs[nome].funcao(**args, aprovacao_id=pid)
+
+
+def test_ops_redeploy_com_aprovacao(servidor):
+    base, registro, _ = servidor
+    fs, falso = _ops(base, "assistente")
+    texto = fs["stack_redeploy"].funcao(nome="media")
+    assert texto.startswith("Aguardando") and not any(c[0] == "PUT" for c in falso.chamadas)
+    pid = texto.split("pedido ")[1].split(".")[0]
+    registro.decidir(pid, True, "telegram:leo")
+    with pytest.raises(Recusado, match="outro cliente, ação"):  # outros argumentos, outro pedido
+        fs["stack_redeploy"].funcao(nome="media", puxar_imagens=True, aprovacao_id=pid)
+    fs["stack_redeploy"].funcao(nome="media", aprovacao_id=pid)
+    assert any(c[0] == "PUT" for c in falso.chamadas)
+
+
+def test_ops_ansible_check_e_aplicar_com_aprovacao(servidor):
+    """O --check também roda código do repositório: o agente pede para simular e, de novo, para aplicar. O pedido
+    de aplicar mostra de quem é o commit e o PLAY RECAP do --check."""
+    from ops.runner import Runner
+    from test_ops import Comandos, Relogio as RelogioOps
+    base, registro, _ = servidor
+    cfg = ConfigOps.do_ambiente({**AMBIENTE_OPS, "APROVADOR_URL": base, "APROVADOR_TOKEN": "tok-ops"})
+    cmd = Comandos(saida="TASK [x] ok\nPLAY RECAP\ncore : ok=3 changed=1 failed=0")
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), Runner(cfg, cmd, RelogioOps()), None,
+                     cliente=lambda: "agentes")
+    with pytest.raises(Recusado, match="ops_playbooks_permitidos"):  # fora da lista nem vira pedido
+        fs["ansible_check"].funcao(playbook="full-deploy.yml")
+    assert registro.listar() == []
+    texto = fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml")
+    assert texto.startswith("Aguardando") and cmd.argvs == []  # nem git pull antes do "aprovar"
+    pid = texto.split("pedido ")[1].split(".")[0]
+    registro.decidir(pid, True, "tela:leo")
+    saida = fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml", aprovacao_id=pid)
+    assert "Léo Ivan <leo@exemplo.com>: muda o traefik" in saida
+    plano = saida.splitlines()[0].split(": ", 1)[1]
+    texto = fs["ansible_aplicar"].funcao(plano_id=plano)
+    pedido = registro.obter(texto.split("pedido ")[1].split(".")[0])
+    assert "muda o traefik" in pedido["descricao"] and "changed=1" in pedido["descricao"]
+    assert len(cmd.ansible()) == 1  # só o --check até aqui
+    registro.decidir(pedido["id"], True, "tela:leo")
+    fs["ansible_aplicar"].funcao(plano_id=plano, aprovacao_id=pedido["id"])
+    assert len(cmd.ansible()) == 2 and "--check" not in cmd.ansible()[1][0]
+
+
+def test_ops_lista_vazia_todos_pedem_aprovacao(servidor):
+    """Sem OPS_CLIENTES_SEM_APROVACAO (variável perdida), nem o Claude Code age direto: falha fechada."""
+    base, registro, _ = servidor
+    cfg = ConfigOps.do_ambiente({**AMBIENTE_OPS, "APROVADOR_URL": base, "APROVADOR_TOKEN": "tok-ops",
+                                 "OPS_CLIENTES_SEM_APROVACAO": ""})
+    assert cfg.clientes_sem_aprovacao == frozenset()
+    falso = PortainerFalso()
+    fs = ferramentas(cfg, Portainer(cfg, falso), None, None, cliente=lambda: "claude_code")
+    assert fs["container_reiniciar"].funcao(nome="jellyfin").startswith("Aguardando")
+    assert not any(c[0] == "POST" for c in falso.chamadas)
+    # Cliente que não está em lista nenhuma (chave nova esquecida) também pede.
+    fs, _ = _ops(base, "novo_agente")
+    assert fs["container_reiniciar"].funcao(nome="jellyfin").startswith("Aguardando")
+
+
 def test_ops_aprovador_fora_falha_fechado():
     with pytest.raises(Recusado, match="inalcançável"):
         Aprovador("http://127.0.0.1:9", "t").pedir("agentes", "a", "b", {}, "")
     with pytest.raises(Recusado, match="não está configurado"):
         Aprovador("", "").pedir("agentes", "a", "b", {}, "")
     with pytest.raises(Recusado, match="inválido"):
-        Aprovador("http://x", "t").usar("../../x", "a", "b", {})
+        Aprovador("http://x", "t").usar("../../x", "agentes", "a", "b", {})
 
 
 def test_codigo_so_com_biblioteca_padrao():

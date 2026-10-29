@@ -26,11 +26,19 @@ mcp_servers:
     url: http://notes_escrita:8000/mcp
     timeout: 60
 
+# Só o Telegram: a API compatível com OpenAI do Hermes liga sozinha quando há API_SERVER_KEY (o init da imagem
+# gera uma); aqui ela fica desligada de vez.
+platforms:
+  api_server:
+    enabled: false
+
 # Ferramentas embutidas que um assistente aberto a mensagens não precisa e que seriam o caminho de um ataque
-# (terminal, código, arquivos do container, navegador, internet, novas conexões MCP, skills). Ficam memória,
-# lembretes (cronjob), lista de tarefas, perguntas de esclarecimento, busca nas conversas e os MCPs acima.
+# (terminal, código, arquivos do container, navegador, internet, novas conexões MCP, skills). O cronjob também
+# sai: as tarefas agendadas buscam qualquer URL e entregam em qualquer chat, sem passar pelas listas acima.
+# Ficam memória, lista de tarefas, perguntas de esclarecimento, busca nas conversas e os MCPs acima.
 agent:
   disabled_toolsets:
+    - cronjob
     - terminal
     - code_execution
     - file

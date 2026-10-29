@@ -117,7 +117,7 @@ binds:
 {{ alvos('controle', 'controle') }}
 # Rota dos autônomos (página 16): agentes do posto e o assistente, na ai-desktop-vm (a 4200 só aceita a VM de IA
 # pela LAN). Leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e agem só pelo ops_controle,
-# que exige a aprovação do Léo para estes clientes (OPS_CLIENTES_COM_APROVACAO).
+# que exige a aprovação do Léo de todo cliente fora de OPS_CLIENTES_SEM_APROVACAO.
 - port: 4200
   listeners:
   - name: autonomos

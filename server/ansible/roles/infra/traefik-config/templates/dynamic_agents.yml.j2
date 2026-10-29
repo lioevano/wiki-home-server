@@ -1,0 +1,8 @@
+# ansible/roles/infra/traefik-config/templates/dynamic_agents.yml.j2
+# (Copiado para dynamic/agents.yml no container Traefik.) Middlewares dos agentes com segredo (página 16).
+http:
+  middlewares:
+    aprovador-chave: # a tela do aprovador só aceita requisições com este segredo (outro container da rede proxy não)
+      headers:
+        customRequestHeaders:
+          X-Aprovador-Chave: "{{ aprovador_chave_proxy }}"

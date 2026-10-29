@@ -200,6 +200,8 @@ class Comandos:
         self.argvs.append((argv, cwd, timeout))
         if argv[:1] == ["git"] and "rev-parse" in argv:
             return 0, self.commit + "\n"
+        if argv[:1] == ["git"] and "log" in argv:
+            return 0, "Léo Ivan <leo@exemplo.com>: muda o traefik\n"
         if argv[:1] == ["git"]:
             return 0, "Already up to date.\n"
         return 0, self.saida

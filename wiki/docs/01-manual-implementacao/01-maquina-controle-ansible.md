@@ -376,8 +376,12 @@ Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser arm
     # (openssl rand -hex 32 cada).
     aprovador_token: "TOKEN_DO_OPS_PARA_O_APROVADOR"
     aprovador_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_A_TELA_DE_APROVACOES"
-    # Posto (página 16): token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios do posto,
-    # Contents e Pull requests); "" deixa sem.
+    # Posto (página 16): segredo que só o Traefik injeta no kanban. (o Caddy do posto recusa o resto;
+    # openssl rand -hex 32).
+    posto_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_O_KANBAN"
+    # Token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios de trabalho do posto: Contents
+    # e Pull requests). Nunca dê Contents de escrita no wiki-home-server: o ops aplica o que estiver na main.
+    # "" deixa sem.
     posto_github_token: ""
     # Assistente (página 17): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
     hermes_telegram_bot_token: "TOKEN_DO_BOT_DO_ASSISTENTE"
@@ -756,8 +760,9 @@ posto_vibe_kanban_tag: "v0.1.45-20260919085201"
 posto_claude_code_version: "2.1.119"
 # Versão da imagem localhost/homeserver/posto (mude ao trocar o Dockerfile do posto).
 posto_version: "1.0.0"
-# Clientes do hub cujas ações no ops esperam o "aprovar" do Léo.
-ops_clientes_com_aprovacao: [agentes, assistente]
+# Clientes do hub que agem no ops SEM o aprovador: só o Claude Code, que pede aprovação na própria tela. Todo
+# o resto (agentes, assistente, cliente desconhecido; também com a lista vazia) espera o "aprovar" do Léo.
+ops_clientes_sem_aprovacao: [claude_code]
 # Versão da imagem local do aprovador (código em docker/images/aprovador).
 aprovador_version: "1.0.0"
 # Minutos para decidir um pedido (e para usá-lo depois de aprovado).

@@ -23,7 +23,7 @@ def _igual(a: str, b: str) -> bool:
     return hmac.compare_digest(a.encode(), b.encode())
 
 
-def pagina(pedidos: list[dict], usuario: str, aviso: str = "") -> str:
+def pagina(pedidos: list[dict], usuario: str, aviso: str = "", validade_min: int = 30) -> str:
     def linha(p: dict) -> str:
         quando = time.strftime("%d/%m %H:%M", time.localtime(p["criado"]))
         args = html.escape(json.dumps(p["argumentos"], ensure_ascii=False))
@@ -48,7 +48,7 @@ table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;
 code{{word-break:break-all}}button{{padding:6px 12px;margin:2px}}.aviso{{background:#fff3cd;padding:8px}}
 @media (prefers-color-scheme:dark){{body{{background:#1b1b1b;color:#eee}}td,th{{border-color:#444}}.aviso{{background:#4a3d00}}}}</style>
 </head><body><h1>Aprovações dos agentes</h1><p>{html.escape(usuario)} · {len(pendentes)} pendente(s) ·
-pedidos pendentes vencem em 30 min</p>{f'<p class="aviso">{html.escape(aviso)}</p>' if aviso else ''}
+pedidos vencem em {validade_min} min</p>{f'<p class="aviso">{html.escape(aviso)}</p>' if aviso else ''}
 <table><tr><th>Pedido</th><th>Quem</th><th>Ação</th><th>Estado</th><th></th></tr>{corpo}</table></body></html>"""
 
 
@@ -107,7 +107,7 @@ def fazer_handler(cfg: Config, registro: Registro, telegram: Telegram | None):
                 if usuario is None:
                     return
                 aviso = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).get("aviso", [""])[0]
-                return self._enviar(200, pagina(registro.listar(), usuario, aviso), "text/html")
+                return self._enviar(200, pagina(registro.listar(), usuario, aviso, cfg.validade_s // 60), "text/html")
             self._json(404, {"erro": "não encontrado"})
 
         def do_POST(self):  # noqa: N802
@@ -130,16 +130,19 @@ def fazer_handler(cfg: Config, registro: Registro, telegram: Telegram | None):
                 faltando = [c for c in ("cliente", "acao", "alvo") if not isinstance(dados.get(c), str) or not dados[c]]
                 if faltando or not isinstance(dados.get("argumentos", {}), dict):
                     return self._json(400, {"erro": "campos obrigatórios: cliente, acao, alvo, argumentos"})
-                p = registro.criar(dados["cliente"], dados["acao"], dados["alvo"], dados.get("argumentos", {}),
-                                   str(dados.get("descricao", "")))
+                try:
+                    p = registro.criar(dados["cliente"], dados["acao"], dados["alvo"], dados.get("argumentos", {}),
+                                       str(dados.get("descricao", "")))
+                except Conflito as erro:
+                    return self._json(429, {"erro": str(erro)})
                 if telegram:
                     telegram.avisar(p)
                 return self._json(201, {"id": p["id"], "estado": p["estado"], "validade_min": cfg.validade_s // 60})
             if self.path.startswith("/api/pedidos/") and self.path.endswith("/usar"):
                 pid = self.path.split("/")[3]
                 try:
-                    p = registro.usar(pid, str(dados.get("acao", "")), str(dados.get("alvo", "")),
-                                      dados.get("argumentos", {}))
+                    p = registro.usar(pid, str(dados.get("cliente", "")), str(dados.get("acao", "")),
+                                      str(dados.get("alvo", "")), dados.get("argumentos", {}))
                 except Conflito as erro:
                     return self._json(409, {"erro": str(erro)})
                 if telegram:

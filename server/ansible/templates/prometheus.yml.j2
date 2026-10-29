@@ -108,7 +108,7 @@ scrape_configs:
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:3100/api/public/health']
         labels: {app: 'langfuse'}
       # Posto de agentes (página 16): a 3005 aceita a core, onde o blackbox roda.
-      - targets: ['http://{{ ai_desktop_vm_ip_var }}:3005/health']
+      - targets: ['http://{{ ai_desktop_vm_ip_var }}:3005/api/health']
         labels: {app: 'vibe-kanban'}
 {% endif %}
     relabel_configs:

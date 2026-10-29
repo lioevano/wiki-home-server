@@ -458,7 +458,7 @@ def test_bypass_notas_e_escrita():
 
 def test_rotas_notes():
     cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2",
-                                base_domain=DOM, ai_desktop_vm_ip_var=AI_IP))
+                                base_domain=DOM, ai_desktop_vm_ip_var=AI_IP, posto_chave_proxy="x"))
     rot, srv = cfg["http"]["routers"], cfg["http"]["services"]
     por_host = {r["rule"]: r for r in rot.values()}
     for sub, porta, auth in (("notas", 8481, False), ("escrita", 8482, False), ("sync", 8384, True)):

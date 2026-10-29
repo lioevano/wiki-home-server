@@ -248,8 +248,9 @@ posto_vibe_kanban_tag: "v0.1.45-20260919085201"
 posto_claude_code_version: "2.1.119"
 # Versão da imagem localhost/homeserver/posto (mude ao trocar o Dockerfile do posto).
 posto_version: "1.0.0"
-# Clientes do hub cujas ações no ops esperam o "aprovar" do Léo.
-ops_clientes_com_aprovacao: [agentes, assistente]
+# Clientes do hub que agem no ops SEM o aprovador: só o Claude Code, que pede aprovação na própria tela. Todo
+# o resto (agentes, assistente, cliente desconhecido; também com a lista vazia) espera o "aprovar" do Léo.
+ops_clientes_sem_aprovacao: [claude_code]
 # Versão da imagem local do aprovador (código em docker/images/aprovador).
 aprovador_version: "1.0.0"
 # Minutos para decidir um pedido (e para usá-lo depois de aprovado).

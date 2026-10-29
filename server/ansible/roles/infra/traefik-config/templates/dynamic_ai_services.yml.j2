@@ -31,7 +31,8 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
-    # Posto de agentes (página 16): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta.
+    # Posto de agentes (página 16): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta, e o
+    # segredo injetado depois dela é o que o Caddy do posto exige (sem ele, 403).
     kanban-dynamic:
       entryPoints: ["websecure"]
       rule: "Host(`kanban.{{ base_domain }}`)"
@@ -40,6 +41,7 @@ http:
         certResolver: "letsencrypt"
       middlewares:
         - "authelia-forwardauth@docker"
+        - "posto-chave"
 
     # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
     # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
@@ -75,6 +77,12 @@ http:
     #   tls: { certResolver: "letsencrypt" }
     #   middlewares: ["authelia-forwardauth@docker"]
 
+  middlewares:
+    posto-chave: # o Caddy do posto só repassa ao Vibe Kanban o que trouxer este segredo (página 16)
+      headers:
+        customRequestHeaders:
+          X-Posto-Chave: "{{ posto_chave_proxy }}"
+
   services:
     openwebui-svc-dynamic: # Serviço Traefik para OpenWebUI
       loadBalancer:
@@ -93,7 +101,7 @@ http:
         servers:
           - url: "http://{{ ai_desktop_vm_ip_var }}:3100"
 
-    kanban-svc-dynamic: # stack posto; a porta 3005 só aceita a core (firewall das portas do Docker)
+    kanban-svc-dynamic: # Caddy da stack posto; a porta 3005 só aceita a core (firewall das portas do Docker)
       loadBalancer:
         servers:
           - url: "http://{{ ai_desktop_vm_ip_var }}:3005"

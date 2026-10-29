@@ -33,14 +33,41 @@ def _vault() -> dict:
 def test_posto_sem_login_proprio_so_pelo_traefik():
     s = _svc(POSTO)["posto"]
     assert s["image"] == "${POSTO_IMAGE}" and s["pull_policy"] == "never" and s["labels"]["diun.enable"] == "false"
-    assert s["ports"] == ["${AI_DESKTOP_VM_IP}:3005:3000"]
+    assert s["ports"] == ["${AI_DESKTOP_VM_IP}:3005:3005"]  # o porteiro (Caddy), não o Vibe Kanban
+    assert _env(s)["HOST"] == "127.0.0.1"  # o Vibe Kanban não atende as redes ai_network e notes_mcp
     core = {r["porta"]: r["origens"] for r in _main()["firewall_docker_portas"]["ai-desktop-vm"]}
     assert core[3005] == ["{{ core_services_vm_ip_var }}"]  # só o Traefik da core
     assert {"kanban", "aprovacoes"} <= set(_main()["authelia_dominios_admins"])
     rotas = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2",
-                                  base_domain="exemplo.com", ai_desktop_vm_ip_var="192.168.15.68"))["http"]
-    assert rotas["routers"]["kanban-dynamic"]["middlewares"] == ["authelia-forwardauth@docker"]
+                                  base_domain="exemplo.com", ai_desktop_vm_ip_var="192.168.15.68",
+                                  posto_chave_proxy="CHAVE-POSTO"))["http"]
+    assert rotas["routers"]["kanban-dynamic"]["middlewares"] == ["authelia-forwardauth@docker", "posto-chave"]
+    assert rotas["middlewares"]["posto-chave"]["headers"]["customRequestHeaders"] == {"X-Posto-Chave": "CHAVE-POSTO"}
     assert rotas["services"]["kanban-svc-dynamic"]["loadBalancer"]["servers"] == [{"url": "http://192.168.15.68:3005"}]
+
+
+def test_porteiro_do_posto():
+    """O Caddy divide a rede do posto e só repassa com o segredo do Traefik (e o retira); /api/health passa."""
+    p = _svc(POSTO)["posto_porteiro"]
+    assert p["image"].startswith("caddy:2.") and p["image"].endswith("-alpine")
+    assert p["network_mode"] == "service:posto" and "ports" not in p and "networks" not in p
+    assert p["read_only"] is True and p["cap_drop"] == ["ALL"] and "no-new-privileges:true" in p["security_opt"]
+    assert p["volumes"] == ["${POSTO_DATA_PATH}/Caddyfile:/etc/caddy/Caddyfile:ro"]
+    txt = render("templates/posto/Caddyfile.j2", posto_chave_proxy="CHAVE-POSTO", base_domain="exemplo.com")
+    linhas = [l.strip() for l in txt.splitlines()]
+    assert "admin off" in linhas and ":3005 {" in linhas
+    assert '@traefik header X-Posto-Chave "CHAVE-POSTO"' in linhas and "request_header -X-Posto-Chave" in linhas
+    assert linhas.count("reverse_proxy 127.0.0.1:3000") == 2 and "handle /api/health {" in linhas
+    assert any(l.startswith("respond ") and l.endswith(" 403") for l in linhas)  # o resto: recusado
+    t = _pb_tasks(PB_POSTO)
+    assert t[0]["ansible.builtin.assert"]["that"] == "posto_chave_proxy | default('') | length >= 32"
+    caddy = next(x for x in t if "Caddyfile" in str(x.get("ansible.builtin.template", {})))
+    assert caddy["ansible.builtin.template"]["mode"] == "0600" and caddy.get("no_log") is True
+    assert _vault()["posto_chave_proxy"] not in (_vault()["aprovador_chave_proxy"], _vault()["aprovador_token"])
+    df = (ROOT / "server/docker/images/posto/Dockerfile").read_text(encoding="utf-8")
+    assert "ENV HOST=127.0.0.1" in df and "3000/api/health" in df
+    prom = (ANS / "templates/prometheus.yml.j2").read_text(encoding="utf-8")
+    assert "3005/api/health" in prom
 
 
 def test_posto_usa_o_litellm_com_chave_propria():
@@ -79,6 +106,10 @@ def test_vibe_kanban_do_codigo_fonte():
     build = next(x for x in t if "community.docker.docker_image_build" in x)["community.docker.docker_image_build"]
     assert build["tag"] == "{{ posto_vibe_kanban_tag }}" and "args" not in build  # POSTHOG/SENTRY vazios
     posto = next(x for x in t if x.get("community.docker.docker_image", {}).get("name") == "localhost/homeserver/posto")
+    # A tag da imagem muda com qualquer das três versões (senão a stack seguiria com o Claude Code antigo).
+    tag = yaml.safe_load(PB_POSTO.read_text(encoding="utf-8"))[0]["vars"]["posto_tag"]
+    assert all(v in tag for v in ("posto_version", "posto_vibe_kanban_tag", "posto_claude_code_version"))
+    assert posto["community.docker.docker_image"]["tag"] == "{{ posto_tag }}"
     args = posto["community.docker.docker_image"]["build"]["args"]
     assert args["VIBE_KANBAN_IMAGE"] == "localhost/homeserver/vibe-kanban:{{ posto_vibe_kanban_tag }}"
     assert args["CLAUDE_CODE_VERSION"] == "{{ posto_claude_code_version }}"
@@ -95,8 +126,15 @@ def test_vibe_kanban_do_codigo_fonte():
 def test_aprovador_na_stack_agents():
     s = _svc(AGENTS)["aprovador"]
     lab = s["labels"]
-    assert lab["traefik.http.routers.aprovacoes.middlewares"] == "authelia-forwardauth@docker,aprovador-chave@docker"
-    assert lab["traefik.http.middlewares.aprovador-chave.headers.customrequestheaders.X-Aprovador-Chave"] == "${APROVADOR_CHAVE_PROXY}"
+    assert lab["traefik.http.routers.aprovacoes.middlewares"] == "authelia-forwardauth@docker,aprovador-chave@file"
+    # O segredo fica no arquivo do Traefik, não em label (que qualquer leitor do docker inspect vê).
+    assert not any("CHAVE" in str(v) for v in lab.values())
+    mw = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_agents.yml.j2",
+                               aprovador_chave_proxy="CHAVE-APROV"))["http"]["middlewares"]
+    assert mw["aprovador-chave"]["headers"]["customRequestHeaders"] == {"X-Aprovador-Chave": "CHAVE-APROV"}
+    tarefas = yaml.safe_load((ANS / "roles/infra/traefik-config/tasks/main.yml").read_text(encoding="utf-8"))
+    copia = next(x for x in tarefas if x.get("ansible.builtin.template", {}).get("src") == "dynamic_agents.yml.j2")
+    assert copia.get("no_log") is True
     assert "ports" not in s and set(s["networks"]) == {"agents_internal", "proxy"}
     e = _env(s)
     assert e["APROVADOR_URL_PUBLICA"] == "https://aprovacoes.${BASE_DOMAIN_FROM_VAULT}"
@@ -136,7 +174,10 @@ def test_config_do_hermes():
     # Nada que execute código, mexa em arquivos do container, saia para a internet ou acrescente MCPs.
     desligados = set(cfg["agent"]["disabled_toolsets"])
     assert {"terminal", "code_execution", "file", "browser", "web", "connections", "skills", "delegation"} <= desligados
-    assert {"memory", "cronjob"}.isdisjoint(desligados)
+    # Tarefas agendadas buscam qualquer URL e entregam em qualquer chat: fora.
+    assert "cronjob" in desligados and "memory" not in desligados
+    # A API compatível com OpenAI liga sozinha com API_SERVER_KEY (o init da imagem gera): desligada no config.
+    assert cfg["platforms"]["api_server"]["enabled"] is False
 
 
 def test_segredos_do_hermes():

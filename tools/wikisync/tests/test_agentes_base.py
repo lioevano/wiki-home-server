@@ -411,7 +411,7 @@ def test_litellm_manda_para_o_langfuse():
 
 def test_rota_langfuse():
     cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2",
-                                base_domain=DOM, ai_desktop_vm_ip_var="192.168.15.68"))
+                                base_domain=DOM, ai_desktop_vm_ip_var="192.168.15.68", posto_chave_proxy="x"))
     rot, srv = cfg["http"]["routers"], cfg["http"]["services"]
     r = next(r for r in rot.values() if r["rule"] == f"Host(`langfuse.{DOM}`)")
     assert "authelia-forwardauth@docker" in r["middlewares"]
@@ -592,9 +592,11 @@ def test_rota_dos_autonomos():
     sys.path.insert(0, str(ROOT / "server/docker/images/ops"))
     from ops.config import Config as ConfigOps
     padrao = ConfigOps.do_ambiente({"OPS_MODO": "controle", "PORTAINER_URL": "x", "PORTAINER_API_KEY": "y"})
-    assert padrao.clientes_com_aprovacao == {"agentes", "assistente"}
-    assert _main()["ops_clientes_com_aprovacao"] == ["agentes", "assistente"]
+    # Lista de quem NÃO precisa (só o Claude Code, que tem a rota de controle): quem sobra pede aprovação.
+    assert padrao.clientes_sem_aprovacao == {"claude_code"}
+    assert _main()["ops_clientes_sem_aprovacao"] == ["claude_code"]
+    assert set(_main()["ops_clientes_sem_aprovacao"]).isdisjoint({k["metadata"]["cliente"] for k in pol["keys"]})
     env = _env(_svc(AGENTS)["ops_controle"])
-    assert env["OPS_CLIENTES_COM_APROVACAO"] == "${OPS_CLIENTES_COM_APROVACAO}"
+    assert env["OPS_CLIENTES_SEM_APROVACAO"] == "${OPS_CLIENTES_SEM_APROVACAO}"
     assert env["APROVADOR_URL"] == "http://aprovador:8080" and env["APROVADOR_TOKEN"] == "${APROVADOR_TOKEN}"
     assert "APROVADOR_TOKEN" not in _env(_svc(AGENTS)["ops_leitura"])

@@ -187,8 +187,12 @@ observador_token: "TOKEN_DO_GRAFANA_PARA_O_OBSERVADOR"
 # (openssl rand -hex 32 cada).
 aprovador_token: "TOKEN_DO_OPS_PARA_O_APROVADOR"
 aprovador_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_A_TELA_DE_APROVACOES"
-# Posto (página 16): token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios do posto,
-# Contents e Pull requests); "" deixa sem.
+# Posto (página 16): segredo que só o Traefik injeta no kanban. (o Caddy do posto recusa o resto;
+# openssl rand -hex 32).
+posto_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_O_KANBAN"
+# Token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios de trabalho do posto: Contents
+# e Pull requests). Nunca dê Contents de escrita no wiki-home-server: o ops aplica o que estiver na main.
+# "" deixa sem.
 posto_github_token: ""
 # Assistente (página 17): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
 hermes_telegram_bot_token: "TOKEN_DO_BOT_DO_ASSISTENTE"
