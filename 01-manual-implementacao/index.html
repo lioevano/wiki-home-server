@@ -994,6 +994,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="15-ia-observa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    IA que observa o servidor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -2080,8 +2108,9 @@
 <li><strong><a href="10-midia/">Mídia</a>:</strong> Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Prowlarr, Bazarr e qBittorrent atrás da ProtonVPN, com importação por hardlink.</li>
 <li><strong><a href="11-fotos-arquivos/">Fotos e Arquivos</a>:</strong> Immich, Nextcloud e Collabora, com login OIDC do Authelia.</li>
 <li><strong><a href="12-segundo-cerebro/">Segundo Cérebro</a>:</strong> vaults do Obsidian pelo Syncthing, busca local (qmd) e MCP para o Claude com escopo por vault.</li>
-<li><strong><a href="13-agentes-base/">Agentes: Base</a>:</strong> hub de MCPs com leitura pública e controle na LAN, operações (containers, stacks, Ansible) e rastreio no Langfuse.</li>
+<li><strong><a href="13-agentes-base/">Agentes: Base</a>:</strong> hub de MCPs com leitura pública e controle pela VPN, operações (containers, stacks, Ansible) e rastreio no Langfuse.</li>
 <li><strong><a href="14-vpn-tailscale/">VPN (Tailscale)</a>:</strong> acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker.</li>
+<li><strong><a href="15-ia-observa/">IA que observa o servidor</a>:</strong> análise de cada alerta e boletim da manhã no Telegram, por uma IA que só lê (rota de leitura do hub).</li>
 </ol>
 <p>A lista completa de aplicações, com stack, exposição e dados de cada uma, está no <a href="../02-visao-geral-arquitetura/09-catalogo-aplicacoes/">Catálogo de Aplicações</a>; as integrações entre elas, no <a href="../02-visao-geral-arquitetura/10-indice-integracoes/">Índice de Integrações</a>.</p>
 <h2 id="a-conferir-no-primeiro-deploy">A conferir no primeiro deploy<a class="headerlink" href="#a-conferir-no-primeiro-deploy" title="Permanent link">¶</a></h2>
@@ -2146,6 +2175,11 @@
 <td>Teste de ponta a ponta da seção 13; <code>docker logs agentgateway</code>, <code>docker logs ops_controle</code></td>
 </tr>
 <tr>
+<td><a href="15-ia-observa/">15</a></td>
+<td>O observador chama as ferramentas da rota de leitura (nomes com prefixo, respostas em SSE do hub em modo <code>stateless</code>) e o teste do ponto de contato do Grafana chega analisado</td>
+<td><code>docker exec observador python -m observador boletim</code>; <em>Contact points → n8n → Test</em>; <code>docker logs observador</code></td>
+</tr>
+<tr>
 <td><a href="13-agentes-base/">13</a></td>
 <td><code>PUT /api/stacks</code> do Portainer 2.45 (redeploy pelo <code>ops</code>, pela porta HTTP 9000 do <code>--http-enabled</code>) e o alerta <code>ops-acao-falhou</code> com o formato do Loki</td>
 <td><code>ops_stack_redeploy</code> de uma stack de teste; uma ação recusada</td>
@@ -2172,7 +2206,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="28 de outubro de 2026 21:29:46 -03">28 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="28 de outubro de 2026 21:44:47 -03">28 de outubro de 2026</span>
   </span>
 
     
