@@ -166,7 +166,8 @@
   when: docker_portainer_mode == 'agent'
 
 # Firewall das portas publicadas pelo Docker (página 14): o UFW não vê esse tráfego. As regras ficam na cadeia
-# DOCKER-USER e são refeitas a cada início do Docker (PartOf=docker.service).
+# DOCKER-USER e são refeitas antes de cada início do Docker (Before= e PartOf=docker.service): quando os
+# containers sobem, as regras já estão lá.
 - name: "Script do firewall das portas publicadas pelo Docker"
   ansible.builtin.template:
     src: firewall-docker.sh.j2
@@ -185,7 +186,7 @@
     content: |
       [Unit]
       Description=Regras da cadeia DOCKER-USER (portas publicadas pelo Docker; página 14)
-      After=docker.service
+      Before=docker.service
       PartOf=docker.service
 
       [Service]

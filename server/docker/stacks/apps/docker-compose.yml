@@ -47,6 +47,10 @@ services:
 
   grafana_db:
     image: postgres:15-alpine
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: grafana_db
     restart: unless-stopped
     volumes:
@@ -144,8 +148,9 @@ services:
       # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 09.
       - DIUN_DEFAULTS_WATCHREPO=true
       - DIUN_DEFAULTS_SORTTAGS=semver
-      - DIUN_DEFAULTS_MAXTAGS=10
-      - DIUN_DEFAULTS_INCLUDETAGS=^v?\d+(\.\d+)+$$ # $$ = $ no compose
+      - DIUN_DEFAULTS_MAXTAGS=3 # poucas tags por repositório: o Docker Hub limita os pulls anônimos por IP
+      - DIUN_DEFAULTS_INCLUDETAGS=^v?\d+\.\d+\.\d+$$ # $$ = $ no compose; tags de série e as de sistema usam labels diun.*
+      - DIUN_DEFAULTS_NOTIFYON=new # só versão nova; o digest da mesma tag muda a cada rebuild (linuxserver.io)
       - DIUN_NOTIF_WEBHOOK_ENDPOINT=http://n8n:5678/webhook/notificar
       - DIUN_NOTIF_WEBHOOK_METHOD=POST
       - DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION=Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}

@@ -3,7 +3,8 @@
 # Firewall das portas publicadas pelo Docker (o UFW não vê esse tráfego), na cadeia DOCKER-USER, que o Docker
 # reserva para isso e não apaga. Para cada porta de firewall_docker_portas deste host, quem entra pela interface
 # da LAN só passa se a origem estiver na lista (lista vazia: ninguém pela LAN). Tráfego da VPN (tailscale0) e
-# entre containers não passa por aqui. Rodado pela unit firewall-docker, depois de cada (re)início do Docker.
+# entre containers não passa por aqui. Rodado pela unit firewall-docker antes de cada (re)início do Docker: cria a
+# DOCKER-USER se ainda não existe, e o Docker a reaproveita (só acrescenta o salto na FORWARD).
 # Página 14. Gerado pelo role infra/docker.
 set -euo pipefail
 
@@ -11,6 +12,7 @@ LAN="{{ ansible_facts.default_ipv4.interface | default('eth0') }}"
 CADEIA="HOMESERVER"
 IPT="${IPTABLES:-iptables}"
 
+$IPT -N DOCKER-USER 2>/dev/null || true
 $IPT -N "$CADEIA" 2>/dev/null || $IPT -F "$CADEIA"
 $IPT -C DOCKER-USER -j "$CADEIA" 2>/dev/null || $IPT -I DOCKER-USER -j "$CADEIA"
 

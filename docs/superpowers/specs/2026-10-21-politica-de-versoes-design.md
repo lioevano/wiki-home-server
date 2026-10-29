@@ -3,7 +3,7 @@
 - **Data:** 2026-10-21
 - **Autor:** Léo Ivan (com Claude)
 - **Status:** decidido de forma autônoma, a pedido do Léo ("pode seguir da mesma forma autônoma com os demais pontos").
-- **Caminho:** bounded+. Muda a tag de 16 serviços e a configuração do Diun, sem mudar a arquitetura.
+- **Caminho:** bounded+. Muda a tag de 15 serviços e a configuração do Diun, sem mudar a arquitetura.
 - **Origem:** sugestão da rodada de pendências menores. O `server/AGENTS.md` pede "imagens com versão fixada sempre que possível", mas 16 serviços ainda usam `:latest`.
 
 ## 1. Problema
@@ -22,3 +22,9 @@ O Diun, do jeito que está, só avisa quando o **digest da mesma tag** muda. Iss
 | V4 | Atualizar | Continua manual, uma aplicação por vez: notas da versão → trocar a tag na wiki (bloco literal ou compose) → `sync` → `Update the stack` com **Re-pull**. A página 03/09 (atualização segura) ganha esse fluxo. |
 | V5 | Pinos antigos | Traefik `v2.11.2`, cloudflared `2024.5.0`, Authelia `4.38.0`, Portainer `2.19.4` e os Postgres **não** mudam aqui. Subir Traefik para a v3, Authelia para a 4.39 ou o Postgres de versão principal pede migração própria. O Diun passa a avisar quando há versão nova. |
 | V6 | Guarda | O teste `test_imagens_com_versao` falha se um compose usar `:latest` ou imagem sem tag. |
+
+## 3. Correções da revisão final (2026-10-28)
+
+- O Diun aplica o `include_tags` também à tag da própria imagem e **pula** a que não casa. Com o filtro geral, os Postgres, Redis, Valkey, o Nextcloud (`34-apache`), o ClickHouse (`25.12`), o Jellyfin (`12.2`) e a Collabora (cinco partes) deixariam de ser vigiados. Agora eles têm labels `diun.*` próprios (vigiar o digest da própria tag, ou filtro próprio), e o teste `test_diun_vigia_toda_tag_fixada` confere toda tag contra o filtro efetivo.
+- As tags da linuxserver.io são refeitas a cada rebuild (mesmo digest da `-lsNNN` mais nova): `DIUN_DEFAULTS_NOTIFYON=new` evita um aviso por semana. O filtro geral passou a `^v?\d+\.\d+\.\d+$`, sem as tags de série (`v3.41`, `3.7`).
+- Rate limit do Docker Hub: `MAXTAGS=3` e o `diun_ai` às 15h (6 h depois do `diun`).

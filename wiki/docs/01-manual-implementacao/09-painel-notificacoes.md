@@ -57,7 +57,18 @@ O Authelia libera só `n8n.seudominio.com/webhook/…` (regra `bypass` com `reso
 
 ### Atualizações (Diun)
 
-Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true`), uma vez por dia às 9h. Como toda imagem tem versão fixada (política de versões, abaixo), o Diun olha as **tags do repositório** de cada imagem (`DIUN_DEFAULTS_WATCHREPO=true`, ordenadas por `semver`, só as de versão: `DIUN_DEFAULTS_INCLUDETAGS=^v?\d+(\.\d+)+$`). Cada aviso é uma versão nova publicada. Na primeira rodada ele só registra as tags que já existem, sem avisar.
+Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true`), uma vez por dia: o `diun` às 9h e o `diun_ai` às 15h. Como toda imagem tem versão fixada (política de versões, abaixo), o Diun olha as **tags do repositório** de cada imagem (`DIUN_DEFAULTS_WATCHREPO=true`, ordenadas por `semver`, as 3 maiores, só as de versão completa: `DIUN_DEFAULTS_INCLUDETAGS=^v?\d+\.\d+\.\d+$`) e avisa só quando aparece uma **tag nova** (`DIUN_DEFAULTS_NOTIFYON=new`). Na primeira rodada ele só registra as tags que já existem, sem avisar.
+
+Três ajustes, por label no serviço (`diun.*`, que vale mais que o padrão):
+
+- **Tags de série** (os Postgres, Redis e Valkey, o Nextcloud `34-apache`, o ClickHouse `25.12`): o Diun pularia a imagem, porque a própria tag não casa com o filtro. Esses serviços vigiam o **digest da própria tag** (`diun.watch_repo: "false"`, `diun.include_tags: ".*"`, `diun.notify_on: "new;update"`): o aviso é um rebuild de segurança da série. Mudar de versão principal (Postgres 15 → 16) é uma migração planejada, não um aviso.
+- **Jellyfin** (`12.2`) e **Collabora** (`26.04.5.1.1`): filtro próprio no `diun.include_tags`; o Jellyfin também avisa quando o digest da série muda (patch novo).
+- **Sem vigia** (`diun.enable: "false"`): imagens locais, o MinIO do Langfuse (só por digest) e o `nextcloud_cron` (mesma imagem do `nextcloud_app`).
+
+O teste `test_diun_vigia_toda_tag_fixada` falha se alguma tag fixada ficar fora do filtro do seu serviço.
+
+!!! warning "Limite do Docker Hub"
+    Para cada tag nova, o Diun baixa o manifesto, e o Docker Hub limita os pulls anônimos por IP público (que as duas VMs compartilham). Por isso são só 3 tags por repositório e os dois Diuns rodam com 6 h de diferença. Se aparecer `toomanyrequests` no log do Diun, configure uma conta gratuita do Docker Hub (`DIUN_REGOPTS_*`).
 
 | Serviço | Stack / VM | Webhook |
 |---|---|---|
@@ -65,7 +76,7 @@ Um Diun por VM, observando **todos** os containers (`DIUN_PROVIDERS_DOCKER_WATCH
 | `diun_ai` | `ai` / `ai-desktop-vm` | `https://n8n.seudominio.com/webhook/notificar` |
 
 !!! info "Política de versões"
-    Nenhum compose usa `:latest`: o repositório diz exatamente o que roda, e um **Re-pull** não traz uma versão nova por acaso (o `dev.py test` acusa uma tag `latest`). As imagens da linuxserver.io usam a versão do aplicativo (`4.0.20`), sem o sufixo `-lsNNN`; o Jellyfin, a série (`12.2`). Imagens locais (`localhost/homeserver/*`) ficam fora do Diun (`diun.enable: "false"`). Para atualizar, siga o [guia de atualização segura](../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos.md#atualizando-aplicações-docker-individuais-eg-nextcloud-jellyfin-sonarr).
+    Nenhum compose usa `:latest`: o repositório diz exatamente o que roda, e um **Re-pull** não traz uma versão nova por acaso (o `dev.py test` acusa uma tag `latest`). As imagens da linuxserver.io usam a versão do aplicativo (`4.0.20`), sem o sufixo `-lsNNN`: a tag é refeita a cada rebuild semanal, e por isso o Diun avisa só de tag nova. O Jellyfin usa a série (`12.2`). Imagens locais (`localhost/homeserver/*`) ficam fora do Diun (`diun.enable: "false"`). Para atualizar, siga o [guia de atualização segura](../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos.md#atualizando-aplicações-docker-individuais-eg-nextcloud-jellyfin-sonarr).
 
 Ambos enviam `Authorization: Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}`; o banco do Diun fica em `<NFS>/diun/data` e `<NFS>/diun-ai/data` (variáveis `MONITORING_DIUN_DATA_PATH` e `AI_STACK_DIUN_DATA_PATH`). Nenhum dos dois monta o socket do Docker: o `diun` lê pelo `docker-socket-proxy` da stack `apps` e o `diun_ai` pelo `docker-socket-proxy-ai` da stack `ai` (`DIUN_PROVIDERS_DOCKER_ENDPOINT`), ambos só de leitura (`CONTAINERS=1`, `IMAGES=1`, `POST=0`). Cada proxy fica numa rede `internal` própria (`docker_socket` na core, com o Diun e a Homepage; `diun_ai_socket` na VM de IA, só com o `diun_ai`): só de leitura não quer dizer inofensivo, porque `CONTAINERS=1` mostra as variáveis de ambiente de qualquer container, inclusive as chaves de provedor do LiteLLM, e o n8n e o Open WebUI executam código. O workflow recusa (401) qualquer chamada se a variável do token estiver vazia no n8n.
 

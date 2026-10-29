@@ -133,8 +133,8 @@ Este arquivo contém as tarefas principais do role `common`.
 
 # --- Firewall UFW (Uncomplicated Firewall) ---
 # Em todas as VMs: entrada negada por padrão, saída liberada. Vale para os serviços do próprio host (SSH,
-# Alloy na 12345, VNC). Portas publicadas pelo Docker não passam pelo UFW: elas são protegidas pelo bind
-# no IP da LAN e pela autenticação de cada serviço.
+# Alloy na 12345, VNC). Portas publicadas pelo Docker não passam pelo UFW: elas são limitadas pela cadeia
+# HOMESERVER na DOCKER-USER (firewall_docker_portas, role infra/docker; página 14) e pela autenticação de cada serviço.
 - name: "UFW: liberar SSH (antes de ligar, para não perder a conexão)"
   community.general.ufw:
     rule: allow
@@ -218,11 +218,11 @@ Handlers para o role `common`.
     * Criar o grupo `{{ docker_group_name_on_vm }}` com o GID `{{ docker_pgid }}`.
     * Criar o usuário `{{ docker_user_name_on_vm }}` com o UID `{{ docker_puid }}`, associado ao grupo acima, e com uma senha definida.
     * Adicionar o usuário Ansible da VM (`{{ vm_ansible_user_name }}`) também ao grupo `{{ docker_group_name_on_vm }}`.
-  * **Configurar Firewall UFW:** em **todas** as VMs, entrada negada por padrão; libera SSH (antes de ligar o firewall), HTTP/S do Traefik só na `core-services-vm` e VNC só onde `GUI_ENABLED` é verdadeiro. A porta 12345 do Alloy é liberada pelo role `infra/alloy`. Portas publicadas pelo Docker não passam pelo UFW.
+  * **Configurar Firewall UFW:** em **todas** as VMs, entrada negada por padrão; libera SSH (antes de ligar o firewall), HTTP/S do Traefik só na `core-services-vm` e VNC só onde `GUI_ENABLED` é verdadeiro. A porta 12345 do Alloy é liberada pelo role `infra/alloy`. Portas publicadas pelo Docker não passam pelo UFW: quem as limita é o firewall do role `docker` (abaixo).
 
 ## 4.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)
 
-Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portainer_mode` (em `ansible/roles/infra/docker/defaults/main.yml`) decide o que cada uma recebe além do Docker: `server` na `core-services-vm` (o Portainer completo, a rede `proxy` e o diretório no NFS) e `agent` nas demais (o **Portainer Agent** na porta 9001, publicada só no IP da LAN, pelo qual o Portainer central gerencia as stacks daquela VM). As portas publicadas pelo Docker não passam pelo UFW; quem protege o agente é o segredo `portainer_agent_secret` do vault (`AGENT_SECRET`), que o Portainer central também recebe. Suas principais responsabilidades são:
+Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portainer_mode` (em `ansible/roles/infra/docker/defaults/main.yml`) decide o que cada uma recebe além do Docker: `server` na `core-services-vm` (o Portainer completo, a rede `proxy` e o diretório no NFS) e `agent` nas demais (o **Portainer Agent** na porta 9001, publicada só no IP da LAN, pelo qual o Portainer central gerencia as stacks daquela VM). As portas publicadas pelo Docker não passam pelo UFW. O agente tem duas proteções: o firewall do role (cadeia `HOMESERVER` na `DOCKER-USER`, gerada de `firewall_docker_portas`), que só deixa a `core-services-vm` alcançar a 9001 pela LAN ([seção 14](14-vpn-tailscale.md#firewall-das-portas-publicadas-pelo-docker)), e o segredo `portainer_agent_secret` do vault (`AGENT_SECRET`), que o Portainer central também recebe. Suas principais responsabilidades são:
 
 * Instalar o Docker Engine e o plugin Docker Compose.
 * Adicionar os usuários relevantes (`{{ vm_ansible_user_name }}`, `{{ docker_user_name_on_vm }}`) ao grupo `docker` do sistema para permitir a execução de comandos Docker sem `sudo`.
@@ -406,7 +406,8 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
   when: docker_portainer_mode == 'agent'
 
 # Firewall das portas publicadas pelo Docker (página 14): o UFW não vê esse tráfego. As regras ficam na cadeia
-# DOCKER-USER e são refeitas a cada início do Docker (PartOf=docker.service).
+# DOCKER-USER e são refeitas antes de cada início do Docker (Before= e PartOf=docker.service): quando os
+# containers sobem, as regras já estão lá.
 - name: "Script do firewall das portas publicadas pelo Docker"
   ansible.builtin.template:
     src: firewall-docker.sh.j2
@@ -425,7 +426,7 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
     content: |
       [Unit]
       Description=Regras da cadeia DOCKER-USER (portas publicadas pelo Docker; página 14)
-      After=docker.service
+      Before=docker.service
       PartOf=docker.service
 
       [Service]

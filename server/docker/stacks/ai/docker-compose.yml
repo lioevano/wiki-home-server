@@ -53,6 +53,10 @@ services:
   # Chaves virtuais, orçamentos e registro de uso. Disco local da VM (backup: dump diário no NFS).
   litellm_db:
     image: postgres:16-alpine
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: litellm_db
     restart: unless-stopped
     networks:
@@ -148,7 +152,7 @@ services:
     environment:
       # Integração notificacoes (NTF-2): avisa quando sai imagem nova de qualquer container desta VM
       - TZ=${SYSTEM_TIMEZONE}
-      - DIUN_WATCH_SCHEDULE=0 9 * * *
+      - DIUN_WATCH_SCHEDULE=0 15 * * * # 6 h depois do diun da core: os dois saem pelo mesmo IP
       - DIUN_PROVIDERS_DOCKER=true
       - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy-ai:2375 # só leitura, sem o socket no container
       - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
@@ -156,8 +160,9 @@ services:
       # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 09.
       - DIUN_DEFAULTS_WATCHREPO=true
       - DIUN_DEFAULTS_SORTTAGS=semver
-      - DIUN_DEFAULTS_MAXTAGS=10
-      - DIUN_DEFAULTS_INCLUDETAGS=^v?\d+(\.\d+)+$$ # $$ = $ no compose
+      - DIUN_DEFAULTS_MAXTAGS=3 # poucas tags por repositório: o Docker Hub limita os pulls anônimos por IP
+      - DIUN_DEFAULTS_INCLUDETAGS=^v?\d+\.\d+\.\d+$$ # $$ = $ no compose; tags de série e as de sistema usam labels diun.*
+      - DIUN_DEFAULTS_NOTIFYON=new # só versão nova; o digest da mesma tag muda a cada rebuild (linuxserver.io)
       - DIUN_NOTIF_WEBHOOK_ENDPOINT=https://n8n.${BASE_DOMAIN_FROM_VAULT}/webhook/notificar
       - DIUN_NOTIF_WEBHOOK_METHOD=POST
       - DIUN_NOTIF_WEBHOOK_HEADERS_AUTHORIZATION=Bearer ${NOTIFICACOES_WEBHOOK_TOKEN}

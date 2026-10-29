@@ -48,3 +48,12 @@
 
 - **VPN depende da core:** se a `core-services-vm` cair, a VPN cai junto. Em casa, desligue o Tailscale para alcançar o host Proxmox e a ai pela LAN. O host não está nas rotas justamente por isso.
 - **4100 fechada na LAN:** um agente que rode **na LAN, fora da VPN**, perde a rota de controle. Os agentes da 4c3 rodam na `ai-desktop-vm`, que alcança a core pela LAN, então a lista do 4100 recebe o IP da ai quando a 4c3 chegar.
+
+## 5. Correções da revisão final (2026-10-28)
+
+- `--check` numa VM nova: a tarefa do `apt` do Tailscale fica fora do check mode (o repositório só foi simulado, e o `apt` não acharia o pacote).
+- `sysctl`: `ansible.posix.sysctl` aplica o `ip_forward` na hora, antes do `tailscale up`; sem o forwarding do IPv6 (desligaria o `accept_ra` da LAN). O handler `Aplicar sysctl` saiu.
+- `tailscale set` só roda (e mostra *changed*) quando o nome, as rotas ou o `accept-dns` diferem do `tailscale debug prefs`.
+- CoreDNS: `template IN ANY` com `NOERROR` para os outros tipos (HTTPS/65, TXT, MX, SOA), que davam SERVFAIL.
+- Firewall: a unit `firewall-docker` roda **antes** do Docker (`Before=`), criando a `DOCKER-USER` que o Docker reaproveita: sem janela aberta no boot.
+- Textos que ainda diziam que as portas do Docker eram protegidas só pela LAN ou pelo segredo (páginas 04, 06, 07, 10 e 08) passaram a citar a cadeia `HOMESERVER` e a VPN.

@@ -141,7 +141,7 @@ O compose declara, em `TOOL_SERVER_CONNECTIONS`, os dois MCPs do [segundo céreb
 O Claude Code roda no seu PC Linux e tem dois modos:
 
 * **`claude`** — o login da sua assinatura Claude, direto na Anthropic. É o uso do dia a dia; não passa pelo gateway.
-* **`claude-gw`** — pelo gateway, com a chave `claude_code`: aparece na tela de uso, respeita o orçamento e serve para automações. Funciona na LAN (de fora, pela VPN quando ela existir). A Anthropic só suporta o Claude Code com modelos Claude, então este perfil usa os nomes reais (`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`), não os apelidos.
+* **`claude-gw`** — pelo gateway, com a chave `claude_code`: aparece na tela de uso, respeita o orçamento e serve para automações. Funciona na LAN e, de fora, pela VPN ([seção 14](14-vpn-tailscale.md)). A Anthropic só suporta o Claude Code com modelos Claude, então este perfil usa os nomes reais (`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`), não os apelidos.
 
 Crie o alias no `~/.bashrc` (a chave fica só no seu PC; nunca num `.claude/settings.json` de repositório):
 

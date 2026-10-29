@@ -224,7 +224,7 @@ Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):
 |---|---|
 | claude.ai (navegador e celular) | **Configurações → Conectores → Adicionar conector personalizado** com `https://servidor.<domínio>/mcp` (nome `Servidor`). **Conectar** abre o login do Authelia (2FA, só o grupo `admins`). Só leitura. |
 | Claude Code (PC, com o Tailscale ligado) | `claude mcp add --transport http servidor http://<IP da core-services-vm>:4100/mcp --header "Authorization: Bearer <agents_api_keys.claude_code>"`. A chave fica no `~/.claude.json` do seu usuário, nunca em repositório. Sem o Tailscale, a 4100 não responde (nem em casa): use a rota de leitura (`https://servidor.<domínio>/mcp`). |
-| Agentes (4c3) | Mesma rota de controle, com a chave `agents_api_keys.agentes`. |
+| Agentes (4c3) | Mesma rota de controle, com a chave `agents_api_keys.agentes`. Eles rodam na `ai-desktop-vm`, que não tem Tailscale: quando a 4c3 chegar, o IP da ai entra nas `origens` da 4100 em `firewall_docker_portas` (página 01). |
 
 As ferramentas aparecem com o prefixo do alvo: `grafana_…`, `ops_…`, `homeassistant_…`, `n8n_…`.
 

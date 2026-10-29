@@ -9,5 +9,9 @@
     template IN AAAA {
         rcode NOERROR
     }
+    # Os outros tipos (HTTPS/65, que navegadores e o iOS pedem em toda URL, TXT, MX…): resposta vazia, sem SERVFAIL.
+    template IN ANY {
+        rcode NOERROR
+    }
     errors
 }

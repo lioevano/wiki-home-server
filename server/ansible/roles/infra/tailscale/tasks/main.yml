@@ -19,17 +19,16 @@
     name: tailscale
     state: present
     update_cache: true
+  when: not ansible_check_mode # no --check o repositório só foi simulado: o apt não acharia o pacote
 
+# Aplicado na hora (antes do tailscale up). Só IPv4: as rotas anunciadas são IPv4, e ligar o forwarding do
+# IPv6 desligaria o accept_ra (o IPv6 por SLAAC da LAN).
 - name: "Tailscale: encaminhamento de pacotes (subnet router)"
-  ansible.builtin.copy:
-    dest: /etc/sysctl.d/99-tailscale.conf
-    owner: root
-    group: root
-    mode: '0644'
-    content: |
-      net.ipv4.ip_forward = 1
-      net.ipv6.conf.all.forwarding = 1
-  notify: Aplicar sysctl
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_file: /etc/sysctl.d/99-tailscale.conf
+    reload: true
 
 - name: "Tailscale: serviço"
   ansible.builtin.systemd_service:
@@ -54,12 +53,25 @@
   changed_when: true
   no_log: true # a auth key
 
-# A cada execução: mantém as rotas anunciadas iguais às do group_vars (aprovar no painel quando mudarem).
-- name: "Tailscale: rotas anunciadas"
+- name: "Tailscale: preferências atuais"
+  ansible.builtin.command: tailscale debug prefs
+  register: tailscale_prefs
+  changed_when: false
+  failed_when: false
+  check_mode: false # só lê
+
+# Mantém o nome e as rotas anunciadas iguais às do group_vars (aprovar no painel quando as rotas mudarem).
+- name: "Tailscale: nome e rotas anunciadas"
+  vars:
+    prefs: "{{ ((tailscale_prefs.stdout | default('')) or '{}') | from_json }}"
   ansible.builtin.command: >-
     tailscale set --hostname={{ tailscale_hostname }} --advertise-routes={{ tailscale_rotas | join(',') }}
     --accept-dns=false
-  changed_when: false
+  when: >-
+    (prefs.AdvertiseRoutes | default([]) or []) | sort != tailscale_rotas | sort
+    or prefs.Hostname | default('') != tailscale_hostname
+    or prefs.CorpDNS | default(true)
+  changed_when: true
 
 - name: "UFW: conexões diretas do Tailscale"
   community.general.ufw:

@@ -37,6 +37,10 @@ x-nextcloud-env: &nextcloud-env
 services:
   nextcloud_db:
     image: postgres:15-alpine
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: nextcloud_db
     restart: unless-stopped
     volumes:
@@ -56,6 +60,10 @@ services:
 
   nextcloud_redis:
     image: redis:7-alpine
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: nextcloud_redis
     restart: unless-stopped
     networks:
@@ -83,6 +91,9 @@ services:
       nextcloud_redis:
         condition: service_healthy
     labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
       traefik.enable: "true"
       traefik.http.routers.nextcloud.rule: "Host(`nextcloud.${BASE_DOMAIN_FROM_VAULT}`)"
       traefik.http.routers.nextcloud.entrypoints: "websecure"
@@ -94,6 +105,8 @@ services:
   # Tarefas de fundo do Nextcloud (limpeza, versões, prévias, lembretes do calendário) a cada 5 minutos.
   nextcloud_cron:
     image: nextcloud:${NEXTCLOUD_MAJOR}-apache
+    labels:
+      diun.enable: "false" # mesma imagem do nextcloud_app, que já é vigiada (evita aviso em dobro)
     container_name: nextcloud_cron
     restart: unless-stopped
     entrypoint: /cron.sh
@@ -125,6 +138,7 @@ services:
       dictionaries: "pt_BR en_US"
       TZ: ${SYSTEM_TIMEZONE}
     labels:
+      diun.include_tags: '^\d+(\.\d+){4}$$' # versões da Collabora têm cinco partes (26.04.5.1.1)
       traefik.enable: "true"
       traefik.http.routers.collabora.rule: "Host(`office.${BASE_DOMAIN_FROM_VAULT}`)"
       traefik.http.routers.collabora.entrypoints: "websecure"

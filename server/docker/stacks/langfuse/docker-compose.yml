@@ -93,6 +93,10 @@ services:
 
   langfuse_db:
     image: docker.io/postgres:17-alpine
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: langfuse_db
     restart: unless-stopped
     environment:
@@ -113,6 +117,10 @@ services:
 
   langfuse_clickhouse:
     image: docker.io/clickhouse/clickhouse-server:25.12
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: langfuse_clickhouse
     restart: unless-stopped
     user: "101:101" # dono dos diretórios de dados (setup-langfuse-volumes.yml)
@@ -135,6 +143,8 @@ services:
   langfuse_minio:
     # O MinIO não publica mais imagem versionada; a da Chainguard só tem 'latest', então fica fixada pelo digest.
     image: cgr.dev/chainguard/minio@sha256:32c504bea4574d8f29d719b37bc0dad920ecf3e22b81dc5cea0bb105af2ce10f
+    labels:
+      diun.enable: "false" # só digest: a Chainguard publica só a latest; atualize junto com o Langfuse
     container_name: langfuse_minio
     restart: unless-stopped
     entrypoint: sh
@@ -154,6 +164,10 @@ services:
 
   langfuse_redis:
     image: docker.io/redis:7.4-alpine
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: langfuse_redis
     restart: unless-stopped
     command: ["redis-server", "--requirepass", "${LANGFUSE_REDIS_PASSWORD}", "--maxmemory-policy", "noeviction"]

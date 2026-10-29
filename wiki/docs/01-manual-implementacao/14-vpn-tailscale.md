@@ -40,7 +40,7 @@ Portas publicadas pelo Docker (`ports:`) passam por fora do UFW. Para cada porta
 
 O LiteLLM (4000), a Open WebUI (3000), o painel e a sincronização do Syncthing (8384, 22000) continuam abertos na LAN: o PC e o celular os usam em casa, cada um com o próprio login.
 
-O script é gerado pelo role `infra/docker` (página 04) e rodado pela unit `firewall-docker`, que acompanha cada (re)início do Docker. Para conferir: `sudo iptables -L HOMESERVER -n -v`.
+O script é gerado pelo role `infra/docker` (página 04) e rodado pela unit `firewall-docker`, que roda **antes** de cada (re)início do Docker: as regras já estão lá quando os containers sobem, sem janela aberta no boot. Para conferir: `sudo iptables -L HOMESERVER -n -v`.
 
 ```bash title="ansible/roles/infra/docker/templates/firewall-docker.sh.j2"
 #!/bin/bash
@@ -48,7 +48,8 @@ O script é gerado pelo role `infra/docker` (página 04) e rodado pela unit `fir
 # Firewall das portas publicadas pelo Docker (o UFW não vê esse tráfego), na cadeia DOCKER-USER, que o Docker
 # reserva para isso e não apaga. Para cada porta de firewall_docker_portas deste host, quem entra pela interface
 # da LAN só passa se a origem estiver na lista (lista vazia: ninguém pela LAN). Tráfego da VPN (tailscale0) e
-# entre containers não passa por aqui. Rodado pela unit firewall-docker, depois de cada (re)início do Docker.
+# entre containers não passa por aqui. Rodado pela unit firewall-docker antes de cada (re)início do Docker: cria a
+# DOCKER-USER se ainda não existe, e o Docker a reaproveita (só acrescenta o salto na FORWARD).
 # Página 14. Gerado pelo role infra/docker.
 set -euo pipefail
 
@@ -56,6 +57,7 @@ LAN="{{ ansible_facts.default_ipv4.interface | default('eth0') }}"
 CADEIA="HOMESERVER"
 IPT="${IPTABLES:-iptables}"
 
+$IPT -N DOCKER-USER 2>/dev/null || true
 $IPT -N "$CADEIA" 2>/dev/null || $IPT -F "$CADEIA"
 $IPT -C DOCKER-USER -j "$CADEIA" 2>/dev/null || $IPT -I DOCKER-USER -j "$CADEIA"
 
@@ -107,17 +109,16 @@ $IPT -A "$CADEIA" -j RETURN
     name: tailscale
     state: present
     update_cache: true
+  when: not ansible_check_mode # no --check o repositório só foi simulado: o apt não acharia o pacote
 
+# Aplicado na hora (antes do tailscale up). Só IPv4: as rotas anunciadas são IPv4, e ligar o forwarding do
+# IPv6 desligaria o accept_ra (o IPv6 por SLAAC da LAN).
 - name: "Tailscale: encaminhamento de pacotes (subnet router)"
-  ansible.builtin.copy:
-    dest: /etc/sysctl.d/99-tailscale.conf
-    owner: root
-    group: root
-    mode: '0644'
-    content: |
-      net.ipv4.ip_forward = 1
-      net.ipv6.conf.all.forwarding = 1
-  notify: Aplicar sysctl
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_file: /etc/sysctl.d/99-tailscale.conf
+    reload: true
 
 - name: "Tailscale: serviço"
   ansible.builtin.systemd_service:
@@ -142,12 +143,25 @@ $IPT -A "$CADEIA" -j RETURN
   changed_when: true
   no_log: true # a auth key
 
-# A cada execução: mantém as rotas anunciadas iguais às do group_vars (aprovar no painel quando mudarem).
-- name: "Tailscale: rotas anunciadas"
+- name: "Tailscale: preferências atuais"
+  ansible.builtin.command: tailscale debug prefs
+  register: tailscale_prefs
+  changed_when: false
+  failed_when: false
+  check_mode: false # só lê
+
+# Mantém o nome e as rotas anunciadas iguais às do group_vars (aprovar no painel quando as rotas mudarem).
+- name: "Tailscale: nome e rotas anunciadas"
+  vars:
+    prefs: "{{ ((tailscale_prefs.stdout | default('')) or '{}') | from_json }}"
   ansible.builtin.command: >-
     tailscale set --hostname={{ tailscale_hostname }} --advertise-routes={{ tailscale_rotas | join(',') }}
     --accept-dns=false
-  changed_when: false
+  when: >-
+    (prefs.AdvertiseRoutes | default([]) or []) | sort != tailscale_rotas | sort
+    or prefs.Hostname | default('') != tailscale_hostname
+    or prefs.CorpDNS | default(true)
+  changed_when: true
 
 - name: "UFW: conexões diretas do Tailscale"
   community.general.ufw:
@@ -195,13 +209,6 @@ $IPT -A "$CADEIA" -j RETURN
       - "{{ vm_local_data_path }}/coredns/Corefile:/Corefile:ro"
 ```
 
-```yaml title="ansible/roles/infra/tailscale/handlers/main.yml"
-# ansible/roles/infra/tailscale/handlers/main.yml
-- name: Aplicar sysctl
-  ansible.builtin.command: sysctl --system
-  changed_when: true
-```
-
 ```text title="ansible/roles/infra/tailscale/templates/Corefile.j2"
 # ansible/roles/infra/tailscale/templates/Corefile.j2
 # DNS da VPN (página 14): para quem está no Tailscale (split DNS restrito ao domínio), todo <app>.<domínio>
@@ -212,6 +219,10 @@ $IPT -A "$CADEIA" -j RETURN
         answer "{{ '{{' }} .Name {{ '}}' }} 60 IN A {{ core_services_vm_ip_var }}"
     }
     template IN AAAA {
+        rcode NOERROR
+    }
+    # Os outros tipos (HTTPS/65, que navegadores e o iOS pedem em toda URL, TXT, MX…): resposta vazia, sem SERVFAIL.
+    template IN ANY {
         rcode NOERROR
     }
     errors
@@ -261,6 +272,6 @@ $IPT -A "$CADEIA" -j RETURN
 ## Teste de ponta a ponta
 
 1. No celular, **fora do Wi-Fi** e com o Tailscale ligado: `https://fotos.seudominio.com` abre. Um vídeo acima de 100 MB sobe pelo app do Immich.
-2. No PC com o Tailscale ligado: `nslookup fotos.seudominio.com` responde o IP da core. `curl -s -o /dev/null -w '%{http_code}' http://<IP da core>:4100/mcp` responde `401` (o hub pede a chave).
+2. No PC com o Tailscale ligado: `Resolve-DnsName fotos.seudominio.com` (PowerShell) responde o IP da core. O `nslookup` do Windows ignora o split DNS do Tailscale e pode mostrar o IP da Cloudflare. `curl -s -o /dev/null -w '%{http_code}' http://<IP da core>:4100/mcp` responde `401` (o hub pede a chave).
 3. Com o Tailscale **desligado**, na LAN: o mesmo `curl` na 4100 não conecta (tempo esgotado). `curl http://<IP da core>:9090/-/healthy` também não, a menos que venha do host Proxmox ou da `ai-desktop-vm`.
 4. No host Proxmox: `curl -s http://<IP da core>:9090/-/healthy` responde `Prometheus Server is Healthy.`

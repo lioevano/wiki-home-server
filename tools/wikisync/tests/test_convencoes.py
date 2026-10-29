@@ -74,13 +74,61 @@ def test_imagens_com_versao():
     assert achados == []
 
 
-def test_diun_observa_o_repositorio():
-    """Com as versões fixadas, o Diun só avisa de versão nova se olhar as tags do repositório (watch_repo)."""
+def test_imagens_do_ansible_com_versao():
+    """A política de versões vale também para as imagens que o Ansible sobe (Portainer, agente, CoreDNS, core)."""
+    import re
+    achados = []
+    for arq in sorted((ROOT / "server/ansible").rglob("*.yml")):
+        for n, linha in enumerate(arq.read_text(encoding="utf-8").splitlines(), 1):
+            m = re.match(r'\s*(?:-\s*)?(?:image|\w+_image):\s*"?([^"\s#]+)', linha)
+            if not m or "{{" in m.group(1):
+                continue
+            img = m.group(1)
+            tag = img.rsplit(":", 1)[1] if ":" in img.rsplit("/", 1)[-1] else ""
+            if not tag or tag == "latest":
+                achados.append(f"{arq.relative_to(ROOT)}:{n}: {img}")
+    assert achados == []
+
+
+def _diun_env(stack: str, servico: str) -> dict:
     import yaml
+    svc = yaml.safe_load((ROOT / f"server/docker/stacks/{stack}/docker-compose.yml").read_text(encoding="utf-8"))["services"][servico]
+    return dict(e.split("=", 1) for e in svc["environment"])
+
+
+def test_diun_observa_o_repositorio():
+    """Com as versões fixadas, o Diun só avisa de versão nova se olhar as tags do repositório (watch_repo), e só de
+    tag nova (notify_on=new): o digest de uma tag da linuxserver.io muda a cada rebuild."""
     for stack, diun in (("apps", "diun"), ("ai", "diun_ai")):
-        svc = yaml.safe_load((ROOT / f"server/docker/stacks/{stack}/docker-compose.yml").read_text(encoding="utf-8"))["services"][diun]
-        env = dict(e.split("=", 1) for e in svc["environment"])
+        env = _diun_env(stack, diun)
         assert env["DIUN_DEFAULTS_WATCHREPO"] == "true"
         assert env["DIUN_DEFAULTS_SORTTAGS"] == "semver"
-        assert env["DIUN_DEFAULTS_INCLUDETAGS"].split(" #")[0] == r"^v?\d+(\.\d+)+$$"  # $$ vira $ no compose
-        assert int(env["DIUN_DEFAULTS_MAXTAGS"]) >= 1
+        assert env["DIUN_DEFAULTS_NOTIFYON"] == "new"
+        assert env["DIUN_DEFAULTS_INCLUDETAGS"] == r"^v?\d+\.\d+\.\d+$$"  # $$ vira $ no compose
+        assert 1 <= int(env["DIUN_DEFAULTS_MAXTAGS"]) <= 5  # rate limit do Docker Hub
+    assert _diun_env("apps", "diun")["DIUN_WATCH_SCHEDULE"] != _diun_env("ai", "diun_ai")["DIUN_WATCH_SCHEDULE"]
+
+
+def test_diun_vigia_toda_tag_fixada():
+    """O Diun pula (status skip) a imagem cuja própria tag não casa com o include_tags efetivo. Toda tag fixada
+    precisa casar com o filtro do serviço: o padrão dos Diuns ou o label diun.include_tags."""
+    import re
+    import yaml
+    padrao = _diun_env("apps", "diun")["DIUN_DEFAULTS_INCLUDETAGS"].replace("$$", "$")
+    # Versões que vêm de variável (IMMICH_VERSION, NEXTCLOUD_MAJOR) estão no group_vars, em minúsculas.
+    variaveis = yaml.safe_load((ROOT / "server/ansible/inventories/home/group_vars/all/main.yml").read_text(encoding="utf-8"))
+    achados = []
+    for compose in sorted((ROOT / "server/docker/stacks").glob("*/docker-compose.yml")):
+        for nome, svc in (yaml.safe_load(compose.read_text(encoding="utf-8"))["services"] or {}).items():
+            img = str(svc.get("image", ""))
+            labels = svc.get("labels") or {}
+            if isinstance(labels, list):
+                labels = dict(l.split("=", 1) for l in labels)
+            if str(labels.get("diun.enable", "")).lower() == "false" or img.startswith("localhost/"):
+                continue
+            img = re.sub(r"\$\{(\w+)\}", lambda m: str(variaveis.get(m.group(1).lower(), "")), img).split("@", 1)[0]
+            tag = img.rsplit(":", 1)[1] if ":" in img.rsplit("/", 1)[-1] else ""
+            filtro = str(labels.get("diun.include_tags", padrao)).replace("$$", "$")
+            if not tag or not re.search(filtro, tag):
+                achados.append(f"{compose.parent.name}/{nome}: {tag!r} fora de {filtro}")
+    assert achados == []

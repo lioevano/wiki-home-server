@@ -67,7 +67,8 @@ def test_script_monta_a_cadeia_na_ordem(tmp_path):
                        capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     l = log.read_text().splitlines()
-    assert l[0] == "-N HOMESERVER" and "-I DOCKER-USER -j HOMESERVER" in l
+    # Roda antes do Docker: cria a DOCKER-USER (o Docker a reaproveita) antes da cadeia própria.
+    assert l[:2] == ["-N DOCKER-USER", "-N HOMESERVER"] and "-I DOCKER-USER -j HOMESERVER" in l
     ok = l.index("-A HOMESERVER -i ens18 -p tcp -s 192.168.15.66 -m conntrack --ctorigdstport 9090 --ctdir ORIGINAL -j RETURN")
     drop = l.index("-A HOMESERVER -i ens18 -p tcp -m conntrack --ctorigdstport 9090 --ctdir ORIGINAL -j DROP")
     assert ok < drop
@@ -81,7 +82,9 @@ def test_unit_do_firewall_acompanha_o_docker():
     tarefas = yaml.safe_load((ANS / "roles/infra/docker/tasks/main.yml").read_text(encoding="utf-8"))
     unit = next(t for t in tarefas if t.get("ansible.builtin.copy", {}).get("dest") == "/etc/systemd/system/firewall-docker.service")
     c = unit["ansible.builtin.copy"]["content"]
-    assert "After=docker.service" in c and "PartOf=docker.service" in c and "WantedBy=docker.service" in c
+    # Antes do Docker: as regras existem quando os containers sobem (sem janela aberta no boot).
+    assert "Before=docker.service" in c and "After=docker.service" not in c
+    assert "PartOf=docker.service" in c and "WantedBy=docker.service" in c
     assert "RemainAfterExit=true" in c
 
 
@@ -97,6 +100,16 @@ def test_role_tailscale():
     up = next(x for x in t if "tailscale up" in str(x.get("ansible.builtin.command", "")))
     assert up.get("no_log") is True and "--advertise-routes" in up["ansible.builtin.command"]
     assert "Running" in up["when"]  # a auth key é de uso único: só entra se ainda não está na rede
+    nomes = [x["name"] for x in t]
+    apt = next(x for x in t if "ansible.builtin.apt" in x)
+    assert apt["when"] == "not ansible_check_mode"  # no --check o repositório só foi simulado
+    sysctl = next(x for x in t if "ansible.posix.sysctl" in x)["ansible.posix.sysctl"]
+    assert sysctl["name"] == "net.ipv4.ip_forward" and sysctl["reload"] is True
+    assert "ipv6" not in str(t)  # forwarding do IPv6 desligaria o accept_ra da LAN
+    assert nomes.index(next(x["name"] for x in t if "ansible.posix.sysctl" in x)) < nomes.index(up["name"])
+    sete = next(x for x in t if "tailscale set" in str(x.get("ansible.builtin.command", "")))
+    assert "AdvertiseRoutes" in sete["when"] and sete["changed_when"] is True
+    assert not (ANS / "roles/infra/tailscale/handlers/main.yml").exists()
     rota = next(x for x in t if x.get("community.general.ufw", {}).get("route") is True)
     assert rota["community.general.ufw"]["interface_in"] == "tailscale0"
     dns = next(x for x in t if "community.docker.docker_container" in x)["community.docker.docker_container"]
@@ -130,14 +143,18 @@ def test_dns_da_vpn(tmp_path):
     (tmp_path / "Corefile").write_text(cfg)
     p = subprocess.Popen(["coredns", "-conf", str(tmp_path / "Corefile")], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     try:
+        resposta = None
         for _ in range(50):
             try:
-                rcode, ips = _consulta(15353, "fotos.exemplo.com")
+                resposta = _consulta(15353, "fotos.exemplo.com")
                 break
             except OSError:
                 time.sleep(0.1)
-        assert rcode == 0 and ips == ["192.168.15.67"]
+        assert resposta is not None, "o CoreDNS não respondeu em 5 s"
+        assert resposta == (0, ["192.168.15.67"])
         assert _consulta(15353, "fotos.exemplo.com", 28) == (0, [])  # AAAA: vazio, sem erro
+        for tipo in (65, 16, 15, 6):  # HTTPS (navegadores, iOS), TXT, MX, SOA: vazio, nunca SERVFAIL
+            assert _consulta(15353, "fotos.exemplo.com", tipo) == (0, []), tipo
         assert _consulta(15353, "google.com")[0] == 5  # REFUSED: fora do domínio
     finally:
         p.terminate()

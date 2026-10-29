@@ -100,6 +100,10 @@ services:
 
   authelia_db:
     image: postgres:15.6-alpine
+    labels:
+      diun.watch_repo: "false" # tag de série: vigia o digest da própria tag (rebuilds de segurança)
+      diun.include_tags: ".*"
+      diun.notify_on: "new;update"
     container_name: authelia_db
     restart: unless-stopped
     volumes:

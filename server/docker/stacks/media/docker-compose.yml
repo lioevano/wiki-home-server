@@ -30,6 +30,8 @@ services:
       PGID: ${DOCKER_PGID}
       TZ: ${SYSTEM_TIMEZONE}
     labels:
+      diun.include_tags: '^\d+\.\d+$$' # o Jellyfin publica a série (12.2); um patch muda o digest dela
+      diun.notify_on: "new;update"
       # Pública (login próprio): os apps de TV e celular do Jellyfin não passam pelo Authelia.
       traefik.enable: "true"
       traefik.http.routers.jellyfin.rule: "Host(`jellyfin.${BASE_DOMAIN_FROM_VAULT}`)"

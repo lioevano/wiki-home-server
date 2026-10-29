@@ -101,8 +101,8 @@
 
 # --- Firewall UFW (Uncomplicated Firewall) ---
 # Em todas as VMs: entrada negada por padrão, saída liberada. Vale para os serviços do próprio host (SSH,
-# Alloy na 12345, VNC). Portas publicadas pelo Docker não passam pelo UFW: elas são protegidas pelo bind
-# no IP da LAN e pela autenticação de cada serviço.
+# Alloy na 12345, VNC). Portas publicadas pelo Docker não passam pelo UFW: elas são limitadas pela cadeia
+# HOMESERVER na DOCKER-USER (firewall_docker_portas, role infra/docker; página 14) e pela autenticação de cada serviço.
 - name: "UFW: liberar SSH (antes de ligar, para não perder a conexão)"
   community.general.ufw:
     rule: allow
