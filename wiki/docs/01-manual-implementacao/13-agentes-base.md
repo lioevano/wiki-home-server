@@ -244,6 +244,10 @@ A retenção automática por projeto do Langfuse é um recurso pago (entitlement
 
 Gerados uma vez, na tela de cada sistema, e guardados no vault (página 01):
 
+!!! tip "Com o `scripts/gerar_vault.py`"
+    Se o vault saiu do script ([seção 1](01-maquina-controle-ansible.md#caminho-recomendado-scriptsgerar_vaultpy)), os itens 5 a 7 já estão nele: falta só pôr a chave pública que ele mostrou no `authorized_keys` das VMs. Os itens 1 a 4 nascem nas telas e continuam com você.
+
+
 1. **Grafana:** *Administration → Users and access → Service accounts* → duas contas, `mcp-leitura` (papel **Viewer**) e `mcp-controle` (papel **Editor**); um token em cada → `grafana_sa_tokens.leitura` e `grafana_sa_tokens.controle`.
 2. **Home Assistant:** *Configurações → Dispositivos e serviços → Adicionar integração → Model Context Protocol Server* (escolha a API **Assist**, que expõe as entidades marcadas para o assistente); depois *Perfil → Segurança → Tokens de acesso de longa duração* → `homeassistant_mcp_token`.
 3. **n8n:** *Settings → Instance-level MCP* → **Enable MCP access** → aba **API key** → `n8n_mcp_token`. Libere os workflows que a IA pode ver e executar (*Available in MCP* em cada workflow, ou **Workflows enabled**); nenhum fica liberado sem você marcar.

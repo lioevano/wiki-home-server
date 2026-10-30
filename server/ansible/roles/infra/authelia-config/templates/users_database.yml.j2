@@ -1,6 +1,6 @@
 # ansible/roles/infra/authelia-config/templates/users_database.yml.j2
 # Arquivo de Banco de Dados de Usuários Locais do Authelia (gerado por Ansible)
-# Hashes de senha DEVEM ser gerados com 'authelia crypto hash generate argon2'
+# Hashes de senha: 'authelia crypto hash generate argon2' (ou pbkdf2-sha512, como o do scripts/gerar_vault.py)
 # Base de usuários do backend 'file' (authentication_backend em configuration.yml).
 # O PostgreSQL ('storage') guarda sessões e 2FA, não os usuários.
 

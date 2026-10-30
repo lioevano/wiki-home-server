@@ -4,7 +4,7 @@ description: "Roteiro do manual de implementação: a ordem dos passos para cons
 
 # Manual de Implementação
 
-Guia passo a passo para implementar o servidor doméstico. Siga na ordem.
+Guia passo a passo para implementar o servidor doméstico. Siga na ordem. Para a primeira subida, o [Roteiro do primeiro deploy](18-roteiro-primeiro-deploy.md) junta as seções numa sequência só, com o vault gerado pelo `scripts/gerar_vault.py`.
 
 ## Estrutura
 
@@ -25,7 +25,8 @@ Guia passo a passo para implementar o servidor doméstico. Siga na ordem.
 15. **[VPN (Tailscale)](14-vpn-tailscale.md):** acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker.
 16. **[IA que observa o servidor](15-ia-observa.md):** análise de cada alerta e boletim da manhã no Telegram, por uma IA que só lê (rota de leitura do hub).
 17. **[Posto de agentes](16-posto-agentes.md):** Claude Code em paralelo pelo Vibe Kanban, e cada ação dos agentes no servidor esperando a sua aprovação no Telegram ou na tela.
-18. **[Assistente (Hermes)](17-assistente.md):** assistente no Telegram que lê o servidor, busca e escreve nas notas e agenda lembretes, sem terminal.
+18. **[Assistente (Hermes)](17-assistente.md):** assistente no Telegram que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal.
+19. **[Roteiro do primeiro deploy](18-roteiro-primeiro-deploy.md):** a ordem de contas, vault, playbooks e stacks da primeira subida.
 
 A lista completa de aplicações, com stack, exposição e dados de cada uma, está no [Catálogo de Aplicações](../02-visao-geral-arquitetura/09-catalogo-aplicacoes.md); as integrações entre elas, no [Índice de Integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md).
 
@@ -47,6 +48,7 @@ Estes pontos foram desenhados e testados no repositório, mas só dá para confi
 | [12](12-segundo-cerebro.md) | Módulos nativos do qmd no `node:22-bookworm-slim`, `HOME` gravável do markitdown com `--user`, a "Default Folder" criada pelo `generate` do Syncthing e o `notes_escrita` com sistema de arquivos só leitura (`read_only`) | `docker logs qmd`, primeira rodada do `notes-documentos`, painel do Syncthing, uma nota criada pela escrita |
 | [13](13-agentes-base.md) | agentgateway em execução: lista de leitura, chaves, tokens em arquivo, `statefulMode: stateless`, traces no Langfuse e o campo `cliente` nos logs e no registro do `ops` | Teste de ponta a ponta da seção 13; `docker logs agentgateway`, `docker logs ops_controle` |
 | [15](15-ia-observa.md) | O observador chama as ferramentas da rota de leitura (nomes com prefixo, respostas em SSE do hub em modo `stateless`) e o teste do ponto de contato do Grafana chega analisado; o gasto por análise (campo `tokens`) cabe no orçamento | `docker exec observador python -m observador boletim`; *Test* da integração `observador-webhook`; `docker logs observador`; tela de uso do LiteLLM |
-| [16](16-posto-agentes.md) | Vibe Kanban compilado roda o Claude Code pelo LiteLLM; os perfis `DEFAULT` (pede aprovação) e `AUTONOMO` aparecem na tela; o Claude Code lê o `/etc/claude-code/managed-mcp.json`; os botões do Telegram chegam e o clique decide | Teste de ponta a ponta da seção 16; `docker logs posto`, `docker logs aprovador` |
-| [17](17-assistente.md) | Hermes 0.22.5 lê o `config.yaml` gerado (modelo `custom`, os três MCPs, `disabled_toolsets`) e só responde aos usuários permitidos | Teste de ponta a ponta da seção 17; `docker logs assistente` |
+| [16](16-posto-agentes.md) | Vibe Kanban compilado roda o Claude Code pelo LiteLLM; os perfis `DEFAULT` (pede aprovação) e `AUTONOMO` aparecem na tela; o Claude Code lê o `/etc/claude-code/managed-mcp.json`; os botões do Telegram chegam e o clique decide; o porteiro (Caddy 2.11.7 com `cap_add: NET_BIND_SERVICE`) sobe, repassa com o segredo do Traefik e dá 403 sem ele; o Vibe Kanban responde em `/api/health` atrás dele | Teste de ponta a ponta da seção 16; `docker logs posto`, `docker logs posto_porteiro`, `docker logs aprovador` |
+| [17](17-assistente.md) | Hermes 0.22.5 lê o `config.yaml` gerado (modelo `custom`, os três MCPs, `disabled_toolsets` com o `cronjob`, `platforms.api_server.enabled: false`: nenhuma porta escutando) e só responde aos usuários permitidos | Teste de ponta a ponta da seção 17; `docker logs assistente` |
+| [1](01-maquina-controle-ansible.md) | O `vault.yml` do `scripts/gerar_vault.py` é aceito por todos os playbooks e o Authelia aceita o hash `pbkdf2-sha512` do admin | `setup-core-networking.yml --check`; entrar em `auth.` com a senha anotada |
 | [13](13-agentes-base.md) | `PUT /api/stacks` do Portainer 2.45 (redeploy pelo `ops`, pela porta HTTP 9000 do `--http-enabled`) e o alerta `ops-acao-falhou` com o formato do Loki | `ops_stack_redeploy` de uma stack de teste; uma ação recusada |

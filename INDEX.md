@@ -106,6 +106,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/15-ia-observa.md` | Seção 15: IA que observa o servidor | Observador: IA que lê o servidor pela rota de leitura do hub, analisa cada alerta do Grafana e manda um boletim diário ao Telegram, sem agir. |
 | `01-manual-implementacao/16-posto-agentes.md` | Seção 16: Posto de agentes e aprovação humana | Posto de agentes: Claude Code em paralelo pelo Vibe Kanban na ai-desktop-vm, e cada ação no servidor esperando a sua aprovação no Telegram ou na tela. |
 | `01-manual-implementacao/17-assistente.md` | Seção 17: Assistente sempre ligado (Hermes Agent) | Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal e com ações aprovadas. |
+| `01-manual-implementacao/18-roteiro-primeiro-deploy.md` | Roteiro do primeiro deploy | Roteiro do primeiro deploy: a ordem de contas, vault, playbooks e stacks do Portainer, do servidor vazio até os agentes, com o link de cada passo. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -278,7 +279,8 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `docker/stacks/notes/docker-compose.yml` | stack | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `docker/stacks/photos/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `docker/stacks/posto/docker-compose.yml` | stack | `01-manual-implementacao/16-posto-agentes.md` |
-| `scripts/bootstrap.sh` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` |
+| `scripts/bootstrap.sh` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/18-roteiro-primeiro-deploy.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` |
+| `scripts/gerar_vault.py` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/13-agentes-base.md`, `01-manual-implementacao/18-roteiro-primeiro-deploy.md`, `01-manual-implementacao/index.md` |
 | `scripts/notify.sh` | script | `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `04-manutencao-recuperacao/01-rotinas-manutencao.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `scripts/restore.sh` | script | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
 | `scripts/validation/check_nfs_permissions.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |
