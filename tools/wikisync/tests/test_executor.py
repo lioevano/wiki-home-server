@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
+import threading
 from dataclasses import replace
 from types import SimpleNamespace
 
@@ -19,10 +21,12 @@ sys.dont_write_bytecode = True  # sem __pycache__ em docker/images (o copy do pl
 from aprovador.pedidos import Registro  # noqa: E402
 from executor.carteiro import Carteiro, assinar  # noqa: E402
 from executor.config import Config, ConfigInvalida  # noqa: E402
+from executor.ferramentas import ferramentas  # noqa: E402
 from executor.portao import Portao  # noqa: E402
 from executor.leitor import Leitor  # noqa: E402
 from executor.remoto import Remoto, validar_diagnostico  # noqa: E402
 from executor.segredos import CanalDeSegredos  # noqa: E402
+from executor.servidor import manter_vivo  # noqa: E402
 from executor.vault import Vault, chaves_do_modelo, definir  # noqa: E402
 from ops.politica import Recusado  # noqa: E402
 
@@ -661,3 +665,183 @@ def test_carteiro_500_na_issue_aborta_sem_avancar(tmp_path):
     gh, abrir = _gh_issue_some(500)
     assert _cart(tmp_path, abrir).rodar_uma_vez() == 0 and gh.posts == []
     assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2026-11-09T00:00:00Z"
+
+
+# --- Task 8: ferramentas MCP, imagem e comando de preparo do host ---------------------------------------------
+
+def _ferr(tmp_path, executar=lambda a, c, t: (0, "ok"), runner=None, canal=None):
+    rel = Relogio(); reg = Registro(str(tmp_path / "p.json"), 1800, rel); avisos, ao_leo = [], []
+    portao = Portao(reg, type("T", (), {"avisar": lambda s, p: avisos.append(p)})())
+    (tmp_path / "id.pub").write_text("ssh-ed25519 AAAA sysadmin\n", encoding="utf-8")
+    cfg = replace(Config.do_ambiente({**AMB, "EXECUTOR_REPO_DIR": str(tmp_path)}), chave_ssh=str(tmp_path / "id"),
+                  saida_dir=str(tmp_path / "saida"))
+    chamadas = []
+    remoto = type("R", (), {"hosts": lambda s: {"core-services-vm"},
+                            "rodar": lambda s, h, c, shell, become: chamadas.append((h, c, shell, become)) or executar(c, h, 0)})()
+    f = ferramentas(cfg, portao, remoto, runner, canal, ao_leo.append)
+    f["_chamadas"] = chamadas
+    return f, reg, avisos, ao_leo
+
+
+def test_nomes_e_destrutivas(tmp_path):
+    f, *_ = _ferr(tmp_path)
+    f.pop("_chamadas")
+    assert set(f) == {"diagnostico", "comando", "playbooks_listar", "ansible_check", "ansible_aplicar",
+                      "vault_preencher", "vault_status", "preparar_host"}
+    assert {n for n, x in f.items() if x.destrutiva} == {"comando", "ansible_aplicar"}
+    assert all(x.descricao for x in f.values())
+
+
+def test_comando_passa_pelo_portao(tmp_path):
+    f, reg, avisos, _ = _ferr(tmp_path)
+    r = f["comando"].funcao("core-services-vm", "systemctl restart docker")
+    assert "Aguardando" in r and avisos[0]["acao"] == "comando" and avisos[0]["argumentos"] == {
+        "host": "core-services-vm", "comando": "systemctl restart docker"}
+    assert f["_chamadas"] == []                       # nada rodou antes da aprovação
+    reg.decidir(avisos[0]["id"], True, "telegram:leo")
+    r = f["comando"].funcao("core-services-vm", "systemctl restart docker", aprovacao_id=avisos[0]["id"])
+    assert r.endswith("ok") and f["_chamadas"] == [("core-services-vm", "systemctl restart docker", True, True)]
+
+
+def test_comando_recusa_antes_de_pedir(tmp_path):
+    f, reg, avisos, _ = _ferr(tmp_path)
+    for host, cmd in [("core-services-vm", "x" * 251), ("core-services-vm", ""), ("outro", "ls"),
+                      ("core-services-vm", "echo {{ lookup('file', '/segredos/vault_senha') }}")]:
+        with pytest.raises(Recusado):
+            f["comando"].funcao(host, cmd)
+    assert avisos == [] and reg.listar() == []
+    assert "Aguardando" in f["comando"].funcao("core-services-vm", "x" * 250)   # o limite é 250, inclusive
+
+
+def test_diagnostico_sem_portao(tmp_path):
+    f, _, avisos, _ = _ferr(tmp_path)
+    assert f["diagnostico"].funcao("core-services-vm", "docker ps").endswith("ok")
+    assert f["_chamadas"] == [("core-services-vm", ["docker", "ps"], False, True)] and avisos == []
+    with pytest.raises(Recusado):
+        f["diagnostico"].funcao("core-services-vm", "rm -rf /")
+    assert len(f["_chamadas"]) == 1
+
+
+class RunnerFalso:
+    def __init__(self):
+        self.chamadas = []
+        self.plano = {"playbook": "setup-vpn.yml", "limite": None, "commit": "abcdef0123", "autor_assunto": "Ana <a@x>: muda",
+                      "recap": "PLAY RECAP ok=3"}
+
+    def check(self, playbook, limite=None):
+        self.chamadas.append(("check", playbook, limite))
+        return {"plano_id": "p1", "commit": "abcdef0123", "rc": 0, "autor_assunto": "Ana <a@x>: muda", "saida": "diff"}
+
+    def ver(self, plano_id):
+        return dict(self.plano) if plano_id == "p1" else None
+
+    def aplicar(self, plano_id):
+        self.chamadas.append(("aplicar", plano_id))
+        return {"playbook": "setup-vpn.yml", "commit": "abcdef0123", "rc": 0, "saida": "feito"}
+
+
+def test_ansible_check_e_aplicar_pelo_portao(tmp_path):
+    runner = RunnerFalso()
+    f, reg, avisos, _ = _ferr(tmp_path, runner=runner)
+    assert not f["ansible_check"].destrutiva and "playbooks_listar" in f
+    assert "setup-vpn.yml: VPN" in f["playbooks_listar"].funcao()
+    with pytest.raises(Recusado):                      # fora de cfg.playbooks: nem chega a pedir
+        f["ansible_check"].funcao("outro.yml")
+    assert avisos == []
+    assert "Aguardando" in f["ansible_check"].funcao("setup-vpn.yml", limite="pve")
+    a = avisos[0]
+    assert a["acao"] == "ansible_check" and a["alvo"] == "setup-vpn.yml" and "limite pve" in a["descricao"]
+    assert runner.chamadas == []
+    reg.decidir(a["id"], True, "telegram:leo")
+    r = f["ansible_check"].funcao("setup-vpn.yml", limite="pve", aprovacao_id=a["id"])
+    assert "plano_id: p1" in r and "commit: abcdef0123 (Ana <a@x>: muda)" in r and runner.chamadas == [("check", "setup-vpn.yml", "pve")]
+    with pytest.raises(Recusado):                      # plano que não existe
+        f["ansible_aplicar"].funcao("nada")
+    assert "Aguardando" in f["ansible_aplicar"].funcao("p1")
+    b = avisos[1]
+    assert b["acao"] == "ansible_aplicar" and b["alvo"] == "p1"
+    assert "abcdef01" in b["descricao"] and "Ana <a@x>: muda" in b["descricao"] and "PLAY RECAP ok=3" in b["descricao"]
+    reg.decidir(b["id"], True, "telegram:leo")
+    r = f["ansible_aplicar"].funcao("p1", aprovacao_id=b["id"])
+    assert "feito" in r and runner.chamadas[-1] == ("aplicar", "p1")
+
+
+def test_vault_preencher_e_status(tmp_path):
+    pedidos = []
+    canal = type("C", (), {"pedir": lambda s, c: pedidos.append(c) or "pedido enviado", "status": lambda s: "k: gravada"})()
+    f, *_ = _ferr(tmp_path, canal=canal)
+    assert f["vault_preencher"].funcao("k") == "pedido enviado" and pedidos == ["k"]
+    assert "k: gravada" in f["vault_status"].funcao() and "não há" in f["vault_status"].funcao()
+    (tmp_path / "saida").mkdir()
+    (tmp_path / "saida/vault.yml").write_text("x", encoding="utf-8")
+    assert "atualizado em 20" in f["vault_status"].funcao()
+
+
+def test_preparar_host_vai_so_ao_leo(tmp_path):
+    f, _, avisos, ao_leo = _ferr(tmp_path)
+    r = f["preparar_host"].funcao()
+    assert "tskey-h" not in r and "AAAA" not in r and r == "comando enviado ao Léo pelo bot de aprovações"
+    assert "tskey-h" in ao_leo[0] and avisos == []
+    assert ao_leo[0].startswith("curl -fsSL https://raw.githubusercontent.com/o/r/main/server/scripts/gcp/preparar-host.sh | bash -s -- ")
+    assert "'proxmox_ansible_user'" in ao_leo[0] and "'ssh-ed25519 AAAA sysadmin'" in ao_leo[0]
+    assert "'192.168.15.66/32,192.168.15.67/32,192.168.15.68/32'" in ao_leo[0] and "'tskey-h'" in ao_leo[0]
+
+
+def test_preparar_host_falha_do_telegram_nao_vaza(tmp_path):
+    f, *_ = _ferr(tmp_path)
+    def falha(_):
+        raise OSError("Telegram sendMessage: HTTP 500")
+    rel = Relogio()
+    portao = Portao(Registro(str(tmp_path / "q.json"), 1800, rel), type("T", (), {"avisar": lambda s, p: None})())
+    cfg = replace(Config.do_ambiente({**AMB, "EXECUTOR_REPO_DIR": str(tmp_path)}), chave_ssh=str(tmp_path / "id"))
+    g = ferramentas(cfg, portao, None, None, None, falha)
+    with pytest.raises(Recusado) as e:
+        g["preparar_host"].funcao()
+    assert "tskey-h" not in str(e.value)
+
+
+def test_manter_vivo_pega_excecao_e_continua(capsys):
+    parar, chamadas, esperas = threading.Event(), [], []
+
+    def alvo(p):
+        chamadas.append(1)
+        if len(chamadas) < 3:
+            raise RuntimeError("segredo-no-erro")
+        parar.set()
+    parar.wait = lambda t=None: esperas.append(t) or False   # sem dormir de verdade
+    manter_vivo("leitor", alvo, parar, 7)
+    assert len(chamadas) == 3 and esperas == [7, 7]
+    err = capsys.readouterr().err
+    assert "leitor" in err and "RuntimeError" in err and "segredo-no-erro" not in err
+
+
+def test_imagem_executor():
+    d = (ROOT / "server/docker/images/executor/Dockerfile").read_text(encoding="utf-8")
+    assert [l for l in d.splitlines() if l and not l.startswith("#")][0] == "FROM python:3.13-slim"
+    for trecho in ("COPY ops /app/ops", "COPY aprovador /app/aprovador", "COPY executor /app/executor",
+                   'ENTRYPOINT ["python", "-m", "executor"]', "useradd --uid ${UID} --gid ${GID}",
+                   "ENV ANSIBLE_VAULT_PASSWORD_FILE=/segredos/vault_senha", "git openssh-client"):
+        assert trecho in d
+    assert d.index("COPY ops ") < d.index("COPY aprovador ") < d.index("COPY executor ")
+    assert "ANSIBLE_HOST_KEY_CHECKING" not in d and "StrictHostKeyChecking" not in d
+    assert "USER root" not in d.split("\nUSER ")[-1] and "\nUSER " in d
+    assert (ROOT / "server/docker/images/executor/.dockerignore").read_text(encoding="utf-8").split() == [
+        "**/__pycache__", "**/*.pyc"]
+
+
+def test_preparar_host_sh():
+    s = (ROOT / "server/scripts/gcp/preparar-host.sh").read_text(encoding="utf-8")
+    assert s.startswith("#!/bin/bash") and "set -euo pipefail" in s
+    for trecho in ("--advertise-tags=tag:homeserver", "--hostname=pve", "NOPASSWD: ALL", "authorized_keys",
+                   "adduser --disabled-password", "/etc/sysctl.d/99-tailscale.conf", "--accept-dns=false"):
+        assert trecho in s
+    assert "set -x" not in s and "echo \"$CHAVE_TS" not in s
+
+
+def test_preparar_host_sh_valida_argumentos():
+    sh = str(ROOT / "server/scripts/gcp/preparar-host.sh")
+    assert subprocess.run(["bash", "-n", sh]).returncode == 0
+    for args in ([], ["a", "b", "c"], ["a", "b", "c", ""], ["a", "b", "c", "   "], ["a", "b", "c", "d", "e"],
+                 ["a", "b", "root; rm -rf /", "d"]):
+        r = subprocess.run(["bash", sh, *args], capture_output=True, text=True)
+        assert r.returncode != 0 and "preparar-host" in r.stderr
