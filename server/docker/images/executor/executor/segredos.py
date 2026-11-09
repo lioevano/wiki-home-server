@@ -13,7 +13,7 @@ from typing import Callable
 from ops.politica import Recusado
 
 from .config import Config
-from .vault import definir
+from .vault import chaves_do_modelo, definir
 
 
 class CanalDeSegredos:
@@ -41,6 +41,14 @@ class CanalDeSegredos:
     def pedir(self, chave: str) -> str:
         if chave not in self.chaves:
             raise Recusado(f"chave desconhecida no modelo do vault: {chave}")
+        try:
+            presentes = chaves_do_modelo(self.vault.ler())
+        except Exception as erro:  # noqa: BLE001 — só o tipo do erro
+            print(f"segredos: vault ilegível ({type(erro).__name__})", file=sys.stderr)
+            raise Recusado("não consegui ler o vault") from None
+        if chave not in presentes:
+            raise Recusado(f"a chave {chave} não existe no vault atual (só no modelo); "
+                           "acrescente-a ao vault antes de pedir o valor")
         texto = (f"🔐 Responda a esta mensagem com o valor de `{chave}` "
                  f"(vale {self._minutos()} min; a sua resposta é apagada)")
         try:
@@ -84,6 +92,11 @@ class CanalDeSegredos:
             chave = pedido[0]
             try:
                 self.vault.gravar(definir(self.vault.ler(), chave, valor))
+            except KeyError:                                 # a chave sumiu do vault: repetir não adianta
+                del self._pendentes[resposta_a]
+                self._dizer(f"⚠️ `{chave}` não existe no vault atual; não gravei nada. Avise o sysadmin.",
+                            parse_mode="Markdown")
+                return
             except Exception as erro:  # noqa: BLE001 — a mensagem do erro poderia trazer o valor: só o tipo
                 print(f"segredos: não gravei {chave} ({type(erro).__name__})", file=sys.stderr)
                 self._dizer(f"⚠️ Não consegui gravar `{chave}`; responda de novo à mesma mensagem.", parse_mode="Markdown")

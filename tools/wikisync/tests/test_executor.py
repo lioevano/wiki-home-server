@@ -394,7 +394,8 @@ def test_canal_pedir_sem_telegram_recusa():
         def chamar(self, metodo, params, timeout=15):
             raise OSError("Telegram sendMessage: HTTP 500")
 
-    canal = CanalDeSegredos(BotQuebrado(), Config.do_ambiente(AMB), None, {"a"}, Relogio())
+    vault = SimpleNamespace(ler=lambda: MODELO, gravar=lambda t: None)
+    canal = CanalDeSegredos(BotQuebrado(), Config.do_ambiente(AMB), vault, {"a"}, Relogio())
     with pytest.raises(Recusado):
         canal.pedir("a")
     assert "pendente" not in canal.status()
@@ -469,3 +470,39 @@ def test_leitor_rodar_expira_e_continua_apos_erro_de_rede(capsys):
     esperas = []
     Leitor(tg, SimpleNamespace(receber=lambda u: None)).rodar(parar, espera=esperas.append)
     assert chamadas["n"] == 2 and esperas == [10] and atualizados == [{"id": "p"}]
+
+
+def test_vault_gravado_legivel_pelo_sysadmin(tmp_path):
+    Vault(_cfg_vault(tmp_path)).gravar("k: 1\n")
+    assert (tmp_path / "saida/vault.yml").stat().st_mode & 0o777 == 0o644
+
+
+def test_chave_so_no_modelo_recusa_no_pedido_e_descarta_na_resposta():
+    vault_atual = 'a: "X"\n'                       # sem grupo.filho nem chave_ssh
+    gravados = {}
+    vault = SimpleNamespace(ler=lambda: vault_atual, gravar=lambda t: gravados.update(t=t))
+    bot = BotFalso()
+    canal = CanalDeSegredos(bot, Config.do_ambiente(AMB), vault, chaves_do_modelo(MODELO), Relogio())
+    with pytest.raises(Recusado, match="vault atual"):
+        canal.pedir("grupo.filho")
+    assert bot.chamadas == []                         # Léo nem chega a ver o pedido
+    canal.pedir("a")
+    pedido = bot.n
+    vault_atual = ""                                  # a chave some entre o pedido e a resposta
+    canal.receber(_msg("VALOR", resposta_a=pedido, mid=9))
+    assert gravados == {} and "a: pendente" not in canal.status()
+    ultimo = bot.chamadas[-1][1]["text"]
+    assert "não existe no vault" in ultimo and "de novo" not in ultimo and "VALOR" not in ultimo
+
+
+def test_itens_de_lista_nao_sao_folhas_enderecaveis():
+    real = (ROOT / "server/ansible/inventories/home/group_vars/all/vault.yml.example").read_text(encoding="utf-8")
+    chaves = chaves_do_modelo(real)
+    assert "restic_senha" in chaves
+    assert not any(c.startswith("restic_repositorios") for c in chaves)
+    for c in ("restic_repositorios.repositorio", "restic_repositorios.ambiente", "restic_repositorios.nome",
+              "restic_repositorios.ambiente.AWS_ACCESS_KEY_ID"):
+        with pytest.raises(KeyError):
+            definir(real, c, "x")
+    modelo = 'lista:\n  - nome: a\n    v: "1"\n  - nome: b\n    v: "2"\nvolta: "3"\n'
+    assert chaves_do_modelo(modelo) == {"volta"}

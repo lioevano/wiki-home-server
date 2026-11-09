@@ -17,16 +17,25 @@ VAULT_NO_REPO = "server/ansible/inventories/home/group_vars/all/vault.yml"
 
 
 def _varrer(linhas: list[str]):
-    """Gera (inicio, fim, indentacao, chave, caminho, resto) de cada chave do YAML.
+    """Gera (inicio, fim, indentacao, chave, caminho, resto, em_lista) de cada chave do YAML.
+
+    `em_lista` marca chaves dentro de um item de lista (`- nome: x`): o caminho delas não tem índice e é ambíguo.
 
     `fim` é exclusivo e só passa de `inicio + 1` nos blocos `|`/`>`, que vão até a próxima linha
     não vazia menos indentada (o conteúdo do bloco nunca é lido como chave).
     """
     pilha: list[tuple[int, str]] = []
+    lista_ind: int | None = None            # recuo do `-` do item de lista em que estamos
     i = 0
     while i < len(linhas):
         linha, inicio = linhas[i], i
         i += 1
+        if linha.strip() and not linha.lstrip().startswith("#"):
+            recuo = len(linha) - len(linha.lstrip())
+            if linha.lstrip().startswith("- ") or linha.strip() == "-":
+                lista_ind = recuo if lista_ind is None or recuo <= lista_ind else lista_ind
+            elif lista_ind is not None and recuo <= lista_ind:
+                lista_ind = None
         m = LINHA.match(linha)
         if not m:
             continue
@@ -37,7 +46,7 @@ def _varrer(linhas: list[str]):
         if resto[:1] in ("|", ">"):
             while i < len(linhas) and (not linhas[i].strip() or len(linhas[i]) - len(linhas[i].lstrip()) > ind):
                 i += 1
-        yield inicio, i, ind, chave, ".".join(c for _, c in pilha), resto
+        yield inicio, i, ind, chave, ".".join(c for _, c in pilha), resto, lista_ind is not None and ind > lista_ind
 
 
 def _folha(resto: str) -> bool:
@@ -46,7 +55,7 @@ def _folha(resto: str) -> bool:
 
 def chaves_do_modelo(texto: str) -> set[str]:
     """Caminhos com ponto das folhas (chaves de mapa, que têm filhos, não contam)."""
-    return {nome for _, _, _, _, nome, resto in _varrer(texto.split("\n")) if _folha(resto)}
+    return {nome for _, _, _, _, nome, resto, em_lista in _varrer(texto.split("\n")) if _folha(resto) and not em_lista}
 
 
 def _comentario(resto: str) -> str:
@@ -90,8 +99,8 @@ def _linhas_do_valor(ind: int, chave: str, valor: str, comentario: str) -> list[
 def definir(texto: str, chave: str, valor: str) -> str:
     """Troca o valor de uma folha mantendo o resto do texto; `KeyError` se a chave não é uma folha."""
     linhas = texto.split("\n")
-    for inicio, fim, ind, nome_chave, nome, resto in _varrer(linhas):
-        if nome != chave or not _folha(resto):
+    for inicio, fim, ind, nome_chave, nome, resto, em_lista in _varrer(linhas):
+        if nome != chave or not _folha(resto) or em_lista:
             continue
         comentario = "" if resto[:1] in ("|", ">") else _comentario(resto)
         sobra = []                                  # linhas em branco que fechavam o bloco antigo
@@ -130,6 +139,7 @@ class Vault:
         fd, tmp = tempfile.mkstemp(dir=saida.parent, prefix=".vault-", suffix=".tmp")   # 0600
         try:
             with os.fdopen(fd, "wb") as f:
+                os.fchmod(fd, 0o644)   # cifrado e destinado ao git; o sysadmin (outro uid) monta `saida` só para ler
                 f.write(cifrado)
             os.replace(tmp, saida)
         except BaseException:
