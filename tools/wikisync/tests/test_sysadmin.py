@@ -248,8 +248,28 @@ def test_firewall_do_sysadmin():
     t = render("roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2", sysadmin_rede_subnet="172.30.10.0/24",
                sysadmin_bloqueios=["100.64.0.0/10", "192.168.15.0/24", "169.254.169.254/32"])
     for destino in ("100.64.0.0/10", "192.168.15.0/24", "169.254.169.254/32"):
-        assert f"-s 172.30.10.0/24 -d {destino} -j DROP" in t
-    assert "DOCKER-USER" in t and "set -euo pipefail" in t
+        assert f"-i br-sysadmin -s 172.30.10.0/24 -d {destino} -j DROP" in t
+    assert "-t raw" in t and "PREROUTING" in t and "DOCKER-USER" not in t and "set -euo pipefail" in t
+    # o servidor de metadados também é o DNS da VM: DNS passa, o resto (token na porta 80) é bloqueado
+    meta = "-i br-sysadmin -s 172.30.10.0/24 -d 169.254.169.254/32"
+    drop = t.index(f"{meta} -j DROP")
+    for proto in ("udp", "tcp"):
+        assert t.index(f"{meta} -p {proto} --dport 53 -j RETURN") < drop
+
+
+def test_rede_do_sysadmin_endurecida():
+    c = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))
+    r = c["networks"]["sysadmin_rede"]
+    assert r["driver_opts"] == {"com.docker.network.bridge.name": "br-sysadmin"}
+    assert r["enable_ipv6"] is False
+    for nome in ("sysadmin", "sysadmin_painel"):
+        assert c["services"][nome]["cap_drop"] == ["NET_RAW"]
+
+
+def test_separar_diretorios_0700(tmp_path):
+    separar(DADOS, tmp_path / "d", 1001, 1000)
+    for d in ("d", "d/executor", "d/host"):
+        assert (tmp_path / d).stat().st_mode & 0o777 == 0o700
 
 
 def test_separar_protege_o_env_do_compose(tmp_path, capsys, monkeypatch):

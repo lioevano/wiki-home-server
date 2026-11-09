@@ -13,6 +13,10 @@ networks:
   sysadmin_rede:
     name: sysadmin_rede
     driver: bridge
+    enable_ipv6: false
+    # Nome fixo da bridge: o firewall-sysadmin.sh.j2 casa a regra pela interface (-i br-sysadmin).
+    driver_opts:
+      com.docker.network.bridge.name: br-sysadmin
     ipam:
       config:
         - subnet: "${SYSADMIN_REDE_SUBNET}"
@@ -48,6 +52,8 @@ services:
     networks:
       - sysadmin_rede
       - interna
+    cap_drop:
+      - NET_RAW
     security_opt:
       - no-new-privileges:true
     labels:
@@ -73,6 +79,8 @@ services:
     networks:
       - sysadmin_rede
       - interna
+    cap_drop:
+      - NET_RAW
     security_opt:
       - no-new-privileges:true
     labels:

@@ -1,20 +1,29 @@
 #!/bin/bash
 # ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2
-# Firewall da rede do sysadmin (página 19), na cadeia DOCKER-USER, como o firewall-docker (página 14): o container do
-# sysadmin sai para a internet, mas não alcança o tailnet, a LAN de casa nem o servidor de metadados da GCP (de onde
-# se tiraria o token da conta de serviço da VM). Uma regra DROP por destino de sysadmin_bloqueios, só para a
-# sub-rede {{ sysadmin_rede_subnet }}; o resto do tráfego (e as outras redes do Docker) segue como estava.
-# Rodado pela unit firewall-sysadmin antes de cada (re)início do Docker. Gerado pelo role infra/sysadmin-gcp.
+# Firewall da rede do sysadmin (página 19): o container do sysadmin sai para a internet, mas não alcança o tailnet, a
+# LAN de casa nem o servidor de metadados da GCP (de onde se tiraria o token da conta de serviço da VM).
+# Por que na tabela raw (PREROUTING) e não na cadeia reservada do Docker para usuários: (1) o Tailscale, ao reiniciar, põe `-j ts-forward` (que
+# termina em `-o tailscale0 -j ACCEPT`) acima do salto do Docker na FORWARD, e o tráfego para o tailnet seria aceito
+# antes de chegar a essa cadeia; (2) ela só vê tráfego encaminhado, e os destinos da própria VM (seu IP
+# 100.x, o gateway da bridge) passam pela INPUT. A raw PREROUTING roda antes de todas as cadeias de filtro e cobre os
+# dois casos. A regra casa pela bridge fixa br-sysadmin (driver_opts do compose) e pela sub-rede
+# {{ sysadmin_rede_subnet }}, então as outras redes do Docker seguem como estavam.
+# O servidor de metadados (169.254.169.254) também é o DNS da VM: o DNS (porta 53) passa; o token fica na porta 80,
+# que continua bloqueada. Rodado pela unit firewall-sysadmin antes de cada (re)início do Docker. Gerado pelo role
+# infra/sysadmin-gcp.
 set -euo pipefail
 
 CADEIA="SYSADMIN"
 IPT="${IPTABLES:-iptables}"
 
-$IPT -N DOCKER-USER 2>/dev/null || true
-$IPT -N "$CADEIA" 2>/dev/null || $IPT -F "$CADEIA"
-$IPT -C DOCKER-USER -j "$CADEIA" 2>/dev/null || $IPT -I DOCKER-USER -j "$CADEIA"
+$IPT -t raw -N "$CADEIA" 2>/dev/null || $IPT -t raw -F "$CADEIA"
+$IPT -t raw -C PREROUTING -j "$CADEIA" 2>/dev/null || $IPT -t raw -I PREROUTING -j "$CADEIA"
 
 {% for destino in sysadmin_bloqueios %}
-$IPT -A "$CADEIA" -s {{ sysadmin_rede_subnet }} -d {{ destino }} -j DROP
+{% if destino == '169.254.169.254/32' %}
+$IPT -t raw -A "$CADEIA" -i br-sysadmin -s {{ sysadmin_rede_subnet }} -d {{ destino }} -p udp --dport 53 -j RETURN
+$IPT -t raw -A "$CADEIA" -i br-sysadmin -s {{ sysadmin_rede_subnet }} -d {{ destino }} -p tcp --dport 53 -j RETURN
+{% endif %}
+$IPT -t raw -A "$CADEIA" -i br-sysadmin -s {{ sysadmin_rede_subnet }} -d {{ destino }} -j DROP
 {% endfor %}
-$IPT -A "$CADEIA" -j RETURN
+$IPT -t raw -A "$CADEIA" -j RETURN

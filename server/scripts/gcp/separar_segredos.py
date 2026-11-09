@@ -85,10 +85,11 @@ def separar(dados: dict, destino: Path, uid_executor: int, uid_sysadmin: int) ->
     tmp = Path(tempfile.mkdtemp(prefix=f".{destino.name}.novo-", dir=destino.parent))
     antigo = None
     try:
-        os.chmod(tmp, 0o711)  # x para os UIDs dos containers atravessarem até o arquivo montado
-        (tmp / "executor").mkdir()
-        (tmp / "host").mkdir()
-        os.chmod(tmp / "host", 0o700)
+        # Tudo 0700: o dockerd (root) resolve a origem dos bind mounts, os containers não precisam atravessar.
+        os.chmod(tmp, 0o700)
+        for sub in ("executor", "host"):
+            (tmp / sub).mkdir()
+            os.chmod(tmp / sub, 0o700)
 
         # sysadmin: o agente com modelo. Sem vault, sem SSH, sem Tailscale da casa.
         _escrever(tmp / "sysadmin.env", _env({
