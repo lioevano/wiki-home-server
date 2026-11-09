@@ -4,8 +4,10 @@
 # esta unit (drop-in 20-sysadmin.conf): sem segredos, a stack não sobe. Na primeira vez, traz também o vault.yml
 # cifrado que o criar-sysadmin.sh deixou no bucket. Para trocar os segredos: nova versão no Secret Manager e
 # `systemctl restart sysadmin-segredos` (o Docker, que a exige, reinicia junto e os containers voltam com os novos).
-# Falhou (rede ou Secret Manager fora): tenta de novo a cada minuto, sem limite; o Docker espera (o job de início
-# dele fica na fila enquanto esta unit se reinicia) e sobe assim que os segredos chegam.
+# Falhou (rede ou Secret Manager fora): tenta de novo a cada minuto, sem limite. RestartMode=direct (systemd >= 254)
+# faz cada nova tentativa pular o estado failed: a unit fica "activating", quem a exige (o Docker) não é avisado de
+# falha passageira e o job de início do Docker espera na fila, subindo assim que os segredos chegam. Sem ele
+# (RestartMode=normal, o padrão), a primeira falha derrubaria o job do Docker ("dependency") até o dia seguinte.
 # Gerado pelo role infra/sysadmin-gcp.
 [Unit]
 Description=Segredos do sysadmin: Secret Manager para /run/sysadmin (página 19)
@@ -18,6 +20,7 @@ StartLimitIntervalSec=0
 Type=oneshot
 RemainAfterExit=true
 Restart=on-failure
+RestartMode=direct
 RestartSec=60
 UMask=0077
 # gcloud vem como snap nas imagens Ubuntu da GCP; sem log em arquivo (~/.config/gcloud/logs no disco)

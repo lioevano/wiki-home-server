@@ -582,6 +582,8 @@ def test_swap_cifrada():
 def test_units_do_gcloud():
     u = _unit("sysadmin-segredos.service.j2")
     assert "Restart=on-failure" in u and "RestartSec=60" in u  # falha passageira do Secret Manager
+    # sem passar por failed entre as tentativas: o job do Docker (Requires=) espera em vez de falhar por dependência
+    assert "\nRestartMode=direct\n" in u
     for nome in ("sysadmin-segredos.service.j2", "sysadmin-backup.service.j2", "sysadmin-backup.sh.j2",
                  "sysadmin-pull.service.j2", "firewall-sysadmin.service.j2"):
         texto = _unit(nome)
