@@ -872,3 +872,26 @@ def test_preparar_host_sh_robusto():
     assert "command -v visudo" in s and "apt-get install -y sudo" in s
     assert 'id -gn "$USUARIO"' in s and "-g \"$GRUPO\"" in s
     assert "tail -c1" in s                                                         # newline final antes de acrescentar
+
+
+def test_remoto_ignora_host_de_conexao_local(tmp_path):
+    """R12: o sysadmin-gcp (ansible_connection=local) rodaria dentro do próprio executor, onde estão os segredos."""
+    inv = tmp_path / "server/ansible/inventories/home"
+    inv.mkdir(parents=True)
+    (inv / "hosts.ini").write_text(
+        "[core_services]\ncore-services-vm ansible_host=1.2.3.5\n[gcp]\nsysadmin-gcp ansible_connection=local\n"
+        "[outro]\nh2 ansible_host=1.2.3.6 ansible_connection='local'\nh3 ansible_connection=ssh\n", encoding="utf-8")
+    chamadas = []
+    cfg = Config.do_ambiente({**AMB, "EXECUTOR_REPO_DIR": str(tmp_path)})
+    r = Remoto(cfg, lambda argv, cwd, t: chamadas.append(argv) or (0, ""))
+    assert r.hosts() == {"core-services-vm", "h3"}
+    for host in ("sysadmin-gcp", "h2"):
+        with pytest.raises(Recusado, match="inventário"):
+            r.rodar(host, ["uptime"], shell=False, become=False)
+    assert chamadas == []
+
+
+def test_inventario_real_sem_host_local_no_executor():
+    cfg = Config.do_ambiente({**AMB, "EXECUTOR_REPO_DIR": str(ROOT)})
+    hosts = Remoto(cfg, lambda *a: (0, "")).hosts()
+    assert "sysadmin-gcp" not in hosts and {"proxmox_main_host", "core-services-vm", "ai-desktop-vm"} <= hosts

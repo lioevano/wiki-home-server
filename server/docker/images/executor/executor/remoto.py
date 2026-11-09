@@ -67,7 +67,9 @@ class Remoto:
         return f"{self.cfg.repo_dir}/server/ansible"  # onde ficam o ansible.cfg e o inventário
 
     def hosts(self) -> set[str]:
-        """Nomes dos hosts do inventário: só linhas de host de seções de grupo (sem [x:vars] e [x:children])."""
+        """Nomes dos hosts do inventário: só linhas de host de seções de grupo (sem [x:vars] e [x:children]). Host com
+        ansible_connection=local (o sysadmin-gcp) fica de fora: o comando rodaria dentro deste container, onde estão
+        a senha do vault e a chave SSH."""
         try:
             linhas = Path(self._cwd, self.cfg.inventario).read_text(encoding="utf-8").splitlines()
         except OSError as erro:
@@ -81,7 +83,10 @@ class Remoto:
                 valido = linha.endswith("]") and ":" not in linha
                 continue
             if valido:
-                nomes.add(linha.split()[0])
+                nome, *variaveis = linha.split()
+                if any(v.replace('"', "").replace("'", "") == "ansible_connection=local" for v in variaveis):
+                    continue
+                nomes.add(nome)
         return nomes
 
     def rodar(self, host: str, comando: "list[str] | str", shell: bool, become: bool) -> tuple[int, str]:

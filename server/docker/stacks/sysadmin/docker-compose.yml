@@ -5,6 +5,8 @@
 # Os env_file são required: false porque o `dev.py lint` roda sem /run/sysadmin; a falha fechada está no
 # separar_segredos.py e no Config do executor. Nenhuma porta é publicada além do painel em 127.0.0.1:9119
 # (o Tailscale Serve da VM expõe); o webhook (8644) e o MCP do executor (8000) só existem na rede interna.
+# config.yaml, SOUL.md, honcho.json e o plugin do Honcho vêm de ${SYSADMIN_DATA_PATH}/config (do root) e entram só
+# leitura: o que a conversa ou o painel mudarem não vale; a wiki manda (setup-sysadmin.yml a cada ansible-pull).
 version: '3.9'
 
 networks:
@@ -45,10 +47,15 @@ services:
       HOMESERVER_VENV: /opt/dev
       TZ: ${SYSTEM_TIMEZONE}
     volumes:
-      - ${SYSADMIN_DATA_PATH}/hermes:/opt/data # config, memória e sessões
+      - ${SYSADMIN_DATA_PATH}/hermes:/opt/data # memória, sessões e skills aprendidas
       - ${SYSADMIN_DATA_PATH}/repo:/repo # clone de trabalho do sysadmin
       - ${SYSADMIN_DATA_PATH}/saida:/saida:ro # vault.yml cifrado que o executor entrega, para o sysadmin abrir o PR
       - /run/sysadmin/sysadmin.env:/opt/data/.env:ro
+      # O que a wiki define (gerado pelo root em config/, fora do alcance do container): só leitura.
+      - ${SYSADMIN_DATA_PATH}/config/config.yaml:/opt/data/config.yaml:ro
+      - ${SYSADMIN_DATA_PATH}/config/SOUL.md:/opt/data/SOUL.md:ro
+      - ${SYSADMIN_DATA_PATH}/config/honcho.json:/opt/data/honcho.json:ro
+      - ${SYSADMIN_DATA_PATH}/config/plugins/honcho:/opt/data/plugins/honcho:ro
     networks:
       - sysadmin_rede
       - interna
@@ -74,6 +81,10 @@ services:
       - ${SYSADMIN_DATA_PATH}/repo:/repo
       - ${SYSADMIN_DATA_PATH}/saida:/saida:ro
       - /run/sysadmin/sysadmin.env:/opt/data/.env:ro
+      - ${SYSADMIN_DATA_PATH}/config/config.yaml:/opt/data/config.yaml:ro
+      - ${SYSADMIN_DATA_PATH}/config/SOUL.md:/opt/data/SOUL.md:ro
+      - ${SYSADMIN_DATA_PATH}/config/honcho.json:/opt/data/honcho.json:ro
+      - ${SYSADMIN_DATA_PATH}/config/plugins/honcho:/opt/data/plugins/honcho:ro
     ports:
       - "127.0.0.1:9119:9119"
     networks:

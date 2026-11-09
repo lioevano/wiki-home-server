@@ -8,5 +8,7 @@ After=network-online.target docker.service
 [Service]
 Type=oneshot
 UMask=0077
+# sem log do gcloud em arquivo (~/.config/gcloud/logs no disco)
 Environment=PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=CLOUDSDK_CORE_DISABLE_FILE_LOGGING=1
 ExecStart=/usr/local/sbin/sysadmin-backup.sh

@@ -5,6 +5,12 @@
 # timers de atualização e de backup. Não usa o vault de casa: os segredos vêm do Secret Manager para /run/sysadmin.
 
 # --- Memória: a e2-micro tem 1 GB; as construções das imagens e o Honcho precisam de folga ---
+# Swap cifrada com chave aleatória nova a cada boot (/dev/urandom): o que o kernel joga na swap, inclusive páginas
+# com segredos do tmpfs /run/sysadmin, nunca fica legível no disco, nem depois de desligar. O crypttab aceita um
+# arquivo comum: o gerador do systemd (systemd-cryptsetup-generator, no pacote systemd do Ubuntu 24.04) espera a
+# montagem do arquivo (RequiresMountsFor), carrega o módulo loop (modprobe@loop) e o systemd-cryptsetup prende o
+# arquivo a um loop device sozinho; a opção swap roda o mkswap no /dev/mapper/cryptswap a cada boot. Sem loop
+# device manual nem partição nova.
 - name: Swap de 4 GB
   block:
     - name: "Swap: arquivo de 4 GB"
@@ -19,22 +25,28 @@
         group: root
         mode: '0600'
 
-    - name: "Swap: em uso?"
-      ansible.builtin.command: swapon --show=NAME --noheadings
-      register: sysadmin_swap
-      changed_when: false
-      check_mode: false # só lê
+    - name: "Swap: cifrada no crypttab (chave aleatória a cada boot)"
+      ansible.builtin.lineinfile:
+        path: /etc/crypttab
+        line: "cryptswap /swapfile /dev/urandom swap,cipher=aes-xts-plain64,size=256"
+        regexp: '^cryptswap\s'
+        create: true
+        owner: root
+        group: root
+        mode: '0644'
+      register: sysadmin_crypttab
 
-    - name: "Swap: formatar e ligar"
-      ansible.builtin.shell: mkswap /swapfile && swapon /swapfile
-      when: "'/swapfile' not in sysadmin_swap.stdout"
-      changed_when: true
-
-    - name: "Swap: no fstab (volta no boot)"
+    - name: "Swap: nada de swap em claro no fstab"
       ansible.builtin.lineinfile:
         path: /etc/fstab
-        line: "/swapfile none swap sw 0 0"
         regexp: '^/swapfile\s'
+        state: absent
+
+    - name: "Swap: a cifrada no fstab"
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "/dev/mapper/cryptswap none swap sw 0 0"
+        regexp: '^/dev/mapper/cryptswap\s'
 
     - name: "Swap: vm.swappiness=10 (só quando a RAM aperta)"
       ansible.posix.sysctl:
@@ -42,6 +54,20 @@
         value: '10'
         sysctl_file: /etc/sysctl.d/99-sysadmin.conf
         reload: true
+
+    # Agora, sem esperar o próximo boot: o gerador cria as units a partir do crypttab e do fstab.
+    - name: "Swap: abrir o dispositivo cifrado"
+      ansible.builtin.systemd_service:
+        name: systemd-cryptsetup@cryptswap.service
+        state: started
+        daemon_reload: true
+      when: not ansible_check_mode
+
+    - name: "Swap: ligar"
+      ansible.builtin.systemd_service:
+        name: dev-mapper-cryptswap.swap
+        state: started
+      when: not ansible_check_mode
 
 # --- Segredos: o pre_tasks do playbook já rodou este arquivo (o Tailscale precisa da chave); aqui é idempotente ---
 - name: Segredos do Secret Manager no tmpfs
@@ -105,117 +131,130 @@
   when: sysadmin_dropin.changed and not ansible_check_mode
 
 # --- Diretórios (disco da VM; os segredos nunca vêm para cá) ---
-# hermes (HERMES_HOME), repo (clone de trabalho) e o plugin: do Hermes. repo-executor, saida (vault.yml cifrado que o
-# executor entrega) e executor (known_hosts, pedidos): do executor. honcho-db: o entrypoint do Postgres ajusta o dono.
+# R13: o root do host não escreve nem roda git onde um container escreve (um symlink plantado, ou hooks e
+# core.fsmonitor num .git/config, virariam escrita ou execução como root no host). Ele só cria e acerta o dono do
+# próprio diretório de cada container (follow: false, sem recurse). O que o root gera para o sysadmin (config.yaml,
+# SOUL.md, honcho.json, plugin do Honcho) fica em config/, do root, montado só leitura no container.
+# hermes (HERMES_HOME): do Hermes. saida (vault.yml cifrado que o executor entrega) e executor (known_hosts,
+# pedidos): do executor. honcho-db: o entrypoint do Postgres ajusta o dono. repo e repo-executor: criados pelo clone.
 - name: Diretórios do sysadmin
   ansible.builtin.file:
     path: "/opt/sysadmin{{ '/' ~ item.path if item.path else '' }}"
     state: directory
+    follow: false
     owner: "{{ item.dono | default(omit) }}"
     group: "{{ item.dono | default(omit) }}"
     mode: "{{ item.modo }}"
   loop:
     - { path: "", dono: root, modo: '0755' }
+    - { path: config, dono: root, modo: '0755' }
+    - { path: config/plugins, dono: root, modo: '0755' }
     - { path: hermes, dono: "{{ sysadmin_uid }}", modo: '0750' }
-    - { path: hermes/plugins, dono: "{{ sysadmin_uid }}", modo: '0750' }
-    - { path: repo, dono: "{{ sysadmin_uid }}", modo: '0755' }
-    - { path: repo-executor, dono: "{{ sysadmin_executor_uid }}", modo: '0755' }
     - { path: saida, dono: "{{ sysadmin_executor_uid }}", modo: '0755' }
     - { path: executor, dono: "{{ sysadmin_executor_uid }}", modo: '0700' }
     - { path: honcho-db, modo: '0700' }
     - { path: build, dono: root, modo: '0755' }
     - { path: stack, dono: root, modo: '0755' }
 
-# --- Clones (o root do host clona; o dono final é o container que trabalha neles) ---
-# O git do root recusa repositórios de outro dono ("dubious ownership"): os dois clones são declarados seguros.
-- name: "Git: confiar nos clones do sysadmin e do executor"
-  community.general.git_config:
-    scope: system
-    name: safe.directory
-    value: "{{ item }}"
-    add_mode: add
-  loop:
-    - "/opt/sysadmin/repo"
-    - "/opt/sysadmin/repo-executor"
+# --- Clones: o root clona só se o diretório não existe, entrega ao dono uma vez e nunca mais mexe ---
+# Depois disso cada container cuida do seu: o sysadmin (branches, PRs) e o executor, que faz git pull --ff-only
+# antes de cada execução. O ansible-pull usa outro clone (/opt/sysadmin/pull), só do root.
+- name: "Clone de trabalho: já existe?"
+  ansible.builtin.stat:
+    path: /opt/sysadmin/repo
+    follow: false
+  register: sysadmin_repo_existe
 
-# Só a primeira vez: depois, quem cuida dele é o sysadmin (branches, PRs).
 - name: Clone de trabalho do sysadmin
   ansible.builtin.git:
     repo: "{{ sysadmin_repo_url }}"
-    dest: "/opt/sysadmin/repo"
+    dest: /opt/sysadmin/repo
     update: false
+  when: not sysadmin_repo_existe.stat.exists
   register: sysadmin_clone_trabalho
 
 - name: Entregar o clone de trabalho ao Hermes
   ansible.builtin.file:
-    path: "/opt/sysadmin/repo"
+    path: /opt/sysadmin/repo
     recurse: true
+    follow: false
     owner: "{{ sysadmin_uid }}"
     group: "{{ sysadmin_uid }}"
   when: sysadmin_clone_trabalho.changed
 
-# A main, sempre atualizada: o executor lê o vault.yml.example no boot e roda os playbooks daqui (faz git pull antes
-# de cada um). Existe antes de a stack subir.
+# A main: o executor lê o vault.yml.example no boot e roda os playbooks daqui. Existe antes de a stack subir.
+- name: "Clone da main: já existe?"
+  ansible.builtin.stat:
+    path: /opt/sysadmin/repo-executor
+    follow: false
+  register: sysadmin_repo_executor_existe
+
 - name: Clone da main para o executor
   ansible.builtin.git:
     repo: "{{ sysadmin_repo_url }}"
-    dest: "/opt/sysadmin/repo-executor"
+    dest: /opt/sysadmin/repo-executor
     version: main
-    update: true
+    update: false
+  when: not sysadmin_repo_executor_existe.stat.exists
   register: sysadmin_clone_executor
 
 - name: Entregar o clone da main ao executor
   ansible.builtin.file:
-    path: "/opt/sysadmin/repo-executor"
+    path: /opt/sysadmin/repo-executor
     recurse: true
+    follow: false
     owner: "{{ sysadmin_executor_uid }}"
     group: "{{ sysadmin_executor_uid }}"
   when: sysadmin_clone_executor.changed
 
-# --- Honcho: o plugin do Hermes sai do repositório do Honcho, na mesma tag do servidor ---
+# --- Honcho: o plugin do Hermes sai do repositório do Honcho, na mesma tag do servidor (build/ e config/: do root) ---
 - name: Plugin do Honcho
   block:
     - name: "Honcho: código na honcho_version"
       ansible.builtin.git:
         repo: "{{ sysadmin_honcho_repo }}"
-        dest: "/opt/sysadmin/build/honcho-src"
+        dest: /opt/sysadmin/build/honcho-src
         version: "{{ honcho_version }}"
         depth: 1
         force: true
 
-    - name: "Honcho: plugin hermes-plugin-honcho em plugins/honcho"
+    - name: "Honcho: plugin hermes-plugin-honcho em config/plugins/honcho (só leitura no container)"
       ansible.builtin.copy:
-        src: "/opt/sysadmin/build/honcho-src/hermes-plugin-honcho/"
-        dest: "/opt/sysadmin/hermes/plugins/honcho/"
+        src: /opt/sysadmin/build/honcho-src/hermes-plugin-honcho/
+        dest: /opt/sysadmin/config/plugins/honcho/
         remote_src: true
-        owner: "{{ sysadmin_uid }}"
-        group: "{{ sysadmin_uid }}"
-        mode: u=rwX,g=rX,o=
+        owner: root
+        group: root
+        mode: u=rwX,go=rX
+        directory_mode: '0755'
       register: sysadmin_plugin
 
-# --- Configurações do Hermes (HERMES_HOME) e do Honcho; refeitas a cada execução: o que mudar pela conversa volta ---
+# --- Configurações do Hermes e do Honcho (do root, montadas só leitura); refeitas a cada execução ---
 - name: Configurações do Hermes e do Honcho
   ansible.builtin.template:
     src: "{{ sysadmin_fonte }}/server/ansible/templates/sysadmin/{{ item.src }}"
     dest: "{{ item.dest }}"
-    owner: "{{ item.dono }}"
-    group: "{{ item.dono }}"
+    owner: root
+    group: root
     mode: '0644'
   loop:
-    - { src: config.yaml.j2, dest: "/opt/sysadmin/hermes/config.yaml", dono: "{{ sysadmin_uid }}", servico: hermes }
-    - { src: SOUL.md.j2, dest: "/opt/sysadmin/hermes/SOUL.md", dono: "{{ sysadmin_uid }}", servico: hermes }
-    - { src: honcho.json.j2, dest: "/opt/sysadmin/hermes/honcho.json", dono: "{{ sysadmin_uid }}", servico: hermes }
-    - { src: honcho-config.toml.j2, dest: "/opt/sysadmin/honcho-config.toml", dono: root, servico: honcho }
+    - { src: config.yaml.j2, dest: /opt/sysadmin/config/config.yaml, servico: hermes }
+    - { src: SOUL.md.j2, dest: /opt/sysadmin/config/SOUL.md, servico: hermes }
+    - { src: honcho.json.j2, dest: /opt/sysadmin/config/honcho.json, servico: hermes }
+    - { src: honcho-config.toml.j2, dest: /opt/sysadmin/honcho-config.toml, servico: honcho }
   loop_control:
     label: "{{ item.dest }}"
   register: sysadmin_configs
 
-# --- Imagens locais (construídas na VM; force_source quando o contexto muda, como no setup-agents-volumes.yml) ---
+# --- Imagens locais (construídas na VM) ---
+# Reconstrução: o carimbo .versoes (argumentos de build e versão da imagem) entra no contexto; contexto ou carimbo
+# novo apaga o .construido; o build é forçado quando o .construido falta ou difere do .versoes, e o .construido só
+# é gravado depois de um build bem-sucedido. Versão nova reconstrói, e um build que falhou é refeito na próxima.
 - name: Imagem do sysadmin
   block:
     - name: "Sysadmin: diretórios do contexto de build"
       ansible.builtin.file:
-        path: "/opt/sysadmin/build/sysadmin/wiki"
+        path: /opt/sysadmin/build/sysadmin/wiki
         state: directory
         mode: '0755'
 
@@ -232,25 +271,56 @@
         - { src: server/ansible/requirements.yml, dest: requirements.yml }
       register: sysadmin_contexto
 
+    - name: "Sysadmin: carimbo das versões"
+      ansible.builtin.copy:
+        dest: /opt/sysadmin/build/sysadmin/.versoes
+        content: |
+          SYSADMIN_VERSION={{ sysadmin_version }}
+          HERMES_VERSION={{ hermes_version }}
+          ANSIBLE_CORE_VERSION={{ ops_ansible_core_version }}
+          HONCHO_AI_VERSION={{ honcho_ai_version }}
+        mode: '0644'
+      register: sysadmin_carimbo
+
+    - name: "Sysadmin: contexto novo pede build novo"
+      ansible.builtin.file:
+        path: /opt/sysadmin/build/sysadmin/.construido
+        state: absent
+      when: sysadmin_contexto.changed or sysadmin_carimbo.changed
+
+    - name: "Sysadmin: último build bem-sucedido"
+      ansible.builtin.stat:
+        path: /opt/sysadmin/build/sysadmin/.construido
+      register: sysadmin_construido
+
     - name: "Sysadmin: construir localhost/homeserver/sysadmin"
       community.docker.docker_image:
         name: localhost/homeserver/sysadmin
         tag: "{{ sysadmin_version }}"
         source: build
         build:
-          path: "/opt/sysadmin/build/sysadmin"
+          path: /opt/sysadmin/build/sysadmin
           pull: true
           args:
             HERMES_VERSION: "{{ hermes_version }}"
             ANSIBLE_CORE_VERSION: "{{ ops_ansible_core_version }}"
             HONCHO_AI_VERSION: "{{ honcho_ai_version }}"
-        force_source: "{{ sysadmin_contexto.changed }}"
+        force_source: >-
+          {{ not sysadmin_construido.stat.exists
+             or sysadmin_construido.stat.checksum != sysadmin_carimbo.checksum }}
+
+    - name: "Sysadmin: marcar o build"
+      ansible.builtin.copy:
+        src: /opt/sysadmin/build/sysadmin/.versoes
+        dest: /opt/sysadmin/build/sysadmin/.construido
+        remote_src: true
+        mode: '0644'
 
 - name: Imagem do executor
   block:
     - name: "Executor: diretório do contexto de build"
       ansible.builtin.file:
-        path: "/opt/sysadmin/build/executor"
+        path: /opt/sysadmin/build/executor
         state: directory
         mode: '0755'
 
@@ -258,7 +328,7 @@
     - name: "Executor: código"
       ansible.builtin.copy:
         src: "{{ sysadmin_fonte }}/server/{{ item }}"
-        dest: "/opt/sysadmin/build/executor/"
+        dest: /opt/sysadmin/build/executor/
         mode: preserve
       loop:
         - docker/images/executor/
@@ -269,7 +339,7 @@
     - name: "Executor: coleções do Ansible (requirements.yml)"
       ansible.builtin.copy:
         src: "{{ sysadmin_fonte }}/server/ansible/requirements.yml"
-        dest: "/opt/sysadmin/build/executor/requirements.yml"
+        dest: /opt/sysadmin/build/executor/requirements.yml
         mode: '0644'
       register: sysadmin_executor_colecoes
 
@@ -277,9 +347,34 @@
     - name: "Executor: requirements.txt (versões do group_vars)"
       ansible.builtin.template:
         src: "{{ sysadmin_fonte }}/server/ansible/templates/agents/ops-requirements.txt.j2"
-        dest: "/opt/sysadmin/build/executor/requirements.txt"
+        dest: /opt/sysadmin/build/executor/requirements.txt
         mode: '0644'
       register: sysadmin_executor_requirements
+
+    - name: "Executor: carimbo das versões"
+      ansible.builtin.copy:
+        dest: /opt/sysadmin/build/executor/.versoes
+        content: |
+          EXECUTOR_VERSION={{ executor_version }}
+          FASTMCP_VERSION={{ ops_fastmcp_version }}
+          ANSIBLE_CORE_VERSION={{ ops_ansible_core_version }}
+          UID={{ sysadmin_executor_uid }}
+          GID={{ sysadmin_executor_uid }}
+        mode: '0644'
+      register: sysadmin_executor_carimbo
+
+    - name: "Executor: contexto novo pede build novo"
+      ansible.builtin.file:
+        path: /opt/sysadmin/build/executor/.construido
+        state: absent
+      when: >-
+        sysadmin_executor_codigo.changed or sysadmin_executor_colecoes.changed
+        or sysadmin_executor_requirements.changed or sysadmin_executor_carimbo.changed
+
+    - name: "Executor: último build bem-sucedido"
+      ansible.builtin.stat:
+        path: /opt/sysadmin/build/executor/.construido
+      register: sysadmin_executor_construido
 
     # UID/GID do build = --uid-executor do separar_segredos.py (dono dos arquivos de /run/sysadmin/executor).
     - name: "Executor: construir localhost/homeserver/executor"
@@ -288,14 +383,21 @@
         tag: "{{ executor_version }}"
         source: build
         build:
-          path: "/opt/sysadmin/build/executor"
+          path: /opt/sysadmin/build/executor
           pull: true
           args:
             UID: "{{ sysadmin_executor_uid }}"
             GID: "{{ sysadmin_executor_uid }}"
         force_source: >-
-          {{ sysadmin_executor_codigo.changed or sysadmin_executor_colecoes.changed
-             or sysadmin_executor_requirements.changed }}
+          {{ not sysadmin_executor_construido.stat.exists
+             or sysadmin_executor_construido.stat.checksum != sysadmin_executor_carimbo.checksum }}
+
+    - name: "Executor: marcar o build"
+      ansible.builtin.copy:
+        src: /opt/sysadmin/build/executor/.versoes
+        dest: /opt/sysadmin/build/executor/.construido
+        remote_src: true
+        mode: '0644'
 
 # --- Stack ---
 - name: Compose do sysadmin

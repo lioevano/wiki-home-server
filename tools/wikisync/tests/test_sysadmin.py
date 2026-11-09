@@ -487,16 +487,111 @@ def test_clones_e_honcho():
     trab = t["Clone de trabalho do sysadmin"]["ansible.builtin.git"]
     assert trab["dest"] == "/opt/sysadmin/repo" and trab["update"] is False
     ex = t["Clone da main para o executor"]["ansible.builtin.git"]
-    assert ex["dest"] == "/opt/sysadmin/repo-executor" and ex["update"] is True and ex["version"] == "main"
+    assert ex["dest"] == "/opt/sysadmin/repo-executor" and ex["update"] is False and ex["version"] == "main"
     nomes = list(t)
     assert nomes.index("Clone da main para o executor") < nomes.index("Stack do sysadmin")
     plugin = json.dumps(t["Plugin do Honcho"])
     assert "{{ honcho_version }}" in plugin and "/opt/sysadmin/build/honcho-src" in plugin
-    assert "hermes-plugin-honcho/" in plugin and "/opt/sysadmin/hermes/plugins/honcho/" in plugin
+    assert "hermes-plugin-honcho/" in plugin and "/opt/sysadmin/config/plugins/honcho/" in plugin
     cfg = json.dumps([x for x in t.values() if "ansible.builtin.template" in x])
-    for destino in ("/opt/sysadmin/hermes/config.yaml", "/opt/sysadmin/hermes/SOUL.md",
-                    "/opt/sysadmin/hermes/honcho.json", "/opt/sysadmin/honcho-config.toml"):
+    for destino in ("/opt/sysadmin/config/config.yaml", "/opt/sysadmin/config/SOUL.md",
+                    "/opt/sysadmin/config/honcho.json", "/opt/sysadmin/honcho-config.toml"):
         assert destino in cfg, destino
+
+
+def test_root_fora_dos_diretorios_dos_containers():
+    """R13: o root do host não escreve nem roda git onde um container escreve (symlink plantado, hooks e
+    core.fsmonitor no .git/config virariam escrita ou execução como root no host)."""
+    t = list(_todas(_tarefas_sa()))
+    texto = json.dumps(t)
+    assert "/opt/sysadmin/hermes" not in texto  # nada do root dentro do HERMES_HOME (só o próprio diretório)
+    dirs = next(x for x in t if x["name"] == "Diretórios do sysadmin")
+    assert dirs["ansible.builtin.file"]["follow"] is False and "recurse" not in dirs["ansible.builtin.file"]
+    caminhos = [i["path"] for i in dirs["loop"]]
+    assert "hermes" in caminhos and not [c for c in caminhos if c.startswith(("hermes/", "repo"))]
+    cfg = next(i for i in dirs["loop"] if i["path"] == "config")
+    assert cfg["dono"] == "root" and cfg["modo"] == "0755"
+    assert "safe.directory" not in texto  # o root não roda git nos clones dos containers
+    for nome, var in (("Clone de trabalho do sysadmin", "sysadmin_repo_existe"),
+                      ("Clone da main para o executor", "sysadmin_repo_executor_existe")):
+        clone = next(x for x in t if x["name"] == nome)
+        assert clone["when"] == f"not {var}.stat.exists", nome  # só se o diretório ainda não existe
+        stat = next(x for x in t if x.get("register") == var)["ansible.builtin.stat"]
+        assert stat["follow"] is False
+    for x in t:
+        f = x.get("ansible.builtin.file") or {}
+        if f.get("recurse"):  # só a entrega do clone recém-criado, sem seguir links
+            assert f["follow"] is False and x["when"].endswith(".changed"), x["name"]
+    # a unit dos segredos baixa o vault de entrada num diretório do root e só o renomeia para dentro de saida/
+    u = _unit("sysadmin-segredos.service.j2")
+    assert "saida/.vault" not in u and "mktemp -d /opt/sysadmin/build/" in u and "mv -T" in u
+
+
+def test_configs_do_hermes_somente_leitura():
+    c = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))["services"]
+    for nome in ("sysadmin", "sysadmin_painel"):
+        vols = c[nome]["volumes"]
+        for arq in ("config.yaml", "SOUL.md", "honcho.json", "plugins/honcho"):
+            assert f"${{SYSADMIN_DATA_PATH}}/config/{arq}:/opt/data/{arq}:ro" in vols, (nome, arq)
+
+
+def test_rebuild_por_versao():
+    """Versão nova reconstrói, e build que falhou é refeito: o carimbo .construido só é gravado depois do build."""
+    t = list(_todas(_tarefas_sa()))
+    for img, ctx, versoes in (
+            ("sysadmin", "/opt/sysadmin/build/sysadmin",
+             ("{{ hermes_version }}", "{{ ops_ansible_core_version }}", "{{ honcho_ai_version }}", "{{ sysadmin_version }}")),
+            ("executor", "/opt/sysadmin/build/executor",
+             ("{{ ops_fastmcp_version }}", "{{ ops_ansible_core_version }}", "{{ sysadmin_executor_uid }}",
+              "{{ executor_version }}"))):
+        i_carimbo = next(i for i, x in enumerate(t)
+                         if (x.get("ansible.builtin.copy") or {}).get("dest") == f"{ctx}/.versoes")
+        conteudo = t[i_carimbo]["ansible.builtin.copy"]["content"]
+        for v in versoes:
+            assert v in conteudo, (img, v)
+        i_limpa = next(i for i, x in enumerate(t) if (x.get("ansible.builtin.file") or {}).get("path") == f"{ctx}/.construido")
+        assert t[i_limpa]["ansible.builtin.file"]["state"] == "absent"
+        i_build = next(i for i, x in enumerate(t) if (x.get("community.docker.docker_image") or {}).get("name")
+                       == f"localhost/homeserver/{img}")
+        i_stat = next(i for i, x in enumerate(t) if (x.get("ansible.builtin.stat") or {}).get("path") == f"{ctx}/.construido")
+        forca = t[i_build]["community.docker.docker_image"]["force_source"]
+        assert f"not {t[i_stat]['register']}.stat.exists" in forca and f"{t[i_stat]['register']}.stat.checksum" in forca
+        assert i_limpa < i_stat < i_build
+        i_marca = next(i for i, x in enumerate(t)
+                       if (x.get("ansible.builtin.copy") or {}).get("dest") == f"{ctx}/.construido")
+        marca = t[i_marca]["ansible.builtin.copy"]
+        assert marca["src"] == f"{ctx}/.versoes" and marca["remote_src"] is True
+        assert i_carimbo < i_limpa < i_build < i_marca, img
+
+
+def test_swap_cifrada():
+    """R14: o que o kernel joga na swap (inclusive segredos do tmpfs) não fica legível no disco: chave nova a cada boot."""
+    swap = next(x for x in _tarefas_sa() if x["name"] == "Swap de 4 GB")
+    texto = json.dumps(swap)
+    linhas = {x["ansible.builtin.lineinfile"]["path"]: x["ansible.builtin.lineinfile"]
+              for x in swap["block"] if "ansible.builtin.lineinfile" in x}
+    assert linhas["/etc/crypttab"]["line"] == "cryptswap /swapfile /dev/urandom swap,cipher=aes-xts-plain64,size=256"
+    fstab = [x["ansible.builtin.lineinfile"] for x in swap["block"]
+             if (x.get("ansible.builtin.lineinfile") or {}).get("path") == "/etc/fstab"]
+    assert {"line": "/dev/mapper/cryptswap none swap sw 0 0"}.items() <= next(f for f in fstab if "line" in f).items()
+    assert any(f.get("state") == "absent" and "/swapfile" in f["regexp"] for f in fstab)  # nada de swap em claro
+    assert "mkswap /swapfile" not in texto and "swapon /swapfile" not in texto
+    assert "systemd-cryptsetup@cryptswap.service" in texto and "dev-mapper-cryptswap.swap" in texto
+
+
+def test_units_do_gcloud():
+    u = _unit("sysadmin-segredos.service.j2")
+    assert "Restart=on-failure" in u and "RestartSec=60" in u  # falha passageira do Secret Manager
+    for nome in ("sysadmin-segredos.service.j2", "sysadmin-backup.service.j2", "sysadmin-backup.sh.j2",
+                 "sysadmin-pull.service.j2", "firewall-sysadmin.service.j2"):
+        texto = _unit(nome)
+        unit = texto if nome.endswith(".service.j2") else _unit("sysadmin-backup.service.j2")
+        if "gcloud" in texto:
+            assert "Environment=CLOUDSDK_CORE_DISABLE_FILE_LOGGING=1" in unit, nome
+    assert "Environment=CLOUDSDK_CORE_DISABLE_FILE_LOGGING=1" in _unit("sysadmin-backup.service.j2")
+    # o Ansible não fica preso se o segredo nunca chegar: a unit segue tentando, o play falha com aviso
+    sep = next(x for x in _tarefas_sa("segredos.yml") if "ansible.builtin.systemd_service" in x)
+    assert isinstance(sep.get("timeout"), int) and sep["timeout"] > 0
 
 
 def test_timers_do_sysadmin():

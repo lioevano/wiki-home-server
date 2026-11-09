@@ -46,7 +46,9 @@
     mode: '0644'
   no_log: true
 
-# Execução imediata (no primeiro boot, antes do Tailscale e da stack); nas próximas, a unit já está ativa.
+# Execução imediata (no primeiro boot, antes do Tailscale e da stack); nas próximas, a unit já está ativa. Se o
+# Secret Manager falhar, a unit tenta de novo a cada minuto (Restart=on-failure) e o play desiste em 15 min com erro:
+# a unit segue tentando sozinha (veja `journalctl -u sysadmin-segredos`).
 - name: Separar os segredos agora e em todo boot
   ansible.builtin.systemd_service:
     name: sysadmin-segredos.service
@@ -54,4 +56,5 @@
     state: started
     daemon_reload: true
   when: not ansible_check_mode
+  timeout: 900
   no_log: true
