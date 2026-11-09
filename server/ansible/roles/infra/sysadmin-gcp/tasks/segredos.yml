@@ -1,0 +1,57 @@
+# ansible/roles/infra/sysadmin-gcp/tasks/segredos.yml
+# Segredos do sysadmin (página 19): o JSON do Secret Manager (sysadmin-segredos) separado por container no tmpfs
+# /run/sysadmin pela unit sysadmin-segredos, antes do Docker. O setup-sysadmin.yml inclui este arquivo também no
+# pre_tasks: a chave do Tailscale da VM (/run/sysadmin/host/tailscale_chave) precisa existir antes do role
+# infra/tailscale. Repetir é inofensivo: a unit já ativa não roda de novo (para trocar os segredos, veja a página 19).
+
+- name: Projeto da GCP (servidor de metadados)
+  ansible.builtin.uri:
+    url: http://metadata.google.internal/computeMetadata/v1/project/project-id
+    headers:
+      Metadata-Flavor: Google
+    return_content: true
+  register: sysadmin_metadados
+  check_mode: false # só lê
+  when: gcp_projeto is not defined
+
+- name: Guardar o projeto da GCP
+  ansible.builtin.set_fact:
+    gcp_projeto: "{{ sysadmin_metadados.content | trim }}"
+  when: gcp_projeto is not defined
+
+- name: Diretório do separador de segredos
+  ansible.builtin.file:
+    path: /usr/local/lib/sysadmin
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  no_log: true
+
+- name: Separador de segredos (separar_segredos.py)
+  ansible.builtin.copy:
+    src: "{{ sysadmin_fonte }}/server/scripts/gcp/separar_segredos.py"
+    dest: /usr/local/lib/sysadmin/separar_segredos.py
+    owner: root
+    group: root
+    mode: '0755'
+  no_log: true
+
+- name: Unit dos segredos (sysadmin-segredos.service)
+  ansible.builtin.template:
+    src: sysadmin-segredos.service.j2
+    dest: /etc/systemd/system/sysadmin-segredos.service
+    owner: root
+    group: root
+    mode: '0644'
+  no_log: true
+
+# Execução imediata (no primeiro boot, antes do Tailscale e da stack); nas próximas, a unit já está ativa.
+- name: Separar os segredos agora e em todo boot
+  ansible.builtin.systemd_service:
+    name: sysadmin-segredos.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+  no_log: true

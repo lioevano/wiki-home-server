@@ -84,9 +84,8 @@
     name: "{{ item }}"
     groups: docker # Grupo 'docker' é criado automaticamente pela instalação do Docker CE
     append: yes
-  loop:
-    - "{{ vm_ansible_user_name }}"    # Usuário Ansible da VM
-    - "{{ docker_user_name_on_vm }}" # Usuário dedicado para volumes Docker
+  # Padrão (defaults): o usuário Ansible da VM e o dockeruser. A VM do sysadmin na GCP passa a lista vazia.
+  loop: "{{ docker_usuarios_grupo }}"
   notify: Reiniciar VM para aplicar mudanças de grupo Docker # Ou pedir logout/login do usuário
 
 - name: "Criar diretório para dados persistentes do Portainer (via NFS)"

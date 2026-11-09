@@ -1,0 +1,22 @@
+# ansible/roles/infra/sysadmin-gcp/defaults/main.yml
+# Padrões do role infra/sysadmin-gcp (página 19): a VM do sysadmin na GCP. Versões, modelos, rede e bloqueios vêm do
+# group_vars (página 01, carregado por vars_files); gcp_projeto vem do servidor de metadados (tasks/segredos.yml).
+# Nada aqui é segredo: os segredos vêm do Secret Manager para o tmpfs /run/sysadmin.
+
+# Os dados ficam em /opt/sysadmin (SYSADMIN_DATA_PATH do compose), fixo: as units e o ansible-pull também o usam.
+# Bucket do backup e do vault de entrada (criado pelo scripts/gcp/criar-sysadmin.sh).
+sysadmin_bucket: "{{ gcp_projeto }}-sysadmin"
+# UIDs dos containers: o do Hermes (HERMES_UID = DOCKER_PUID) e o do executor (UID/GID do build da imagem). Os
+# mesmos valores vão ao separar_segredos.py (--uid-sysadmin, --uid-executor), que dá a cada um os seus arquivos.
+sysadmin_uid: 1000
+sysadmin_executor_uid: 1001
+# Repositório da casa: clones do sysadmin e do executor (o ansible-pull da unit usa o mesmo endereço) e o link
+# "raw" do preparar-host.sh, que o executor manda ao Léo.
+sysadmin_repo_url: "https://github.com/lioevano/wiki-home-server.git"
+sysadmin_repo_url_raw: "https://raw.githubusercontent.com/lioevano/wiki-home-server/main"
+# Código do Honcho (de onde sai o plugin hermes-plugin-honcho), na tag honcho_version.
+sysadmin_honcho_repo: "https://github.com/plastic-labs/honcho.git"
+# Fuso dos containers (TZ). Os timers da VM são em UTC.
+sysadmin_fuso_horario: "America/Sao_Paulo"
+# Raiz do repositório no clone do ansible-pull: de onde saem os Dockerfiles, o compose, os scripts e os templates.
+sysadmin_fonte: "{{ (role_path ~ '/../../../../..') | realpath }}"

@@ -1,0 +1,24 @@
+#!/bin/bash
+# ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.sh.j2
+# Backup diário da memória do sysadmin (página 19): o dump do banco do Honcho (pg_dump dentro do honcho_db) e o
+# diretório do Hermes (sessões, memória, skills aprendidas) vão para gs://{{ sysadmin_bucket }}/backup/<data>/; a
+# regra de ciclo de vida do bucket apaga depois de 30 dias. O resto da VM se refaz do script e do repositório.
+# Sem segredos: o .env do Hermes (montado de /run/sysadmin) e o auth.json ficam fora do tar, e nada de /run/sysadmin
+# entra. Rodado pela unit sysadmin-backup (timer diário). Gerado pelo role infra/sysadmin-gcp.
+set -euo pipefail
+
+DATA="$(date -u +%F)"
+DESTINO="gs://{{ sysadmin_bucket }}/backup/${DATA}/"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+docker exec honcho_db pg_dump -U honcho -d honcho --format=custom > "$TMP/honcho.dump"
+
+# O Hermes segue no ar: arquivo que muda durante a leitura (código 1 do tar) não invalida o backup.
+rc=0
+tar -C /opt/sysadmin --exclude='hermes/.env*' --exclude='hermes/auth.json*' --warning=no-file-changed \
+    -czf "$TMP/hermes.tar.gz" hermes || rc=$?
+[ "$rc" -le 1 ] || exit "$rc"
+
+gcloud storage cp "$TMP/honcho.dump" "$TMP/hermes.tar.gz" "$DESTINO"
+echo "backup gravado em $DESTINO"

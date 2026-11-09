@@ -222,10 +222,10 @@ Handlers para o role `common`.
 
 ## 4.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)
 
-Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portainer_mode` (em `ansible/roles/infra/docker/defaults/main.yml`) decide o que cada uma recebe além do Docker: `server` na `core-services-vm` (o Portainer completo, a rede `proxy` e o diretório no NFS) e `agent` nas demais (o **Portainer Agent** na porta 9001, publicada só no IP da LAN, pelo qual o Portainer central gerencia as stacks daquela VM). As portas publicadas pelo Docker não passam pelo UFW. O agente tem duas proteções: o firewall do role (cadeia `HOMESERVER` na `DOCKER-USER`, gerada de `firewall_docker_portas`), que só deixa a `core-services-vm` alcançar a 9001 pela LAN ([seção 14](14-vpn-tailscale.md#firewall-das-portas-publicadas-pelo-docker)), e o segredo `portainer_agent_secret` do vault (`AGENT_SECRET`), que o Portainer central também recebe. Suas principais responsabilidades são:
+Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portainer_mode` (em `ansible/roles/infra/docker/defaults/main.yml`) decide o que cada uma recebe além do Docker: `server` na `core-services-vm` (o Portainer completo, a rede `proxy` e o diretório no NFS) e `agent` nas demais (o **Portainer Agent** na porta 9001, publicada só no IP da LAN, pelo qual o Portainer central gerencia as stacks daquela VM); a VM do sysadmin na GCP ([seção 19](19-sysadmin-gcp.md)) reaproveita o role com `nenhum` (sem Portainer) e com `docker_usuarios_grupo` vazio (sem usuários extras e sem o reinício da VM). As portas publicadas pelo Docker não passam pelo UFW. O agente tem duas proteções: o firewall do role (cadeia `HOMESERVER` na `DOCKER-USER`, gerada de `firewall_docker_portas`), que só deixa a `core-services-vm` alcançar a 9001 pela LAN ([seção 14](14-vpn-tailscale.md#firewall-das-portas-publicadas-pelo-docker)), e o segredo `portainer_agent_secret` do vault (`AGENT_SECRET`), que o Portainer central também recebe. Suas principais responsabilidades são:
 
 * Instalar o Docker Engine e o plugin Docker Compose.
-* Adicionar os usuários relevantes (`{{ vm_ansible_user_name }}`, `{{ docker_user_name_on_vm }}`) ao grupo `docker` do sistema para permitir a execução de comandos Docker sem `sudo`.
+* Adicionar os usuários de `docker_usuarios_grupo` (padrão: `{{ vm_ansible_user_name }}` e `{{ docker_user_name_on_vm }}`) ao grupo `docker` do sistema para permitir a execução de comandos Docker sem `sudo`.
 * Na `core-services-vm`: criar o diretório NFS para os dados persistentes do Portainer.
 * Na `core-services-vm`: criar a rede Docker `proxy` (que será usada pelo Traefik e outros serviços expostos).
 * Nas demais VMs: fazer o deploy do Portainer Agent (`portainer_agent_image`), com o socket do Docker e o `AGENT_SECRET`.
@@ -324,9 +324,8 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
     name: "{{ item }}"
     groups: docker # Grupo 'docker' é criado automaticamente pela instalação do Docker CE
     append: yes
-  loop:
-    - "{{ vm_ansible_user_name }}"    # Usuário Ansible da VM
-    - "{{ docker_user_name_on_vm }}" # Usuário dedicado para volumes Docker
+  # Padrão (defaults): o usuário Ansible da VM e o dockeruser. A VM do sysadmin na GCP passa a lista vazia.
+  loop: "{{ docker_usuarios_grupo }}"
   notify: Reiniciar VM para aplicar mudanças de grupo Docker # Ou pedir logout/login do usuário
 
 - name: "Criar diretório para dados persistentes do Portainer (via NFS)"

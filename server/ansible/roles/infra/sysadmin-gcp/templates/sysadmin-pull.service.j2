@@ -1,0 +1,25 @@
+# ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.service.j2
+# Atualização diária do sysadmin (página 19): ansible-pull da main, que só muda pelo merge do Léo. O container do
+# sysadmin não alcança o host (firewall), então ele não se reconfigura. Gerado pelo role infra/sysadmin-gcp.
+#   WorkingDirectory=/      o -i relativo só existe depois do checkout: o ansible-pull baixa a main com o inventário
+#                           localhost e só depois troca para o clone (de dentro do clone, o checkout seria pulado).
+#   ANSIBLE_CONFIG          o ansible.cfg do repositório (roles_path e inventário, relativos a ele).
+#   ANSIBLE_VARS_ENABLED=   sem group_vars automáticos: o vault.yml cifrado de casa não abre aqui (a VM não tem a
+#                           senha); o setup-sysadmin.yml carrega só o main.yml, por vars_files.
+# As coleções do Ansible vêm do requirements.yml do clone anterior (o primeiro boot as instala antes).
+[Unit]
+Description=Atualização diária do sysadmin: ansible-pull da main (página 19)
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/
+Environment=PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=ANSIBLE_CONFIG=/opt/sysadmin/pull/server/ansible/ansible.cfg
+Environment=ANSIBLE_VARS_ENABLED=
+ExecStartPre=-/bin/sh -c 'test ! -f /opt/sysadmin/pull/server/ansible/requirements.yml || ansible-galaxy collection install -r /opt/sysadmin/pull/server/ansible/requirements.yml -p /usr/share/ansible/collections'
+ExecStart=ansible-pull -U https://github.com/lioevano/wiki-home-server.git -C main -d /opt/sysadmin/pull -i server/ansible/inventories/home/hosts.ini -l sysadmin-gcp server/ansible/playbooks/setup-sysadmin.yml
+# As imagens são construídas na e2-micro: pode demorar.
+TimeoutStartSec=3h
+Nice=10

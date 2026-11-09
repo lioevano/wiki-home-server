@@ -1,0 +1,37 @@
+# ansible/playbooks/setup-sysadmin.yml
+# Sysadmin no GCP (página 19). Roda NA PRÓPRIA VM da GCP, por ansible-pull da main (primeiro boot e timer diário):
+#   ansible-pull -U https://github.com/lioevano/wiki-home-server.git -C main -d /opt/sysadmin/pull \
+#     -i server/ansible/inventories/home/hosts.ini -l sysadmin-gcp server/ansible/playbooks/setup-sysadmin.yml
+# com ANSIBLE_CONFIG=<clone>/server/ansible/ansible.cfg e ANSIBLE_VARS_ENABLED= (sem group_vars automáticos: o vault
+# cifrado de casa não abre na VM). Fica fora do full-deploy.yml e da lista do executor (o sysadmin não se
+# reconfigura). Só o main.yml entra, por vars_files: os segredos vêm do Secret Manager para /run/sysadmin.
+- name: Configurar a VM do sysadmin na GCP
+  hosts: gcp
+  become: true
+  vars_files:
+    - ../inventories/home/group_vars/all/main.yml
+
+  # O role infra/tailscale lê a chave do tmpfs: os segredos são separados antes dos roles.
+  pre_tasks:
+    - name: Preparar /run/sysadmin antes dos roles (a chave do Tailscale vem de lá)
+      ansible.builtin.include_role:
+        name: infra/sysadmin-gcp
+        tasks_from: segredos.yml
+
+  roles:
+    # Só o Docker: sem Portainer e sem usuários extras no grupo docker (e, portanto, sem reinício da VM).
+    - role: infra/docker
+      vars:
+        docker_portainer_mode: nenhum
+        docker_usuarios_grupo: []
+    # Nó do tailnet com a tag do sysadmin; aceita as rotas da casa (o executor chega aos hosts por elas).
+    - role: infra/tailscale
+      vars:
+        tailscale_hostname: sysadmin
+        tailscale_tags: ["tag:sysadmin"]
+        tailscale_rotas: []
+        tailscale_aceitar_rotas: true
+        tailscale_coredns: false
+        tailscale_ufw: false
+        tailscale_auth_key: "{{ lookup('file', '/run/sysadmin/host/tailscale_chave') }}"
+    - infra/sysadmin-gcp

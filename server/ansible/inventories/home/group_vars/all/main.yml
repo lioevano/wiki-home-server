@@ -267,6 +267,8 @@ assistente_telegram_usuarios: ["{{ telegram_chat_id }}"]
 # --- Sysadmin (página 19) ---
 # Versão da imagem localhost/homeserver/sysadmin (mude ao trocar o Dockerfile). O Hermes usa a hermes_version acima.
 sysadmin_version: "1.0.0"
+# Versão da imagem localhost/homeserver/executor (código em docker/images/executor; mude ao alterar o código).
+executor_version: "1.0.0"
 # Honcho (memória do sysadmin), na tag do repositório da Plastic Labs; o pgvector é o da imagem do banco.
 honcho_version: "v3.6.0"
 # Pacote honcho-ai do plugin (SDK do cliente); conferir no PyPI na execução e fixar o mais novo 2.x.
@@ -281,6 +283,17 @@ sysadmin_honcho_modelo: "gemini-3.8-flash"
 gcp_tipo_maquina: "e2-micro"
 gcp_regiao: "us-east1"
 gcp_zona: "us-east1-b"
+# Rede Docker do container do sysadmin (bridge br-sysadmin; o compose recebe o mesmo valor pelo .env) e os destinos
+# que ela não alcança (firewall-sysadmin.sh, tabela raw): o tailnet, a LAN de casa (cobre as rotas de
+# tailscale_rotas, que o executor usa), o servidor de metadados da GCP (token da conta de serviço; o DNS, porta 53,
+# passa), o gateway da bridge (primeiro IP da sub-rede) e o IP interno da própria VM (o sshd e os serviços do host).
+sysadmin_rede_subnet: "172.30.10.0/24"
+sysadmin_bloqueios:
+  - "100.64.0.0/10"
+  - "192.168.15.0/24"
+  - "169.254.169.254/32"
+  - "172.30.10.1/32"
+  - "{{ ansible_facts.default_ipv4.address }}/32"
 # https://sysadmin.<tailnet>.ts.net — preencher depois do primeiro tailscale serve; vazio não liga a URL pública.
 sysadmin_dashboard_url: ""
 # Repositório de trabalho da equipe (diários, issues) e a conta de máquina do sysadmin no GitHub.

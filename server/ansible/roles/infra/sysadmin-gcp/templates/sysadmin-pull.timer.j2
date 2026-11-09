@@ -1,0 +1,11 @@
+# ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.timer.j2
+# Todo dia às 05:17 UTC (página 19); se a VM estava desligada, roda na volta. Gerado pelo role infra/sysadmin-gcp.
+[Unit]
+Description=Atualização diária do sysadmin (ansible-pull, 05:17 UTC)
+
+[Timer]
+OnCalendar=*-*-* 05:17:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -280,3 +280,266 @@ def test_separar_protege_o_env_do_compose(tmp_path, capsys, monkeypatch):
     monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(DADOS | {"gemini_api_key": "x\nGH_TOKEN=y"})))
     assert separar_main(["--destino", str(tmp_path / "ruim")]) == 1
     assert "gemini_api_key" in capsys.readouterr().err and not (tmp_path / "ruim").exists()
+
+
+# --- Playbook setup-sysadmin.yml e role infra/sysadmin-gcp (Task 11) ---
+
+PB_SA = ANS / "playbooks/setup-sysadmin.yml"
+ROLE_SA = ANS / "roles/infra/sysadmin-gcp"
+PULL = ("ansible-pull -U https://github.com/lioevano/wiki-home-server.git -C main -d /opt/sysadmin/pull "
+        "-i server/ansible/inventories/home/hosts.ini -l sysadmin-gcp server/ansible/playbooks/setup-sysadmin.yml")
+
+
+def test_playbook_roda_local_e_fora_do_full_deploy():
+    pb = yaml.safe_load(PB_SA.read_text(encoding="utf-8"))
+    assert pb[0]["hosts"] == "gcp" and pb[0]["become"] is True
+    papeis = [r["role"] if isinstance(r, dict) else r for r in pb[0]["roles"]]
+    assert papeis == ["infra/docker", "infra/tailscale", "infra/sysadmin-gcp"]
+    ts = next(r for r in pb[0]["roles"] if isinstance(r, dict) and r["role"] == "infra/tailscale")["vars"]
+    assert ts["tailscale_tags"] == ["tag:sysadmin"] and ts["tailscale_aceitar_rotas"] is True and ts["tailscale_rotas"] == []
+    full = [p["import_playbook"] for p in yaml.safe_load((ANS / "playbooks/full-deploy.yml").read_text(encoding="utf-8"))]
+    assert "setup-sysadmin.yml" not in full
+    hosts = (ANS / "inventories/home/hosts.ini").read_text(encoding="utf-8")
+    assert "[gcp]\nsysadmin-gcp ansible_connection=local" in hosts
+
+
+def test_role_sysadmin_gcp():
+    t = yaml.safe_load((ANS / "roles/infra/sysadmin-gcp/tasks/main.yml").read_text(encoding="utf-8"))
+    nomes = [x["name"] for x in t]
+    for n in ("Swap de 4 GB", "Segredos do Secret Manager no tmpfs", "Firewall da rede do sysadmin",
+              "Clone de trabalho do sysadmin", "Clone da main para o executor", "Plugin do Honcho",
+              "Imagem do sysadmin", "Imagem do executor", "Stack do sysadmin", "Atualização diária (ansible-pull)",
+              "Backup diário no GCS"):
+        assert n in nomes
+    stack = next(x for x in t if x["name"] == "Stack do sysadmin")
+    assert stack["community.docker.docker_compose_v2"]["project_src"] == "/opt/sysadmin/stack"
+    assert all(x.get("no_log") is True for x in t if "segredo" in x["name"].lower())
+    timer = (ANS / "roles/infra/sysadmin-gcp/templates/sysadmin-pull.service.j2").read_text(encoding="utf-8")
+    assert "ansible-pull -U https://github.com/lioevano/wiki-home-server.git -C main" in timer and "-l sysadmin-gcp" in timer
+    unit = (ANS / "roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2").read_text(encoding="utf-8")
+    assert "Before=docker.service" in unit and "gcloud secrets versions access latest --secret=sysadmin-segredos" in unit
+
+
+def test_executor_pode_todos_os_playbooks_menos_o_proprio():
+    m = yaml.safe_load((ANS / "inventories/home/group_vars/all/main.yml").read_text(encoding="utf-8"))
+    todos = {p.name for p in (ANS / "playbooks").glob("*.yml")}
+    assert set(m["executor_playbooks_permitidos"]) == todos - {"setup-sysadmin.yml"}
+
+
+def _defaults_sa() -> dict:
+    return yaml.safe_load((ROLE_SA / "defaults/main.yml").read_text(encoding="utf-8"))
+
+
+def _tarefas_sa(arquivo: str = "main.yml") -> list[dict]:
+    return yaml.safe_load((ROLE_SA / "tasks" / arquivo).read_text(encoding="utf-8"))
+
+
+def _todas(tarefas: list[dict]):
+    """Tarefas e blocos, achatados (com os filhos dos blocos)."""
+    for t in tarefas:
+        yield t
+        for chave in ("block", "rescue", "always"):
+            yield from _todas(t.get(chave) or [])
+
+
+def _unit(nome: str, **extra) -> str:
+    return render(f"roles/infra/sysadmin-gcp/templates/{nome}",
+                  **{**_m(), **_defaults_sa(), "sysadmin_bucket": "proj-sysadmin", **extra})
+
+
+def _rotas() -> list[str]:
+    """tailscale_rotas do group_vars com os IPs do [all:vars] do hosts.ini."""
+    import configparser
+    import jinja2
+    ini = configparser.ConfigParser(allow_no_value=True, delimiters=("=",), strict=False)
+    ini.read_string((ANS / "inventories/home/hosts.ini").read_text(encoding="utf-8"))
+    ips = {k: v for k, v in ini["all:vars"].items() if k.endswith("_ip_var")}
+    return [jinja2.Environment().from_string(r).render(**ips) for r in _m()["tailscale_rotas"]]
+
+
+def test_segredos_antes_do_tailscale_e_sem_vault():
+    """A chave do Tailscale vem de /run/sysadmin: o pre_tasks separa os segredos antes dos roles. Só o main.yml
+    entra por vars_files (a VM não tem a senha do vault de casa)."""
+    play = yaml.safe_load(PB_SA.read_text(encoding="utf-8"))[0]
+    assert play["vars_files"] == ["../inventories/home/group_vars/all/main.yml"]
+    pre = play["pre_tasks"][0]["ansible.builtin.include_role"]
+    assert pre == {"name": "infra/sysadmin-gcp", "tasks_from": "segredos.yml"}
+    ts = next(r for r in play["roles"] if isinstance(r, dict) and r["role"] == "infra/tailscale")["vars"]
+    assert ts["tailscale_auth_key"] == "{{ lookup('file', '/run/sysadmin/host/tailscale_chave') }}"
+    assert ts["tailscale_hostname"] == "sysadmin" and ts["tailscale_coredns"] is False and ts["tailscale_ufw"] is False
+    dk = next(r for r in play["roles"] if isinstance(r, dict) and r["role"] == "infra/docker")["vars"]
+    assert dk == {"docker_portainer_mode": "nenhum", "docker_usuarios_grupo": []}  # sem Portainer, sem reboot
+    seg = next(t for t in _tarefas_sa() if t["name"] == "Segredos do Secret Manager no tmpfs")
+    assert seg["ansible.builtin.include_tasks"] == "segredos.yml"
+    # nenhum nome com "segredo" sem no_log, em todos os arquivos de tarefas do role (blocos inclusive)
+    for arq in (ROLE_SA / "tasks").glob("*.yml"):
+        for t in _todas(_tarefas_sa(arq.name)):
+            if "segredo" in t.get("name", "").lower():
+                assert t.get("no_log") is True, (arq.name, t["name"])
+    # nenhuma variável do vault no playbook, no role e nos templates do sysadmin
+    vault = set(yaml.safe_load((ANS / "inventories/home/group_vars/all/vault.yml.example").read_text(encoding="utf-8")))
+    import re
+    textos = [PB_SA.read_text(encoding="utf-8")] + [p.read_text(encoding="utf-8") for p in ROLE_SA.rglob("*")
+                                                     if p.is_file()]
+    textos += [p.read_text(encoding="utf-8") for p in (ANS / "templates/sysadmin").glob("*.j2")]
+    usadas = {v for t in textos for v in re.findall(r"\b([a-z_][a-z0-9_]*)\b", t)}
+    # tailscale_auth_key: o nome é o do role; o valor vem do tmpfs (lookup acima), não do vault de casa
+    assert not (usadas & vault) - {"tailscale_auth_key"}, usadas & vault
+
+
+def test_projeto_do_servidor_de_metadados():
+    seg = _tarefas_sa("segredos.yml")
+    uri = next(t for t in seg if "ansible.builtin.uri" in t)["ansible.builtin.uri"]
+    assert uri["url"] == "http://metadata.google.internal/computeMetadata/v1/project/project-id"
+    assert uri["headers"] == {"Metadata-Flavor": "Google"}
+    assert _defaults_sa()["sysadmin_bucket"] == "{{ gcp_projeto }}-sysadmin"
+
+
+def test_unit_dos_segredos():
+    d = _defaults_sa()
+    u = _unit("sysadmin-segredos.service.j2")
+    assert "After=network-online.target" in u and "Before=docker.service" in u
+    pre = next(l for l in u.splitlines() if l.startswith("ExecStartPre="))
+    assert "rm -rf /run/.sysadmin.*" in pre  # sobras de uma troca interrompida, antes de separar
+    assert u.index(pre) < u.index("\nExecStart=")
+    assert ("python3 /usr/local/lib/sysadmin/separar_segredos.py --destino /run/sysadmin "
+            f"--uid-executor {d['sysadmin_executor_uid']} --uid-sysadmin {d['sysadmin_uid']}") in u
+    assert "pipefail" in u  # gcloud falhou: o separar_segredos não roda com stdin vazio
+    assert "gs://proj-sysadmin/entrada/vault.yml" in u and "/opt/sysadmin/saida/vault.yml" in u
+    assert "Type=oneshot" in u and "RemainAfterExit=true" in u
+    seg = _tarefas_sa("segredos.yml")
+    copia = next(t for t in seg if "separar_segredos.py" in json.dumps(t.get("ansible.builtin.copy", {})))
+    assert copia["ansible.builtin.copy"]["dest"] == "/usr/local/lib/sysadmin/separar_segredos.py"
+
+
+def test_docker_depois_dos_segredos_e_do_firewall():
+    t = list(_todas(_tarefas_sa()))
+    dropin = next(x for x in t if "docker.service.d" in json.dumps(x.get("ansible.builtin.copy", {})))
+    conteudo = dropin["ansible.builtin.copy"]["content"]
+    assert "Requires=sysadmin-segredos.service firewall-sysadmin.service" in conteudo
+    assert "After=sysadmin-segredos.service firewall-sysadmin.service" in conteudo
+    fw = _unit("firewall-sysadmin.service.j2")
+    assert "Before=docker.service" in fw and "ExecStart=/usr/local/sbin/firewall-sysadmin.sh" in fw
+
+
+def test_rede_e_bloqueios_do_sysadmin():
+    import ipaddress
+    m = _m()
+    rede = ipaddress.ip_network(m["sysadmin_rede_subnet"])
+    assert str(rede) == "172.30.10.0/24"
+    b = m["sysadmin_bloqueios"]
+    for destino in ("100.64.0.0/10", "169.254.169.254/32", f"{next(rede.hosts())}/32",
+                    "{{ ansible_facts.default_ipv4.address }}/32"):
+        assert destino in b, destino
+    redes = [ipaddress.ip_network(x) for x in b if "{{" not in x]
+    for rota in _rotas():  # a LAN de casa cobre todas as rotas que o executor recebe
+        assert any(ipaddress.ip_network(rota).subnet_of(r) for r in redes if r.version == 4), rota
+
+
+def test_env_da_stack():
+    import re
+    texto = render("roles/infra/sysadmin-gcp/templates/sysadmin.env.j2",
+                   **{**_m(), **_defaults_sa(), "tailscale_rotas": _rotas()})
+    env = _env("\n".join(l for l in texto.splitlines() if not l.startswith("#")))
+    usadas = set(re.findall(r"\$\{(\w+)\}", COMPOSE.read_text(encoding="utf-8")))
+    assert usadas <= set(env), usadas - set(env)
+    assert env["EXECUTOR_ROTAS"] == ",".join(_rotas()) and len(_rotas()) == 3
+    assert env["SYSADMIN_REDE_SUBNET"] == _m()["sysadmin_rede_subnet"]  # uma fonte só: o group_vars
+    assert env["SYSADMIN_DATA_PATH"] == "/opt/sysadmin"
+    assert env["DOCKER_PUID"] == env["DOCKER_PGID"] == str(_defaults_sa()["sysadmin_uid"]) == "1000"
+    assert env["SYSADMIN_IMAGE_TAG"] == _m()["sysadmin_version"] and env["EXECUTOR_IMAGE_TAG"] == _m()["executor_version"]
+    assert env["ANSIBLE_USUARIO_HOST"] == _m()["proxmox_ansible_user_on_host"]
+    assert env["REPO_URL_RAW"] == "https://raw.githubusercontent.com/lioevano/wiki-home-server/main"
+    assert env["EQUIPE_REPO"] == _m()["equipe_repo"] and env["CONTA_SYSADMIN"] == _m()["conta_sysadmin"]
+    pb = env["EXECUTOR_PLAYBOOKS"]
+    assert pb.startswith("'") and pb.endswith("'") and "'" not in pb[1:-1]  # literal para o compose
+    playbooks = json.loads(pb[1:-1])
+    assert list(playbooks) == _m()["executor_playbooks_permitidos"]
+    assert playbooks["setup-vpn.yml"] == "setup-vpn.yml"
+    assert playbooks["setup-n8n-volumes.yml"] == "Diretórios e variáveis do n8n"  # descrição do ops, quando há
+    for nome in env:
+        assert not re.search(r"TOKEN|SENHA|SECRET|SEGREDO|KEY|PASSWORD|CHAVE", nome), nome
+
+
+def test_imagens_locais_do_sysadmin():
+    t = list(_todas(_tarefas_sa()))
+    imagens = {x["community.docker.docker_image"]["name"]: x["community.docker.docker_image"]
+               for x in t if "community.docker.docker_image" in x}
+    ex, sa = imagens["localhost/homeserver/executor"], imagens["localhost/homeserver/sysadmin"]
+    assert ex["tag"] == "{{ executor_version }}" and sa["tag"] == "{{ sysadmin_version }}"
+    assert ex["source"] == sa["source"] == "build"
+    assert ex["build"]["args"] == {"UID": "{{ sysadmin_executor_uid }}", "GID": "{{ sysadmin_executor_uid }}"}
+    assert sa["build"]["args"] == {"HERMES_VERSION": "{{ hermes_version }}",
+                                   "ANSIBLE_CORE_VERSION": "{{ ops_ansible_core_version }}",
+                                   "HONCHO_AI_VERSION": "{{ honcho_ai_version }}"}
+    # contextos: o que cada Dockerfile copia
+    texto = json.dumps(t)
+    for origem in ("docker/images/executor/", "docker/images/ops/ops", "docker/images/aprovador/aprovador",
+                   "templates/agents/ops-requirements.txt.j2", "ansible/requirements.yml",
+                   "docker/images/sysadmin/", '"requirements-dev.txt"', "wiki/requirements.txt"):
+        assert origem in texto, origem
+    d = (ROOT / "server/docker/images/sysadmin/Dockerfile").read_text(encoding="utf-8")
+    assert "COPY requirements.yml" in d and "ansible-galaxy collection install -r" in d  # coleções no build
+
+
+def test_clones_e_honcho():
+    t = {x["name"]: x for x in _todas(_tarefas_sa())}
+    trab = t["Clone de trabalho do sysadmin"]["ansible.builtin.git"]
+    assert trab["dest"] == "/opt/sysadmin/repo" and trab["update"] is False
+    ex = t["Clone da main para o executor"]["ansible.builtin.git"]
+    assert ex["dest"] == "/opt/sysadmin/repo-executor" and ex["update"] is True and ex["version"] == "main"
+    nomes = list(t)
+    assert nomes.index("Clone da main para o executor") < nomes.index("Stack do sysadmin")
+    plugin = json.dumps(t["Plugin do Honcho"])
+    assert "{{ honcho_version }}" in plugin and "/opt/sysadmin/build/honcho-src" in plugin
+    assert "hermes-plugin-honcho/" in plugin and "/opt/sysadmin/hermes/plugins/honcho/" in plugin
+    cfg = json.dumps([x for x in t.values() if "ansible.builtin.template" in x])
+    for destino in ("/opt/sysadmin/hermes/config.yaml", "/opt/sysadmin/hermes/SOUL.md",
+                    "/opt/sysadmin/hermes/honcho.json", "/opt/sysadmin/honcho-config.toml"):
+        assert destino in cfg, destino
+
+
+def test_timers_do_sysadmin():
+    s = _unit("sysadmin-pull.service.j2")
+    assert PULL in s
+    # ansible-pull roda de /: o -i relativo só vale depois do checkout (senão o git seria pulado)
+    assert "WorkingDirectory=/\n" in s
+    assert "Environment=ANSIBLE_CONFIG=/opt/sysadmin/pull/server/ansible/ansible.cfg" in s  # roles_path
+    assert "Environment=ANSIBLE_VARS_ENABLED=\n" in s  # sem group_vars automático: o vault cifrado não abre aqui
+    assert "OnCalendar=*-*-* 05:17:00 UTC" in _unit("sysadmin-pull.timer.j2")
+    assert "OnCalendar=*-*-* 06:07:00 UTC" in _unit("sysadmin-backup.timer.j2")
+    b = _unit("sysadmin-backup.sh.j2")
+    assert b.startswith("#!/bin/bash") and "set -euo pipefail" in b
+    assert "docker exec honcho_db pg_dump" in b and "gs://proj-sysadmin/backup/" in b and "gcloud storage cp" in b
+    assert "--exclude='hermes/.env*'" in b and "--exclude='hermes/auth.json*'" in b and "tar -C /opt/sysadmin" in b
+    assert "ExecStart=/usr/local/sbin/sysadmin-backup.sh" in _unit("sysadmin-backup.service.j2")
+
+
+def test_painel_pelo_tailscale_serve():
+    t = list(_todas(_tarefas_sa()))
+    status = next(x for x in t if x.get("ansible.builtin.command") == "tailscale serve status --json")
+    assert status["changed_when"] is False
+    serve = next(x for x in t if "tailscale serve --bg" in str(x.get("ansible.builtin.command", "")))
+    assert "--https=443 http://127.0.0.1:9119" in serve["ansible.builtin.command"]
+    assert "127.0.0.1:9119" in serve["when"]  # só quando ainda não está servindo
+
+
+def test_grupo_gcp_fora_dos_playbooks_de_casa():
+    """Handoff 10: nenhum playbook de casa alcança o sysadmin-gcp por hosts: all; o grupo [gcp] não é filho de nada."""
+    for p in (ANS / "playbooks").glob("*.yml"):
+        for play in yaml.safe_load(p.read_text(encoding="utf-8")) or []:
+            hosts = str(play.get("hosts", ""))
+            assert hosts not in ("all", "*") and (hosts != "gcp" or p.name == "setup-sysadmin.yml"), p.name
+    hosts = (ANS / "inventories/home/hosts.ini").read_text(encoding="utf-8")
+    import re
+    for filhos in re.findall(r"^\[\w+:children\]\n((?:[^\[\n].*\n?)*)", hosts, re.M):
+        assert "gcp" not in filhos.split()
+
+
+def test_docker_reaproveitado_sem_portainer():
+    d = (ANS / "roles/infra/docker/defaults/main.yml").read_text(encoding="utf-8")
+    dd = yaml.safe_load(d)
+    assert dd["docker_usuarios_grupo"] == ["{{ vm_ansible_user_name }}", "{{ docker_user_name_on_vm }}"]
+    t = yaml.safe_load((ANS / "roles/infra/docker/tasks/main.yml").read_text(encoding="utf-8"))
+    grupo = next(x for x in t if "ao grupo 'docker'" in x["name"])
+    assert grupo["loop"] == "{{ docker_usuarios_grupo }}"

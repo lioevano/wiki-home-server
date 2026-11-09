@@ -1,0 +1,12 @@
+# ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.service.j2
+# Backup diário do sysadmin no GCS (página 19); o timer sysadmin-backup o dispara. Gerado pelo role infra/sysadmin-gcp.
+[Unit]
+Description=Backup diário do sysadmin no GCS (página 19)
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+UMask=0077
+Environment=PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/usr/local/sbin/sysadmin-backup.sh

@@ -3,5 +3,10 @@ docker_ce_version: "" # Deixe vazio para instalar a última versão disponível
 portainer_ce_image: "portainer/portainer-ce:2.45.3" # LTS; servidor e agente na mesma versão
 docker_proxy_network_name: "proxy"
 # Portainer completo na core-services-vm; Portainer Agent nas demais VMs Ubuntu (gerenciadas pelo central).
+# Qualquer outro valor (a VM do sysadmin na GCP passa "nenhum") instala só o Docker, sem Portainer.
 docker_portainer_mode: "{{ 'server' if inventory_hostname in groups['core_services'] else 'agent' }}"
 portainer_agent_image: "portainer/agent:2.45.3"
+# Usuários acrescentados ao grupo docker (uma mudança reinicia a VM). A VM do sysadmin na GCP passa [] (página 19).
+docker_usuarios_grupo:
+  - "{{ vm_ansible_user_name }}"    # Usuário Ansible da VM
+  - "{{ docker_user_name_on_vm }}" # Usuário dedicado para volumes Docker

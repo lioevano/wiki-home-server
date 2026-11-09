@@ -7,7 +7,8 @@ depois `python tools/dev.py sync`. Consulte o `INDEX.md` para achar a página de
 
 - Rode os comandos a partir de `server/ansible/` (carrega `ansible.cfg`: inventário `inventories/home/hosts.ini`, `roles_path ./roles`).
 - Grupos do inventário: `proxmox_hosts` (`proxmox_main_host`), `core_services` (`core-services-vm`),
-  `ai_desktop` (`ai-desktop-vm`), `virtual_machines` e `ubuntu_vms` (filhos: `core_services`, `ai_desktop`).
+  `ai_desktop` (`ai-desktop-vm`), `virtual_machines` e `ubuntu_vms` (filhos: `core_services`, `ai_desktop`) e
+  `gcp` (`sysadmin-gcp`, conexão local: só o `setup-sysadmin.yml`, por `ansible-pull` na própria VM).
 - Variáveis globais não secretas: `inventories/home/group_vars/all/main.yml`.
   Segredos: `vault.yml` (criptografado com `ansible-vault`); modelo em `vault.yml.example`.
 - Roles por categoria: `roles/common/`, `roles/infra/<role>/`, `roles/apps/<role>/`,

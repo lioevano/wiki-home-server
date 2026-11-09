@@ -1,0 +1,29 @@
+# ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2
+# Segredos do sysadmin (página 19): lê o JSON sysadmin-segredos do Secret Manager (conta de serviço da VM) e o separa
+# por container no tmpfs /run/sysadmin (separar_segredos.py; falha fechada, nada vai para o disco). O Docker exige
+# esta unit (drop-in 20-sysadmin.conf): sem segredos, a stack não sobe. Na primeira vez, traz também o vault.yml
+# cifrado que o criar-sysadmin.sh deixou no bucket. Para trocar os segredos: nova versão no Secret Manager e
+# `systemctl restart sysadmin-segredos` (o Docker, que a exige, reinicia junto e os containers voltam com os novos).
+# Gerado pelo role infra/sysadmin-gcp.
+[Unit]
+Description=Segredos do sysadmin: Secret Manager para /run/sysadmin (página 19)
+Wants=network-online.target
+After=network-online.target snapd.seeded.service
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+UMask=0077
+# gcloud vem como snap nas imagens Ubuntu da GCP
+Environment=PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# sobras de uma troca interrompida (o separar_segredos.py monta o diretório novo em /run/.sysadmin.*)
+ExecStartPre=/bin/sh -c 'rm -rf /run/.sysadmin.*'
+# A rede pode demorar no boot: até 5 tentativas. pipefail: se o gcloud falhar, a tentativa falha.
+ExecStart=/bin/bash -c 'set -o pipefail; for tentativa in 1 2 3 4 5; do gcloud secrets versions access latest --secret=sysadmin-segredos | python3 /usr/local/lib/sysadmin/separar_segredos.py --destino /run/sysadmin --uid-executor {{ sysadmin_executor_uid }} --uid-sysadmin {{ sysadmin_uid }} && exit 0; sleep 10; done; exit 1'
+# Só se o executor ainda não gravou um: o vault.yml de entrada (cifrado). Sem ele, vale o vault do repositório.
+ExecStart=-/bin/sh -c 'test -e /opt/sysadmin/saida/vault.yml || { mkdir -p /opt/sysadmin/saida && gcloud storage cp gs://{{ sysadmin_bucket }}/entrada/vault.yml /opt/sysadmin/saida/.vault.yml.entrada && chown {{ sysadmin_executor_uid }}:{{ sysadmin_executor_uid }} /opt/sysadmin/saida/.vault.yml.entrada && chmod 0644 /opt/sysadmin/saida/.vault.yml.entrada && mv -f /opt/sysadmin/saida/.vault.yml.entrada /opt/sysadmin/saida/vault.yml; }'
+TimeoutStartSec=5min
+
+[Install]
+WantedBy=multi-user.target
