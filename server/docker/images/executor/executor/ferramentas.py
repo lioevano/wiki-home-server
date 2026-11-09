@@ -1,7 +1,9 @@
 """As ferramentas MCP do executor. Tudo que muda a casa passa pelo Portão; segredos só vão ao Léo."""
 from __future__ import annotations
 
+import json
 import shlex
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -14,6 +16,7 @@ from .portao import Portao
 from .remoto import Remoto, validar_diagnostico
 
 MAX_COMANDO = 250  # o pedido no Telegram corta os argumentos em 300 caracteres: o Léo precisa ver o comando inteiro
+MAX_JSON = 300  # quanto do JSON dos argumentos o texto do pedido mostra
 JINJA = ("{{", "{%", "{#")
 CONFIRMACAO = "comando enviado ao Léo pelo bot de aprovações"
 
@@ -49,6 +52,14 @@ def ferramentas(cfg: Config, portao: Portao, remoto: Remoto, runner, canal,
         if len(comando) > MAX_COMANDO:
             raise Recusado(f"comando com {len(comando)} caracteres; o máximo é {MAX_COMANDO} (o Léo precisa vê-lo "
                            "inteiro antes de aprovar). Para algo maior, versione um script por PR")
+        # O Léo lê json.dumps(argumentos, ensure_ascii=False)[:300] (aprovador/telegram.py): o JSON infla aspas e
+        # barras, e caracteres invisíveis ou que reordenam o texto (U+202E, largura zero) esconderiam parte do comando.
+        if any(unicodedata.category(c).startswith("C") or unicodedata.category(c) in ("Zl", "Zp") for c in comando):
+            raise Recusado("comando com caractere de controle, invisível ou de direção de texto; escreva-o só com "
+                           "caracteres visíveis, numa linha")
+        if len(json.dumps({"host": host, "comando": comando}, ensure_ascii=False)) > MAX_JSON:
+            raise Recusado(f"comando grande demais depois de escapado (aspas e barras invertidas contam em dobro; "
+                           f"o Léo vê só {MAX_JSON} caracteres do pedido). Simplifique ou versione um script por PR")
         if any(m in comando for m in JINJA):
             raise Recusado("comando contém {{, {% ou {#: o Ansible interpretaria isso como Jinja no próprio executor")
         if host not in remoto.hosts():

@@ -845,3 +845,30 @@ def test_preparar_host_sh_valida_argumentos():
                  ["a", "b", "root; rm -rf /", "d"]):
         r = subprocess.run(["bash", sh, *args], capture_output=True, text=True)
         assert r.returncode != 0 and "preparar-host" in r.stderr
+
+
+@pytest.mark.parametrize("cmd", [
+    'echo "' + 'a' * 20 + '" ' + '"x" ' * 55,                  # 250 caracteres, mas as aspas viram \" no JSON: passa de 300
+    "echo " + "\\" * 200,                                    # barras invertidas dobram no JSON
+    "ls \u202e/etc", "ls \u200b/etc", "ls \u2028 /etc", "ls\n/etc", "ls \x00", "ls \ufeff/etc", "ls \ue000"])
+def test_comando_recusa_o_que_o_leo_nao_veria_inteiro(tmp_path, cmd):
+    f, reg, avisos, _ = _ferr(tmp_path)
+    assert len(cmd) <= 250
+    with pytest.raises(Recusado):
+        f["comando"].funcao("core-services-vm", cmd)
+    assert avisos == [] and reg.listar() == []
+
+
+def test_comando_cabe_em_300_apos_o_json(tmp_path):
+    f, _, avisos, _ = _ferr(tmp_path)
+    assert "Aguardando" in f["comando"].funcao("core-services-vm", "echo ação ok " + "x" * 200)
+    assert len(json.dumps(avisos[0]["argumentos"], ensure_ascii=False)) <= 300
+
+
+def test_preparar_host_sh_robusto():
+    s = (ROOT / "server/scripts/gcp/preparar-host.sh").read_text(encoding="utf-8")
+    assert "\nmain() {" in s and s.rstrip().endswith('main "$@"')                 # download truncado não roda pela metade
+    assert "trap 'rm -f \"$TMP\"' EXIT" in s
+    assert "command -v visudo" in s and "apt-get install -y sudo" in s
+    assert 'id -gn "$USUARIO"' in s and "-g \"$GRUPO\"" in s
+    assert "tail -c1" in s                                                         # newline final antes de acrescentar
