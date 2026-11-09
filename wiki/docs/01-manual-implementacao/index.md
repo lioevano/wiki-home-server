@@ -27,6 +27,7 @@ Guia passo a passo para implementar o servidor doméstico. Siga na ordem. Para a
 17. **[Posto de agentes](16-posto-agentes.md):** Claude Code em paralelo pelo Vibe Kanban, e cada ação dos agentes no servidor esperando a sua aprovação no Telegram ou na tela.
 18. **[Assistente (Hermes)](17-assistente.md):** assistente no Telegram que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal.
 19. **[Roteiro do primeiro deploy](18-roteiro-primeiro-deploy.md):** a ordem de contas, vault, playbooks e stacks da primeira subida.
+20. **[Sysadmin no GCP](19-sysadmin-gcp.md):** Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub.
 
 A lista completa de aplicações, com stack, exposição e dados de cada uma, está no [Catálogo de Aplicações](../02-visao-geral-arquitetura/09-catalogo-aplicacoes.md); as integrações entre elas, no [Índice de Integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md).
 

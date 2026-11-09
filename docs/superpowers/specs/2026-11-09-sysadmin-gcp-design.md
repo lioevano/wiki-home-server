@@ -5,6 +5,7 @@
 - **Status:** decidido em conversa (brainstorming), seção por seção, com o Léo.
 - **Caminho:** arquitetural: máquina nova fora de casa (GCP), agente novo com terminal, mudança no modelo de VPN, exceção nova nas regras de segurança do `AGENTS.md` e um canal novo entre agentes.
 - **Depende de:** 4c3 (código do `ops` e do `aprovador`, que o executor reaproveita), 4c4 (imagem do Hermes já fixada), VPN (página 14).
+- **Emendas:** seção 16 (plano, 2026-11-09).
 - **Sub-projeto seguinte:** **5b — agentes da casa por papel** (spec própria), que implementa o lado de casa do protocolo da equipe definido aqui (seção 9).
 
 ## 1. Objetivo
@@ -269,3 +270,20 @@ Alerta de orçamento do GCP em **US$ 2**.
 - **1 GB de RAM:** pode ficar lento sob carga; a saída é uma variável (S10).
 - **Plugin do Honcho fora do Hermes:** ele passou a ser distribuído à parte, pela Plastic Labs. Versão fixada e testada no plano.
 - **Free tier muda:** se o Google mudar as regras, o alerta de US$ 2 avisa no mesmo dia.
+
+## 16. Emendas do plano
+
+As verificações da seção 13 foram feitas lendo o código do Hermes v0.22.5 e do Honcho v3.6.0. O que mudou:
+
+- **E1 (S2, S6):** sem Vertex. O Honcho só fala `openai`, `anthropic` e `gemini` por chave (`LLM_GEMINI_API_KEY`), sem conta de serviço. Uma **chave do Gemini (AI Studio, plano pago)** serve ao deriver, aos *embeddings* (`gemini-embedding-001`, 1536 dimensões) e à reserva do Hermes (`fallback_providers: [{provider: gemini, model: gemini-3.8-flash}]`). Sai a conta de serviço do Vertex e o item 13.5.
+- **E2 (S6):** o modelo do Honcho é `gemini-3.8-flash` (o nome que o repositório já usa), trocável por `sysadmin_honcho_modelo`.
+- **E3 (S16):** o `gerar_vault.py` roda **no Cloud Shell**, dentro do `criar-sysadmin.sh`. As senhas "para anotar" aparecem só na tela do Léo. O `vault.yml` criptografado vai para `gs://<bucket>/entrada/vault.yml`, o host copia para `/opt/sysadmin/saida/vault.yml` e o sysadmin abre o PR. Sai `vault_gerar`.
+- **E4 (§5.4, §6):** sai `proxmox_preparar`. O executor manda pelo bot de aprovações o comando do host (`preparar_host`): `scripts/gcp/preparar-host.sh` instala o Tailscale, cria o usuário Ansible sem senha com a chave pública e o sudo. A senha de root só vai para o vault (`proxmox_api_password`) pelo canal de segredos.
+- **E5 (§6):** saem `stack_criar`, `stack_atualizar` e `inicializar_portainer`. A API do Portainer só existe na rede `proxy` da core. As stacks continuam um passo do Léo no Portainer, guiado pelo sysadmin.
+- **E6 (S15):** a resposta do Léo ao pedido de segredo **é** a aprovação: não há botão antes.
+- **E7 (S18):** host e core anunciam as **três** rotas `/32` (inclusive a do host), e a core também entra com `tag:homeserver`. Sem isso, a core (dono: o Léo) alcançaria `tag:sysadmin`.
+- **E8 (S20):** o dashboard escuta em `0.0.0.0:9119` dentro do container (publicado em `127.0.0.1:9119` do host), com usuário e senha (`HERMES_DASHBOARD_BASIC_AUTH_*`) e `dashboard.public_url` = URL do `tailscale serve`. O Hermes exige provedor de autenticação atrás de *reverse proxy*.
+- **E9 (S27):** o carteiro acorda o Hermes pela **plataforma `webhook`** (porta 8644 na rede interna, assinatura HMAC V2, `deliver: telegram`, `mirror_to_session: true`). A entrega cai na conversa do Léo, e não pela API.
+- **E10 (S21):** as skills do repositório entram por `skills.external_dirs`. O plugin do Honcho é o diretório `hermes-plugin-honcho` do repositório do Honcho na tag `v3.6.0`, copiado para `$HERMES_HOME/plugins/honcho`. O Honcho roda **sem Redis** (`CACHE_ENABLED` já é `false` por padrão).
+- **E11:** correção de um bug achado no caminho: `vm_ci_ssh_keys_public_file` trocava o último caractere da chave por `pub` (`regex_replace('.$', 'pub')`) em vez de acrescentar `.pub`.
+- **E12 (§13.6):** a memória real em 1 GB vai para "A conferir no primeiro deploy".
