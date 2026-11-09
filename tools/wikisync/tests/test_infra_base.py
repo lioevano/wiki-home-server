@@ -162,3 +162,8 @@ def test_docker_reinicia_quando_a_configuracao_muda():
     h = next(h for h in _yaml(ANS / "roles/infra/docker/handlers/main.yml") if h["name"] == "Reiniciar Docker")
     assert h["ansible.builtin.systemd_service"] == {"name": "docker", "state": "restarted", "daemon_reload": True}
     assert h["when"] == "not ansible_check_mode"
+
+
+def test_chave_publica_acrescenta_pub():
+    d = (ROOT / "server/ansible/roles/infra/proxmox-vm/defaults/main.yml").read_text(encoding="utf-8")
+    assert "vm_ci_ssh_keys_public_file: \"{{ (ansible_ssh_private_key_file ~ '.pub') | expanduser }}\"" in d

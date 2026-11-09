@@ -187,7 +187,7 @@ vm_storage_disk: "{{ proxmox_storage_vm_disks | default('local-lvm') }}" # Stora
 vm_ci_user: "{{ vm_ansible_user_name | default('vm_ansible_user') }}" # Nome do usuário a ser criado via cloud-init
 vm_ci_password: "{{ vm_ansible_user_password_plain }}"      # Senha para vm_ci_user (do vault.yml)
 # Caminho para a chave SSH pública na máquina de controle Ansible
-vm_ci_ssh_keys_public_file: "{{ ansible_ssh_private_key_file | regex_replace('.$', 'pub') | expanduser }}" # Adiciona .pub ao nome da chave privada e expande ~
+vm_ci_ssh_keys_public_file: "{{ (ansible_ssh_private_key_file ~ '.pub') | expanduser }}" # Adiciona .pub ao nome da chave privada e expande ~
 vm_ci_nameservers: "{{ vm_cloud_init_nameservers | default('1.1.1.1,8.8.8.8') }}" # DNS para a VM
 # A variável vm_ipconfig (e.g., "dhcp" ou "ip=IP/MASK,gw=GATEWAY") DEVE ser passada pelo playbook.
 
@@ -208,7 +208,7 @@ vm_qemu_args: ""
 ```
 
 !!! note "Chave SSH Pública para Cloud-Init"
-    A linha `vm_ci_ssh_keys_public_file: "{{ ansible_ssh_private_key_file | regex_replace('.$', 'pub') | expanduser }}"` assume que sua chave pública tem o mesmo nome da privada, mas com `.pub` no final, e que `ansible_ssh_private_key_file` (de `hosts.ini`) aponta para a chave privada.
+    A linha `vm_ci_ssh_keys_public_file: "{{ (ansible_ssh_private_key_file ~ '.pub') | expanduser }}"` assume que sua chave pública tem o mesmo nome da privada, mas com `.pub` no final, e que `ansible_ssh_private_key_file` (de `hosts.ini`) aponta para a chave privada.
 
 ### `tasks/main.yml`
 
