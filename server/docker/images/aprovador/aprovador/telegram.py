@@ -46,7 +46,8 @@ def texto_do_pedido(p: dict, url_publica: str) -> str:
     if estado:
         linhas.append(f"\n{estado}" + (f" por {html.escape(p['decidido_por'])}" if p.get("decidido_por") else ""))
     else:
-        linhas.append(f"\nSem decisão, vence sozinho. Também em {html.escape(url_publica)}")
+        fim = f" Também em {html.escape(url_publica)}" if url_publica else ""
+        linhas.append(f"\nSem decisão, vence sozinho.{fim}")
     return "\n".join(linhas)
 
 

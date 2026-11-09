@@ -42,6 +42,13 @@ class Relogio:
         return self.t
 
 
+def test_texto_sem_tela_nao_cita_endereco():
+    p = {"id": "ab12", "cliente": "sysadmin", "acao": "comando", "alvo": "core-services-vm",
+         "argumentos": {"comando": "ls"}, "descricao": "", "estado": "pendente"}
+    t = texto_do_pedido(p, "")
+    assert "Sem decisão, vence sozinho." in t and "Também em" not in t
+
+
 # --- Configuração e registro ---
 
 def test_config():
