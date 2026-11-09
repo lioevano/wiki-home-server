@@ -1081,6 +1081,51 @@ assistente_modelo: "principal"
 # Quem pode falar com o assistente no Telegram (ids de usuário; o chat privado do Léo tem o id dele).
 assistente_telegram_usuarios: ["{{ telegram_chat_id }}"]
 
+# --- Sysadmin (página 19) ---
+# Versão da imagem localhost/homeserver/sysadmin (mude ao trocar o Dockerfile). O Hermes usa a hermes_version acima.
+sysadmin_version: "1.0.0"
+# Honcho (memória do sysadmin), na tag do repositório da Plastic Labs; o pgvector é o da imagem do banco.
+honcho_version: "v3.6.0"
+# Pacote honcho-ai do plugin (SDK do cliente); conferir no PyPI na execução e fixar o mais novo 2.x.
+honcho_ai_version: "2.4.0"
+honcho_pgvector_version: "0.8.7-pg17"
+# Modelos: o principal e o de compactação do contexto (Anthropic), a reserva do Hermes e o do Honcho (Gemini).
+sysadmin_modelo: "claude-sonnet-5-5"
+sysadmin_modelo_auxiliar: "claude-haiku-5-5"
+sysadmin_modelo_reserva: "gemini-3.8-flash"
+sysadmin_honcho_modelo: "gemini-3.8-flash"
+# Máquina na GCP (nível gratuito: e2-micro em us-east1, us-west1 ou us-central1).
+gcp_tipo_maquina: "e2-micro"
+gcp_regiao: "us-east1"
+gcp_zona: "us-east1-b"
+# https://sysadmin.<tailnet>.ts.net — preencher depois do primeiro tailscale serve; vazio não liga a URL pública.
+sysadmin_dashboard_url: ""
+# Repositório de trabalho da equipe (diários, issues) e a conta de máquina do sysadmin no GitHub.
+equipe_repo: "lioevano/homeserver-equipe"
+conta_sysadmin: "lioevano-sysadmin"
+# Playbooks que o executor pode rodar (pelo portão de aprovação): todos os de playbooks/ menos o setup-sysadmin.yml
+# (o sysadmin não se reconfigura). Mantenha em ordem alfabética e acrescente os playbooks novos.
+executor_playbooks_permitidos:
+  - full-deploy.yml
+  - setup-agents-volumes.yml
+  - setup-ai-keys.yml
+  - setup-ai-volumes.yml
+  - setup-assistente-volumes.yml
+  - setup-base-ubuntu.yml
+  - setup-cloud-stack-volumes.yml
+  - setup-core-networking.yml
+  - setup-langfuse-volumes.yml
+  - setup-media-stack-volumes.yml
+  - setup-monitoring-stack-volumes.yml
+  - setup-n8n-volumes.yml
+  - setup-notes-volumes.yml
+  - setup-photos-stack-volumes.yml
+  - setup-posto-volumes.yml
+  - setup-productivity-automation-volumes.yml
+  - setup-proxmox-host.yml
+  - setup-vpn.yml
+  - vm-deploy.yml
+
 # Nomes dos ambientes no Portainer (Environments): a core é o 'local'; a de IA, o agente.
 ops_endpoints:
   core: "local"

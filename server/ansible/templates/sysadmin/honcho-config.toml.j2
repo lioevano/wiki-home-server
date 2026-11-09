@@ -1,0 +1,78 @@
+# ansible/templates/sysadmin/honcho-config.toml.j2
+# Honcho do sysadmin (página 19), montado em /app/config.toml da API e do deriver. Só Gemini (modelo e
+# embeddings), sem Redis e sem telemetria. Sem segredos: a chave do Gemini e a URI do banco vêm do ambiente
+# (variáveis LLM_* e DB_*). Os campos dos níveis seguem o config.toml.example da {{ honcho_version }}.
+
+# O banco é o pgvector da stack; o pool fica pequeno para a VM de 1 GB.
+[db]
+SCHEMA = "public"
+POOL_SIZE = 5
+MAX_OVERFLOW = 5
+
+[cache]
+ENABLED = false
+
+[telemetry]
+ENABLED = false
+
+[embedding]
+VECTOR_DIMENSIONS = 1536
+
+[embedding.model_config]
+transport = "gemini"
+model = "gemini-embedding-001"
+
+[deriver.model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+[summary.model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+# Os "sonhos" (consolidação em segundo plano) usam o mesmo modelo: sem isso o padrão seria outro provedor, sem chave aqui.
+[dream.deduction_model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+[dream.induction_model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+[dialectic.levels.minimal]
+MAX_TOOL_ITERATIONS = 1
+MAX_OUTPUT_TOKENS = 250
+TOOL_CHOICE = "auto"
+
+[dialectic.levels.minimal.model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+[dialectic.levels.low]
+MAX_TOOL_ITERATIONS = 5
+TOOL_CHOICE = "auto"
+
+[dialectic.levels.low.model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+[dialectic.levels.medium]
+MAX_TOOL_ITERATIONS = 2
+
+[dialectic.levels.medium.model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+[dialectic.levels.high]
+MAX_TOOL_ITERATIONS = 4
+
+[dialectic.levels.high.model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
+
+[dialectic.levels.max]
+MAX_TOOL_ITERATIONS = 10
+
+[dialectic.levels.max.model_config]
+transport = "gemini"
+model = "{{ sysadmin_honcho_modelo }}"
