@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "server/docker/images/aprovador"))
 sys.dont_write_bytecode = True  # sem __pycache__ em docker/images (o copy do playbook o levaria)
 
 from aprovador.pedidos import Registro  # noqa: E402
+from executor.carteiro import Carteiro, assinar  # noqa: E402
 from executor.config import Config, ConfigInvalida  # noqa: E402
 from executor.portao import Portao  # noqa: E402
 from executor.leitor import Leitor  # noqa: E402
@@ -506,3 +507,130 @@ def test_itens_de_lista_nao_sao_folhas_enderecaveis():
             definir(real, c, "x")
     modelo = 'lista:\n  - nome: a\n    v: "1"\n  - nome: b\n    v: "2"\nvolta: "3"\n'
     assert chaves_do_modelo(modelo) == {"volta"}
+
+
+class Resp:
+    def __init__(self, corpo, status=200):
+        self.corpo, self.status = corpo, status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def read(self):
+        return self.corpo
+
+
+class GitHubFalso:
+    def __init__(self, issues, comentarios, avulsas=None, status_post=200):
+        self.issues, self.comentarios, self.avulsas, self.status_post = issues, comentarios, avulsas or {}, status_post
+        self.posts, self.gets = [], []
+
+    def __call__(self, req, timeout=15):
+        url = req.full_url
+        if req.get_method() == "POST":
+            self.posts.append(req)
+            return Resp(b'{"status":"ok"}', self.status_post)
+        self.gets.append(req)
+        if "/issues/comments" in url:
+            corpo = self.comentarios
+        elif "/issues?" in url:
+            corpo = self.issues
+        else:
+            corpo = self.avulsas[int(url.rsplit("/", 1)[1])]
+        return Resp(json.dumps(corpo).encode())
+
+
+API = "https://api.github.com/repos/o/homeserver-equipe/issues/"
+
+
+def _cart(tmp_path, gh, agora=2_000_000_000.0, desde="2026-11-09T00:00:00Z"):
+    cfg = replace(Config.do_ambiente(AMB), dados_dir=str(tmp_path))
+    if desde:
+        (tmp_path / "carteiro.json").write_text(json.dumps({"desde": desde}))
+    return Carteiro(cfg, gh, lambda: agora)
+
+
+def test_carteiro_primeira_vez_nao_acorda(tmp_path):
+    cfg = replace(Config.do_ambiente(AMB), dados_dir=str(tmp_path))
+    gh = GitHubFalso([{"number": 1, "title": "velha", "labels": [{"name": "papel:sysadmin"}],
+                       "user": {"login": "o"}, "html_url": "u"}], [])
+    assert Carteiro(cfg, gh, lambda: 1_000.0).rodar_uma_vez() == 0 and gh.posts == []
+    assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "1970-01-01T00:16:40Z"
+
+
+def test_carteiro_acorda_com_resposta_de_outro(tmp_path):
+    cfg = replace(Config.do_ambiente(AMB), dados_dir=str(tmp_path))
+    (tmp_path / "carteiro.json").write_text('{"desde": "2026-11-09T00:00:00Z"}')
+    issues = [{"number": 2, "title": "pedido", "labels": [{"name": "papel:metricas"}], "user": {"login": "o-sysadmin"},
+               "html_url": "https://g/2"},
+              {"number": 3, "title": "incidente", "labels": [{"name": "papel:sysadmin"}], "user": {"login": "observador"},
+               "html_url": "https://g/3", "created_at": "2026-11-09T01:00:00Z"}]
+    comentarios = [{"issue_url": API + "2", "user": {"login": "metricas"}, "html_url": "https://g/2#c"},
+                   {"issue_url": API + "2", "user": {"login": "o-sysadmin"}, "html_url": "https://g/2#d"}]
+    gh = GitHubFalso(issues, comentarios)
+    assert Carteiro(cfg, gh, lambda: 2_000_000_000.0).rodar_uma_vez() == 2
+    req = gh.posts[0]
+    ts = req.headers["X-webhook-timestamp"]
+    assert req.headers["X-webhook-signature-v2"] == assinar("s", ts, req.data)
+    assert req.headers["Content-type"] == "application/json" and req.full_url == AMB["WEBHOOK_URL"]
+    corpo = json.loads(req.data)
+    assert {i["numero"] for i in corpo["itens"]} == {2, 3} and "o-sysadmin" not in json.dumps(corpo)
+    assert {i["tipo"] for i in corpo["itens"]} == {"comentario", "issue"}
+    assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2033-05-18T03:33:20Z"
+    auth = gh.gets[0]
+    assert auth.headers["Authorization"] == "Bearer ghp" and auth.headers["X-github-api-version"] == "2022-11-28"
+    assert "since=2026-11-09T00:00:00Z" in gh.gets[0].full_url
+
+
+def test_assinar_e_hmac_sha256_de_ts_ponto_corpo():
+    import hashlib
+    import hmac
+    assert assinar("s", "123", b'{"a":1}') == hmac.new(b"s", b'123.{"a":1}', hashlib.sha256).hexdigest()
+
+
+def test_carteiro_comentario_em_issue_fora_da_pagina_busca_a_issue(tmp_path):
+    avulsa = {"number": 9, "title": "antiga", "labels": [{"name": "papel:sysadmin"}], "user": {"login": "x"},
+              "html_url": "https://g/9"}
+    gh = GitHubFalso([], [{"issue_url": API + "9", "user": {"login": "metricas"}, "html_url": "https://g/9#c"}],
+                     avulsas={9: avulsa})
+    assert _cart(tmp_path, gh).rodar_uma_vez() == 1
+    assert gh.gets[-1].full_url.endswith("/issues/9") and json.loads(gh.posts[0].data)["itens"][0]["numero"] == 9
+
+
+def test_carteiro_ignora_pr_proprio_autor_e_issue_antiga(tmp_path):
+    issues = [{"number": 4, "title": "pr", "labels": [{"name": "papel:sysadmin"}], "user": {"login": "a"},
+               "html_url": "u", "created_at": "2026-11-09T01:00:00Z", "pull_request": {}},
+              {"number": 5, "title": "minha", "labels": [{"name": "papel:sysadmin"}], "user": {"login": "o-sysadmin"},
+               "html_url": "u", "created_at": "2026-11-09T01:00:00Z"},
+              {"number": 6, "title": "antiga", "labels": [{"name": "papel:sysadmin"}], "user": {"login": "a"},
+               "html_url": "u", "created_at": "2026-11-08T01:00:00Z"},
+              {"number": 7, "title": "outra", "labels": [{"name": "papel:metricas"}], "user": {"login": "a"},
+               "html_url": "u", "created_at": "2026-11-09T01:00:00Z"}]
+    comentarios = [{"issue_url": API + "4", "user": {"login": "b"}, "html_url": "u"},
+                   {"issue_url": API + "7", "user": {"login": "b"}, "html_url": "u"}]
+    gh = GitHubFalso(issues, comentarios)
+    assert _cart(tmp_path, gh).rodar_uma_vez() == 0 and gh.posts == []
+    assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2033-05-18T03:33:20Z"
+
+
+@pytest.mark.parametrize("status", [500, 302])
+def test_carteiro_so_avanca_desde_com_post_2xx(tmp_path, status):
+    issues = [{"number": 3, "title": "t", "labels": [{"name": "papel:sysadmin"}], "user": {"login": "a"},
+               "html_url": "u", "created_at": "2026-11-09T01:00:00Z"}]
+    gh = GitHubFalso(issues, [], status_post=status)
+    assert _cart(tmp_path, gh).rodar_uma_vez() == 0
+    assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2026-11-09T00:00:00Z"
+
+
+def test_carteiro_erro_de_rede_nao_vaza_token_nem_avanca(tmp_path, capsys):
+    import urllib.error
+
+    def quebrado(req, timeout=15):
+        raise urllib.error.HTTPError(req.full_url + "?t=ghp", 502, "x", {}, None)
+    assert _cart(tmp_path, quebrado).rodar_uma_vez() == 0
+    err = capsys.readouterr().err
+    assert "502" in err and "ghp" not in err
+    assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2026-11-09T00:00:00Z"
