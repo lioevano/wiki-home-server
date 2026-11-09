@@ -182,3 +182,20 @@ def test_remoto_shell_sem_become_e_comando_como_texto(tmp_path):
     assert "docker logs 'x y'" in chamadas[1]  # argv vira texto com aspas (módulo command separa de volta)
     with pytest.raises(Recusado):  # nome de host que parece opção ou fora do inventário
         r.rodar("-m", ["df"], shell=False, become=False)
+
+
+@pytest.mark.parametrize("marcador", ["{{", "{%", "{#"])
+@pytest.mark.parametrize("forma", ["lista", "texto", "elemento"])
+def test_remoto_recusa_jinja_sem_executar(tmp_path, marcador, forma):
+    inv = tmp_path / "server/ansible/inventories/home"
+    inv.mkdir(parents=True)
+    (inv / "hosts.ini").write_text("[g]\nh1\n", encoding="utf-8")
+    chamadas = []
+    cfg = Config.do_ambiente({**AMB, "EXECUTOR_REPO_DIR": str(tmp_path)})
+    r = Remoto(cfg, lambda argv, cwd, t: chamadas.append(argv) or (0, ""))
+    perigo = f"x {marcador} lookup('file', '/segredos/vault_senha') y"
+    comando = {"lista": ["echo", perigo], "texto": f"echo {perigo}", "elemento": [f"{marcador}"]}[forma]
+    for shell in (False, True):
+        with pytest.raises(Recusado, match="Jinja"):
+            r.rodar("h1", comando, shell=shell, become=False)
+    assert chamadas == []

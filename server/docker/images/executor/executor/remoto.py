@@ -87,6 +87,10 @@ class Remoto:
     def rodar(self, host: str, comando: "list[str] | str", shell: bool, become: bool) -> tuple[int, str]:
         if host.startswith("-") or host not in self.hosts():
             raise Recusado(f"host {host!r} não está no inventário")
+        partes = [comando] if isinstance(comando, str) else comando
+        if any(m in parte for parte in partes for m in ("{{", "{%", "{#")):
+            raise Recusado("comando contém {{, {% ou {#: o Ansible interpretaria isso como Jinja no próprio executor "
+                           "(lê arquivos e roda comandos nele, não no host)")
         texto = comando if isinstance(comando, str) else shlex.join(comando)
         argv = ["ansible", host, "-i", self.cfg.inventario, "-m",
                 "ansible.builtin.shell" if shell else "ansible.builtin.command", "-a", texto,
