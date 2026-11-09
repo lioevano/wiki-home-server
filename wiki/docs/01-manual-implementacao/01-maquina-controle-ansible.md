@@ -720,6 +720,8 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
     # VPN (página 14): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
     # Painel do Tailscale → Settings → Keys → Generate auth key (não reutilizável, pré-aprovada).
     tailscale_auth_key: "tskey-auth-CHAVE_DE_USO_UNICO"
+    # Só se o host Proxmox sair do tailnet e precisar entrar de novo (a primeira entrada é pelo preparar-host.sh).
+    # tailscale_auth_key_host: "tskey-auth-CHAVE_DE_USO_UNICO_DO_HOST"
     # Backup com restic (página 04/02). A senha cifra os repositórios: sem ela, nenhum backup se restaura.
     # Gere com openssl rand -base64 32 e guarde uma cópia FORA do servidor (gerenciador de senhas).
     restic_senha: "SENHA_LONGA_DOS_REPOSITORIOS_DO_RESTIC"
@@ -871,9 +873,8 @@ zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo céreb
 vm_local_data_path: "/opt/local-data"
 
 # --- VPN e firewall das portas do Docker (página 14) ---
-# Rotas que a core-services-vm anuncia na VPN: só as duas VMs (/32). O host Proxmox fica de fora de propósito:
-# se a core cair, ele continua alcançável pela LAN.
-tailscale_rotas: ["{{ core_services_vm_ip_var }}/32", "{{ ai_desktop_vm_ip_var }}/32"]
+# Rotas anunciadas na VPN (/32): o host Proxmox e as duas VMs. A core e o host anunciam as mesmas (failover).
+tailscale_rotas: ["{{ proxmox_host_ip_var }}/32", "{{ core_services_vm_ip_var }}/32", "{{ ai_desktop_vm_ip_var }}/32"]
 tailscale_hostname: "homeserver"
 # DNS da VPN (split DNS no painel do Tailscale): *.<domínio> → Traefik na core.
 coredns_version: "1.15.0"

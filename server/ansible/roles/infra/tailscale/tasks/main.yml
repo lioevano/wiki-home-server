@@ -1,16 +1,18 @@
 # ansible/roles/infra/tailscale/tasks/main.yml
-# VPN (página 14): Tailscale na core-services-vm como subnet router das duas VMs, e o CoreDNS que responde
-# *.<domínio> com o IP da core para quem está na VPN (split DNS configurado no painel do Tailscale).
+# VPN (página 14): Tailscale como nó do tailnet. Na core-services-vm e no host Proxmox é subnet router dos três
+# IPs da casa (/32; as duas pontas anunciam as mesmas rotas, para failover); a core ainda roda o CoreDNS que
+# responde *.<domínio> com o IP da core para quem está na VPN (split DNS configurado no painel do Tailscale).
+# Serve a Ubuntu (VMs, VM do GCP) e a Debian (host Proxmox): o repositório sai de ansible_facts.distribution.
 
 - name: "Tailscale: chave do repositório"
   ansible.builtin.get_url:
-    url: "https://pkgs.tailscale.com/stable/ubuntu/{{ ansible_facts.distribution_release }}.noarmor.gpg"
+    url: "https://pkgs.tailscale.com/stable/{{ ansible_facts.distribution | lower }}/{{ ansible_facts.distribution_release }}.noarmor.gpg"
     dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
     mode: '0644'
 
 - name: "Tailscale: repositório"
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu {{ ansible_facts.distribution_release }} main"
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_facts.distribution | lower }} {{ ansible_facts.distribution_release }} main"
     filename: tailscale
     state: present
 
@@ -44,11 +46,14 @@
   failed_when: false
   check_mode: false # só lê
 
-# Só na primeira vez (ou depois de um logout): a auth key é de uso único.
+# Só na primeira vez (ou depois de um logout): a auth key é de uso único. As tags (--advertise-tags) só entram
+# aqui: o 'tailscale set' não troca tags sem reautenticar; para mudá-las num nó já na rede, rode
+# 'tailscale up --force-reauth' à mão.
 - name: "Tailscale: entrar na rede"
   ansible.builtin.command: >-
     tailscale up --auth-key={{ tailscale_auth_key }} --hostname={{ tailscale_hostname }}
-    --advertise-routes={{ tailscale_rotas | join(',') }} --accept-dns=false
+    --advertise-routes={{ tailscale_rotas | join(',') }} --advertise-tags={{ tailscale_tags | join(',') }}
+    --accept-routes={{ tailscale_aceitar_rotas | bool | lower }} --accept-dns=false
   when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') != 'Running'
   changed_when: true
   no_log: true # a auth key
@@ -79,6 +84,7 @@
     port: '41641'
     proto: udp
     comment: "Tailscale (WireGuard direto)"
+  when: tailscale_ufw | bool
 
 - name: "UFW: encaminhar da VPN para a LAN (rotas anunciadas)"
   community.general.ufw:
@@ -87,6 +93,7 @@
     interface_in: tailscale0
     interface_out: "{{ ansible_facts.default_ipv4.interface }}"
     comment: "Tailscale subnet router"
+  when: tailscale_ufw | bool
 
 - name: "CoreDNS: diretório"
   ansible.builtin.file:
@@ -95,6 +102,7 @@
     owner: root
     group: root
     mode: '0755'
+  when: tailscale_coredns | bool
 
 - name: "CoreDNS: configuração"
   ansible.builtin.template:
@@ -104,6 +112,7 @@
     group: root
     mode: '0644'
   register: corefile
+  when: tailscale_coredns | bool
 
 - name: "CoreDNS: container"
   community.docker.docker_container:
@@ -117,3 +126,4 @@
       - "{{ core_services_vm_ip_var }}:53:53/tcp"
     volumes:
       - "{{ vm_local_data_path }}/coredns/Corefile:/Corefile:ro"
+  when: tailscale_coredns | bool

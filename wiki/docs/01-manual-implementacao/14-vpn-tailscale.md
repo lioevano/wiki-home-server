@@ -1,5 +1,5 @@
 ---
-description: "VPN com Tailscale na core-services-vm: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker."
+description: "VPN com Tailscale na core-services-vm e no host Proxmox, com tags e ACL versionada: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker."
 ---
 
 # Seção 14: VPN (Tailscale) e firewall das portas do Docker
@@ -19,12 +19,12 @@ flowchart LR
 
 | Peça | Onde | O que faz |
 |---|---|---|
-| `tailscaled` | `core-services-vm` (pacote oficial, role `ansible/roles/infra/tailscale/`) | Entra na sua rede Tailscale como `homeserver` e anuncia rotas só para as duas VMs (`tailscale_rotas`, `/32`) |
+| `tailscaled` | `core-services-vm` e host Proxmox (pacote oficial, role `ansible/roles/infra/tailscale/`) | Cada um entra na sua rede Tailscale como nó próprio (`homeserver` e `pve`), com a tag `tag:homeserver`, e anuncia as mesmas três rotas `/32` (`tailscale_rotas`: host, core e ai) |
 | CoreDNS | container `coredns` na core, porta 53 no IP da LAN | Para quem está na VPN, responde qualquer `<app>.seudominio.com` com o IP da core (Traefik); outras zonas são recusadas |
 | Firewall das portas do Docker | as duas VMs (role `ansible/roles/infra/docker/`) | As portas publicadas pelo Docker não passam pelo UFW; a cadeia `DOCKER-USER` limita quem as alcança pela LAN |
 
-!!! info "Por que rotas /32 e por que o host Proxmox fica de fora"
-    Rotas `/32` são mais específicas que a `/24` da LAN. Por isso um PC **em casa** com o Tailscale ligado também fala com as VMs pela VPN, e a rota de controle (que a LAN não alcança) funciona dentro de casa. O host Proxmox não está nas rotas: a VPN roda na core, e se a core cair você precisa alcançar o Proxmox pela LAN. Em casa, desligue o Tailscale nesse caso.
+!!! info "Por que rotas /32 e por que o host é um nó próprio"
+    Rotas `/32` são mais específicas que a `/24` da LAN. Por isso um PC **em casa** com o Tailscale ligado também fala com as VMs pela VPN, e a rota de controle (que a LAN não alcança) funciona dentro de casa. O host Proxmox é um nó próprio do tailnet (hostname `pve`), e host e core anunciam as **mesmas** rotas: se a core cair, o host continua levando o tráfego para o Proxmox, a core e a ai (failover entre dois roteadores de sub-rede; o Tailscale escolhe o que estiver de pé). A tag `tag:homeserver` vai nos dois nós, e é por ela que a ACL aprova as rotas sozinha.
 
 ## Firewall das portas publicadas pelo Docker
 
@@ -91,18 +91,20 @@ $IPT -A "$CADEIA" -j RETURN
 
 ```yaml title="ansible/roles/infra/tailscale/tasks/main.yml"
 # ansible/roles/infra/tailscale/tasks/main.yml
-# VPN (página 14): Tailscale na core-services-vm como subnet router das duas VMs, e o CoreDNS que responde
-# *.<domínio> com o IP da core para quem está na VPN (split DNS configurado no painel do Tailscale).
+# VPN (página 14): Tailscale como nó do tailnet. Na core-services-vm e no host Proxmox é subnet router dos três
+# IPs da casa (/32; as duas pontas anunciam as mesmas rotas, para failover); a core ainda roda o CoreDNS que
+# responde *.<domínio> com o IP da core para quem está na VPN (split DNS configurado no painel do Tailscale).
+# Serve a Ubuntu (VMs, VM do GCP) e a Debian (host Proxmox): o repositório sai de ansible_facts.distribution.
 
 - name: "Tailscale: chave do repositório"
   ansible.builtin.get_url:
-    url: "https://pkgs.tailscale.com/stable/ubuntu/{{ ansible_facts.distribution_release }}.noarmor.gpg"
+    url: "https://pkgs.tailscale.com/stable/{{ ansible_facts.distribution | lower }}/{{ ansible_facts.distribution_release }}.noarmor.gpg"
     dest: /usr/share/keyrings/tailscale-archive-keyring.gpg
     mode: '0644'
 
 - name: "Tailscale: repositório"
   ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu {{ ansible_facts.distribution_release }} main"
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/{{ ansible_facts.distribution | lower }} {{ ansible_facts.distribution_release }} main"
     filename: tailscale
     state: present
 
@@ -136,11 +138,14 @@ $IPT -A "$CADEIA" -j RETURN
   failed_when: false
   check_mode: false # só lê
 
-# Só na primeira vez (ou depois de um logout): a auth key é de uso único.
+# Só na primeira vez (ou depois de um logout): a auth key é de uso único. As tags (--advertise-tags) só entram
+# aqui: o 'tailscale set' não troca tags sem reautenticar; para mudá-las num nó já na rede, rode
+# 'tailscale up --force-reauth' à mão.
 - name: "Tailscale: entrar na rede"
   ansible.builtin.command: >-
     tailscale up --auth-key={{ tailscale_auth_key }} --hostname={{ tailscale_hostname }}
-    --advertise-routes={{ tailscale_rotas | join(',') }} --accept-dns=false
+    --advertise-routes={{ tailscale_rotas | join(',') }} --advertise-tags={{ tailscale_tags | join(',') }}
+    --accept-routes={{ tailscale_aceitar_rotas | bool | lower }} --accept-dns=false
   when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') != 'Running'
   changed_when: true
   no_log: true # a auth key
@@ -171,6 +176,7 @@ $IPT -A "$CADEIA" -j RETURN
     port: '41641'
     proto: udp
     comment: "Tailscale (WireGuard direto)"
+  when: tailscale_ufw | bool
 
 - name: "UFW: encaminhar da VPN para a LAN (rotas anunciadas)"
   community.general.ufw:
@@ -179,6 +185,7 @@ $IPT -A "$CADEIA" -j RETURN
     interface_in: tailscale0
     interface_out: "{{ ansible_facts.default_ipv4.interface }}"
     comment: "Tailscale subnet router"
+  when: tailscale_ufw | bool
 
 - name: "CoreDNS: diretório"
   ansible.builtin.file:
@@ -187,6 +194,7 @@ $IPT -A "$CADEIA" -j RETURN
     owner: root
     group: root
     mode: '0755'
+  when: tailscale_coredns | bool
 
 - name: "CoreDNS: configuração"
   ansible.builtin.template:
@@ -196,6 +204,7 @@ $IPT -A "$CADEIA" -j RETURN
     group: root
     mode: '0644'
   register: corefile
+  when: tailscale_coredns | bool
 
 - name: "CoreDNS: container"
   community.docker.docker_container:
@@ -209,6 +218,7 @@ $IPT -A "$CADEIA" -j RETURN
       - "{{ core_services_vm_ip_var }}:53:53/tcp"
     volumes:
       - "{{ vm_local_data_path }}/coredns/Corefile:/Corefile:ro"
+  when: tailscale_coredns | bool
 ```
 
 ```text title="ansible/roles/infra/tailscale/templates/Corefile.j2"
@@ -231,24 +241,60 @@ $IPT -A "$CADEIA" -j RETURN
 }
 ```
 
+```yaml title="ansible/roles/infra/tailscale/defaults/main.yml"
+# ansible/roles/infra/tailscale/defaults/main.yml
+# Padrões do role infra/tailscale (página 14). tailscale_hostname, tailscale_rotas e tailscale_auth_key não têm
+# padrão: cada play informa (tailscale_rotas vem do group_vars, página 01).
+# Tags do nó, aplicadas só na primeira entrada (tailscale up); a ACL (scripts/tailscale/acl.json) decide por elas.
+tailscale_tags: ["tag:homeserver"]
+# Aceitar as rotas anunciadas pelos outros nós: as máquinas da casa não precisam; um PC Linux de uso pessoal, sim.
+tailscale_aceitar_rotas: false
+# CoreDNS da VPN e regras do UFW: só a core usa; o host Proxmox (firewall próprio do PVE) desliga os dois.
+tailscale_coredns: true
+tailscale_ufw: true
+```
+
+```json title="scripts/tailscale/acl.json"
+{
+  "tagOwners": {
+    "tag:sysadmin": ["autogroup:admin"],
+    "tag:homeserver": ["autogroup:admin"]
+  },
+  "hosts": {
+    "pve": "192.168.15.66",
+    "core": "192.168.15.67",
+    "ai": "192.168.15.68"
+  },
+  "acls": [
+    {"action": "accept", "src": ["tag:sysadmin"], "dst": ["pve:22,8006", "core:22,443,53", "ai:22"]},
+    {"action": "accept", "src": ["autogroup:member"], "dst": ["tag:sysadmin:22,443"]},
+    {"action": "accept", "src": ["autogroup:member"], "dst": ["pve:*", "core:*", "ai:*", "tag:homeserver:*"]}
+  ],
+  "autoApprovers": {
+    "routes": {
+      "192.168.15.66/32": ["tag:homeserver"],
+      "192.168.15.67/32": ["tag:homeserver"],
+      "192.168.15.68/32": ["tag:homeserver"]
+    }
+  }
+}
+```
+
 ## Primeira configuração
 
-1. **Conta Tailscale** (plano gratuito) em `login.tailscale.com`. Em *Settings → Keys → Generate auth key*, gere uma chave **não reutilizável** e **pré-aprovada**, e grave em `tailscale_auth_key` no vault (página 01). Ela só serve para o primeiro `tailscale up`.
+1. **Conta Tailscale** (plano gratuito) em `login.tailscale.com`. Em *Settings → Keys → Generate auth key*, gere uma chave **não reutilizável** e **pré-aprovada**, marque a tag `tag:homeserver` e grave em `tailscale_auth_key` no vault (página 01). Ela só serve para o primeiro `tailscale up` da core. As tags só valem na primeira entrada (o `tailscale set` não as troca); para mudá-las num nó que já está na rede, rode `tailscale up --force-reauth` nele. O host Proxmox entra pelo `preparar-host.sh`; o vault só ganha `tailscale_auth_key_host` se o host sair do tailnet e precisar entrar de novo.
 2. **Na máquina de controle:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-vpn.yml --ask-vault-pass --check`, depois sem `--check`.
 3. **No painel do Tailscale → Machines → `homeserver`:**
-    - *Edit route settings*: aprove as duas rotas (`<IP da core>/32` e `<IP da ai>/32`).
+    - *Edit route settings*: aprove as três rotas (`<IP do host>/32`, `<IP da core>/32` e `<IP da ai>/32`). Com a ACL do passo 5 colada, o `autoApprovers` já as aprova e este passo vira só conferência. Repita no nó `pve`.
     - *Disable key expiry*: o servidor não pode cair da VPN a cada 180 dias.
 4. **DNS (painel → DNS → Nameservers → Add nameserver → Custom):** o IP da `core-services-vm`, com **Restrict to domain** = `seudominio.com`. É o split DNS: só o seu domínio vai para o CoreDNS; o resto continua no DNS normal do aparelho.
-5. **ACL (painel → Access controls):** limite quem alcança o quê. Com um único usuário, a regra padrão (todos os seus aparelhos falam entre si) serve; com família na rede, libere só o necessário:
-   ```json title="Exemplo: ACL com o administrador e a família"
-   {
-     "groups": {"group:admins": ["voce@exemplo.com"], "group:familia": ["fulano@exemplo.com"]},
-     "acls": [
-       {"action": "accept", "src": ["group:admins"], "dst": ["*:*"]},
-       {"action": "accept", "src": ["group:familia"], "dst": ["192.168.15.67:443", "192.168.15.67:53"]}
-     ]
-   }
-   ```
+5. **ACL (painel → Access controls):** cole o conteúdo de `scripts/tailscale/acl.json` (bloco acima; JSON estrito, sem comentários, então a explicação fica aqui). Ele faz quatro coisas:
+    - `tagOwners`: só os administradores da conta (`autogroup:admin`) criam nós com `tag:homeserver` (as máquinas da casa) e `tag:sysadmin` (a VM do sysadmin no GCP).
+    - `hosts`: apelidos `pve`, `core` e `ai` para os três IPs da LAN, usados nas regras.
+    - `acls`: o `tag:sysadmin` alcança só o necessário (SSH e a interface web no `pve`; SSH, HTTPS e DNS na `core`; SSH na `ai`). Os seus aparelhos (`autogroup:member`) alcançam o sysadmin só em SSH e HTTPS e tudo na casa. Não existe regra da casa para o sysadmin: se a máquina da casa for comprometida, ela não chega à VM do GCP. O teste `test_acl_casa_nao_alcanca_o_sysadmin` garante isso.
+    - `autoApprovers`: as três rotas `/32` são aprovadas sozinhas quando anunciadas por um nó com `tag:homeserver`.
+
+    Com família na rede, acrescente grupos próprios à ACL em vez de usar `autogroup:member` para tudo.
 6. **Aparelhos:** instale o Tailscale no PC e no celular e entre com a mesma conta. No Windows, as rotas anunciadas já valem; no Linux, use `tailscale up --accept-routes`.
 
 ## O que muda nas aplicações
@@ -259,14 +305,14 @@ $IPT -A "$CADEIA" -j RETURN
 | Immich e Nextcloud | Vídeos e arquivos grandes sobem de qualquer lugar. A troca de URL pelo Wi-Fi no app do Immich vira opcional ([seção 11](11-fotos-arquivos.md)) |
 | Syncthing | O celular conecta direto em `tcp://<IP da ai-desktop-vm>:22000`, sem relay ([seção 12](12-segundo-cerebro.md)) |
 | Hub de MCPs (rota de controle) | `http://<IP da core>:4100/mcp` só responde pela VPN, também em casa ([seção 13](13-agentes-base.md)) |
-| Proxmox | Fica fora da VPN: acesse pela LAN |
+| Proxmox | Nó próprio da VPN (`pve`): `https://<IP do host>:8006` responde pela rota `/32`, mesmo longe de casa |
 
 ## Falhas
 
 | Falha | Comportamento | O que fazer |
 |---|---|---|
-| `core-services-vm` fora | VPN fora: nada alcançável por ela | Em casa, desligue o Tailscale e use a LAN (o Proxmox não está na VPN) |
-| Rota não aprovada no painel | O aparelho entra na VPN mas não alcança as VMs | Painel → Machines → `homeserver` → *Edit route settings* |
+| `core-services-vm` fora | O host Proxmox anuncia as mesmas rotas e assume | Se os dois estiverem fora, desligue o Tailscale e use a LAN |
+| Rota não aprovada no painel | O aparelho entra na VPN mas não alcança as VMs | Painel → Machines → `homeserver` e `pve` → *Edit route settings* (ou confira a tag `tag:homeserver` e o `autoApprovers`) |
 | Nome não resolve pela VPN | `fotos.seudominio.com` cai na Cloudflare (limite de 100 MB) | Confira o nameserver restrito ao domínio no painel e `docker logs coredns` |
 | Claude Code sem as ferramentas do hub | A 4100 só responde pela VPN | Ligue o Tailscale no PC |
 | Uma aplicação da LAN parou de alcançar a 9090, 3100, 3005, 4100, 4200 ou 9001 | Bloqueada pelo `firewall_docker_portas` | Acrescente a origem à lista (página 01) e rode o `setup-base-ubuntu.yml` |

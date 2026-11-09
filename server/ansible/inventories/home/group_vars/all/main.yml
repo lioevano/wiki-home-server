@@ -56,9 +56,8 @@ zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo céreb
 vm_local_data_path: "/opt/local-data"
 
 # --- VPN e firewall das portas do Docker (página 14) ---
-# Rotas que a core-services-vm anuncia na VPN: só as duas VMs (/32). O host Proxmox fica de fora de propósito:
-# se a core cair, ele continua alcançável pela LAN.
-tailscale_rotas: ["{{ core_services_vm_ip_var }}/32", "{{ ai_desktop_vm_ip_var }}/32"]
+# Rotas anunciadas na VPN (/32): o host Proxmox e as duas VMs. A core e o host anunciam as mesmas (failover).
+tailscale_rotas: ["{{ proxmox_host_ip_var }}/32", "{{ core_services_vm_ip_var }}/32", "{{ ai_desktop_vm_ip_var }}/32"]
 tailscale_hostname: "homeserver"
 # DNS da VPN (split DNS no painel do Tailscale): *.<domínio> → Traefik na core.
 coredns_version: "1.15.0"

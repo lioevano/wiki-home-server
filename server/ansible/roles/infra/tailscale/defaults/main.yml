@@ -1,0 +1,10 @@
+# ansible/roles/infra/tailscale/defaults/main.yml
+# Padrões do role infra/tailscale (página 14). tailscale_hostname, tailscale_rotas e tailscale_auth_key não têm
+# padrão: cada play informa (tailscale_rotas vem do group_vars, página 01).
+# Tags do nó, aplicadas só na primeira entrada (tailscale up); a ACL (scripts/tailscale/acl.json) decide por elas.
+tailscale_tags: ["tag:homeserver"]
+# Aceitar as rotas anunciadas pelos outros nós: as máquinas da casa não precisam; um PC Linux de uso pessoal, sim.
+tailscale_aceitar_rotas: false
+# CoreDNS da VPN e regras do UFW: só a core usa; o host Proxmox (firewall próprio do PVE) desliga os dois.
+tailscale_coredns: true
+tailscale_ufw: true

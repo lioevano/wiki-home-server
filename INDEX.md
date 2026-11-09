@@ -102,7 +102,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/11-fotos-arquivos.md` | Seção 11: Fotos e Arquivos (Immich, Nextcloud e Collabora) | Stacks photos (Immich) e cloud (Nextcloud, cron e Collabora), públicas pelo túnel com login OIDC do Authelia, datasets com cota e bancos no disco local. |
 | `01-manual-implementacao/12-segundo-cerebro.md` | Seção 12: Segundo cérebro (Obsidian, Syncthing, busca local e MCP) | Stack notes na VM de IA: vaults do Obsidian sincronizados pelo Syncthing, busca local com qmd sobre as notas e os documentos do Nextcloud, e MCP para o Claude com escopo por vault. |
 | `01-manual-implementacao/13-agentes-base.md` | Seção 13: Agentes — base (hub de MCPs, operações e rastreio) | Base dos agentes: hub de MCPs (agentgateway) com rota de leitura pública e rota de controle só pela VPN, MCP de operações com runner Ansible, MCP do Grafana, Home Assistant e n8n, e Langfuse para rastrear LLM e ferramentas. |
-| `01-manual-implementacao/14-vpn-tailscale.md` | Seção 14: VPN (Tailscale) e firewall das portas do Docker | VPN com Tailscale na core-services-vm: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker. |
+| `01-manual-implementacao/14-vpn-tailscale.md` | Seção 14: VPN (Tailscale) e firewall das portas do Docker | VPN com Tailscale na core-services-vm e no host Proxmox, com tags e ACL versionada: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker. |
 | `01-manual-implementacao/15-ia-observa.md` | Seção 15: IA que observa o servidor | Observador: IA que lê o servidor pela rota de leitura do hub, analisa cada alerta do Grafana e manda um boletim diário ao Telegram, sem agir. |
 | `01-manual-implementacao/16-posto-agentes.md` | Seção 16: Posto de agentes e aprovação humana | Posto de agentes: Claude Code em paralelo pelo Vibe Kanban na ai-desktop-vm, e cada ação no servidor esperando a sua aprovação no Telegram ou na tela. |
 | `01-manual-implementacao/17-assistente.md` | Seção 17: Assistente sempre ligado (Hermes Agent) | Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal e com ações aprovadas. |
@@ -195,6 +195,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/proxmox-vm/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/infra/restic/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/roles/infra/restic/templates/backup-restic.sh.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
+| `ansible/roles/infra/tailscale/defaults/main.yml` | role-defaults | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/tailscale/tasks/main.yml` | role-tasks | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/tailscale/templates/Corefile.j2` | role-template | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/traefik-config/handlers/main.yml` | role-handlers | `01-manual-implementacao/05-rede-segura.md` |
@@ -283,6 +284,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `scripts/gerar_vault.py` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/13-agentes-base.md`, `01-manual-implementacao/18-roteiro-primeiro-deploy.md`, `01-manual-implementacao/index.md` |
 | `scripts/notify.sh` | script | `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `04-manutencao-recuperacao/01-rotinas-manutencao.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `scripts/restore.sh` | script | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
+| `scripts/tailscale/acl.json` | outro | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `scripts/validation/check_nfs_permissions.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |
 | `scripts/validation/check_yaml_integrity.py` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |
 | `scripts/validation/validate_infrastructure.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |

@@ -1,6 +1,7 @@
 """VPN e firewall das portas do Docker (spec 2026-10-21-vpn-firewall-design)."""
 from __future__ import annotations
 
+import json
 import shutil
 import socket
 import struct
@@ -91,9 +92,54 @@ def test_unit_do_firewall_acompanha_o_docker():
 
 # --- Tailscale e DNS da VPN ---
 
-def test_rotas_so_das_vms():
-    rotas = _resolve(_main()["tailscale_rotas"])
-    assert rotas == ["192.168.15.67/32", "192.168.15.68/32"]  # o host Proxmox fica fora (alcançável sem a VPN)
+def _acl():
+    return json.loads((ROOT / "server/scripts/tailscale/acl.json").read_text(encoding="utf-8"))
+
+
+def test_rotas_incluem_o_host_e_tags():
+    m = _main()
+    assert m["tailscale_rotas"] == ["{{ proxmox_host_ip_var }}/32", "{{ core_services_vm_ip_var }}/32",
+                                    "{{ ai_desktop_vm_ip_var }}/32"]
+    d = yaml.safe_load((ANS / "roles/infra/tailscale/defaults/main.yml").read_text(encoding="utf-8"))
+    assert d == {"tailscale_tags": ["tag:homeserver"], "tailscale_aceitar_rotas": False,
+                 "tailscale_coredns": True, "tailscale_ufw": True}
+
+
+def test_role_tailscale_parametrizado():
+    t = (ANS / "roles/infra/tailscale/tasks/main.yml").read_text(encoding="utf-8")
+    assert "{{ ansible_facts.distribution | lower }}" in t           # Ubuntu (VMs, GCP) e Debian (Proxmox)
+    assert "--advertise-tags={{ tailscale_tags | join(',') }}" in t
+    assert "--accept-routes={{ tailscale_aceitar_rotas | bool | lower }}" in t
+    tarefas = yaml.safe_load(t)
+    for x in tarefas:
+        if x["name"].startswith("CoreDNS"):
+            assert x["when"] == "tailscale_coredns | bool"
+        if x["name"].startswith("UFW"):
+            assert x["when"] == "tailscale_ufw | bool"
+    # Tags só no 'up' (R1): o 'tailscale set' não troca tags sem reautenticar.
+    sete = next(x for x in tarefas if "tailscale set" in str(x.get("ansible.builtin.command", "")))
+    assert "advertise-tags" not in sete["ansible.builtin.command"]
+
+
+def test_host_proxmox_e_no_proprio():
+    pb = yaml.safe_load((ANS / "playbooks/setup-proxmox-host.yml").read_text(encoding="utf-8"))
+    papeis = [r for p in pb for r in p.get("roles", [])]
+    ts = next(r for r in papeis if isinstance(r, dict) and r.get("role") == "infra/tailscale")
+    assert ts["vars"] == {"tailscale_hostname": "pve", "tailscale_coredns": False, "tailscale_ufw": False,
+                          "tailscale_auth_key": "{{ tailscale_auth_key_host | default('') }}"}
+
+
+def test_acl_casa_nao_alcanca_o_sysadmin():
+    acl = _acl()
+    assert set(acl["tagOwners"]) == {"tag:sysadmin", "tag:homeserver"}
+    assert acl["hosts"] == {"pve": "192.168.15.66", "core": "192.168.15.67", "ai": "192.168.15.68"}
+    for regra in acl["acls"]:
+        if any(s in ("tag:homeserver", "pve", "core", "ai") for s in regra["src"]):
+            assert not any(d.startswith("tag:sysadmin") for d in regra["dst"])
+    sa = [r for r in acl["acls"] if r["src"] == ["tag:sysadmin"]]
+    assert sa == [{"action": "accept", "src": ["tag:sysadmin"], "dst": ["pve:22,8006", "core:22,443,53", "ai:22"]}]
+    assert {"action": "accept", "src": ["autogroup:member"], "dst": ["tag:sysadmin:22,443"]} in acl["acls"]
+    assert acl["autoApprovers"]["routes"] == {f"192.168.15.{n}/32": ["tag:homeserver"] for n in (66, 67, 68)}
 
 
 def test_role_tailscale():

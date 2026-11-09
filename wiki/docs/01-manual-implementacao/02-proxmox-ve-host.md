@@ -511,6 +511,12 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
     - role: infra/proxmox-host-config # Aplica o role que configura o host
     - role: infra/alloy # Coletor de logs e métricas (seção 4.4 do manual); sem Docker no host
     - role: infra/restic # Backup diário dos datasets com restic (página 04/02)
+    - role: infra/tailscale # O host como nó próprio da VPN (página 14); sem CoreDNS e sem UFW (o firewall é o do PVE)
+      vars:
+        tailscale_hostname: pve
+        tailscale_coredns: false
+        tailscale_ufw: false
+        tailscale_auth_key: "{{ tailscale_auth_key_host | default('') }}"
 ```
 
 ### Executando o Playbook `setup-proxmox-host.yml`

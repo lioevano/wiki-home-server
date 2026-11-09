@@ -228,6 +228,8 @@ langfuse_secrets:
 # VPN (página 14): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
 # Painel do Tailscale → Settings → Keys → Generate auth key (não reutilizável, pré-aprovada).
 tailscale_auth_key: "tskey-auth-CHAVE_DE_USO_UNICO"
+# Só se o host Proxmox sair do tailnet e precisar entrar de novo (a primeira entrada é pelo preparar-host.sh).
+# tailscale_auth_key_host: "tskey-auth-CHAVE_DE_USO_UNICO_DO_HOST"
 # Backup com restic (página 04/02). A senha cifra os repositórios: sem ela, nenhum backup se restaura.
 # Gere com openssl rand -base64 32 e guarde uma cópia FORA do servidor (gerenciador de senhas).
 restic_senha: "SENHA_LONGA_DOS_REPOSITORIOS_DO_RESTIC"

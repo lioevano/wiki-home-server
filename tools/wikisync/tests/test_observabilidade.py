@@ -154,7 +154,7 @@ def test_firewall_host_libera_nfs_e_alloy_antes_do_drop():
     assert regras[3]["dport"] == "12345" and "core_services_vm_ip_var" in regras[3]["source"]
     assert not any("node exporter" in n.lower() for n in nomes)
     play = yaml.safe_load((ROOT / "server/ansible/playbooks/setup-proxmox-host.yml").read_text(encoding="utf-8"))[0]
-    assert _roles(play) == ["infra/proxmox-host-config", "infra/alloy", "infra/restic"]
+    assert _roles(play) == ["infra/proxmox-host-config", "infra/alloy", "infra/restic", "infra/tailscale"]
 
 
 def test_condicao_pve_usa_pveversion():

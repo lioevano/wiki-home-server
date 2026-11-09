@@ -1,0 +1,23 @@
+{
+  "tagOwners": {
+    "tag:sysadmin": ["autogroup:admin"],
+    "tag:homeserver": ["autogroup:admin"]
+  },
+  "hosts": {
+    "pve": "192.168.15.66",
+    "core": "192.168.15.67",
+    "ai": "192.168.15.68"
+  },
+  "acls": [
+    {"action": "accept", "src": ["tag:sysadmin"], "dst": ["pve:22,8006", "core:22,443,53", "ai:22"]},
+    {"action": "accept", "src": ["autogroup:member"], "dst": ["tag:sysadmin:22,443"]},
+    {"action": "accept", "src": ["autogroup:member"], "dst": ["pve:*", "core:*", "ai:*", "tag:homeserver:*"]}
+  ],
+  "autoApprovers": {
+    "routes": {
+      "192.168.15.66/32": ["tag:homeserver"],
+      "192.168.15.67/32": ["tag:homeserver"],
+      "192.168.15.68/32": ["tag:homeserver"]
+    }
+  }
+}
