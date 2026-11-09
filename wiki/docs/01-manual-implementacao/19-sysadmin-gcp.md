@@ -28,6 +28,11 @@ Texto na Task 14.
 
 Arquivos desta seção (cada task acrescenta o seu):
 
+- `docker/images/executor/executor/__init__.py` — docstring e versão do pacote do executor.
+- `docker/images/executor/executor/config.py` — configuração do executor lida do ambiente (falha fechada) e a conversão para o `ops`.
+- `docker/images/executor/executor/portao.py` — portão de aprovação: toda ação que muda a casa só roda com pedido aprovado pelo Léo no Telegram.
+- `docker/images/executor/executor/remoto.py` — comandos remotos por Ansible ad-hoc e o validador dos comandos de diagnóstico.
+
 ## Teste de ponta a ponta
 
 Texto na Task 14.
