@@ -32,6 +32,9 @@ Arquivos desta seção (cada task acrescenta o seu):
 - `docker/images/executor/executor/config.py` — configuração do executor lida do ambiente (falha fechada) e a conversão para o `ops`.
 - `docker/images/executor/executor/portao.py` — portão de aprovação: toda ação que muda a casa só roda com pedido aprovado pelo Léo no Telegram.
 - `docker/images/executor/executor/remoto.py` — comandos remotos por Ansible ad-hoc e o validador dos comandos de diagnóstico.
+- `docker/images/executor/executor/vault.py` — edita o vault do Ansible: troca o valor de uma folha do modelo e grava cifrado, de forma atômica, em `saida/vault.yml`.
+- `docker/images/executor/executor/segredos.py` — canal de segredos: o Léo responde a um pedido no Telegram e o valor vai direto ao vault, sem passar pelo modelo, por log ou por mensagem.
+- `docker/images/executor/executor/leitor.py` — leitor do Telegram do executor: cliques nos botões vão ao aprovador e mensagens ao canal de segredos.
 
 ## Teste de ponta a ponta
 
