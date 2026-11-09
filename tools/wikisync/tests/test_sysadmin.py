@@ -3,9 +3,13 @@ from __future__ import annotations
 
 import io
 import json
+import re
+import shutil
+import subprocess
 import sys
 import tomllib
 
+import pytest
 import yaml
 
 from test_observabilidade import ROOT, render
@@ -640,3 +644,89 @@ def test_docker_reaproveitado_sem_portainer():
     t = yaml.safe_load((ANS / "roles/infra/docker/tasks/main.yml").read_text(encoding="utf-8"))
     grupo = next(x for x in t if "ao grupo 'docker'" in x["name"])
     assert grupo["loop"] == "{{ docker_usuarios_grupo }}"
+
+
+# --- criar-sysadmin.sh (Cloud Shell, Task 12) ---
+
+SH = ROOT / "server/scripts/gcp/criar-sysadmin.sh"
+
+
+def test_criar_sysadmin_barato_e_fechado():
+    s = SH.read_text(encoding="utf-8")
+    assert s.startswith("#!/bin/bash") and "set -euo pipefail" in s
+    assert 'REGIAO="${REGIAO:-us-east1}"' in s and 'TIPO="${TIPO:-e2-micro}"' in s
+    assert "us-west1|us-central1|us-east1" in s  # recusa região fora do free tier
+    assert "--boot-disk-type=pd-standard" in s and "--boot-disk-size=30GB" in s
+    assert "gcloud compute firewall-rules create sysadmin-recusa-entrada" in s and "--priority=100" in s
+    assert "--action=DENY" in s and "--rules=all" in s
+    assert "secretmanager.secretAccessor" in s and "roles/owner" not in s and "roles/editor" not in s
+    assert "gcloud billing budgets create" in s and "--budget-amount=2USD" in s
+    assert "read -rs" in s and "gcloud secrets create sysadmin-segredos --data-file=-" in s  # o JSON vai pelo stdin
+    for campo in CAMPOS:
+        assert campo in s
+
+
+def test_criar_sysadmin_shellcheck():
+    if shutil.which("shellcheck") is None:
+        pytest.skip("shellcheck ausente")
+    r = subprocess.run(["shellcheck", str(SH), str(ROOT / "server/scripts/gcp/preparar-host.sh")],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stdout
+
+
+def _startup() -> str:
+    """O startup-script embutido (heredoc 'STARTUP')."""
+    s = SH.read_text(encoding="utf-8")
+    m = re.search(r"<<'STARTUP'\n(.*?)\nSTARTUP\n", s, re.S)
+    assert m, "heredoc STARTUP ausente"
+    return m.group(1)
+
+
+def test_criar_sysadmin_sintaxe_bash():
+    r = subprocess.run(["bash", "-n", str(SH)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    r = subprocess.run(["bash", "-n"], input=_startup(), capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+
+
+def test_criar_sysadmin_campos_iguais_ao_separador():
+    s = SH.read_text(encoding="utf-8")
+    m = re.search(r"local CAMPOS=\(([^)]*)\)", s)
+    assert m and tuple(m.group(1).split()) == CAMPOS  # mesma lista e mesma ordem do separar_segredos.py
+
+
+def test_startup_script_repete_o_ansible_pull_da_unit():
+    """O primeiro boot e o timer diário precisam se comportar igual (handoff da Task 11)."""
+    unit = (ANS / "roles/infra/sysadmin-gcp/templates/sysadmin-pull.service.j2").read_text(encoding="utf-8")
+    st = _startup()
+    exec_start = re.search(r"^ExecStart=(ansible-pull .*)$", unit, re.M).group(1)
+    assert exec_start in st  # mesmo comando, mesmos argumentos
+    for var in re.findall(r"^Environment=(ANSIBLE_\w+=\S*)$", unit, re.M):
+        assert f"export {var}" in st
+    assert "ANSIBLE_VARS_ENABLED=" in st
+    # a unit roda de "/" (o -i relativo só existe depois do checkout)
+    assert re.search(r"^cd /$", st, re.M) and "WorkingDirectory=/\n" in unit
+    # coleções: mesmo destino da unit, a partir do requirements.yml do repositório
+    assert "-p /usr/share/ansible/collections" in unit and "-p /usr/share/ansible/collections" in st
+    assert "server/ansible/requirements.yml" in st
+    # ansible-core num venv ligado em /usr/local/bin, na versão do group_vars (substituída na criação)
+    assert "/usr/local/bin" in st and "-m venv" in st and "ansible-core==@VERSAO_ANSIBLE@" in st
+    # o endereço do repositório é o do role
+    assert _defaults_repo() in exec_start and _defaults_repo_raw() in st
+    # metadado da VM: nenhum segredo
+    assert not re.search(r"(?i)token|senha|password|api_key|secret", st)
+
+
+def _defaults_repo() -> str:
+    return yaml.safe_load((ANS / "roles/infra/sysadmin-gcp/defaults/main.yml").read_text(encoding="utf-8"))["sysadmin_repo_url"]
+
+
+def _defaults_repo_raw() -> str:
+    return yaml.safe_load((ANS / "roles/infra/sysadmin-gcp/defaults/main.yml").read_text(encoding="utf-8"))["sysadmin_repo_url_raw"]
+
+
+def test_criar_sysadmin_nomes_do_role():
+    s = SH.read_text(encoding="utf-8")
+    assert 'BUCKET="${PROJETO}-sysadmin"' in s  # sysadmin_bucket
+    assert "sysadmin-vm" in s and "gs://${BUCKET}/entrada/vault.yml" in s  # lido pela unit sysadmin-segredos
+    assert "--senha-vault-arquivo" in s and "ssh-keygen -t ed25519 -N" in s
