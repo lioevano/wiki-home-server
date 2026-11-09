@@ -634,3 +634,30 @@ def test_carteiro_erro_de_rede_nao_vaza_token_nem_avanca(tmp_path, capsys):
     err = capsys.readouterr().err
     assert "502" in err and "ghp" not in err
     assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2026-11-09T00:00:00Z"
+
+
+def _gh_issue_some(codigo):
+    import urllib.error
+    outro = {"number": 3, "title": "t", "labels": [{"name": "papel:sysadmin"}], "user": {"login": "a"},
+             "html_url": "u", "created_at": "2026-11-09T01:00:00Z"}
+    gh = GitHubFalso([outro], [{"issue_url": API + "8", "user": {"login": "b"}, "html_url": "u"}])
+    base = gh.__call__
+
+    def abrir(req, timeout=15):
+        if req.get_method() == "GET" and req.full_url.endswith("/issues/8"):
+            raise urllib.error.HTTPError(req.full_url, codigo, "x", {}, None)
+        return base(req, timeout)
+    return gh, abrir
+
+
+def test_carteiro_pula_comentario_de_issue_apagada(tmp_path):
+    gh, abrir = _gh_issue_some(404)
+    assert _cart(tmp_path, abrir).rodar_uma_vez() == 1
+    assert [i["numero"] for i in json.loads(gh.posts[0].data)["itens"]] == [3]
+    assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2033-05-18T03:33:20Z"
+
+
+def test_carteiro_500_na_issue_aborta_sem_avancar(tmp_path):
+    gh, abrir = _gh_issue_some(500)
+    assert _cart(tmp_path, abrir).rodar_uma_vez() == 0 and gh.posts == []
+    assert json.loads((tmp_path / "carteiro.json").read_text())["desde"] == "2026-11-09T00:00:00Z"

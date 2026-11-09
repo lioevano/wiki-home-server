@@ -36,6 +36,14 @@ def _login(obj: dict) -> str:
     return str((obj.get("user") or {}).get("login", ""))
 
 
+class ErroHttp(OSError):
+    """Falha HTTP que carrega só o código (nunca a URL, que pode ter segredo)."""
+
+    def __init__(self, nome: str, codigo: int):
+        super().__init__(f"{nome}: HTTP {codigo}")
+        self.codigo = codigo
+
+
 class Carteiro:
     def __init__(self, cfg: Config, abrir: Callable = urllib.request.urlopen, relogio: Callable[[], float] = time.time):
         self.cfg, self._abrir, self._relogio = cfg, abrir, relogio
@@ -70,11 +78,11 @@ class Carteiro:
                 status = getattr(resp, "status", 200)
                 corpo = resp.read()
         except urllib.error.HTTPError as erro:  # a URL pode carregar segredo: só o código vai ao log
-            raise OSError(f"{nome}: HTTP {erro.code}") from None
+            raise ErroHttp(nome, erro.code) from None
         except (urllib.error.URLError, OSError, ValueError) as erro:
             raise OSError(f"{nome}: {type(erro).__name__}") from None
         if not 200 <= status < 300:
-            raise OSError(f"{nome}: HTTP {status}")
+            raise ErroHttp(nome, status)
         return corpo
 
     def _json(self, caminho: str):
@@ -109,7 +117,12 @@ class Carteiro:
                 continue
             issue = pagina.get(numero)
             if issue is None:
-                issue = self._json(f"issues/{numero}")
+                try:
+                    issue = self._json(f"issues/{numero}")
+                except ErroHttp as erro:
+                    if erro.codigo in (404, 410):  # issue apagada ou transferida: não travar a fila por ela
+                        continue
+                    raise
             if not isinstance(issue, dict) or "pull_request" in issue or not interessa(issue):
                 continue
             itens.setdefault((numero, "comentario"), self._item(issue, c, "comentario"))
