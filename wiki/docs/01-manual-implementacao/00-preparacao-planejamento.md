@@ -371,6 +371,18 @@ LANGFUSE_SECRET_KEY=
 LANGFUSE_OIDC_CLIENT_SECRET=
 LANGFUSE_OTEL_HOST=
 LANGFUSE_OTEL_AUTH=
+
+# --- Stack sysadmin (sysadmin no GCP; página 19) ---
+SYSADMIN_IMAGE_TAG=
+EXECUTOR_IMAGE_TAG=
+SYSADMIN_DATA_PATH=
+SYSADMIN_REDE_SUBNET=
+EXECUTOR_PLAYBOOKS=
+EXECUTOR_ROTAS=
+ANSIBLE_USUARIO_HOST=
+REPO_URL_RAW=
+EQUIPE_REPO=
+CONTA_SYSADMIN=
 ```
 !!! important "Segurança de Segredos com .gitignore"
     O arquivo `ansible/inventories/home/group_vars/all/vault.yml` conterá segredos e só é versionado **criptografado** (começa com `$ANSIBLE_VAULT;`); por isso ele não está no `.gitignore`. Cópias abertas (`*.decrypted*`) são bloqueadas pelo `.gitignore`. Arquivos `.env` reais com segredos (gerados pelo Ansible nas VMs) **NUNCA** devem ser commitados.

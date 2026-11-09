@@ -1,0 +1,20 @@
+#!/bin/bash
+# ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2
+# Firewall da rede do sysadmin (página 19), na cadeia DOCKER-USER, como o firewall-docker (página 14): o container do
+# sysadmin sai para a internet, mas não alcança o tailnet, a LAN de casa nem o servidor de metadados da GCP (de onde
+# se tiraria o token da conta de serviço da VM). Uma regra DROP por destino de sysadmin_bloqueios, só para a
+# sub-rede {{ sysadmin_rede_subnet }}; o resto do tráfego (e as outras redes do Docker) segue como estava.
+# Rodado pela unit firewall-sysadmin antes de cada (re)início do Docker. Gerado pelo role infra/sysadmin-gcp.
+set -euo pipefail
+
+CADEIA="SYSADMIN"
+IPT="${IPTABLES:-iptables}"
+
+$IPT -N DOCKER-USER 2>/dev/null || true
+$IPT -N "$CADEIA" 2>/dev/null || $IPT -F "$CADEIA"
+$IPT -C DOCKER-USER -j "$CADEIA" 2>/dev/null || $IPT -I DOCKER-USER -j "$CADEIA"
+
+{% for destino in sysadmin_bloqueios %}
+$IPT -A "$CADEIA" -s {{ sysadmin_rede_subnet }} -d {{ destino }} -j DROP
+{% endfor %}
+$IPT -A "$CADEIA" -j RETURN

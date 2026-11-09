@@ -1,0 +1,179 @@
+# docker/stacks/sysadmin/docker-compose.yml
+# Sysadmin no GCP (página 19): Hermes (gateway e painel), executor, Honcho (API, deriver e banco). Roda na VM da GCP.
+# Segredos separados por container em /run/sysadmin (tmpfs; scripts/gcp/separar_segredos.py, antes do Docker). O
+# sysadmin nunca recebe a senha do vault, a chave SSH nem a chave do Tailscale da casa: isso fica só no executor.
+# Os env_file são required: false porque o `dev.py lint` roda sem /run/sysadmin; a falha fechada está no
+# separar_segredos.py e no Config do executor. Nenhuma porta é publicada além do painel em 127.0.0.1:9119
+# (o Tailscale Serve da VM expõe); o webhook (8644) e o MCP do executor (8000) só existem na rede interna.
+version: '3.9'
+
+networks:
+  # Saída para a internet (Anthropic, Gemini, GitHub, Telegram). O firewall do host bloqueia desta sub-rede o tailnet,
+  # a LAN de casa e o servidor de metadados da GCP (firewall-sysadmin.sh.j2).
+  sysadmin_rede:
+    name: sysadmin_rede
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "${SYSADMIN_REDE_SUBNET}"
+  # Saída do executor (Telegram, GitHub e o tailnet até os hosts de casa).
+  executor_rede:
+    name: executor_rede
+    driver: bridge
+  # Só sysadmin <-> executor (MCP e webhook); sem saída.
+  interna:
+    name: sysadmin_interna
+    internal: true
+  # Só Honcho <-> banco; sem saída.
+  honcho_interna:
+    name: honcho_interna
+    internal: true
+
+services:
+  sysadmin:
+    image: localhost/homeserver/sysadmin:${SYSADMIN_IMAGE_TAG}
+    container_name: sysadmin
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    environment:
+      HERMES_UID: "${DOCKER_PUID}"
+      HERMES_GID: "${DOCKER_PGID}"
+      HOMESERVER_VENV: /opt/dev
+      TZ: ${SYSTEM_TIMEZONE}
+    volumes:
+      - ${SYSADMIN_DATA_PATH}/hermes:/opt/data # config, memória e sessões
+      - ${SYSADMIN_DATA_PATH}/repo:/repo # clone de trabalho do sysadmin
+      - ${SYSADMIN_DATA_PATH}/saida:/saida:ro # vault.yml cifrado que o executor entrega, para o sysadmin abrir o PR
+      - /run/sysadmin/sysadmin.env:/opt/data/.env:ro
+    networks:
+      - sysadmin_rede
+      - interna
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      diun.enable: "false"
+
+  sysadmin_painel:
+    image: localhost/homeserver/sysadmin:${SYSADMIN_IMAGE_TAG}
+    container_name: sysadmin_painel
+    restart: unless-stopped
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "9119", "--no-open"]
+    environment:
+      HERMES_UID: "${DOCKER_PUID}"
+      HERMES_GID: "${DOCKER_PGID}"
+      HOMESERVER_VENV: /opt/dev
+      TZ: ${SYSTEM_TIMEZONE}
+    volumes:
+      - ${SYSADMIN_DATA_PATH}/hermes:/opt/data
+      - ${SYSADMIN_DATA_PATH}/repo:/repo
+      - ${SYSADMIN_DATA_PATH}/saida:/saida:ro
+      - /run/sysadmin/sysadmin.env:/opt/data/.env:ro
+    ports:
+      - "127.0.0.1:9119:9119"
+    networks:
+      - sysadmin_rede
+      - interna
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      diun.enable: "false"
+
+  executor:
+    image: localhost/homeserver/executor:${EXECUTOR_IMAGE_TAG}
+    container_name: executor
+    restart: unless-stopped
+    env_file:
+      - path: /run/sysadmin/executor.env
+        required: false
+    environment:
+      EXECUTOR_PLAYBOOKS: ${EXECUTOR_PLAYBOOKS}
+      EXECUTOR_ROTAS: ${EXECUTOR_ROTAS}
+      ANSIBLE_USUARIO_HOST: ${ANSIBLE_USUARIO_HOST}
+      REPO_URL_RAW: ${REPO_URL_RAW}
+      EQUIPE_REPO: ${EQUIPE_REPO}
+      CONTA_SYSADMIN: ${CONTA_SYSADMIN}
+      WEBHOOK_URL: http://sysadmin:8644/webhooks/equipe
+      TZ: ${SYSTEM_TIMEZONE}
+    volumes:
+      - ${SYSADMIN_DATA_PATH}/repo-executor:/repo # clone próprio do executor (o que roda os playbooks)
+      - ${SYSADMIN_DATA_PATH}/saida:/saida
+      - ${SYSADMIN_DATA_PATH}/executor:/data
+      - /run/sysadmin/executor:/segredos:ro # vault_senha e chave SSH
+    networks:
+      - executor_rede
+      - interna
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      diun.enable: "false"
+
+  honcho_api:
+    image: ghcr.io/plastic-labs/honcho:v3.6.0
+    container_name: honcho_api
+    restart: unless-stopped
+    entrypoint: ["sh", "docker/entrypoint.sh"]
+    env_file:
+      - path: /run/sysadmin/honcho.env
+        required: false
+    volumes:
+      - ${SYSADMIN_DATA_PATH}/honcho-config.toml:/app/config.toml:ro
+    depends_on:
+      honcho_db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "/app/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - sysadmin_rede
+      - honcho_interna
+      - interna
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      diun.enable: "false"
+
+  honcho_deriver:
+    image: ghcr.io/plastic-labs/honcho:v3.6.0
+    container_name: honcho_deriver
+    restart: unless-stopped
+    entrypoint: ["/app/.venv/bin/python", "-m", "src.deriver"]
+    env_file:
+      - path: /run/sysadmin/honcho.env
+        required: false
+    volumes:
+      - ${SYSADMIN_DATA_PATH}/honcho-config.toml:/app/config.toml:ro
+    depends_on:
+      honcho_api:
+        condition: service_healthy
+    networks:
+      - sysadmin_rede
+      - honcho_interna
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      diun.enable: "false"
+
+  honcho_db:
+    image: pgvector/pgvector:0.8.7-pg17
+    container_name: honcho_db
+    restart: unless-stopped
+    command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=30"]
+    env_file:
+      - path: /run/sysadmin/honcho-db.env
+        required: false
+    volumes:
+      - ${SYSADMIN_DATA_PATH}/honcho-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U honcho -d honcho"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - honcho_interna
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      diun.enable: "false"
