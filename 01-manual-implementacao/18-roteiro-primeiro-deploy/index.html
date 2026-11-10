@@ -15,7 +15,7 @@
         <link rel="prev" href="../17-assistente/">
       
       
-        <link rel="next" href="../../02-visao-geral-arquitetura/">
+        <link rel="next" href="../19-sysadmin-gcp/">
       
       
         
@@ -1087,10 +1087,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fase-1--máquina-de-controle-e-vault" class="md-nav__link">
+  <a href="#fase-1--criar-o-sysadmin-e-mesclar-o-pr-do-vault" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fase 1 — Máquina de controle e vault
+        Fase 1 — Criar o sysadmin e mesclar o PR do vault
       
     </span>
   </a>
@@ -1222,6 +1222,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../19-sysadmin-gcp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Sysadmin no GCP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -2266,10 +2294,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#fase-1--máquina-de-controle-e-vault" class="md-nav__link">
+  <a href="#fase-1--criar-o-sysadmin-e-mesclar-o-pr-do-vault" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Fase 1 — Máquina de controle e vault
+        Fase 1 — Criar o sysadmin e mesclar o PR do vault
       
     </span>
   </a>
@@ -2419,7 +2447,7 @@
 
 <h1 id="roteiro-do-primeiro-deploy">Roteiro do primeiro deploy<a class="headerlink" href="#roteiro-do-primeiro-deploy" title="Permanent link">¶</a></h1>
 <p>As seções 0 a 17 explicam cada parte e trazem os arquivos. Esta página só põe tudo <strong>na ordem da primeira subida</strong>, com o vault gerado pelo <code>scripts/gerar_vault.py</code> (<a href="../01-maquina-controle-ansible/#caminho-recomendado-scriptsgerar_vaultpy">seção 1</a>): como os segredos aleatórios já estão nele, os passos "gere o segredo X" das seções viram só "rode o playbook". Siga as fases em ordem; dentro de cada uma, os detalhes estão no link.</p>
-<p>Todos os comandos rodam na máquina de controle, a partir de <code>server/ansible</code>. Antes de cada playbook, rode-o com <code>--check</code>; depois, sem.</p>
+<p><strong>Quem conduz.</strong> A fase 0 é sua. Da fase 1 em diante, quem conduz é o <strong>sysadmin</strong> (<a href="../19-sysadmin-gcp/">seção 19</a>): você manda <code>/implantar-fase N</code> no Telegram, ele faz o que pode, entrega numa mensagem só o que é seu e pede o seu botão para cada <code>--check</code> e cada aplicação. Os comandos abaixo continuam sendo o que ele executa; se preferir fazer à mão, rode-os na <a href="../01-maquina-controle-ansible/">máquina de controle</a>, a partir de <code>server/ansible</code>. Antes de cada playbook, rode-o com <code>--check</code>; depois, sem.</p>
 <div class="language-bash highlight"><span class="filename">Exemplo: o padrão de cada playbook</span><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/&lt;playbook&gt;.yml<span class="w"> </span>--ask-vault-pass<span class="w"> </span>--check
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ansible-playbook<span class="w"> </span>-i<span class="w"> </span>inventories/home/hosts.ini<span class="w"> </span>playbooks/&lt;playbook&gt;.yml<span class="w"> </span>--ask-vault-pass
 </span></code></pre></div>
@@ -2455,7 +2483,7 @@
 <td><a href="../10-midia/#primeira-configuração">Seção 10</a></td>
 </tr>
 <tr>
-<td>Conta Tailscale e auth key de uso único, pré-aprovada</td>
+<td>Conta Tailscale (plano gratuito)</td>
 <td>login.tailscale.com</td>
 <td><a href="../14-vpn-tailscale/#primeira-configuração">Seção 14</a></td>
 </tr>
@@ -2465,24 +2493,54 @@
 <td><a href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/">Backup</a></td>
 </tr>
 <tr>
-<td>Proteção da <code>main</code> do <code>wiki-home-server</code> (PR obrigatório, sem <em>force push</em>) e, para os agentes, um token do GitHub <strong>sem</strong> escrita neste repositório</td>
+<td>Chaves dos provedores do sysadmin: Anthropic (própria, com teto de gasto no console) e Gemini (AI Studio, plano pago)</td>
+<td>Console de cada um</td>
+<td><a href="../19-sysadmin-gcp/#1-o-que-você-leva-para-o-cloud-shell">Seção 19</a></td>
+</tr>
+<tr>
+<td><strong>Projeto do GCP dedicado</strong> ao sysadmin, com faturamento ligado e um orçamento (o script cria o alerta de US$ 2)</td>
+<td>console.cloud.google.com</td>
+<td><a href="../19-sysadmin-gcp/#rede-e-acl">Seção 19</a></td>
+</tr>
+<tr>
+<td><strong>Quatro bots</strong> no @BotFather: sysadmin, aprovações do sysadmin, avisos e assistente</td>
+<td>Telegram</td>
+<td><a href="../19-sysadmin-gcp/#1-o-que-você-leva-para-o-cloud-shell">Seção 19</a></td>
+</tr>
+<tr>
+<td>Conta de máquina <code>lioevano-sysadmin</code> (colaboradora com escrita no <code>wiki-home-server</code>) e o <em>ruleset</em> da <code>main</code>: PR obrigatório, <strong>1 aprovação</strong>, aprovação do último push por outra pessoa, sem <em>force push</em> e <strong>sem exceções (nem <em>bypass</em>)</strong></td>
+<td>GitHub → <em>Settings → Rules</em></td>
+<td><a href="../19-sysadmin-gcp/#1-o-que-você-leva-para-o-cloud-shell">Seção 19</a></td>
+</tr>
+<tr>
+<td>Repositório privado <code>lioevano/homeserver-equipe</code> com as etiquetas (<code>papel:*</code>, <code>estado:*</code>, <code>diario</code>) e dois tokens <em>fine-grained</em>: o da conta de máquina (PR neste repositório e issues no da equipe) e o do carteiro (só leitura de issues da equipe)</td>
+<td>GitHub</td>
+<td><a href="../19-sysadmin-gcp/#a-equipe">Seção 19</a></td>
+</tr>
+<tr>
+<td><strong>Primeiro</strong> a ACL de <code>scripts/tailscale/acl.json</code> colada (com os <code>tagOwners</code>: sem eles o painel não cria chave com tag) e o HTTPS do tailnet ligado; <strong>depois</strong> as <strong>três chaves de uso único</strong>, pré-aprovadas: <code>tag:sysadmin</code> da VM do GCP e <code>tag:homeserver</code> do host Proxmox (as duas vão para o segredo do GCP, pedidas pelo <code>criar-sysadmin.sh</code>) e <code>tag:homeserver</code> da core (vai para o vault, <code>tailscale_auth_key</code>, pelo <code>vault_preencher</code> na fase 1)</td>
+<td>login.tailscale.com</td>
+<td><a href="../14-vpn-tailscale/#primeira-configuração">Seção 14</a></td>
+</tr>
+<tr>
+<td>Para os agentes de casa (posto e assistente), um token do GitHub <strong>sem</strong> escrita neste repositório</td>
 <td>GitHub → <em>Settings → Rules</em></td>
 <td><a href="../16-posto-agentes/#ansible-duas-aprovações">Seção 16</a></td>
 </tr>
 </tbody>
 </table>
-<h2 id="fase-1--máquina-de-controle-e-vault">Fase 1 — Máquina de controle e vault<a class="headerlink" href="#fase-1--máquina-de-controle-e-vault" title="Permanent link">¶</a></h2>
+<h2 id="fase-1--criar-o-sysadmin-e-mesclar-o-pr-do-vault">Fase 1 — Criar o sysadmin e mesclar o PR do vault<a class="headerlink" href="#fase-1--criar-o-sysadmin-e-mesclar-o-pr-do-vault" title="Permanent link">¶</a></h2>
 <ol>
-<li><code>scripts/bootstrap.sh</code> e a chave SSH da máquina de controle (<a href="../01-maquina-controle-ansible/#11-instalação-do-ambiente-de-controle-scriptsbootstrapsh">seção 1</a>).</li>
-<li>Ajuste o <code>group_vars/all/main.yml</code> <strong>pela wiki</strong> (<a href="../01-maquina-controle-ansible/#variáveis-globais-não-sensíveis-ansibleinventorieshomegroup_varsallmainyml">seção 1</a>): IPs, gateway, CIDRs, discos. O <code>notes_nextcloud_usuario</code> fica para a fase 8.</li>
-<li><code>python3 scripts/gerar_vault.py</code> (na pasta <code>server/</code>). Anote o que ele mostra no gerenciador de senhas, principalmente a senha do vault e a do <strong>restic</strong>.</li>
-<li><code>ansible-vault edit inventories/home/group_vars/all/vault.yml</code> e preencha o que a fase 0 trouxe: Cloudflare, <code>base_domain</code>, <code>letsencrypt_email</code>, chaves de LLM, <code>telegram_bot_token</code>, <code>telegram_chat_id</code>, <code>hermes_telegram_bot_token</code>, ProtonVPN, <code>tailscale_auth_key</code>, B2 e a senha do root do Proxmox. Os tokens criados nas telas (Grafana, Portainer, Home Assistant, n8n, widgets) ficam para depois.</li>
-<li>Commit do <code>vault.yml</code> <strong>criptografado</strong> (o <code>python tools/dev.py check</code> acusa se não estiver): o runner do <code>ops</code> clona o repositório e precisa dele.</li>
+<li>No Cloud Shell, <code>gcloud config set project &lt;projeto&gt;</code> e rode o <code>criar-sysadmin.sh</code> (<a href="../19-sysadmin-gcp/#2-criar-a-vm-cloud-shell">seção 19</a>). Ele pede as chaves e os tokens da fase 0, gera o <code>vault.yml</code> cifrado com todos os segredos aleatórios e cria a VM. <strong>Anote</strong> o que ele mostra no gerenciador de senhas: a senha do vault, a do painel do Hermes e, do <code>gerar_vault.py</code>, a do <strong>restic</strong> (sem ela nenhum backup se restaura).</li>
+<li>Espere a VM se configurar (20 a 40 minutos), o nó <code>sysadmin</code> aparecer no Tailscale e o bot responder. Faça o <a href="../19-sysadmin-gcp/#teste-de-ponta-a-ponta">teste de ponta a ponta da seção 19</a>, menos o item do <code>ansible_check</code> e do <code>ansible_aplicar</code>: ele só vale depois da fase 2 (ainda não há host).</li>
+<li>Peça "abra o PR do vault" e <strong>mescle</strong> o PR do sysadmin com o <code>vault.yml</code> criptografado (<a href="../19-sysadmin-gcp/#3-o-pr-do-vault">seção 19</a>); o <code>python tools/dev.py check</code> acusa se não estiver cifrado. O runner do <code>ops</code> e o executor leem o vault da <code>main</code>.</li>
+<li>Ajuste o <code>group_vars/all/main.yml</code> <strong>pela wiki</strong> (<a href="../01-maquina-controle-ansible/#variáveis-globais-não-sensíveis-ansibleinventorieshomegroup_varsallmainyml">seção 1</a>): IPs, gateway, CIDRs, discos, por PR do sysadmin. O <code>notes_nextcloud_usuario</code> fica para a fase 8.</li>
+<li>O sysadmin pede, uma a uma, pelo <code>vault_preencher</code>, as chaves que vêm de fora e que a fase 0 trouxe: Cloudflare, <code>base_domain</code>, <code>letsencrypt_email</code>, chaves de LLM, <code>telegram_bot_token</code>, <code>telegram_chat_id</code>, <code>hermes_telegram_bot_token</code>, ProtonVPN, <code>tailscale_auth_key</code>, B2. Você responde ao <strong>bot de aprovações</strong>, nunca na conversa. Os tokens criados nas telas (Grafana, Portainer, Home Assistant, n8n, widgets) ficam para depois. Ao fim, mescle o novo PR do vault.</li>
 </ol>
 <h2 id="fase-2--host-e-vms">Fase 2 — Host e VMs<a class="headerlink" href="#fase-2--host-e-vms" title="Permanent link">¶</a></h2>
 <ol>
 <li>Instale o Proxmox VE e crie o pool ZFS e os datasets, incluindo o <code>data/notes</code> da <a href="../12-segundo-cerebro/#deploy">seção 12</a> (<a href="../02-proxmox-ve-host/">seção 2</a>).</li>
-<li>Usuário Ansible no host (<a href="../02-proxmox-ve-host/#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible">ações manuais prévias</a>) e <code>setup-proxmox-host.yml</code> (NFS, Alloy, restic).</li>
+<li><strong>Cole no console do host o comando do <code>preparar_host</code></strong> que o sysadmin lhe manda pelo bot de aprovações (<a href="../19-sysadmin-gcp/#4-preparar-o-host-proxmox">seção 19</a>): Tailscale, usuário Ansible com <code>sudo</code> e a chave SSH do sysadmin. A senha de root do Proxmox (<code>proxmox_api_password</code>) entra pelo <code>vault_preencher</code>, e o PR do vault com ela é mesclado <strong>antes</strong> do playbook (o executor roda os playbooks com o vault da <code>main</code>). Isso substitui as <a href="../02-proxmox-ve-host/#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible">ações manuais prévias</a> (que só valem para quem não usa o sysadmin). Depois, <code>setup-proxmox-host.yml</code> (NFS, Alloy, restic) e, logo em seguida, a linha do firewall do PVE em <a href="../#a-conferir-no-primeiro-deploy">A conferir no primeiro deploy</a> e o item do <code>ansible_check</code> e do <code>ansible_aplicar</code> do <a href="../19-sysadmin-gcp/#teste-de-ponta-a-ponta">teste da seção 19</a>.</li>
 <li>Template Cloud-Init (<a href="../03-provisionamento-vms/#31-criação-de-template-de-vm-base-ubuntu-server-cloud-init">seção 3.1</a>) e <code>vm-deploy.yml</code>.</li>
 <li><code>setup-base-ubuntu.yml</code> (Docker, UFW, firewall das portas do Docker, Alloy, Portainer na core e o agente na VM de IA) (<a href="../04-configuracao-base-vms-ubuntu/">seção 4</a>).</li>
 <li>A chave pública do runner que o <code>gerar_vault.py</code> mostrou vai para o <code>~/.ssh/authorized_keys</code> do usuário Ansible das <strong>duas VMs</strong> (não no host) (<a href="../13-agentes-base/#tokens-e-chaves">seção 13</a>).</li>
@@ -2491,7 +2549,7 @@
 <ol>
 <li><code>setup-core-networking.yml</code>: sobe a stack <code>core</code> (Traefik, Cloudflared, Authelia) (<a href="../06-deploy-core/">seção 6</a>).</li>
 <li>Public Hostnames do túnel (<a href="../05-rede-segura/#55-configuração-de-dns-na-cloudflare">seção 5.5</a>); abra <code>auth.</code> e registre o 2FA. A senha do admin do Authelia é a que o <code>gerar_vault.py</code> mostrou.</li>
-<li><code>setup-vpn.yml</code> e, no painel do Tailscale, rotas, expiração da chave, DNS e ACL (<a href="../14-vpn-tailscale/#primeira-configuração">seção 14</a>).</li>
+<li><code>setup-vpn.yml</code> e, no painel do Tailscale, conferir as rotas (o <code>autoApprovers</code> da ACL da fase 0 já as aprova), desligar a expiração da chave e configurar o DNS (<a href="../14-vpn-tailscale/#primeira-configuração">seção 14</a>). A core passa a anunciar as mesmas rotas do host (failover).</li>
 <li><strong>Portainer, nos primeiros 5 minutos:</strong> administrador, ambiente <code>local</code> e o agente <code>ai-desktop-vm</code>; crie o token de API e grave em <code>portainer_api_key</code> (<a href="../07-deploy-apps/#primeiro-acesso-ao-portainer">seção 7</a>).</li>
 </ol>
 <h2 id="fase-4--apps-da-core">Fase 4 — Apps da core<a class="headerlink" href="#fase-4--apps-da-core" title="Permanent link">¶</a></h2>
@@ -2563,7 +2621,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="30 de outubro de 2026 18:30:03 -03">30 de outubro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="9 de novembro de 2026 22:19:45 -03">9 de novembro de 2026</span>
   </span>
 
     
