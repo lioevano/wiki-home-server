@@ -795,3 +795,15 @@ def test_skills_do_sysadmin_citam_as_ferramentas_reais():
             assert citado in nomes, f"{n}: ferramenta inexistente {citado}"
     assert "lioevano/homeserver-equipe" in texto["equipe"] and "equipe_repo" in texto["implantar-fase"]
     assert "gh issue create -R lioevano/homeserver-equipe --label papel:" in texto["equipe"]
+
+
+def test_skills_do_sysadmin_sem_comandos_inexistentes():
+    arquivos = [*(ROOT / ".agents/skills").glob("*/SKILL.md"), *(ROOT / ".claude/skills").glob("*/SKILL.md"),
+                ROOT / "AGENTS.md", ROOT / "INDEX.md"]
+    for a in arquivos:
+        for i, linha in enumerate(a.read_text(encoding="utf-8").splitlines(), 1):
+            assert not re.search(r"/fase\b|/status(?![\w-])", linha), f"{a.relative_to(ROOT)}:{i}: {linha}"
+    st = (ROOT / ".agents/skills/status-implantacao/SKILL.md").read_text(encoding="utf-8")
+    assert "terminal" in st and "Peça ao Léo que rode" not in st
+    for n in ("implantar-fase", "equipe"):
+        assert "ansible-playbook" in (ROOT / f".agents/skills/{n}/SKILL.md").read_text(encoding="utf-8")

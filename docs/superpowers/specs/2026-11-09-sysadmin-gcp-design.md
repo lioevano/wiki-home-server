@@ -141,14 +141,14 @@ O MCP aceita só o `sysadmin`, por token interno.
   - API do Hermes só na rede interna com o executor, com chave, para o carteiro (seção 13).
 - **`SOUL.md`:** gerado da página 19.
 - **Skills próprias** (no repositório, em `.agents/skills/`, para também servirem a outros agentes):
-  - `implantar-fase` (`/fase <n>`);
-  - `status-implantacao` (`/status`: fase atual, pendências do Léo, pedidos abertos, gasto do mês, memória da VM);
+  - `implantar-fase` (`/implantar-fase <n>`);
+  - `status-implantacao` (`/status-implantacao`: fase atual, pendências do Léo, pedidos abertos, gasto do mês, memória da VM);
   - `equipe` (`/equipe`: pedidos abertos e com quem estão; abrir pedido para um papel).
 - **Dashboard:** mesmo container, processo à parte, `127.0.0.1:9119`, publicado por `tailscale serve`.
 
 ## 8. Fluxo de trabalho de uma fase
 
-1. O Léo manda "vamos para a fase N" (ou `/fase N`).
+1. O Léo manda "vamos para a fase N" (ou `/implantar-fase N`).
 2. O sysadmin lê a fase na página 18 e as seções citadas, e confere o estado real com o `diagnostico`.
 3. Abre o **diário da fase**: uma issue no `homeserver-equipe` com a lista de passos marcável e o log completo. O Telegram recebe só o resumo.
 4. Manda numa mensagem só o que é do Léo (com o link da seção) e espera a confirmação.
@@ -287,3 +287,4 @@ As verificações da seção 13 foram feitas lendo o código do Hermes v0.22.5 e
 - **E10 (S21):** as skills do repositório entram por `skills.external_dirs`. O plugin do Honcho é o diretório `hermes-plugin-honcho` do repositório do Honcho na tag `v3.6.0`, copiado para `$HERMES_HOME/plugins/honcho`. O Honcho roda **sem Redis** (`CACHE_ENABLED` já é `false` por padrão).
 - **E11:** correção de um bug achado no caminho: `vm_ci_ssh_keys_public_file` trocava o último caractere da chave por `pub` (`regex_replace('.$', 'pub')`) em vez de acrescentar `.pub`.
 - **E12 (§13.6):** a memória real em 1 GB vai para "A conferir no primeiro deploy".
+- **E13 (§8, S21):** comandos = nomes das skills; `/status` é nativo do Hermes.
