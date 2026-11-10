@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html class="no-js" lang="pt"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="Sysadmin no GCP: Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub." name="description"/>
+<meta content="Léo Ivan" name="author"/>
+<link href="https://wiki.lioevano.com/01-manual-implementacao/02-sysadmin-gcp/" rel="canonical"/>
+<link href="../01-roteiro-primeiro-deploy/" rel="prev"/>
+<link href="../03-maquina-controle-ansible/" rel="next"/>
+<link href="../../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.1" name="generator"/>
+<title>Sysadmin no GCP (criação) - Wiki do Servidor do Léo Ivan</title>
+<link href="../../assets/stylesheets/main.484c7ddc.min.css" rel="stylesheet"/>
+<link href="../../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+<link href="../../assets/stylesheets/glightbox.min.css" rel="stylesheet"/><script src="../../assets/javascripts/glightbox.min.js"></script><style id="glightbox-style">
+            html.glightbox-open { overflow: initial; height: 100%; }
+            .gslide-title { margin-top: 0px; user-select: text; }
+            .gslide-desc { color: #666; user-select: text; }
+            .gslide-image img { background: white; }
+            .gscrollbar-fixer { padding-right: 15px; }
+            .gdesc-inner { font-size: 0.75rem; }
+            body[data-md-color-scheme="slate"] .gdesc-inner { background: var(--md-default-bg-color); }
+            body[data-md-color-scheme="slate"] .gslide-title { color: var(--md-default-fg-color); }
+            body[data-md-color-scheme="slate"] .gslide-desc { color: var(--md-default-fg-color); }
+        </style></head>
+<body data-md-color-accent="indigo" data-md-color-primary="blue" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#seção-2-sysadmin-no-gcp">
+          Ir para o conteúdo
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header" data-md-component="header">
+<nav aria-label="Cabeçalho" class="md-header__inner md-grid">
+<a aria-label="Wiki do Servidor do Léo Ivan" class="md-header__button md-logo" data-md-component="logo" href="../.." title="Wiki do Servidor do Léo Ivan">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Wiki do Servidor do Léo Ivan
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Sysadmin no GCP (criação)
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-label="Switch to light mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-primary="blue" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_1" hidden="" title="Switch to light mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"></path></svg>
+</label>
+<input aria-label="Switch to dark mode" class="md-option" data-md-color-accent="indigo" data-md-color-media="(prefers-color-scheme: light)" data-md-color-primary="blue" data-md-color-scheme="default" id="__palette_1" name="__palette" type="radio"/>
+<label class="md-header__button md-icon" for="__palette_0" hidden="" title="Switch to dark mode">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"></path></svg>
+</label>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Buscar" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Buscar" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Pesquisar" class="md-search__options">
+<button aria-label="Limpar" class="md-search__icon md-icon" tabindex="-1" title="Limpar" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+<div class="md-search__suggest" data-md-component="search-suggest"></div>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Inicializando a pesquisa
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    lioevano/wiki-home-server
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<nav aria-label="Abas" class="md-tabs" data-md-component="tabs">
+<div class="md-grid">
+<ul class="md-tabs__list">
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../..">
+        
+  
+  
+    
+  
+  Introdução
+
+      </a>
+</li>
+<li class="md-tabs__item md-tabs__item--active">
+<a class="md-tabs__link" href="../">
+          
+  
+  
+  🚀 Implementação
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../02-visao-geral-arquitetura/">
+          
+  
+  
+  💡 Arquitetura
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../03-guias-sustentacao/">
+          
+  
+  
+  🛠️ Sustentação
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../04-manutencao-recuperacao/">
+          
+  
+  
+  ⚙️ Manutenção
+
+        </a>
+</li>
+<li class="md-tabs__item">
+<a class="md-tabs__link" href="../../05-referencia-rapida/">
+        
+  
+  
+    
+  
+  📎 Referência
+
+      </a>
+</li>
+</ul>
+</div>
+</nav>
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navegação" class="md-nav md-nav--primary md-nav--lifted" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Wiki do Servidor do Léo Ivan" class="md-nav__button md-logo" data-md-component="logo" href="../.." title="Wiki do Servidor do Léo Ivan">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Wiki do Servidor do Léo Ivan
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/lioevano/wiki-home-server/" title="Ir ao repositório">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</div>
+<div class="md-source__repository">
+    lioevano/wiki-home-server
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../..">
+<span class="md-ellipsis">
+    
+  
+    Introdução
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+<input checked="" class="md-nav__toggle md-toggle" id="__nav_2" type="checkbox"/>
+<label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+<span class="md-ellipsis">
+    
+  
+    🚀 Implementação
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="true" aria-labelledby="__nav_2_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_2">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    🚀 Implementação
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../00-preparacao-planejamento/">
+<span class="md-ellipsis">
+    
+  
+    Preparação e Planejamento
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../01-roteiro-primeiro-deploy/">
+<span class="md-ellipsis">
+    
+  
+    Roteiro do primeiro deploy
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Sysadmin no GCP (criação)
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Sysadmin no GCP (criação)
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Índice" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#como-funciona">
+<span class="md-ellipsis">
+      
+        Como funciona
+      
+    </span>
+</a>
+<nav aria-label="Como funciona" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#como-uma-fase-corre">
+<span class="md-ellipsis">
+      
+        Como uma fase corre
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dashboard">
+<span class="md-ellipsis">
+      
+        Dashboard
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#custo">
+<span class="md-ellipsis">
+      
+        Custo
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#o-que-ele-pode-e-o-que-não-pode">
+<span class="md-ellipsis">
+      
+        O que ele pode e o que não pode
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rede-e-acl">
+<span class="md-ellipsis">
+      
+        Rede e ACL
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#criar-o-sysadmin">
+<span class="md-ellipsis">
+      
+        Criar o sysadmin
+      
+    </span>
+</a>
+<nav aria-label="Criar o sysadmin" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-o-que-você-leva-para-o-cloud-shell">
+<span class="md-ellipsis">
+      
+        1. O que você leva para o Cloud Shell
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-criar-a-vm-cloud-shell">
+<span class="md-ellipsis">
+      
+        2. Criar a VM (Cloud Shell)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-o-pr-do-vault">
+<span class="md-ellipsis">
+      
+        3. O PR do vault
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-preparar-o-host-proxmox">
+<span class="md-ellipsis">
+      
+        4. Preparar o host Proxmox
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#5-daqui-em-diante">
+<span class="md-ellipsis">
+      
+        5. Daqui em diante
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#a-equipe">
+<span class="md-ellipsis">
+      
+        A equipe
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#arquivos">
+<span class="md-ellipsis">
+      
+        Arquivos
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#teste-de-ponta-a-ponta">
+<span class="md-ellipsis">
+      
+        Teste de ponta a ponta
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#falhas">
+<span class="md-ellipsis">
+      
+        Falhas
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../03-maquina-controle-ansible/">
+<span class="md-ellipsis">
+    
+  
+    Máquina de Controle (vault e inventário)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../04-proxmox-ve-host/">
+<span class="md-ellipsis">
+    
+  
+    Proxmox VE Host
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../05-provisionamento-vms/">
+<span class="md-ellipsis">
+    
+  
+    Provisionamento de VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../06-configuracao-base-vms-ubuntu/">
+<span class="md-ellipsis">
+    
+  
+    Configuração Base das VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../07-rede-segura/">
+<span class="md-ellipsis">
+    
+  
+    Rede Segura
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../08-deploy-core/">
+<span class="md-ellipsis">
+    
+  
+    Deploy Core
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../09-deploy-apps/">
+<span class="md-ellipsis">
+    
+  
+    Deploy de Apps
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../10-stack-ia/">
+<span class="md-ellipsis">
+    
+  
+    Stack de IA
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../11-painel-notificacoes/">
+<span class="md-ellipsis">
+    
+  
+    Painel e Notificações
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../12-midia/">
+<span class="md-ellipsis">
+    
+  
+    Mídia
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../13-fotos-arquivos/">
+<span class="md-ellipsis">
+    
+  
+    Fotos e Arquivos
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../14-segundo-cerebro/">
+<span class="md-ellipsis">
+    
+  
+    Segundo Cérebro
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../15-agentes-base/">
+<span class="md-ellipsis">
+    
+  
+    Agentes: Base
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../16-vpn-tailscale/">
+<span class="md-ellipsis">
+    
+  
+    VPN (Tailscale)
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../17-ia-observa/">
+<span class="md-ellipsis">
+    
+  
+    IA que observa o servidor
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../18-posto-agentes/">
+<span class="md-ellipsis">
+    
+  
+    Posto de agentes
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../19-assistente/">
+<span class="md-ellipsis">
+    
+  
+    Assistente (Hermes)
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_3" type="checkbox"/>
+<label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    💡 Arquitetura
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_3_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_3">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    💡 Arquitetura
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo/">
+<span class="md-ellipsis">
+    
+  
+    Fluxo de Rede
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/02-virtualizacao-proxmox/">
+<span class="md-ellipsis">
+    
+  
+    Virtualização
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/03-armazenamento-zfs-nfs/">
+<span class="md-ellipsis">
+    
+  
+    Armazenamento
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/04-automacao-ansible/">
+<span class="md-ellipsis">
+    
+  
+    Automação
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/05-gerenciamento-containers/">
+<span class="md-ellipsis">
+    
+  
+    Containers
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/06-principios-seguranca/">
+<span class="md-ellipsis">
+    
+  
+    Segurança
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/07-apis-llm-estrategia/">
+<span class="md-ellipsis">
+    
+  
+    Estratégia LLM
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/09-catalogo-aplicacoes/">
+<span class="md-ellipsis">
+    
+  
+    Catálogo de Aplicações
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../02-visao-geral-arquitetura/10-indice-integracoes/">
+<span class="md-ellipsis">
+    
+  
+    Índice de Integrações
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_4" type="checkbox"/>
+<label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    🛠️ Sustentação
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_4_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_4">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    🛠️ Sustentação
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/01-adicionando-novo-servico-docker/">
+<span class="md-ellipsis">
+    
+  
+    Novo Serviço Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/02-modificando-configuracoes-existentes/">
+<span class="md-ellipsis">
+    
+  
+    Modificando Configurações
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/03-troubleshooting-comum/">
+<span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/04-gerenciando-redes-docker/">
+<span class="md-ellipsis">
+    
+  
+    Redes Docker
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/05-passthrough-hardware-adicional/">
+<span class="md-ellipsis">
+    
+  
+    Passthrough de Hardware
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/06-gerenciando-recursos-vms/">
+<span class="md-ellipsis">
+    
+  
+    Recursos de VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/07-cenarios-especificos-criacao-vms/">
+<span class="md-ellipsis">
+    
+  
+    Cenários de VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/08-compartilhando-recursos-entre-vms/">
+<span class="md-ellipsis">
+    
+  
+    Recursos entre VMs
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/09-atualizacao-segura-componentes-criticos/">
+<span class="md-ellipsis">
+    
+  
+    Atualização Segura
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/10-hospedando-aplicacao-publica-dominio-raiz/">
+<span class="md-ellipsis">
+    
+  
+    App no Domínio Raiz
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../03-guias-sustentacao/11-guia-snapshots-zfs/">
+<span class="md-ellipsis">
+    
+  
+    Snapshots ZFS
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item md-nav__item--nested">
+<input class="md-nav__toggle md-toggle md-toggle--indeterminate" id="__nav_5" type="checkbox"/>
+<label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+<span class="md-ellipsis">
+    
+  
+    ⚙️ Manutenção
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<nav aria-expanded="false" aria-labelledby="__nav_5_label" class="md-nav" data-md-level="1">
+<label class="md-nav__title" for="__nav_5">
+<span class="md-nav__icon md-icon"></span>
+            
+  
+    ⚙️ Manutenção
+  
+
+          </label>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/">
+<span class="md-ellipsis">
+    
+  
+    Visão Geral
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/01-rotinas-manutencao/">
+<span class="md-ellipsis">
+    
+  
+    Rotinas
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/02-backup-restore-estrategia/">
+<span class="md-ellipsis">
+    
+  
+    Backup e Restore
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/03-cicd-basico-ansible/">
+<span class="md-ellipsis">
+    
+  
+    CI/CD Ansible
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/04-reconstruindo-infraestrutura/">
+<span class="md-ellipsis">
+    
+  
+    Reconstruindo
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../04-manutencao-recuperacao/05-migrando-hardware-rede/">
+<span class="md-ellipsis">
+    
+  
+    Migrando Hardware/Rede
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="../../05-referencia-rapida/">
+<span class="md-ellipsis">
+    
+  
+    📎 Referência
+  
+
+    
+  </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Índice" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Índice
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#como-funciona">
+<span class="md-ellipsis">
+      
+        Como funciona
+      
+    </span>
+</a>
+<nav aria-label="Como funciona" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#como-uma-fase-corre">
+<span class="md-ellipsis">
+      
+        Como uma fase corre
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#dashboard">
+<span class="md-ellipsis">
+      
+        Dashboard
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#custo">
+<span class="md-ellipsis">
+      
+        Custo
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#o-que-ele-pode-e-o-que-não-pode">
+<span class="md-ellipsis">
+      
+        O que ele pode e o que não pode
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#rede-e-acl">
+<span class="md-ellipsis">
+      
+        Rede e ACL
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#criar-o-sysadmin">
+<span class="md-ellipsis">
+      
+        Criar o sysadmin
+      
+    </span>
+</a>
+<nav aria-label="Criar o sysadmin" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#1-o-que-você-leva-para-o-cloud-shell">
+<span class="md-ellipsis">
+      
+        1. O que você leva para o Cloud Shell
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#2-criar-a-vm-cloud-shell">
+<span class="md-ellipsis">
+      
+        2. Criar a VM (Cloud Shell)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#3-o-pr-do-vault">
+<span class="md-ellipsis">
+      
+        3. O PR do vault
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#4-preparar-o-host-proxmox">
+<span class="md-ellipsis">
+      
+        4. Preparar o host Proxmox
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#5-daqui-em-diante">
+<span class="md-ellipsis">
+      
+        5. Daqui em diante
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#a-equipe">
+<span class="md-ellipsis">
+      
+        A equipe
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#arquivos">
+<span class="md-ellipsis">
+      
+        Arquivos
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#teste-de-ponta-a-ponta">
+<span class="md-ellipsis">
+      
+        Teste de ponta a ponta
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#falhas">
+<span class="md-ellipsis">
+      
+        Falhas
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="seção-2-sysadmin-no-gcp">Seção 2: Sysadmin no GCP<a class="headerlink" href="#seção-2-sysadmin-no-gcp" title="Permanent link">¶</a></h1>
+<h2 id="como-funciona">Como funciona<a class="headerlink" href="#como-funciona" title="Permanent link">¶</a></h2>
+<p>O <strong>sysadmin</strong> é um agente que existe <strong>antes</strong> do servidor. Ele roda numa VM <code>e2-micro</code> do Google Cloud (nível gratuito, <code>us-east1</code>), você o comanda pelo Telegram, e ele conduz o <a href="../01-roteiro-primeiro-deploy/">roteiro do primeiro deploy</a> fase a fase: lê a wiki, confere o estado real da casa, monta os pedidos e <strong>espera o seu botão</strong> para tudo que muda o servidor. Depois do deploy, continua como o coordenador da equipe de agentes da casa. É também o jeito recomendado de ter a <a href="../03-maquina-controle-ansible/">máquina de controle do Ansible</a>.</p>
+<p>O agente é o <a href="../19-assistente/">Hermes</a> (v0.22.5) com memória no <a href="https://github.com/plastic-labs/honcho">Honcho</a> (v3.6.0) próprio. O <strong>modelo</strong> é o Claude da Anthropic (Sonnet por padrão, Haiku para resumos), com o Gemini (AI Studio) de reserva. Ele <strong>não usa o LiteLLM de casa</strong>: o sysadmin existe antes dela e é quem a conserta.</p>
+<pre class="mermaid"><code>flowchart LR
+    leo[Léo] -- "bot sysadmin" --&gt; sa
+    leo -- "bot de aprovações&lt;br/&gt;botões e segredos" --&gt; ex
+    leo -- "tailscale serve :443" --&gt; dash[dashboard]
+    subgraph gcp[VM e2-micro, us-east1]
+        sa[sysadmin&lt;br/&gt;Hermes] -- MCP --&gt; ex[executor&lt;br/&gt;vault, SSH, carteiro]
+        ex -- "webhook&lt;br/&gt;(carteiro)" --&gt; sa
+        sa --&gt; hon[honcho&lt;br/&gt;api, deriver, db]
+        dash --- sa
+    end
+    sa -- "PR (conta de máquina)&lt;br/&gt;issues" --&gt; gh[GitHub&lt;br/&gt;wiki-home-server&lt;br/&gt;homeserver-equipe]
+    ex -- "lê a main e a equipe" --&gt; gh
+    ex -- "Tailscale&lt;br/&gt;SSH, API do Proxmox" --&gt; casa[host Proxmox&lt;br/&gt;core, ai]
+    casa -- "agentes da casa (5b)&lt;br/&gt;issues" --&gt; gh
+    sa -- "Claude / Gemini" --&gt; llm[Anthropic&lt;br/&gt;Gemini API]</code></pre>
+<table>
+<thead>
+<tr>
+<th>Peça</th>
+<th>Onde</th>
+<th>O que faz</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sysadmin</code></td>
+<td>container na VM (<code>localhost/homeserver/sysadmin</code>: Hermes, Ansible, <code>gh</code>, ambiente do <code>tools/dev.py</code>)</td>
+<td>Conversa pelo bot do sysadmin, tem terminal e o clone do repositório; <strong>não tem</strong> a senha do vault nem a chave SSH da casa</td>
+</tr>
+<tr>
+<td><code>sysadmin_painel</code></td>
+<td>mesma imagem</td>
+<td>Dashboard oficial do Hermes em <code>127.0.0.1:9119</code>, publicado só no tailnet pelo <code>tailscale serve</code></td>
+</tr>
+<tr>
+<td><code>executor</code></td>
+<td>container na VM (<code>localhost/homeserver/executor</code>: Python, <code>ansible-core</code>, git, ssh)</td>
+<td><strong>Sem modelo.</strong> Único com a senha do vault e a chave SSH; oferece ao Hermes um MCP com ferramentas fechadas, lê os cliques do bot de aprovações e roda o carteiro</td>
+</tr>
+<tr>
+<td><code>honcho_api</code>, <code>honcho_deriver</code>, <code>honcho_db</code></td>
+<td>containers na VM (Honcho <code>v3.6.0</code>, Postgres com pgvector)</td>
+<td>Memória do sysadmin, <em>workspace</em> <code>sysadmin</code> com os pares Léo e sysadmin. Sem Redis, sem telemetria; o deriver e os <em>embeddings</em> usam a chave do Gemini</td>
+</tr>
+<tr>
+<td>Bot do sysadmin</td>
+<td><code>telegram_bot_sysadmin</code> (segredo do GCP)</td>
+<td>A conversa. Só responde ao seu <code>telegram_chat_id</code></td>
+</tr>
+<tr>
+<td>Bot de aprovações</td>
+<td><code>telegram_bot_aprovacoes</code></td>
+<td>Só o executor o lê: os botões de aprovar ou recusar e o canal de segredos. Separar conversa e aprovação evita que o modelo veja segredos. Não é o bot de avisos de casa</td>
+</tr>
+<tr>
+<td>Conta de máquina</td>
+<td><code>lioevano-sysadmin</code> no GitHub</td>
+<td>Abre PRs e issues; não consegue mesclar nada na <code>main</code> sem a sua aprovação</td>
+</tr>
+<tr>
+<td><code>homeserver-equipe</code></td>
+<td>repositório privado</td>
+<td>Pedidos entre agentes (<a href="#a-equipe">A equipe</a>)</td>
+</tr>
+<tr>
+<td>Secret Manager e bucket</td>
+<td><code>sysadmin-segredos</code> e <code>gs://&lt;projeto&gt;-sysadmin</code></td>
+<td>Um único segredo JSON, lido na partida para o <code>tmpfs</code> <code>/run/sysadmin</code>; o bucket guarda o vault de entrada e os backups</td>
+</tr>
+</tbody>
+</table>
+<p>Os seis containers dividem 1 GB de RAM com 4 GB de swap (cifrada, com chave nova a cada boot). Se ficar lento, a saída é <code>gcp_tipo_maquina: e2-small</code> (cerca de US$ 13 por mês) por PR; a medição real está em <a href="../#a-conferir-no-primeiro-deploy">A conferir no primeiro deploy</a>.</p>
+<h3 id="como-uma-fase-corre">Como uma fase corre<a class="headerlink" href="#como-uma-fase-corre" title="Permanent link">¶</a></h3>
+<ol>
+<li>Você manda <code>/implantar-fase 3</code> (ou "vamos para a fase 3"). Os comandos do Telegram são os <strong>nomes das skills</strong>: <code>/implantar-fase N</code>, <code>/status-implantacao</code> e <code>/equipe</code>; <code>/status</code> é o comando nativo do Hermes. Linguagem natural também serve.</li>
+<li>O sysadmin lê a fase na <a href="../01-roteiro-primeiro-deploy/">página 01</a> e confere o estado real com o <code>diagnostico</code> (só leitura, sem botão).</li>
+<li>Abre o <strong>diário da fase</strong>: uma issue com a etiqueta <code>diario</code> no <code>homeserver-equipe</code>, com a lista de passos e o log completo. O Telegram recebe só o resumo e o link.</li>
+<li>Manda numa mensagem só o que <strong>é seu</strong> (contas, físico, telas que pedem uma pessoa, stacks no Portainer, merges) e espera a confirmação.</li>
+<li>Segredo que falta: <code>vault_preencher</code> (você responde ao bot de aprovações). Wiki errada ou incompleta: PR primeiro; ele só segue depois do seu merge.</li>
+<li>Cada playbook: <code>ansible_check</code> (botão) e <code>ansible_aplicar</code> (botão).</li>
+<li>Teste de ponta a ponta da seção, marca a linha em "A conferir no primeiro deploy", fecha o diário e sugere a próxima fase. "Pare" interrompe o trabalho dele; um playbook já aprovado vai até o fim ou até o tempo limite do runner.</li>
+</ol>
+<h3 id="dashboard">Dashboard<a class="headerlink" href="#dashboard" title="Permanent link">¶</a></h3>
+<p>O dashboard oficial do Hermes (visualização e controle) escuta em <code>127.0.0.1:9119</code> do host e o <code>tailscale serve</code> o publica em <code>https://sysadmin.&lt;tailnet&gt;.ts.net</code>, só para os seus aparelhos. Exige usuário e senha (<code>leo</code> e a senha que o <code>criar-sysadmin.sh</code> mostra uma vez) e precisa do <strong>HTTPS do tailnet</strong> ligado no painel do Tailscale (<em>DNS → HTTPS Certificates</em>). Depois do primeiro <code>tailscale serve</code>, grave a URL em <code>sysadmin_dashboard_url</code> no <code>group_vars</code> (por PR). É uma porta de administração (chaves, ferramentas, terminal): nunca pelo túnel da Cloudflare nem pela internet. O <code>config.yaml</code> do Hermes é montado <strong>só leitura</strong>: o que for mudado pelo painel não grava, e a configuração só muda por PR.</p>
+<h3 id="custo">Custo<a class="headerlink" href="#custo" title="Permanent link">¶</a></h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Custo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VM <code>e2-micro</code>, 30 GB de disco padrão, IP externo</td>
+<td>US$ 0 (nível gratuito, <code>us-east1</code>)</td>
+</tr>
+<tr>
+<td>Secret Manager (um segredo) e bucket (&lt; 5 GB, região dos EUA)</td>
+<td>US$ 0</td>
+</tr>
+<tr>
+<td>Saída de rede</td>
+<td>1 GB por mês grátis; acima, cerca de US$ 0,12 por GB</td>
+</tr>
+<tr>
+<td>Tailscale (plano pessoal)</td>
+<td>US$ 0</td>
+</tr>
+<tr>
+<td>Modelo</td>
+<td>Teto no console da Anthropic (sugerido: US$ 30 por mês na implantação e US$ 10 depois) mais o Gemini do deriver, dos <em>embeddings</em> e da reserva (centavos)</td>
+</tr>
+</tbody>
+</table>
+<p>O alerta de orçamento do GCP fica em <strong>US$ 2</strong>.</p>
+<h2 id="o-que-ele-pode-e-o-que-não-pode">O que ele pode e o que não pode<a class="headerlink" href="#o-que-ele-pode-e-o-que-não-pode" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Pode</th>
+<th>Como</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ler, planejar e editar a wiki, rodar <code>check</code>, <code>sync</code>, <code>test</code> e <code>lint</code></td>
+<td>No terminal do container, no clone do repositório (<code>/repo</code>)</td>
+</tr>
+<tr>
+<td>Abrir PR e issue</td>
+<td>Pela conta de máquina <code>lioevano-sysadmin</code>; a <code>main</code> só muda pelo seu merge</td>
+</tr>
+<tr>
+<td>Diagnosticar a casa (só leitura)</td>
+<td><code>diagnostico(host, comando)</code>: lista fechada (<code>systemctl status</code>, <code>journalctl -u … -n</code>, <code>docker ps</code>, <code>docker logs</code>, <code>df</code>, <code>free</code>, <code>ip</code>, <code>ss -tlnp</code>, <code>ping</code>, <code>tailscale status</code>, <code>cat /etc/os-release</code>); qualquer outra forma, inclusive <code>;</code>, <code>&amp;&amp;</code>, <code>\|</code> e redirecionamentos, é recusada</td>
+</tr>
+<tr>
+<td>Listar playbooks e consultar pedidos de segredo</td>
+<td><code>playbooks_listar()</code> e <code>vault_status()</code></td>
+</tr>
+<tr>
+<td>Simular e aplicar um playbook</td>
+<td><code>ansible_check(playbook, limite)</code> e <code>ansible_aplicar(plano_id)</code>, <strong>cada um com botão</strong>; o <code>limite</code> só aceita um padrão de hosts do inventário (letras, números e <code>_ . - , : ! &amp; *</code>, até 200 caracteres): um <code>@arquivo</code> faria o Ansible ler um arquivo do executor como lista de hosts</td>
+</tr>
+<tr>
+<td>Rodar um comando livre num host</td>
+<td><code>comando(host, comando)</code>, <strong>com botão</strong>; uma linha, só caracteres visíveis, até 250 caracteres (o pedido mostra o comando por extenso, e o que passa de cerca de 300 caracteres depois de escapado é cortado). Algo maior vira script versionado por PR</td>
+</tr>
+<tr>
+<td>Pedir um segredo</td>
+<td><code>vault_preencher(chave)</code>: o bot de aprovações pergunta, <strong>a sua resposta é a aprovação</strong>, o valor vai direto ao vault cifrado e a mensagem é apagada. O valor nunca passa pelo modelo, pelo histórico do Hermes nem pelo Honcho</td>
+</tr>
+<tr>
+<td>Preparar o host Proxmox</td>
+<td><code>preparar_host()</code>: o bot de aprovações lhe manda o comando que você cola no console do host</td>
+</tr>
+<tr>
+<td>Pedir trabalho a outros agentes</td>
+<td>Issues no <code>homeserver-equipe</code> (<a href="#a-equipe">A equipe</a>)</td>
+</tr>
+</tbody>
+</table>
+<p>Todo pedido com botão vale só para a <strong>mesma ferramenta, alvo e argumentos</strong>, <strong>uma vez</strong>, em <strong>30 minutos</strong>. Há uma execução por vez, no máximo 5 pedidos pendentes, auditoria no log do container, com rotação de 3 × 10 MB (<code>logging</code> do compose), e saídas cortadas antes de voltar ao modelo. O executor <strong>só aceita botões do seu id</strong> (<code>telegram_chat_id</code>), ignora a própria VM do GCP como alvo (rodaria dentro dele, onde estão os segredos) e <code>setup-sysadmin.yml</code> não está entre os playbooks permitidos: o sysadmin não se reconfigura.</p>
+<p><strong>Não pode:</strong></p>
+<ul>
+<li>Alcançar a casa pelo terminal: o container não tem a chave SSH, e o tailnet, a LAN de casa e o servidor de metadados do GCP estão bloqueados para a rede dele (<a href="#rede-e-acl">Rede e ACL</a>). Tudo passa pelo executor.</li>
+<li>Ler a senha do vault, a chave SSH e a chave do Tailscale da casa: esses arquivos vão só ao executor.</li>
+<li>Dar <code>git push</code> na <code>main</code> nem mesclar PR (<code>AGENTS.md</code>: a exceção da página 02 vale para <code>ansible-playbook</code>, <code>ansible-vault</code> e <code>ssh</code> com o botão, nunca para push na <code>main</code>). O <em>ruleset</em> barra o push e o merge sem a sua aprovação; mesclar é sempre com você, mesmo depois de aprovado.</li>
+<li>Usar navegador, <code>computer_use</code>, subagentes (<code>delegation</code>), tarefas agendadas (<code>cronjob</code>), conexões novas (<code>connections</code>), busca na web, geração de mídia e voz, nem as outras plataformas de mensagem. Esses grupos estão em <code>agent.disabled_toolsets</code> no <code>config.yaml</code>. Ficam <strong>ligados</strong> <code>terminal</code>, <code>code_execution</code>, <code>file</code> (dentro do container), <code>skills</code>, <code>memory</code>, <code>todo</code>, <code>clarify</code> e <code>session_search</code>, mais o MCP do executor. A aprovação de comandos do próprio Hermes está desligada (<code>approvals.mode: off</code>): o container do sysadmin não guarda nada de valor, e os portões que valem são os do executor; assim você não recebe botão para um <code>rm</code> no clone.</li>
+<li>Responder a outra pessoa: o Hermes só aceita o <code>telegram_chat_id</code>.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Por que dois containers</p>
+<p>Um agente com terminal, internet e a chave SSH da casa seria uma injeção de prompt longe de entregar a casa. Por isso o <code>sysadmin</code> (que lê issues, PRs, logs e páginas de terceiros) não tem nada de valor, e o <code>executor</code> (que tem a senha do vault e a chave SSH) não tem modelo, não aceita conexões e só obedece a botões do seu id. É o padrão <code>ops</code> mais <code>aprovador</code> da <a href="../18-posto-agentes/#aprovação-humana">seção 18</a>, aqui no mesmo compose.</p>
+</div>
+<div class="admonition info">
+<p class="admonition-title">Dados que saem de casa</p>
+<p>O que você conversa, as saídas de diagnóstico e trechos de log vão à Anthropic, ao Google (reserva, deriver e <em>embeddings</em>) e ao GitHub (repositório privado da equipe). Segredos não: o canal de segredos não passa pelo modelo nem pelas issues.</p>
+</div>
+<h2 id="rede-e-acl">Rede e ACL<a class="headerlink" href="#rede-e-acl" title="Permanent link">¶</a></h2>
+<p>A VM <strong>recusa toda entrada</strong>: uma regra do firewall do GCP (<code>sysadmin-recusa-entrada</code>, prioridade 100) anula o <code>default-allow-ssh</code> da rede padrão. Telegram, Tailscale, GitHub e as APIs são conexões de saída. O acesso de manutenção é por SSH <strong>pelo Tailscale</strong>.</p>
+<ol>
+<li><strong>Tailscale da VM:</strong> entra sozinha no primeiro boot com a chave de uso único da <code>tag:sysadmin</code> (<code>--accept-routes</code>). Nós com tag não expiram a chave.</li>
+<li><strong>Host Proxmox como nó próprio</strong> (<code>pve</code>, <code>tag:homeserver</code>): anuncia as rotas <code>/32</code> do host, da core e da <code>ai</code>. Depois do <code>setup-vpn.yml</code> a core anuncia as mesmas três rotas (failover do Tailscale): se a core cair, as rotas seguem pelo host e o host continua alcançável. Os passos estão na <a href="../16-vpn-tailscale/#primeira-configuração">seção 16</a>.</li>
+<li><strong>ACL:</strong> cole no painel do Tailscale (<em>Access controls</em>) o conteúdo de <code>scripts/tailscale/acl.json</code>, que a <a href="../16-vpn-tailscale/#primeira-configuração">seção 16</a> mostra por inteiro e explica linha a linha (JSON estrito não aceita comentários). Em resumo: o <code>tag:sysadmin</code> alcança só o host (<code>:22</code>, <code>:8006</code>) e as VMs (<code>:22</code>, <code>:443</code>, <code>:53</code> na core; <code>:22</code> na <code>ai</code>); os seus aparelhos alcançam o sysadmin em <code>:22</code> e <code>:443</code>; <strong>nada da casa alcança o <code>tag:sysadmin</code></strong>, para que um servidor comprometido não chegue ao sysadmin. O <code>autoApprovers</code> só aprova as três rotas <code>/32</code>.</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">A ACL nova é mais estreita que a padrão</p>
+<p>Sem uma regra de aparelho para aparelho, o seu celular não alcança o seu PC pelo Tailscale (a ACL antiga, de "tudo para todos", alcançava). Se quiser, acrescente em <code>acls</code> uma regra com <code>autogroup:member</code> na origem e <code>autogroup:member:*</code> no destino.</p>
+</div>
+<p><strong>O container <code>sysadmin</code> não alcança o tailnet, a casa nem os metadados do GCP.</strong> A rede Docker dele (<code>sysadmin_rede</code>, ponte <code>br-sysadmin</code>, <code>172.30.10.0/24</code>) passa por uma cadeia <code>SYSADMIN</code> na tabela <code>raw</code> (<code>PREROUTING</code>) do host, criada pelo role <code>infra/sysadmin-gcp</code> (<code>ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2</code>) e reaplicada antes de cada (re)início do Docker. Ela descarta o que sai dessa rede para <code>100.64.0.0/10</code>, para a LAN de casa, para <code>169.254.169.254</code> (exceto DNS, que o GCP serve por lá), para o gateway da ponte e para o IP interno da VM. O <code>executor</code> fica numa rede à parte e alcança a casa pelo Tailscale do host da VM. O compose publica <strong>uma única porta</strong>, o painel em <code>127.0.0.1:9119</code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Use um projeto do GCP só para o sysadmin</p>
+<p>A regra <code>sysadmin-recusa-entrada</code> não tem <code>target-tags</code>: vale para a rede <code>default</code> <strong>inteira</strong> do projeto. Outras VMs no mesmo projeto perderiam o acesso de entrada. Crie um projeto dedicado.</p>
+</div>
+<h2 id="criar-o-sysadmin">Criar o sysadmin<a class="headerlink" href="#criar-o-sysadmin" title="Permanent link">¶</a></h2>
+<p>O sysadmin é criado <strong>antes</strong> do servidor: ele é a máquina de controle, e daí em diante quem conduz o <a href="../01-roteiro-primeiro-deploy/">roteiro</a> é ele. O passo a passo tem quatro tempos: as contas abaixo (a parte do sysadmin na fase 0 do roteiro), o <code>criar-sysadmin.sh</code> no Cloud Shell, o PR do vault e o <code>preparar_host</code> quando o Proxmox estiver instalado. Faça as contas nesta ordem (a ACL do Tailscale, em especial, vem antes das chaves).</p>
+<h3 id="1-o-que-você-leva-para-o-cloud-shell">1. O que você leva para o Cloud Shell<a class="headerlink" href="#1-o-que-você-leva-para-o-cloud-shell" title="Permanent link">¶</a></h3>
+<p>Tudo isso é seu (você nunca pede a ninguém para criar). Guarde cada chave e token no gerenciador de senhas à medida que cria: o <code>criar-sysadmin.sh</code> pede todos de uma vez, sem eco.</p>
+<h4 id="11-projeto-do-google-cloud">1.1. Projeto do Google Cloud<a class="headerlink" href="#11-projeto-do-google-cloud" title="Permanent link">¶</a></h4>
+<ol>
+<li>Em <a href="https://console.cloud.google.com/">console.cloud.google.com</a>, crie um <strong>projeto novo, só para o sysadmin</strong> (seletor de projetos → <em>New project</em>). Um projeto próprio é obrigatório: a regra que recusa toda entrada vale para a rede inteira do projeto (<a href="#rede-e-acl">Rede e ACL</a>).</li>
+<li>Vincule uma <strong>conta de faturamento</strong> ao projeto (<em>Billing</em>). A <code>e2-micro</code> em <code>us-east1</code>, <code>us-central1</code> ou <code>us-west1</code> está no nível gratuito, mas o GCP exige o cartão cadastrado; o script recusa outras regiões e cria o alerta de orçamento de US$ 2.</li>
+<li>Conta nova começa no <strong>período de teste</strong> (<em>Free Trial</em>): ative a <strong>conta completa</strong> (<em>Activate full account</em>, ou <em>Upgrade</em> em <em>Billing</em>). Sem isso, quando o teste acaba o GCP para tudo o que foi criado nele, e o sysadmin para junto. O nível gratuito continua valendo depois da ativação.</li>
+<li>Anote o <strong>id do projeto</strong> (não o nome). APIs, conta de serviço, bucket, firewall e a VM ficam com o script.</li>
+</ol>
+<h4 id="12-chaves-dos-modelos">1.2. Chaves dos modelos<a class="headerlink" href="#12-chaves-dos-modelos" title="Permanent link">¶</a></h4>
+<ol>
+<li><strong>Anthropic</strong> (<a href="https://console.anthropic.com/">console.anthropic.com</a>): um <em>workspace</em> <code>sysadmin</code>, com <strong>limite de gasto próprio</strong>, e nele a chave de API do sysadmin, separada das de casa. O limite do <em>workspace</em> segura o custo se algo sair do controle sem cortar as chaves da casa (um teto só na organização valeria para todas).</li>
+<li><strong>Gemini</strong> (<a href="https://aistudio.google.com/">aistudio.google.com</a>): uma chave de API <strong>no projeto do sysadmin</strong> (o do 1.1, com faturamento: <strong>plano pago</strong>), para o gasto entrar no alerta de US$ 2. Ela serve ao deriver e aos <em>embeddings</em> do Honcho e é a reserva do Hermes.</li>
+</ol>
+<h4 id="13-bots-do-telegram">1.3. Bots do Telegram<a class="headerlink" href="#13-bots-do-telegram" title="Permanent link">¶</a></h4>
+<ol>
+<li>No <a href="https://t.me/BotFather">@BotFather</a>, <code>/newbot</code> <strong>quatro vezes</strong>, um token para cada: o do <strong>sysadmin</strong> (a conversa), o de <strong>aprovações do sysadmin</strong> (botões e segredos), o de <strong>avisos</strong> (n8n e <code>aprovador</code> de casa) e o do <strong>assistente</strong>. Um bot só aceita um leitor por vez, por isso são quatro.</li>
+<li>Mande <code>/start</code> aos bots do sysadmin e de aprovações e descubra o id do seu chat (<code>telegram_chat_id</code>): é o <code>chat.id</code> da resposta de <code>getUpdates</code>.</li>
+</ol>
+<div class="language-bash highlight"><span class="filename">Exemplo: o id do seu chat, depois do /start (troque o token)</span><pre><span></span><code><span id="__span-0-1"><a href="#__codelineno-0-1" id="__codelineno-0-1" name="__codelineno-0-1"></a><span class="nb">read</span><span class="w"> </span>-rs<span class="w"> </span>-p<span class="w"> </span><span class="s2">"Token do bot de aprovações: "</span><span class="w"> </span>T<span class="p">;</span><span class="w"> </span><span class="nb">echo</span>
+</span><span id="__span-0-2"><a href="#__codelineno-0-2" id="__codelineno-0-2" name="__codelineno-0-2"></a>curl<span class="w"> </span>-s<span class="w"> </span><span class="s2">"https://api.telegram.org/bot</span><span class="nv">$T</span><span class="s2">/getUpdates"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>python3<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import json, sys; print({u["message"]["chat"]["id"] for u in json.load(sys.stdin)["result"] if "message" in u})'</span>
+</span><span id="__span-0-3"><a href="#__codelineno-0-3" id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="nb">unset</span><span class="w"> </span>T
+</span></code></pre></div>
+<h4 id="14-github">1.4. GitHub<a class="headerlink" href="#14-github" title="Permanent link">¶</a></h4>
+<ol>
+<li><strong>Conta de máquina.</strong> Crie a conta <code>lioevano-sysadmin</code>, com e-mail próprio e <strong>2FA</strong> ligado (o código do 2FA também vai para o gerenciador de senhas). O GitHub aceita uma conta de máquina além da sua pessoal, desde que só automatize.</li>
+<li><strong>Colaboradora.</strong> No <code>wiki-home-server</code>, <em>Settings → Collaborators → Add people</em> e convide a conta de máquina; aceite o convite entrando com ela. Num repositório de conta pessoal, todo colaborador tem <strong>escrita</strong>: quem protege a <code>main</code> é o <em>ruleset</em> do passo seguinte.</li>
+<li><strong>Ruleset da <code>main</code>.</strong> <em>Settings → Rules → Rulesets → New branch ruleset</em>: nome <code>main</code>, <em>Enforcement</em> <strong>Active</strong>, alvo <em>Include default branch</em>, e as regras <em>Restrict deletions</em>, <em>Block force pushes</em> e <em>Require a pull request before merging</em> com <strong>1 aprovação</strong> e <em>Require approval of the most recent reviewable push</em>. Na <em>Bypass list</em>, só o papel <em>Repository admin</em> (você), no modo <strong>For pull requests only</strong>: você mescla os seus próprios PRs sem esperar aprovação de ninguém, mas nem você empurra direto para a <code>main</code>. A conta de máquina não entra na lista: ela abre PRs, e nada dela entra na <code>main</code> sem a sua aprovação, nem um push depois que você aprovou. A partir daqui, toda mudança, inclusive as do Claude e as suas, entra por PR. Não exija <em>status checks</em>: o <code>server-lint</code> só roda em PRs que mexem no <code>server/</code> ou no <code>tools/</code>, e um PR só da wiki ficaria esperando um check que nunca vem.</li>
+<li><strong>Repositório da equipe.</strong> Crie o <code>lioevano/homeserver-equipe</code>, <strong>privado</strong>, convide a conta de máquina como colaboradora (e aceite) e crie as etiquetas do protocolo (<a href="#a-equipe">A equipe</a>):</li>
+</ol>
+<div class="language-bash highlight"><span class="filename">Exemplo: as etiquetas do homeserver-equipe (gh autenticado na sua conta)</span><pre><span></span><code><span id="__span-1-1"><a href="#__codelineno-1-1" id="__codelineno-1-1" name="__codelineno-1-1"></a><span class="nv">R</span><span class="o">=</span>lioevano/homeserver-equipe
+</span><span id="__span-1-2"><a href="#__codelineno-1-2" id="__codelineno-1-2" name="__codelineno-1-2"></a><span class="k">for</span><span class="w"> </span>p<span class="w"> </span><span class="k">in</span><span class="w"> </span>sysadmin<span class="w"> </span>metricas<span class="w"> </span>apps<span class="w"> </span>variaveis<span class="w"> </span>atualizacoes<span class="w"> </span>backup<span class="w"> </span>assistente<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>gh<span class="w"> </span>label<span class="w"> </span>create<span class="w"> </span><span class="s2">"papel:</span><span class="nv">$p</span><span class="s2">"</span><span class="w"> </span>-R<span class="w"> </span><span class="s2">"</span><span class="nv">$R</span><span class="s2">"</span><span class="w"> </span>--color<span class="w"> </span>1d76db<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+</span><span id="__span-1-3"><a href="#__codelineno-1-3" id="__codelineno-1-3" name="__codelineno-1-3"></a><span class="k">for</span><span class="w"> </span>e<span class="w"> </span><span class="k">in</span><span class="w"> </span>aberto<span class="w"> </span>em-andamento<span class="w"> </span>feito<span class="w"> </span>bloqueado<span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>gh<span class="w"> </span>label<span class="w"> </span>create<span class="w"> </span><span class="s2">"estado:</span><span class="nv">$e</span><span class="s2">"</span><span class="w"> </span>-R<span class="w"> </span><span class="s2">"</span><span class="nv">$R</span><span class="s2">"</span><span class="w"> </span>--color<span class="w"> </span>0e8a16<span class="p">;</span><span class="w"> </span><span class="k">done</span>
+</span><span id="__span-1-4"><a href="#__codelineno-1-4" id="__codelineno-1-4" name="__codelineno-1-4"></a>gh<span class="w"> </span>label<span class="w"> </span>create<span class="w"> </span>diario<span class="w"> </span>-R<span class="w"> </span><span class="s2">"</span><span class="nv">$R</span><span class="s2">"</span><span class="w"> </span>--color<span class="w"> </span>5319e7<span class="w"> </span>--description<span class="w"> </span><span class="s2">"diário de fase do sysadmin"</span>
+</span></code></pre></div>
+<ol>
+<li><strong>Token da conta de máquina</strong> (<code>github_token_sysadmin</code>). Entre com a conta de máquina e crie um token <strong>clássico</strong> (<em>Settings → Developer settings → Personal access tokens → Tokens (classic)</em>) com <strong>só o escopo <code>repo</code></strong> e validade definida (anote quando vence; para trocar, grave o novo em <code>github_token_sysadmin</code> no segredo do GCP e reinicie a unit dos segredos, como na <a href="../../04-manutencao-recuperacao/04-reconstruindo-infraestrutura/#passos-detalhados-para-reconstrução-da-infraestrutura">reentrada do host</a>). Tem de ser clássico: o GitHub não deixa um token <em>fine-grained</em> contribuir num repositório em que a conta é só colaboradora, e cada um só alcança os repositórios de um dono. O escopo <code>repo</code> vale para os repositórios em que a conta de máquina é colaboradora (só estes dois) e, <strong>sem</strong> o escopo <code>workflow</code>, ela não consegue alterar o CI (<code>.github/workflows/</code>).</li>
+<li><strong>Token do carteiro</strong> (<code>github_token_carteiro</code>). Na <strong>sua</strong> conta, um token <em>fine-grained</em>: <em>Resource owner</em> você, <em>Only select repositories</em> <code>homeserver-equipe</code>, permissão de repositório <strong>Issues: Read-only</strong> (o <em>Metadata</em> de leitura vem junto). Ele só lê issues e comentários.</li>
+</ol>
+<h4 id="15-tailscale">1.5. Tailscale<a class="headerlink" href="#15-tailscale" title="Permanent link">¶</a></h4>
+<ol>
+<li><strong>Conta e aparelhos.</strong> Crie a conta (plano gratuito) em <a href="https://login.tailscale.com/">login.tailscale.com</a> e instale o Tailscale no PC e no celular, entrando com ela: o painel do Hermes e o SSH de manutenção da VM só existem pelo tailnet, já no teste da fase 1.</li>
+<li><strong>ACL primeiro.</strong> No painel, <em>Access controls</em>: cole o <code>scripts/tailscale/acl.json</code> inteiro (<a href="../16-vpn-tailscale/#primeira-configuração">seção 16</a>). O painel só cria chave com uma tag que esteja nos <code>tagOwners</code> dela.</li>
+<li><strong>HTTPS do tailnet.</strong> Em <em>DNS</em>, ligue <em>MagicDNS</em> e <em>HTTPS Certificates</em>: o painel do Hermes é publicado pelo <code>tailscale serve</code>.</li>
+<li><strong>Três chaves</strong>, em <em>Settings → Keys → Generate auth key</em>, cada uma <strong>de uso único</strong> (<em>Reusable</em> desligado), <strong>pré-aprovada</strong>, não efêmera e com a tag: <code>tag:sysadmin</code> (a VM do GCP) e <code>tag:homeserver</code> (o host Proxmox), que o <code>criar-sysadmin.sh</code> pede e guarda no segredo do GCP, e outra <code>tag:homeserver</code>, a da core, que vai para o vault (<code>tailscale_auth_key</code>) pelo <code>vault_preencher</code> na fase 1. As chaves vencem (90 dias, por padrão): a do host só é usada na fase 2 e a da core na fase 3; se passar disso, gere outra (a do host vai para o segredo do GCP como na <a href="../../04-manutencao-recuperacao/04-reconstruindo-infraestrutura/#passos-detalhados-para-reconstrução-da-infraestrutura">reentrada do host</a>; a da core, pelo <code>vault_preencher</code>).</li>
+</ol>
+<p>Com tudo isso em mãos, a criação da VM é um comando só.</p>
+<h3 id="2-criar-a-vm-cloud-shell">2. Criar a VM (Cloud Shell)<a class="headerlink" href="#2-criar-a-vm-cloud-shell" title="Permanent link">¶</a></h3>
+<p>Abra o <strong>Cloud Shell</strong> (o ícone <code>&gt;_</code> no alto do console do GCP, com o projeto do <a href="#11-projeto-do-google-cloud">1.1</a> selecionado) e rode <strong>uma vez</strong> (precisa de Python 3.12 ou mais novo; sem ele, o script para na etapa 9 e mostra a versão que achou; o segredo já gravado é reaproveitado quando você rodar de novo):</p>
+<div class="language-bash highlight"><span class="filename">Exemplo: criar o sysadmin no Cloud Shell</span><pre><span></span><code><span id="__span-2-1"><a href="#__codelineno-2-1" id="__codelineno-2-1" name="__codelineno-2-1"></a>gcloud<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>project<span class="w"> </span>&lt;projeto&gt;
+</span><span id="__span-2-2"><a href="#__codelineno-2-2" id="__codelineno-2-2" name="__codelineno-2-2"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/lioevano/wiki-home-server/main/server/scripts/gcp/criar-sysadmin.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>bash
+</span></code></pre></div>
+<p>O <code>scripts/gcp/criar-sysadmin.sh</code>:</p>
+<ol>
+<li>liga as APIs e cria a conta de serviço <code>sysadmin-vm</code> (<code>secretAccessor</code> só no segredo, <code>objectAdmin</code> só no bucket, nenhum papel no projeto);</li>
+<li>cria o bucket <code>&lt;projeto&gt;-sysadmin</code> (os backups são apagados em 30 dias) e as regras de firewall: a que recusa toda entrada e a <code>sysadmin-iap-emergencia</code>, <strong>desligada</strong>;</li>
+<li>cria o alerta de orçamento de US$ 2;</li>
+<li>pede, <strong>sem eco</strong>, as chaves e os tokens da seção anterior, gera o resto (tokens internos, senha do Honcho, senha do painel, <strong>senha do vault</strong>, chave SSH do executor) e grava tudo no segredo <code>sysadmin-segredos</code>;</li>
+<li>roda o <code>gerar_vault.py</code> no próprio Cloud Shell, mostra o bloco "anote" e envia o <code>vault.yml</code> <strong>cifrado</strong> para <code>gs://&lt;projeto&gt;-sysadmin/entrada/vault.yml</code>;</li>
+<li>cria a VM, cujo <em>startup-script</em> instala o <code>ansible-core</code> fixado e faz o primeiro <code>ansible-pull</code> da <code>main</code>.</li>
+</ol>
+<div class="admonition danger">
+<p class="admonition-title">Guarde o que aparece na tela</p>
+<p>No fim ele mostra <strong>uma vez</strong> a senha do painel e a <strong>senha do vault</strong> (e, antes, o bloco com as senhas do <code>gerar_vault.py</code>, incluindo a do restic). Guarde no gerenciador de senhas: sem a senha do vault você perde o acesso aos segredos da casa.</p>
+</div>
+<p>Repetir o script é seguro: ele reaproveita o segredo existente (nada de senha, chave SSH ou vault novos) e recria uma VM perdida. Se a <code>main</code> já tem <code>vault.yml</code>, <strong>a <code>main</code> manda</strong>: o script não gera vault e apaga o <code>entrada/vault.yml</code> que sobrou da fase 1, para a VM nova não o semear no <code>saida/</code> (mesmo semeado, ele não valeria: sem <code>.base</code>, o executor lê o da <code>main</code>). Só <code>REGERAR=1</code> (com confirmação) gera tudo de novo.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>REGERAR=1</code> com o vault já na <code>main</code></p>
+<p>A senha do vault muda, e o <code>vault.yml</code> da <code>main</code> continua cifrado com a antiga e valendo sobre o de entrada: o executor não o lê e nenhum playbook roda. O script avisa antes de perguntar. Para recomeçar do zero, primeiro remova o <code>vault.yml</code> da <code>main</code> por PR e apague a VM (<code>gcloud compute instances delete sysadmin --zone=us-east1-b</code>), e só então rode com <code>REGERAR=1</code>: o vault de entrada novo vira o PR do vault. Para recriar uma VM perdida, rode <strong>sem</strong> <code>REGERAR</code>.</p>
+</div>
+<p>A VM leva de <strong>20 a 40 minutos</strong> para se configurar (as imagens <code>sysadmin</code> e <code>executor</code> são compiladas na e2-micro). Acompanhe com <code>gcloud compute instances get-serial-port-output sysadmin --zone=us-east1-b | tail -n 30</code>. Quando o nó <code>sysadmin</code> aparecer no Tailscale e o bot do sysadmin responder, está de pé. A partir daí, toda a configuração da VM vem de <code>ansible/playbooks/setup-sysadmin.yml</code>, que a própria VM puxa da <code>main</code> no primeiro boot e num timer diário (05:17 UTC), configurando Docker, Tailscale e o role <code>infra/sysadmin-gcp</code>. Ele fica <strong>fora</strong> do <code>full-deploy.yml</code>, e só o <code>main.yml</code> entra nele, nunca o vault.</p>
+<h3 id="3-o-pr-do-vault">3. O PR do vault<a class="headerlink" href="#3-o-pr-do-vault" title="Permanent link">¶</a></h3>
+<p>O vault de entrada está em <code>/saida/vault.yml</code> (cifrado, só leitura para o sysadmin, que não o decifra). Peça: "abra o PR do vault". O sysadmin copia o arquivo para <code>server/ansible/inventories/home/group_vars/all/vault.yml</code>, roda o <code>python tools/dev.py check</code> e abre o PR; você revisa (é um arquivo cifrado: confira que começa com <code>$ANSIBLE_VAULT;</code> e mescle). As chaves que vêm de fora (Cloudflare, domínio, provedores de LLM, ProtonVPN, B2 e a senha do root do Proxmox) ficam com o texto do modelo: o sysadmin as pede <strong>uma a uma</strong> pelo <code>vault_preencher</code> quando a fase chegar nelas, e cada preenchimento regrava o <code>saida/vault.yml</code>. Os playbooks rodam com o vault da <code>main</code>: o PR do vault com as chaves novas é mesclado <strong>antes</strong> de qualquer playbook que as use, não ao fim da fase. Logo antes de abrir o PR, o sysadmin chama o <code>vault_status</code>: ele faz o <code>git pull</code> da <code>main</code> do executor e diz se o <code>saida/vault.yml</code> tem edições pendentes sobre ela e qual é a <strong>base</strong> (o sha256 do vault da <code>main</code> em que elas se apoiam). O sysadmin cria o branch da <code>main</code> mais nova e só copia o arquivo se o <code>sha256sum</code> do <code>vault.yml</code> do branch for essa base: se outro PR mudou o vault no meio, ele chama o <code>vault_status</code> de novo em vez de abrir um PR que desfaria essa mudança (você não teria como notar: o arquivo é cifrado). Sem a <code>main</code> atualizada (git fora, outra execução em andamento), o <code>vault_status</code> diz para não abrir o PR.</p>
+<p>Mesclado o PR, as edições que ele não levou (chaves preenchidas com o PR já aberto) <strong>não se perdem</strong>: na primeira leitura depois que a <code>main</code> muda, o executor as reaplica sobre a <code>main</code> nova, chave a chave, comparando com o ancestral guardado em <code>saida/.base.yml</code> e com cada versão do vault na história da <code>main</code> desde a base. As que a <code>main</code> já teve em algum momento caem (foram mescladas; se depois um PR as mudou ou reverteu, vale a <code>main</code>); se a <code>main</code> mudou para outro valor uma chave que você preencheu e que ela nunca teve, vale a <code>main</code> e o executor avisa o <strong>nome</strong> da chave, uma vez no bot de aprovações e no <code>vault_status</code> até você preenchê-la de novo. Quando não sobra nada a reaplicar, o <code>saida/</code> é <strong>apagado</strong>: um <code>saida/</code> superado nunca volta a valer, nem se a <code>main</code> voltar ao conteúdo antigo. Se a <code>main</code> some no meio de um <code>git pull</code>, o executor recusa ler o vault até ela voltar.</p>
+<h3 id="4-preparar-o-host-proxmox">4. Preparar o host Proxmox<a class="headerlink" href="#4-preparar-o-host-proxmox" title="Permanent link">¶</a></h3>
+<p>Com o Proxmox instalado pelo pendrive, o sysadmin chama <code>preparar_host()</code>: o bot de aprovações lhe manda <strong>um comando</strong> para colar no console do host. O <code>scripts/gcp/preparar-host.sh</code> (que é repetível) instala o Tailscale e entra no tailnet com a chave de uso único da <code>tag:homeserver</code>, anunciando as rotas <code>/32</code>; liga o encaminhamento de pacotes; cria o usuário do Ansible, sem senha, com <code>sudo</code>; e autoriza a chave pública do executor. É o último passo físico na rede. A senha de root do Proxmox, que o <code>proxmox_api_password</code> do vault pede, entra por <code>vault_preencher</code>. Daí em diante o <code>setup-proxmox-host.yml</code> gerencia esse Tailscale pelo role <code>infra/tailscale</code>, que passou a aceitar Debian.</p>
+<h3 id="5-daqui-em-diante">5. Daqui em diante<a class="headerlink" href="#5-daqui-em-diante" title="Permanent link">¶</a></h3>
+<p>Mande <code>/status-implantacao</code> para ver a fase atual, as pendências suas, os pedidos abertos, o gasto do mês e a memória da VM, e <code>/implantar-fase 1</code> para começar. Os segredos ficam em <code>/run/sysadmin</code> (um <code>tmpfs</code>, 0600), separados por container pelo <code>scripts/gcp/separar_segredos.py</code>: o sysadmin recebe só o que é dele e <strong>falha fechado</strong> se faltar um campo. O backup roda todo dia às 06:07 UTC (o <code>pg_dump</code> do Honcho e o diretório do Hermes, sem <code>.env</code> nem <code>auth.json</code>) em <code>gs://&lt;projeto&gt;-sysadmin/backup/&lt;data&gt;/</code>. O <code>ansible-pull</code> das 05:17 UTC mantém a VM igual à <code>main</code>; a atualização do próprio Hermes, do Honcho e das imagens acontece por PR de versão no <code>group_vars</code>. O <code>ansible-core</code> da VM e as coleções seguem o <code>group_vars</code> e o <code>requirements.yml</code> com um dia de atraso: são atualizados <strong>antes</strong> de cada <code>ansible-pull</code>, a partir do clone da execução anterior, nunca no meio de uma. Se o backup ou o <code>ansible-pull</code> falhar, o bot de aprovações avisa.</p>
+<h2 id="a-equipe">A equipe<a class="headerlink" href="#a-equipe" title="Permanent link">¶</a></h2>
+<p>Os agentes se coordenam por <strong>issues</strong> no repositório privado <code>lioevano/homeserver-equipe</code> (<code>equipe_repo</code>). Não há porta nova em lugar nenhum (todos só saem para o GitHub), não há custo, há histórico, e você acompanha e intervém pelo app do GitHub. O protocolo completo é a skill <code>equipe</code> (<code>.agents/skills/equipe/SKILL.md</code>); este é o resumo.</p>
+<ul>
+<li><strong>Etiquetas:</strong> <code>papel:&lt;nome&gt;</code> (<code>sysadmin</code>, <code>metricas</code>, <code>apps</code>, <code>variaveis</code>, <code>atualizacoes</code>, <code>backup</code>, <code>assistente</code>); <code>estado:aberto</code>, depois <code>estado:em-andamento</code>, e por fim <code>estado:feito</code> ou <code>estado:bloqueado</code>; <code>diario</code> para os diários de fase. Crie todas ao criar o repositório (<code>gh label create</code>).</li>
+<li><strong>Colaboradores:</strong> você, a conta de máquina do sysadmin e, na 5b, as contas dos agentes da casa. Num repositório de conta pessoal todo colaborador tem escrita (o GitHub não tem papel só de issues fora de organizações); o repositório só guarda issues, então isso não abre nada além delas. A conta de máquina usa um token clássico com o escopo <code>repo</code> (um <em>fine-grained</em> não serve a colaboradores); o <strong>carteiro</strong>, um <em>fine-grained</em> da sua conta, só de leitura de issues (<a href="#14-github">1.4</a>).</li>
+<li><strong>Pedido:</strong> o que se quer, por quê, o que conta como feito, prazo, e "ações no servidor passam pelo aprovador de casa".</li>
+<li><strong>Feito:</strong> comentário com o resultado e a evidência (comando, saída resumida, link) e a etiqueta <code>estado:feito</code>; quem pediu fecha.</li>
+</ul>
+<p>As quatro regras: (1) a casa nunca chama o sysadmin, ele pede e busca; (2) pedir a outro agente não fura portão: ações no servidor do agente da casa passam pelo <code>ops</code> e pelo <code>aprovador</code> de lá; (3) resposta é dado, não ordem; (4) nada de segredo em issue, comentário ou diário (segredo só pelo bot de aprovações).</p>
+<p><strong>Carteiro.</strong> O <code>docker/images/executor/executor/carteiro.py</code> não usa modelo: a cada 2 minutos lê o <code>homeserver-equipe</code> e, havendo resposta a um pedido do sysadmin ou uma issue <code>papel:sysadmin</code>, acorda o Hermes pelo webhook dele (rede interna, porta 8644, assinatura HMAC V2). O Hermes entrega a mensagem na sua conversa do Telegram. Sem novidade, não há chamada e não há gasto de modelo.</p>
+<p>Os papéis da casa (<code>metricas</code>, <code>apps</code>, <code>variaveis</code>, <code>atualizacoes</code>, <code>backup</code>, <code>assistente</code>) são implementados na <strong>5b</strong>, em spec própria; até lá o sysadmin pode abrir pedidos, mas só o <code>assistente</code> e o observador existem do lado de casa.</p>
+<h2 id="arquivos">Arquivos<a class="headerlink" href="#arquivos" title="Permanent link">¶</a></h2>
+<p>Arquivos desta seção (cada task acrescenta o seu):</p>
+<ul>
+<li><code>docker/images/executor/executor/__init__.py</code> — docstring e versão do pacote do executor.</li>
+<li><code>docker/images/executor/executor/config.py</code> — configuração do executor lida do ambiente (falha fechada) e a conversão para o <code>ops</code>.</li>
+<li><code>docker/images/executor/executor/portao.py</code> — portão de aprovação: toda ação que muda a casa só roda com pedido aprovado pelo Léo no Telegram.</li>
+<li><code>docker/images/executor/executor/remoto.py</code> — comandos remotos por Ansible ad-hoc e o validador dos comandos de diagnóstico; hosts de conexão local (o <code>sysadmin-gcp</code>) ficam fora: rodariam dentro do próprio executor, onde estão os segredos.</li>
+<li><code>docker/images/executor/executor/vault.py</code> — edita o vault do Ansible: lê, troca o valor de uma folha do modelo e grava cifrado, sob uma trava só e de forma atômica, em <code>saida/vault.yml</code>; em <code>saida/.base</code>, o sha256 do vault da <code>main</code> em que se baseou, o do ancestral e o último commit que mudou o vault da <code>main</code>; em <code>saida/.base.yml</code>, o próprio ancestral (cifrado). Se a <code>main</code> mudou (conteúdo ou história), reaplica sobre ela as edições que ela nunca teve, consultando o <code>git log</code> do vault, e registra em <code>saida/.conflitos</code> os nomes das que ela mudou para outro valor; sem nada a reaplicar, ou sem ancestral (o <code>entrada/</code> semeado), apaga o <code>saida/</code>; recusa ler se a <code>main</code> sumiu depois de servir de base.</li>
+<li><code>docker/images/executor/executor/segredos.py</code> — canal de segredos: o Léo responde a um pedido no Telegram e o valor vai direto ao vault, sem passar pelo modelo, por log ou por mensagem; se a <code>main</code> tinha mudado chaves que ele preencheu, avisa os nomes delas.</li>
+<li><code>docker/images/executor/executor/leitor.py</code> — leitor do Telegram do executor: cliques nos botões vão ao aprovador e mensagens ao canal de segredos.</li>
+<li><code>docker/images/executor/executor/carteiro.py</code> — carteiro: sem modelo, consulta o repositório da equipe e acorda o sysadmin pelo webhook do Hermes (assinatura HMAC V2) quando há novidade para ele.</li>
+<li><code>docker/images/executor/executor/ferramentas.py</code> — ferramentas MCP do executor: diagnóstico de leitura, comando e playbooks pelo portão de aprovação (o <code>limite</code> passa pelo <code>checar_limite</code> do <code>ops</code>), pedido de segredos ao Léo, o <code>vault_status</code> (que atualiza a <code>main</code> do executor antes de responder) e o comando de preparo do host.</li>
+<li><code>docker/images/executor/executor/servidor.py</code> — ponto de entrada: sobe o leitor do Telegram e o carteiro em threads que se recuperam de erros e serve o MCP atrás do token.</li>
+<li><code>docker/images/executor/executor/__main__.py</code> — <code>python -m executor</code> chama o <code>servidor.main</code>.</li>
+<li><code>docker/images/executor/Dockerfile</code> — imagem do executor (FastMCP, ansible-core, git e ssh), como a do ops mais o aprovador; roda sem root.</li>
+<li><code>docker/images/executor/.dockerignore</code> — deixa o cache do Python fora da imagem.</li>
+<li><code>scripts/gcp/preparar-host.sh</code> — o comando único que o Léo cola no console do host Proxmox: Tailscale com a chave de uso único, usuário do Ansible com sudo e a chave SSH do sysadmin (repetível).</li>
+<li><code>docker/images/sysadmin/Dockerfile</code> — imagem do sysadmin: Hermes Agent mais Ansible, <code>gh</code>, git, ssh, o ambiente do <code>tools/dev.py</code>, as coleções do Ansible (instaladas na construção) e o cliente do Honcho (<code>honcho-ai</code>); o contexto de build traz <code>requirements-dev.txt</code>, <code>wiki/requirements.txt</code> e <code>requirements.yml</code>.</li>
+<li><code>ansible/templates/sysadmin/config.yaml.j2</code> — <code>config.yaml</code> do Hermes: modelos, memória no Honcho, executor por MCP, webhook da equipe e ferramentas desligadas.</li>
+<li><code>ansible/templates/sysadmin/SOUL.md.j2</code> — identidade e regras do sysadmin (wiki primeiro, só por PR, tudo pelo executor, segredos só por <code>vault_preencher</code>).</li>
+<li><code>ansible/templates/sysadmin/honcho.json.j2</code> — <code>honcho.json</code> do plugin: servidor próprio, workspace e pares.</li>
+<li><code>ansible/templates/sysadmin/honcho-config.toml.j2</code> — <code>config.toml</code> do Honcho: só Gemini, sem Redis e sem telemetria.</li>
+<li><code>scripts/gcp/separar_segredos.py</code> — separa o JSON do Secret Manager em arquivos por container no tmpfs <code>/run/sysadmin</code>: o sysadmin nunca recebe a senha do vault, a chave SSH nem a chave do Tailscale da casa; o host recebe a chave do Tailscale da VM e o token do bot de aprovações para o alerta; falha fechada se faltar campo.</li>
+<li><code>docker/stacks/sysadmin/docker-compose.yml</code> — stack do sysadmin na VM da GCP: Hermes (gateway e painel em <code>127.0.0.1:9119</code>), executor e Honcho (API, deriver e banco), em redes separadas, com logs rotacionados (3 × 10 MB por container); <code>config.yaml</code>, <code>SOUL.md</code>, <code>honcho.json</code> e o plugin do Honcho entram só leitura, de <code>config/</code> (do root).</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2</code> — firewall da rede do sysadmin (cadeia <code>SYSADMIN</code> na tabela <code>raw</code> PREROUTING, pela bridge <code>br-sysadmin</code>): bloqueia o tailnet, a LAN de casa e o servidor de metadados da GCP.</li>
+<li><code>ansible/playbooks/setup-sysadmin.yml</code> — configura a VM do sysadmin a partir dela mesma (<code>ansible-pull</code> da <code>main</code>, no primeiro boot e no timer diário): Docker sem Portainer, Tailscale com <code>tag:sysadmin</code> e o role <code>infra/sysadmin-gcp</code>; só o <code>main.yml</code> entra (por <code>vars_files</code>), nunca o vault, e fica fora do <code>full-deploy.yml</code>.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/defaults/main.yml</code> — padrões do role: bucket (<code>&lt;projeto&gt;-sysadmin</code>), UIDs do Hermes e do executor, endereços do repositório e do Honcho, fuso dos containers.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/tasks/main.yml</code> — swap de 4 GB cifrada (chave aleatória a cada boot), firewall, diretórios em <code>/opt/sysadmin</code> (o root não escreve nem roda git onde um container escreve: as configurações e o plugin ficam em <code>config/</code>, só leitura, e os clones são criados uma vez e entregues ao dono), as imagens <code>sysadmin</code> e <code>executor</code> (reconstruídas quando a versão ou o contexto muda, ou quando o último build falhou), a stack, o painel pelo <code>tailscale serve</code>, o aviso de falha e os timers.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/tasks/contexto-limpo.yml</code> — apaga do contexto de build de cada imagem os arquivos que saíram do repositório (o <code>copy</code> só acrescenta), e um arquivo apagado também pede build novo.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/tasks/segredos.yml</code> — projeto da GCP pelo servidor de metadados, o <code>separar_segredos.py</code> em <code>/usr/local/lib/sysadmin/</code> e a unit dos segredos, executada na hora (o playbook a roda antes do Tailscale, que lê a chave do tmpfs).</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2</code> — unit que, antes do Docker, lê o <code>sysadmin-segredos</code> do Secret Manager e o separa em <code>/run/sysadmin</code>, tentando de novo a cada minuto se falhar (e traz o <code>vault.yml</code> de entrada do bucket, se ainda não houver um em <code>saida/</code> e o clone da <code>main</code> do executor ainda não tiver <code>vault.yml</code>); o <code>gcloud</code> não grava log em disco.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.service.j2</code> — unit que aplica o <code>firewall-sysadmin.sh</code> antes de cada (re)início do Docker.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.service.j2</code> — o <code>ansible-pull</code> da <code>main</code> (de <code>/</code>, com o <code>ansible.cfg</code> do clone e sem <code>group_vars</code> automáticos, para o vault cifrado não ser lido); antes dele, o <code>ansible-core</code> e as coleções do clone anterior; falhou, avisa.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-ansible-core.sh.j2</code> — antes de cada <code>ansible-pull</code>, põe o <code>ansible-core</code> do venv <code>/opt/ansible</code> na <code>ops_ansible_core_version</code> do clone anterior (o primeiro boot instala a da criação).</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-alerta.sh.j2</code> — avisa no bot de aprovações que uma unit falhou: só o nome e a hora, com o token lido do tmpfs e passado ao <code>curl</code> pelo stdin.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-alerta.service.j2</code> — instalada como <code>sysadmin-alerta@.service</code>: a unit que o <code>OnFailure=</code> do backup e do <code>ansible-pull</code> chama, com o nome da unit que falhou.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.timer.j2</code> — atualização diária às 05:17 UTC.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.sh.j2</code> — backup da memória: <code>pg_dump</code> do banco do Honcho e o diretório do Hermes (sem <code>.env</code> nem <code>auth.json</code>) em <code>gs://&lt;bucket&gt;/backup/&lt;data&gt;/</code>.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.service.j2</code> — unit do backup; falhou, avisa.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.timer.j2</code> — backup diário às 06:07 UTC.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin.env.j2</code> — <code>.env</code> da stack, só com valores não secretos: versões, caminhos, a sub-rede do sysadmin, os playbooks e as rotas do executor.</li>
+<li><code>scripts/gcp/criar-sysadmin.sh</code> — roda uma vez no Cloud Shell: liga as APIs, cria a conta de serviço <code>sysadmin-vm</code> (<code>secretAccessor</code> só no segredo, <code>objectAdmin</code> só no bucket), o bucket <code>&lt;projeto&gt;-sysadmin</code> (backups apagados em 30 dias), a regra que recusa toda entrada, o alerta de orçamento de US$ 2, o segredo <code>sysadmin-segredos</code> (chaves digitadas sem eco, o resto gerado), o <code>vault.yml</code> cifrado em <code>entrada/</code> e a VM, cujo startup-script instala o <code>ansible-core</code> fixado e faz o primeiro <code>ansible-pull</code>, igual ao do timer diário. Repetido, reaproveita o segredo existente (só <code>REGERAR=1</code> gera tudo de novo, avisando se a <code>main</code> já tem <code>vault.yml</code>, e o startup-script espera o lock do apt) e, se a <code>main</code> já tem <code>vault.yml</code>, não gera vault e apaga o <code>entrada/</code>; deixa pronta, desligada, a regra <code>sysadmin-iap-emergencia</code> (SSH pelo IAP).</li>
+</ul>
+<h2 id="teste-de-ponta-a-ponta">Teste de ponta a ponta<a class="headerlink" href="#teste-de-ponta-a-ponta" title="Permanent link">¶</a></h2>
+<p>Faça depois que o nó <code>sysadmin</code> aparecer no Tailscale e o bot responder:</p>
+<ol>
+<li><code>/status</code> no bot do sysadmin: o Hermes responde. Depois <code>/status-implantacao</code>. Dentro do container, <code>hermes memory status</code> mostra o Honcho.</li>
+<li>Peça algo que dependa da equipe ("peça ao assistente um resumo do servidor"): o sysadmin abre a issue com <code>papel:</code> e <code>estado:aberto</code> no <code>homeserver-equipe</code>, e um comentário no GitHub acorda o sysadmin (o carteiro) com aviso na sua conversa.</li>
+<li><strong>Só depois da fase 2 do <a href="../01-roteiro-primeiro-deploy/#fase-2--host-e-vms">roteiro</a></strong> (na fase 1 ainda não há host): <code>ansible_check</code> e <code>ansible_aplicar</code> de um playbook inofensivo, um que você sabe que já está aplicado e não muda nada: chegam os botões no <strong>bot de aprovações</strong> com commit, autor e assunto; aprove os dois.</li>
+<li><code>vault_preencher</code> de uma chave de teste: o bot pergunta, você responde, a mensagem some do chat e o <code>saida/vault.yml</code> atualiza (<code>vault_status</code>). Confira que o valor não aparece na conversa com o sysadmin.</li>
+<li>Peça um <code>comando</code> e <strong>recuse</strong> no botão: ele diz que foi recusado e nada roda.</li>
+<li>De outra conta do Telegram, mande mensagem aos dois bots: nenhuma resposta.</li>
+<li>Abra o dashboard em <code>https://sysadmin.&lt;tailnet&gt;.ts.net</code> com o Tailscale ligado: aparece pedindo usuário e senha. Sem o Tailscale, não abre.</li>
+<li>Peça "rode <code>ssh core</code>" no terminal do Hermes: falha (sem chave e sem rota).</li>
+<li><code>docker exec sysadmin curl -m 5 http://169.254.169.254</code> falha (idem para um IP <code>100.x</code> e para um da LAN de casa), e <code>docker exec sysadmin getent hosts api.anthropic.com</code> resolve.</li>
+</ol>
+<h2 id="falhas">Falhas<a class="headerlink" href="#falhas" title="Permanent link">¶</a></h2>
+<table>
+<thead>
+<tr>
+<th>Falha</th>
+<th>Comportamento</th>
+<th>O que fazer</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>VM parada (manutenção, cobrança)</td>
+<td>Bot mudo</td>
+<td><code>gcloud compute instances start sysadmin --zone=us-east1-b</code>; na partida, os segredos e os containers sobem sozinhos</td>
+</tr>
+<tr>
+<td>VM perdida</td>
+<td>Perdem-se a memória e as sessões</td>
+<td>Rode o <code>criar-sysadmin.sh</code> de novo (reaproveita o segredo; <code>REGERAR=1</code> só se quiser trocar tudo) e restaure o dump e o diretório do Hermes do GCS</td>
+</tr>
+<tr>
+<td>Falta de memória</td>
+<td>Swap e <code>restart: unless-stopped</code></td>
+<td>Se repetir, <code>gcp_tipo_maquina: e2-small</code> por PR</td>
+</tr>
+<tr>
+<td>Anthropic fora ou teto atingido</td>
+<td>Reserva no Gemini; se as duas falharem, <strong>não há aviso automático</strong>: o bot do sysadmin fica mudo</td>
+<td>Veja pelo dashboard ou por <code>docker logs sysadmin</code> (com o Tailscale ou, sem ele, pelo IAP de emergência); confira o teto no console da Anthropic e a chave e a cota do Gemini</td>
+</tr>
+<tr>
+<td>Casa fora ou tailnet caído</td>
+<td><code>diagnostico</code> falha; nada destrutivo é possível</td>
+<td>O sysadmin relata e espera; com a core fora, o host segue alcançável pelo Tailscale</td>
+</tr>
+<tr>
+<td>Playbook falha no meio</td>
+<td>Código de saída e o final do log no diário</td>
+<td>Correção por PR e <code>ansible_check</code> de novo</td>
+</tr>
+<tr>
+<td>Aprovação vencida</td>
+<td>O executor recusa</td>
+<td>Peça de novo (vale 30 minutos)</td>
+</tr>
+<tr>
+<td>GitHub fora</td>
+<td>PRs e equipe param; o executor recusa aplicar sem ler a <code>main</code></td>
+<td>Esperar</td>
+</tr>
+<tr>
+<td>Aviso do Telegram que falha ao enviar</td>
+<td>O pedido existe, mas você não o vê; vence em 30 minutos (falha fechada)</td>
+<td>O sysadmin deve avisar pela conversa que há pedido pendente; reenvie</td>
+</tr>
+<tr>
+<td>Thread do leitor ou do carteiro cai</td>
+<td>O <code>manter_vivo</code> a reinicia depois de uma espera; o log só tem o tipo do erro</td>
+<td><code>docker logs executor</code>; se repetir, veja o token do bot e o do GitHub</td>
+</tr>
+<tr>
+<td>Backup ou <code>ansible-pull</code> falha</td>
+<td>O bot de aprovações avisa o nome da unit e a hora (o <code>OnFailure=</code> chama o <code>sysadmin-alerta@</code>; nada do journal sai da VM)</td>
+<td><code>systemctl status</code> e <code>journalctl -u</code> da unit na VM, pelo Tailscale ou pelo IAP de emergência; corrija por PR se for do repositório</td>
+</tr>
+<tr>
+<td>Aviso de falha não chega</td>
+<td>O <code>sysadmin-alerta@</code> falha sem <code>/run/sysadmin/host/alerta.env</code>: ele só aparece quando a unit dos segredos roda (boot ou rotação), e uma VM criada antes desta versão não o tem</td>
+<td>Reinicie a VM uma vez (<code>gcloud compute instances reset sysadmin --zone=us-east1-b</code>); <code>systemctl --failed</code> mostra o <code>sysadmin-alerta@</code> que falhou</td>
+</tr>
+<tr>
+<td>O executor cai no meio de uma gravação do vault</td>
+<td>O <code>saida/</code> nunca sobrescreve a <code>main</code>, mas a última chave preenchida pode se perder (o <code>vault_status</code> não a mostra)</td>
+<td>Peça a chave de novo pelo <code>vault_preencher</code></td>
+</tr>
+<tr>
+<td>Segredos rotacionados</td>
+<td>A unit de segredos reinicia o Docker (a stack inteira)</td>
+<td>Faça com a casa parada de pedidos; <code>systemctl list-jobs</code> mostra o que espera</td>
+</tr>
+<tr>
+<td>Falha passageira do Secret Manager</td>
+<td>A unit tenta de novo a cada minuto e o Docker espera por ela</td>
+<td>Espere; veja <code>journalctl -u sysadmin-segredos</code></td>
+</tr>
+<tr>
+<td>Tailscale caiu e não há SSH</td>
+<td>A VM recusa toda entrada</td>
+<td>Ligue o IAP de emergência: <code>gcloud compute firewall-rules update sysadmin-iap-emergencia --no-disabled</code>, depois <code>gcloud compute ssh sysadmin --zone=us-east1-b --tunnel-through-iap</code>; <strong>desligue</strong> de novo com <code>--disabled</code> ao terminar</td>
+</tr>
+<tr>
+<td>Outras VMs do projeto sem acesso</td>
+<td>A regra <code>sysadmin-recusa-entrada</code> vale para a rede <code>default</code> inteira</td>
+<td>Use um projeto do GCP só para o sysadmin</td>
+</tr>
+<tr>
+<td><code>container sysadmin</code> comprometido</td>
+<td>Vazam a chave da Anthropic (com teto) e o token da conta de máquina (PR e issues)</td>
+<td>Revogue os dois e o bot do sysadmin; a casa e o vault ficam intactos</td>
+</tr>
+<tr>
+<td>Executor comprometido</td>
+<td>Equivale a perder a máquina de controle</td>
+<td>Troque a senha do vault e a chave SSH. Mitigação: sem modelo, sem entrada, só botões do seu id e código mínimo e testado</td>
+</tr>
+<tr>
+<td>Token do bot de aprovações vazado</td>
+<td>Quem tem o token lê os pedidos, mas os botões só valem do seu id</td>
+<td><code>/revoke</code> no BotFather e troque no segredo</td>
+</tr>
+<tr>
+<td><code>comando</code> recusado por tamanho ou invisíveis</td>
+<td>O executor pede uma linha só, com até 250 caracteres visíveis</td>
+<td>Versione um script por PR</td>
+</tr>
+</tbody>
+</table>
+<aside class="md-source-file">
+<span class="md-source-file__fact">
+<span class="md-icon" title="Última atualização">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
+</span>
+<span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="10 de novembro de 2026 00:10:50 -03">10 de novembro de 2026</span>
+</span>
+</aside>
+</article>
+</div>
+<script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+<button class="md-top md-icon" data-md-component="top" hidden="" type="button">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"></path></svg>
+  Voltar ao topo
+</button>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+<div class="md-social">
+<a class="md-social__link" href="https://github.com/lioevano" rel="noopener" target="_blank" title="github.com">
+<svg viewbox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"></path></svg>
+</a>
+<a class="md-social__link" href="https://instagram.com/lioevano" rel="noopener" target="_blank" title="instagram.com">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M224.3 141a115 115 0 1 0-.6 230 115 115 0 1 0 .6-230m-.6 40.4a74.6 74.6 0 1 1 .6 149.2 74.6 74.6 0 1 1-.6-149.2m93.4-45.1a26.8 26.8 0 1 1 53.6 0 26.8 26.8 0 1 1-53.6 0m129.7 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8M399 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotate", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado para \u00e1rea de transfer\u00eancia", "clipboard.copy": "Copiar para \u00e1rea de transfer\u00eancia", "search.result.more.one": "Mais 1 nesta p\u00e1gina", "search.result.more.other": "Mais # nesta p\u00e1gina", "search.result.none": "Nenhum resultado encontrado", "search.result.one": "1 resultado encontrado", "search.result.other": "# resultados encontrados", "search.result.placeholder": "Digite para iniciar a busca", "search.result.term.missing": "Ausente", "select.version": "Selecione a vers\u00e3o"}, "version": null}</script>
+<script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+<script id="init-glightbox">const lightbox = GLightbox({"touchNavigation": true, "loop": false, "zoomable": true, "draggable": true, "openEffect": "zoom", "closeEffect": "zoom", "slideEffect": "slide"});
+document$.subscribe(()=>{ lightbox.reload(); });
+</script></body></html>
