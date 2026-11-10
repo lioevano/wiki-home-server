@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import shlex
 import unicodedata
 from datetime import datetime, timezone
@@ -14,11 +15,15 @@ from ops.politica import Recusado
 from .config import Config
 from .portao import Portao
 from .remoto import Remoto, validar_diagnostico
+from .vault import Vault
 
 MAX_COMANDO = 250  # o pedido no Telegram corta os argumentos em 300 caracteres: o Léo precisa ver o comando inteiro
 MAX_JSON = 300  # quanto do JSON dos argumentos o texto do pedido mostra
 JINJA = ("{{", "{%", "{#")
 CONFIRMACAO = "comando enviado ao Léo pelo bot de aprovações"
+# Padrão de hosts do Ansible (nomes, grupos, `,`, `:`, `!`, `&`, `*`). Fora dele, nada: `@arquivo` faria o Ansible ler
+# um arquivo do executor (a senha do vault, por exemplo) como lista de hosts e devolver as linhas ao modelo.
+LIMITE = re.compile(r"[A-Za-z0-9_.:,!&*-]{1,200}")
 
 
 def _entre_aspas(valor: str) -> str:
@@ -79,9 +84,13 @@ def ferramentas(cfg: Config, portao: Portao, remoto: Remoto, runner, canal,
         """Simula um playbook (--check --diff) no commit atual do repositório e devolve o diff e um plano_id.
         Pede aprovação do Léo no Telegram: mesmo em --check, o Ansible roda lookups, templates e tarefas com
         check_mode: false do commit que estiver no repositório, com a senha do vault. Repita a chamada com
-        aprovacao_id depois que o Léo aprovar."""
+        aprovacao_id depois que o Léo aprovar. limite é um padrão de hosts do inventário (core-services-vm,
+        core*:!ai), só com letras, números e _ . - , : ! & *."""
         if playbook not in cfg.playbooks:
             raise Recusado(f"{playbook} não está na lista de playbooks permitidos")
+        if limite is not None and not (isinstance(limite, str) and LIMITE.fullmatch(limite)):
+            raise Recusado("limite inválido: use só nomes de host ou grupo do inventário com , : ! & * "
+                           "(letras, números, _ . -; até 200 caracteres)")
 
         def fazer() -> str:
             r = _runner().check(playbook, limite)
@@ -113,11 +122,17 @@ def ferramentas(cfg: Config, portao: Portao, remoto: Remoto, runner, canal,
         return canal.pedir(chave)
 
     def vault_status() -> str:
-        """Situação dos pedidos de segredo (pendentes e gravados) e quando o saida/vault.yml foi atualizado."""
+        """Situação dos pedidos de segredo (pendentes e gravados), quando o saida/vault.yml foi atualizado e se ele
+        ainda tem edições pendentes sobre a main (só então ele vira PR) ou já foi superado por ela."""
         arquivo = Path(cfg.saida_dir) / "vault.yml"
         try:
             quando = datetime.fromtimestamp(arquivo.stat().st_mtime, timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
             rodape = f"saida/vault.yml atualizado em {quando}"
+            if Vault(cfg).origem() == arquivo:
+                rodape += "; edições pendentes sobre a main: abra o PR do vault com ele"
+            else:
+                rodape += ("; superado pela main (PR já mesclado, ou cópia velha da entrada): vale o vault da main, "
+                           "não abra PR com ele")
         except OSError:
             rodape = "ainda não há saida/vault.yml (vale o vault do repositório)"
         return f"{canal.status()}\n{rodape}"

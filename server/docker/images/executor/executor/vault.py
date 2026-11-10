@@ -1,6 +1,7 @@
 """Vault do Ansible editado pelo executor: lê o modelo, troca o valor de uma folha e grava cifrado em `saida/`."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -14,6 +15,7 @@ from .config import Config
 # Mesma regra de linha do server/scripts/gerar_vault.py (que não está na imagem do executor).
 LINHA = re.compile(r'^(?P<ind> *)(?P<chave>[A-Za-z_]\w*):(?P<resto>.*)$')
 VAULT_NO_REPO = "server/ansible/inventories/home/group_vars/all/vault.yml"
+BASE_AUSENTE = "ausente"   # o `.base` de um saida/vault.yml feito quando a main ainda não tinha vault
 
 
 def _varrer(linhas: list[str]):
@@ -113,8 +115,13 @@ def definir(texto: str, chave: str, valor: str) -> str:
 
 
 class Vault:
+    """O `saida/vault.yml` guarda as edições ainda não mescladas e o `saida/.base`, o sha256 do vault da `main` em
+    que elas se basearam. Mesclado o PR (ou mudada a `main` por outro caminho), o `.base` deixa de bater e volta a
+    valer o vault da `main`: um `saida/` velho (o de entrada, semeado do bucket, nem tem `.base`) nunca a sobrescreve."""
+
     def __init__(self, cfg: Config):
         self.cfg = cfg
+        self._base_lida: str | None = None    # a base do texto que o último ler() devolveu
 
     def _lib(self) -> VaultLib:
         senha = Path(self.cfg.senha_vault_arquivo).read_text(encoding="utf-8").strip()
@@ -123,25 +130,64 @@ class Vault:
     def _saida(self) -> Path:
         return Path(self.cfg.saida_dir) / "vault.yml"
 
-    def origem(self) -> Path:
-        """`saida/vault.yml` (o que o sysadmin já editou) ou, na primeira vez, o vault do repositório."""
+    def _base_arquivo(self) -> Path:
+        return Path(self.cfg.saida_dir) / ".base"
+
+    def _main(self) -> Path:
+        return Path(self.cfg.repo_dir) / VAULT_NO_REPO
+
+    def _sha_main(self) -> str:
+        try:
+            return hashlib.sha256(self._main().read_bytes()).hexdigest()
+        except FileNotFoundError:
+            return BASE_AUSENTE
+
+    def _escolher(self) -> tuple[Path, str]:
+        """(arquivo a ler, base que uma edição dele terá)."""
+        sha_main = self._sha_main()
         saida = self._saida()
-        return saida if saida.exists() else Path(self.cfg.repo_dir) / VAULT_NO_REPO
+        if saida.exists():
+            if sha_main == BASE_AUSENTE:
+                return saida, BASE_AUSENTE
+            try:
+                base = self._base_arquivo().read_text(encoding="utf-8").strip()
+            except FileNotFoundError:
+                base = None
+            if base == sha_main:
+                return saida, sha_main
+        return self._main(), sha_main
+
+    def origem(self) -> Path:
+        """`saida/vault.yml` se ele tem edições sobre a `main` atual (ou a `main` não tem vault); senão, o da `main`."""
+        return self._escolher()[0]
 
     def ler(self) -> str:
-        return self._lib().decrypt(self.origem().read_bytes()).decode("utf-8")
+        arquivo, base = self._escolher()
+        texto = self._lib().decrypt(arquivo.read_bytes()).decode("utf-8")
+        self._base_lida = base
+        return texto
 
-    def gravar(self, texto: str) -> None:
-        """Cifra e grava em `saida/vault.yml` de forma atômica; texto puro nunca vai ao disco."""
-        cifrado = self._lib().encrypt(texto)
-        saida = self._saida()
-        saida.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=saida.parent, prefix=".vault-", suffix=".tmp")   # 0600
+    def _gravar_atomico(self, destino: Path, dados: bytes) -> None:
+        fd, tmp = tempfile.mkstemp(dir=destino.parent, prefix=".vault-", suffix=".tmp")   # 0600
         try:
             with os.fdopen(fd, "wb") as f:
                 os.fchmod(fd, 0o644)   # cifrado e destinado ao git; o sysadmin (outro uid) monta `saida` só para ler
-                f.write(cifrado)
-            os.replace(tmp, saida)
+                f.write(dados)
+            os.replace(tmp, destino)
         except BaseException:
             Path(tmp).unlink(missing_ok=True)
             raise
+
+    def gravar(self, texto: str) -> None:
+        """Cifra e grava em `saida/vault.yml` de forma atômica, com o `.base` do texto lido (texto puro nunca vai ao
+        disco). A base é a do último ler(): se a `main` mudou entre a leitura e a gravação, a edição não a
+        sobrescreve (volta a valer a `main`)."""
+        base = self._base_lida if self._base_lida is not None else self._sha_main()
+        cifrado = self._lib().encrypt(texto)
+        saida = self._saida()
+        saida.parent.mkdir(parents=True, exist_ok=True)
+        # O .base vai depois: se cair entre os dois, um vault.yml novo com o .base antigo não bate com a main e vale a
+        # main (a edição se perde, a main não é sobrescrita); o contrário leria um vault.yml velho como edição nova.
+        self._gravar_atomico(saida, cifrado)
+        self._gravar_atomico(self._base_arquivo(), (base + "\n").encode("utf-8"))
+        self._base_lida = base

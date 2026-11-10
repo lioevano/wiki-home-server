@@ -275,7 +275,7 @@ def test_vault_cifra_na_saida(tmp_path):
     bruto = (tmp_path / "saida/vault.yml").read_text(encoding="utf-8")
     assert bruto.startswith("$ANSIBLE_VAULT;1.1;AES256") and v.ler() == MODELO and v.origem().parent.name == "saida"
     assert "grupo" not in bruto and "BEGIN" not in bruto
-    assert sorted(p.name for p in (tmp_path / "saida").iterdir()) == ["vault.yml"]  # sem temporários nem texto puro
+    assert sorted(p.name for p in (tmp_path / "saida").iterdir()) == [".base", "vault.yml"]  # sem temporários nem texto puro
     v.gravar(MODELO + 'z: "1"\n')                    # sobrescreve atomicamente
     assert v.ler().endswith('z: "1"\n')
 
@@ -680,12 +680,14 @@ def _ferr(tmp_path, executar=lambda a, c, t: (0, "ok"), runner=None, canal=None)
                             "rodar": lambda s, h, c, shell, become: chamadas.append((h, c, shell, become)) or executar(c, h, 0)})()
     f = ferramentas(cfg, portao, remoto, runner, canal, ao_leo.append)
     f["_chamadas"] = chamadas
+    f["_cfg"] = cfg
     return f, reg, avisos, ao_leo
 
 
 def test_nomes_e_destrutivas(tmp_path):
     f, *_ = _ferr(tmp_path)
     f.pop("_chamadas")
+    f.pop("_cfg")
     assert set(f) == {"diagnostico", "comando", "playbooks_listar", "ansible_check", "ansible_aplicar",
                       "vault_preencher", "vault_status", "preparar_host"}
     assert {n for n, x in f.items() if x.destrutiva} == {"comando", "ansible_aplicar"}
@@ -895,3 +897,102 @@ def test_inventario_real_sem_host_local_no_executor():
     cfg = Config.do_ambiente({**AMB, "EXECUTOR_REPO_DIR": str(ROOT)})
     hosts = Remoto(cfg, lambda *a: (0, "")).hosts()
     assert "sysadmin-gcp" not in hosts and {"proxmox_main_host", "core-services-vm", "ai-desktop-vm"} <= hosts
+
+
+# --- Revisão final do 5a ---
+
+@pytest.mark.parametrize("limite", ["@/segredos/vault_senha", "core services", "core\nai", "core‮ia",
+                                    "", "x" * 201, 5])
+def test_ansible_check_recusa_limite_fora_do_padrao_antes_de_pedir(tmp_path, limite):
+    """R19: `@arquivo` faria o Ansible ler um arquivo do executor como lista de hosts e devolver as linhas."""
+    runner = RunnerFalso()
+    f, reg, avisos, _ = _ferr(tmp_path, runner=runner)
+    with pytest.raises(Recusado):
+        f["ansible_check"].funcao("setup-vpn.yml", limite=limite)
+    assert avisos == [] and reg.listar() == [] and runner.chamadas == []
+
+
+@pytest.mark.parametrize("limite", ["core-services-vm", "core*:!ai", "proxmox_main_host,core-services-vm",
+                                    "ubuntu_vms:&core_services", "x" * 200, None])
+def test_ansible_check_aceita_padroes_de_host(tmp_path, limite):
+    f, _, avisos, _ = _ferr(tmp_path, runner=RunnerFalso())
+    assert "Aguardando" in f["ansible_check"].funcao("setup-vpn.yml", limite=limite)
+    assert avisos[0]["argumentos"]["limite"] == limite
+
+
+def _vault_main(tmp_path, texto: str):
+    """Grava, como o PR mesclado faria, um vault cifrado no clone da main do executor."""
+    import hashlib
+    from ansible.parsing.vault import VaultLib, VaultSecret
+    alvo = tmp_path / "server/ansible/inventories/home/group_vars/all/vault.yml"
+    alvo.parent.mkdir(parents=True, exist_ok=True)
+    alvo.write_bytes(VaultLib([("default", VaultSecret(b"s3nha"))]).encrypt(texto))
+    return alvo, hashlib.sha256(alvo.read_bytes()).hexdigest()
+
+
+def test_vault_base_ausente_quando_a_main_nao_tem_vault(tmp_path):
+    v = Vault(_cfg_vault(tmp_path))
+    v.gravar(v_texto := "k: 1\n")
+    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").strip() == "ausente"
+    assert v.origem() == tmp_path / "saida/vault.yml" and v.ler() == v_texto
+
+
+def test_vault_edicao_pendente_vale_enquanto_a_main_nao_muda(tmp_path):
+    """R17: a base do saida/ é o vault da main de quando ele foi gravado; com a mesma main, vale o saida/."""
+    cfg = _cfg_vault(tmp_path)
+    main, sha = _vault_main(tmp_path, "k: main\n")
+    v = Vault(cfg)
+    assert v.origem() == main and v.ler() == "k: main\n"
+    v.gravar(definir(v.ler(), "k", "editado"))
+    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").strip() == sha
+    assert v.origem() == tmp_path / "saida/vault.yml" and v.ler() == 'k: "editado"\n'
+    v.gravar(definir(v.ler(), "k", "de novo"))       # 2ª edição em cima da 1ª: a base continua a mesma main
+    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").strip() == sha and v.ler() == 'k: "de novo"\n'
+
+
+def test_vault_main_mudou_volta_para_a_main(tmp_path):
+    """R17: mesclado o PR (ou a main mudou por outro caminho), o saida/ velho não sobrescreve a main."""
+    cfg = _cfg_vault(tmp_path)
+    _vault_main(tmp_path, "k: main\n")
+    v = Vault(cfg)
+    v.gravar(definir(v.ler(), "k", "editado"))
+    main, _ = _vault_main(tmp_path, "k: mesclado\n")
+    assert v.origem() == main and v.ler() == "k: mesclado\n"
+    v.gravar(definir(v.ler(), "k", "novo"))           # a próxima edição parte da main nova
+    assert v.origem().parent.name == "saida" and v.ler() == 'k: "novo"\n'
+
+
+def test_vault_sem_base_usa_a_main_se_existir(tmp_path):
+    """O saida/vault.yml semeado do bucket (entrada/) não tem .base: com vault na main, a main manda."""
+    cfg = _cfg_vault(tmp_path)
+    Vault(cfg).gravar("k: entrada\n")
+    (tmp_path / "saida/.base").unlink()
+    v = Vault(cfg)
+    assert v.origem() == tmp_path / "saida/vault.yml" and v.ler() == "k: entrada\n"   # main sem vault: vale o saida
+    main, _ = _vault_main(tmp_path, "k: main\n")
+    assert v.origem() == main and v.ler() == "k: main\n"
+
+
+def test_vault_main_que_sumiu_depois_da_base_volta_ao_saida_so_se_base_ausente(tmp_path):
+    cfg = _cfg_vault(tmp_path)
+    main, _ = _vault_main(tmp_path, "k: main\n")
+    v = Vault(cfg)
+    v.gravar(definir(v.ler(), "k", "editado"))
+    main.unlink()                                       # main sem vault: não há o que sobrescrever
+    assert v.origem() == tmp_path / "saida/vault.yml"
+
+
+def test_vault_status_diz_se_o_saida_esta_superado_pela_main(tmp_path):
+    """R17: o sysadmin abre o PR do vault com /saida/vault.yml; um saida/ superado pela main não pode virar PR."""
+    canal = type("C", (), {"pedir": lambda s, c: "", "status": lambda s: "nada"})()
+    f, *_ = _ferr(tmp_path, canal=canal)
+    (tmp_path / "saida").mkdir()
+    (tmp_path / "saida/vault.yml").write_text("x", encoding="utf-8")
+    assert "pendente" in f["vault_status"].funcao()                  # main sem vault: o saida é o que vale
+    _vault_main(tmp_path, "k: main\n")
+    r = f["vault_status"].funcao()                                    # sem .base: superado
+    assert "superado" in r and "não abra PR" in r
+    from executor.vault import Vault as V
+    sha = __import__("hashlib").sha256(V(f["_cfg"]).origem().read_bytes()).hexdigest()
+    (tmp_path / "saida/.base").write_text(sha + "\n", encoding="utf-8")
+    assert "pendente" in f["vault_status"].funcao() and "superado" not in f["vault_status"].funcao()
