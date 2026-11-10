@@ -69,7 +69,7 @@ services:
       retries: 5
 
   grafana:
-    image: grafana/grafana-oss:13.2.4 # fixada: o MCP do Grafana (página 13) depende da API
+    image: grafana/grafana-oss:13.2.4 # fixada: o MCP do Grafana (página 15) depende da API
     container_name: grafana
     restart: unless-stopped
     user: "${DOCKER_PUID}:${DOCKER_PGID}"
@@ -92,7 +92,7 @@ services:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
       - NOTIFICACOES_WEBHOOK_TOKEN=${NOTIFICACOES_WEBHOOK_TOKEN}
-      - OBSERVADOR_TOKEN=${OBSERVADOR_TOKEN} # ponto de contato do observador (página 15)
+      - OBSERVADOR_TOKEN=${OBSERVADOR_TOKEN} # ponto de contato do observador (página 17)
       - TZ=${SYSTEM_TIMEZONE}
     depends_on:
       grafana_db:
@@ -146,7 +146,7 @@ services:
       - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy:2375 # só leitura, sem o socket no container
       - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
       # Versões fixadas: o Diun olha as tags do repositório de cada imagem e avisa quando sai uma versão nova
-      # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 09.
+      # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 11.
       - DIUN_DEFAULTS_WATCHREPO=true
       - DIUN_DEFAULTS_SORTTAGS=semver
       - DIUN_DEFAULTS_MAXTAGS=3 # poucas tags por repositório: o Docker Hub limita os pulls anônimos por IP
@@ -213,7 +213,7 @@ services:
   # ===================== AUTOMAÇÃO =====================
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n:2.44.4 # fixada: o MCP nativo do n8n exige >= 2.33 (página 13)
+    image: docker.n8n.io/n8nio/n8n:2.44.4 # fixada: o MCP nativo do n8n exige >= 2.33 (página 15)
     container_name: n8n_app
     restart: unless-stopped
     networks:
@@ -240,7 +240,7 @@ services:
       traefik.http.services.n8n.loadbalancer.server.port: '5678'
 
   homeassistant:
-    image: ghcr.io/home-assistant/home-assistant:2026.10.2 # fixada: MCP embutido (página 13)
+    image: ghcr.io/home-assistant/home-assistant:2026.10.2 # fixada: MCP embutido (página 15)
     container_name: homeassistant
     restart: unless-stopped
     volumes:

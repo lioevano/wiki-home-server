@@ -2,16 +2,16 @@
 description: "Cria as VMs core-services-vm e ai-desktop-vm a partir de template Cloud-Init com o role proxmox-vm, incluindo passthrough de GPU."
 ---
 
-# Seção 3: Provisionamento das Máquinas Virtuais (VMs) com Ansible
+# Seção 5: Provisionamento das Máquinas Virtuais (VMs) com Ansible
 
-Com o host Proxmox VE devidamente configurado ([Seção 2](02-proxmox-ve-host.md)), o próximo passo é provisionar as máquinas virtuais (VMs) que hospedarão seus serviços containerizados. Utilizaremos o Ansible para automatizar a criação e configuração inicial dessas VMs a partir de um template Ubuntu Server Cloud-Init, garantindo consistência e repetibilidade.
+Com o host Proxmox VE devidamente configurado ([Seção 4](04-proxmox-ve-host.md)), o próximo passo é provisionar as máquinas virtuais (VMs) que hospedarão seus serviços containerizados. Utilizaremos o Ansible para automatizar a criação e configuração inicial dessas VMs a partir de um template Ubuntu Server Cloud-Init, garantindo consistência e repetibilidade.
 
 Nesta arquitetura, com 48GB de RAM disponíveis no host, temos flexibilidade para alocar recursos de forma mais confortável para nossas VMs principais:
 
 * **`core-services-vm`:** Esta VM será o cavalo de batalha, hospedando a maioria dos seus serviços Docker, incluindo Traefik, Portainer, Authelia, Nextcloud, a stack de mídia, a stack de monitoramento, e outros serviços essenciais.
 * **`ai-desktop-vm`:** Esta VM é opcional, mas planejada para tarefas de Inteligência Artificial (LLMs com Ollama, busca nas notas do segundo cérebro) que podem se beneficiar de um ambiente isolado e, crucialmente, do passthrough da GPU AMD RX 5600XT para aceleração de hardware.
 
-## 3.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)
+## 5.1. Criação de Template de VM Base (Ubuntu Server Cloud-Init)
 
 Um template de VM no Proxmox permite que você clone rapidamente novas VMs já com uma configuração base (como o sistema operacional e alguns pacotes essenciais). Usaremos uma imagem Cloud-Init do Ubuntu Server, que é projetada para ser configurada dinamicamente no primeiro boot.
 
@@ -149,7 +149,7 @@ Siga estes passos na **interface web do Proxmox VE** ou, para os comandos de dow
     * !!! important "Nome do Template no Proxmox"
         O template agora aparecerá na sua lista de VMs com um ícone diferente. O **nome** deste template no Proxmox deve corresponder **exatamente** ao valor da variável `proxmox_ubuntu_template_name` que você definiu no seu arquivo `ansible/inventories/home/group_vars/all/main.yml` (e.g., `ubuntu-2204-cloudinit-template-v1`). O Ansible usará este nome para clonar as VMs.
 
-## 3.2. Role Ansible `proxmox-vm` (`ansible/roles/infra/proxmox-vm/`)
+## 5.2. Role Ansible `proxmox-vm` (`ansible/roles/infra/proxmox-vm/`)
 
 Este role Ansible é o coração da automação do provisionamento de VMs. Ele é responsável por:
 * Clonar novas VMs a partir do template que acabamos de criar.
@@ -170,7 +170,7 @@ Valores padrão para o role. Estes podem ser sobrescritos no playbook que chama 
 # Variáveis padrão para o role proxmox-vm.
 # Valores obrigatórios (vm_id, vm_name, vm_ipconfig) devem ser definidos no playbook que chama o role.
 
-# Nome do template Proxmox a ser clonado (deve corresponder ao template criado na Seção 3.1)
+# Nome do template Proxmox a ser clonado (deve corresponder ao template criado na Seção 5.1)
 vm_template: "{{ proxmox_ubuntu_template_name }}" # Definido em group_vars/all/main.yml
 
 # Recursos padrão da VM (podem ser sobrescritos por VM)
@@ -350,7 +350,7 @@ Handlers para o role `proxmox-vm`.
   delegate_to: localhost
 ```
 
-## 3.3. Playbook para Deploy de VM (`ansible/playbooks/vm-deploy.yml`)
+## 5.3. Playbook para Deploy de VM (`ansible/playbooks/vm-deploy.yml`)
 
 Este playbook utiliza o role `proxmox-vm` para criar e configurar as VMs `core-services-vm` e `ai-desktop-vm` com suas especificações de recursos.
 
@@ -444,13 +444,13 @@ Certifique-se de que o arquivo `ansible/playbooks/vm-deploy.yml` exista com o se
 
 Após a execução, suas VMs (`core-services-vm` e `ai-desktop-vm`, se habilitada) devem estar criadas no Proxmox, configuradas com os parâmetros básicos de Cloud-Init e, se tudo correu bem com o `wait_for`, prontas para as próximas etapas de configuração.
 
-## 3.4. Configuração de GPU Passthrough (Host Proxmox)
+## 5.4. Configuração de GPU Passthrough (Host Proxmox)
 
 Se você planeja usar a `ai-desktop-vm` com a RX 5600XT para aceleração de IA ou outras tarefas gráficas, a configuração de GPU passthrough no **host Proxmox** é um pré-requisito. Este é um processo avançado e os detalhes podem variar ligeiramente dependendo do seu hardware específico e versão do Proxmox.
 
 **Resumo das Etapas Essenciais no Host Proxmox (Como Checklist de Verificação):**
 
-1. **BIOS/UEFI do Servidor (Já Coberto na Seção 2.1):**
+1. **BIOS/UEFI do Servidor (Já Coberto na Seção 4.1):**
     * Virtualização de CPU (AMD-V / SVM Mode) **HABILITADA**.
     * IOMMU (AMD-Vi) **HABILITADO**.
 
@@ -514,7 +514,7 @@ Se você planeja usar a `ai-desktop-vm` com a RX 5600XT para aceleração de IA 
 
 A configuração de GPU passthrough é uma das partes mais complexas e propensas a variações dependendo do hardware. Consulte guias detalhados online específicos para "Proxmox AMD GPU passthrough" se encontrar dificuldades.
 
-## 3.5. Configuração de Ambiente Desktop (GUI) em VMs Linux (Opcional)
+## 5.5. Configuração de Ambiente Desktop (GUI) em VMs Linux (Opcional)
 
 Para a `ai-desktop-vm`, se você deseja uma interface gráfica para interagir com ela (especialmente se estiver usando GPU passthrough e conectar um monitor diretamente à RX 5600XT), você pode instalar um ambiente desktop. Se o acesso for apenas via SSH e para rodar serviços como Ollama, uma GUI não é estritamente necessária.
 
@@ -557,10 +557,10 @@ Este role Ansible instala XFCE (um ambiente desktop leve) e TightVNCServer (para
       6. De um cliente VNC na sua máquina de controle, conecte-se a {{ inventory_hostname }}:1 (ou IP_DA_VM:5901).
       Se você estiver usando GPU passthrough com um monitor conectado à RX 5600XT na VM,
       você precisará instalar os drivers AMD apropriados DENTRO da VM ai-desktop-vm
-      (ver Seção 7.1) para que a GUI utilize a GPU passada.
+      (passthrough na seção 5.4) para que a GUI utilize a GPU passada.
   when: install_gui_flag | default(false) | bool
 ```
 
-O playbook `ansible/playbooks/setup-base-ubuntu.yml` (Seção 4) chamará este role condicionalmente para as VMs que tiverem a variável `GUI_ENABLED=true` definida no seu inventário (`ansible/inventories/home/hosts.ini`).
+O playbook `ansible/playbooks/setup-base-ubuntu.yml` (Seção 6) chamará este role condicionalmente para as VMs que tiverem a variável `GUI_ENABLED=true` definida no seu inventário (`ansible/inventories/home/hosts.ini`).
 
-Com as VMs provisionadas e o GPU passthrough (se aplicável) configurado no host Proxmox, estamos prontos para avançar para a [Configuração Base das VMs Ubuntu](04-configuracao-base-vms-ubuntu.md), onde instalaremos Docker, Portainer e outros utilitários essenciais.
+Com as VMs provisionadas e o GPU passthrough (se aplicável) configurado no host Proxmox, estamos prontos para avançar para a [Configuração Base das VMs Ubuntu](06-configuracao-base-vms-ubuntu.md), onde instalaremos Docker, Portainer e outros utilitários essenciais.

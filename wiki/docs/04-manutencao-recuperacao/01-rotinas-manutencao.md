@@ -45,7 +45,7 @@ Manter todo o software atualizado é uma das tarefas de manutenção mais críti
 ### Máquinas Virtuais (VMs Ubuntu)
 
 *   **`unattended-upgrades` (Para Segurança):**
-    *   Este pacote, instalado e configurado pelo role Ansible `common` ([Seção 4.1 do Manual de Implementação](../01-manual-implementacao/04-configuracao-base-vms-ubuntu.md#41-role-ansible-common-ansiblerolescommon)), deve cuidar da aplicação automática de atualizações de segurança para os pacotes do sistema operacional nas suas VMs Ubuntu.
+    *   Este pacote, instalado e configurado pelo role Ansible `common` ([Seção 6.1 do Manual de Implementação](../01-manual-implementacao/06-configuracao-base-vms-ubuntu.md#61-role-ansible-common-ansiblerolescommon)), deve cuidar da aplicação automática de atualizações de segurança para os pacotes do sistema operacional nas suas VMs Ubuntu.
 *   **Verificação dos Logs do `unattended-upgrades` (Periodicamente):**
     *   Conecte-se a cada VM via SSH e verifique os logs para garantir que as atualizações automáticas estão ocorrendo sem erros:
         `/var/log/unattended-upgrades/unattended-upgrades-dpkg.log`
@@ -89,14 +89,14 @@ Logs são seus olhos e ouvidos para o que está acontecendo no seu sistema. Uma 
 
 ## 4. Monitoramento Contínuo da Saúde do Sistema
 
-Utilize ativamente a Stack de Monitoramento (Prometheus, Grafana, Loki) — veja [Deploy de Apps](../01-manual-implementacao/07-deploy-apps.md).
+Utilize ativamente a Stack de Monitoramento (Prometheus, Grafana, Loki) — veja [Deploy de Apps](../01-manual-implementacao/09-deploy-apps.md).
 
 *   **Dashboards Grafana:** Configure e consulte regularmente dashboards para visualizar:
     *   Uso de CPU, RAM, Espaço em Disco, Swap (para o Host Proxmox e cada VM).
     *   Tráfego de Rede (por interface, por VM).
     *   Status e Performance do Pool ZFS (saúde, capacidade, IOPS, latência, ARC stats).
     *   Métricas do Alloy de cada sistema (`node_*`) e dos containers (`container_*`).
-    *   Status dos containers no painel Homepage e sondas do blackbox-exporter (ver [Painel e Notificações](../01-manual-implementacao/09-painel-notificacoes.md)).
+    *   Status dos containers no painel Homepage e sondas do blackbox-exporter (ver [Painel e Notificações](../01-manual-implementacao/11-painel-notificacoes.md)).
     *   Métricas do Cloudflare Tunnel.
 *   **Alertas (Grafana Alerting → n8n → Telegram):**
     *   Configure alertas para condições críticas que exigem sua atenção imediata:

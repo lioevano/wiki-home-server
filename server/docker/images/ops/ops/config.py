@@ -31,7 +31,7 @@ class Config:
     plano_validade_s: int
     # Clientes do hub (metadado da chave) que agem SEM o aprovador: só o Claude Code, que pede aprovação na
     # própria interface. Todo o resto (agentes, assistente, cliente desconhecido, lista vazia) passa pelo
-    # aprovador (página 16): uma variável perdida não abre a porta.
+    # aprovador (página 18): uma variável perdida não abre a porta.
     clientes_sem_aprovacao: frozenset[str] = frozenset({"claude_code"})
     aprovador_url: str = ""
     aprovador_token: str = ""

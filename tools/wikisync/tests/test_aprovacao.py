@@ -1,4 +1,4 @@
-"""Aprovação humana dos agentes autônomos (sub-projeto 4c3, página 16): o aprovador (registro, Telegram, API e
+"""Aprovação humana dos agentes autônomos (sub-projeto 4c3, página 18): o aprovador (registro, Telegram, API e
 tela) e o fluxo no ops, de ponta a ponta, com o aprovador de verdade num servidor local e um Telegram falso."""
 from __future__ import annotations
 

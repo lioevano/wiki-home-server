@@ -9,7 +9,7 @@ Responda curto, numa mensagem do Telegram, com estas cinco partes. Só leitura: 
 
 ## O que compõe o status (`/status-implantacao`)
 
-1. **Fase atual.** Procure no repositório da equipe (`lioevano/homeserver-equipe`, o valor de `equipe_repo`) a issue `diario` aberta: `gh issue list -R lioevano/homeserver-equipe --label diario --state open`. Diga a fase, quantos passos da lista estão marcados e o que está em curso. Sem diário aberto, diga que nenhuma fase está em andamento e qual é a próxima do roteiro (`wiki/docs/01-manual-implementacao/18-roteiro-primeiro-deploy.md`).
+1. **Fase atual.** Procure no repositório da equipe (`lioevano/homeserver-equipe`, o valor de `equipe_repo`) a issue `diario` aberta: `gh issue list -R lioevano/homeserver-equipe --label diario --state open`. Diga a fase, quantos passos da lista estão marcados e o que está em curso. Sem diário aberto, diga que nenhuma fase está em andamento e qual é a próxima do roteiro (`wiki/docs/01-manual-implementacao/01-roteiro-primeiro-deploy.md`).
 2. **Pendências do Léo.** Os itens do diário que são dele e ainda não foram confirmados (contas, físico, telas com pessoa, stacks no Portainer, merges), cada um com o link da seção.
 3. **Pedidos e aprovações abertos.**
    - Segredos: `vault_status()` (pedidos pendentes, gravados e quando o `saida/vault.yml` foi atualizado).

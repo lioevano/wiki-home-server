@@ -1,5 +1,5 @@
 # docker/stacks/langfuse/docker-compose.yml
-# Langfuse (página 13), na ai-desktop-vm: rastreio das chamadas de LLM (LiteLLM) e de ferramentas (hub de MCPs).
+# Langfuse (página 15), na ai-desktop-vm: rastreio das chamadas de LLM (LiteLLM) e de ferramentas (hub de MCPs).
 # Base: docker-compose.yml oficial da v4.66.0, com versões fixadas, segredos por variável e tudo no disco local
 # (dados descartáveis, sem backup). Só a web publica porta (Traefik em langfuse.; OTLP e API para o LiteLLM e o hub).
 # Variáveis em /opt/portainer_stack_envs/langfuse.env (setup-langfuse-volumes.yml).
@@ -67,7 +67,7 @@ services:
       # Quem entra pelo SSO cai na organização como admin.
       LANGFUSE_DEFAULT_ORG_ID: homeserver
       LANGFUSE_DEFAULT_ORG_ROLE: ADMIN
-      # Login só pelo OIDC do Authelia (cliente langfuse, página 05).
+      # Login só pelo OIDC do Authelia (cliente langfuse, página 07).
       AUTH_DISABLE_USERNAME_PASSWORD: "true"
       AUTH_DISABLE_SIGNUP: "false"
       AUTH_CUSTOM_NAME: Authelia

@@ -1,6 +1,6 @@
 # ansible/playbooks/setup-agents-volumes.yml
-# Base dos agentes (página 13): diretórios, segredos do runner, clone do repositório, imagens locais do ops e
-# do observador (página 15),
+# Base dos agentes (página 15): diretórios, segredos do runner, clone do repositório, imagens locais do ops e
+# do observador (página 17),
 # config do hub e agents.env da stack agents. Roda na core-services-vm antes do deploy da stack no Portainer.
 - name: Preparar a stack agents
   hosts: core_services
@@ -105,7 +105,7 @@
             GID: "{{ docker_pgid }}"
         force_source: "{{ ops_codigo.changed or ops_requirements.changed or ops_colecoes.changed }}"
 
-    # --- Imagem local do observador (página 15): só a biblioteca padrão, sem requirements ---
+    # --- Imagem local do observador (página 17): só a biblioteca padrão, sem requirements ---
     - name: Criar o diretório de build do observador
       ansible.builtin.file:
         path: "{{ observador_imagem }}"
@@ -133,7 +133,7 @@
             GID: "{{ docker_pgid }}"
         force_source: "{{ observador_codigo.changed }}"
 
-    # --- Aprovador (página 16): imagem local (só a biblioteca padrão) e o diretório dos pedidos ---
+    # --- Aprovador (página 18): imagem local (só a biblioteca padrão) e o diretório dos pedidos ---
     - name: Criar os diretórios do aprovador
       ansible.builtin.file:
         path: "{{ item.path }}"

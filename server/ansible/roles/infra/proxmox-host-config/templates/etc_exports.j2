@@ -15,11 +15,11 @@
 {{ zfs_base_pool_path }}/{{ zfs_media_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamentos de fotos (Immich) e arquivos (Nextcloud), montados na core-services-vm; 'files' também na VM de IA,
-# só leitura na montagem, para o conversor de documentos do segundo cérebro (página 12)
+# só leitura na montagem, para o conversor de documentos do segundo cérebro (página 14)
 {{ zfs_base_pool_path }}/{{ zfs_photos_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 {{ zfs_base_pool_path }}/{{ zfs_files_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
-# Vaults do Obsidian (segundo cérebro, página 12): exportado só para a VM de IA, onde rodam o Syncthing e a busca
+# Vaults do Obsidian (segundo cérebro, página 14): exportado só para a VM de IA, onde rodam o Syncthing e a busca
 {{ zfs_base_pool_path }}/{{ zfs_notes_dataset_name }} {{ ai_desktop_vm_ip_var }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamento para backups (geralmente não precisa ser montado por VMs,

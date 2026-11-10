@@ -1,7 +1,7 @@
 # ansible/playbooks/setup-ai-keys.yml
 # Cria ou atualiza no LiteLLM uma chave virtual por cliente (litellm_client_keys do vault), com orçamento
 # mensal (litellm_key_budgets). Roda DEPOIS do deploy da stack ai; pode rodar de novo a qualquer momento:
-# só muda o que estiver diferente. Página 08.
+# só muda o que estiver diferente. Página 10.
 - name: Chaves virtuais do LiteLLM por cliente
   hosts: ai_desktop
   gather_facts: false

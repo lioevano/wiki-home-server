@@ -41,7 +41,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         *   **Teste a restauração de alguns arquivos e de um dump de banco ANTES da migração** ([testes de restauração](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#testes-de-restauração)).
 
 2.  **Setup Inicial do Novo Servidor Físico com Proxmox VE:**
-    *   No novo hardware, instale o Proxmox VE no SSD NVMe, seguindo os passos da [**Seção 2.1 do Manual de Implementação**](../01-manual-implementacao/02-proxmox-ve-host.md#21-instalação-do-proxmox-ve-no-servidor-físico).
+    *   No novo hardware, instale o Proxmox VE no SSD NVMe, seguindo os passos da [**Seção 4.1 do Manual de Implementação**](../01-manual-implementacao/04-proxmox-ve-host.md#41-instalação-do-proxmox-ve-no-servidor-físico).
     *   **Configuração de Rede do Novo Host Proxmox:**
         *   Durante a instalação, configure a rede do novo host Proxmox. **Idealmente, e para simplificar MUITO a migração, tente usar o mesmo endereço IP estático, hostname e configurações de gateway/DNS que o servidor Proxmox antigo usava.**
         *   Se não for possível usar o mesmo IP, anote cuidadosamente o novo IP estático. Você precisará atualizar o inventário Ansible (`ansible_host` para `proxmox_main_host`) e potencialmente outras configurações que referenciem o IP do host Proxmox.
@@ -64,7 +64,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
             ```
         6.  Verifique o status do pool importado: `sudo zpool status data`. Se o estado for `ONLINE`, seus datasets (como `/data/docker-volumes`, `/data/media`, `/data/backups/vms`) devem estar acessíveis nos seus pontos de montagem usuais.
     *   **Opção B: Recriar o Pool ZFS no Novo Servidor e Restaurar os Dados de um Backup Externo (Se não puder mover os HDDs, ou se os HDDs do novo servidor forem diferentes/novos):**
-        1.  No novo host Proxmox, crie um novo pool ZFS `data` com os HDDs disponíveis no novo servidor, seguindo os passos da [**Seção 2.2 do Manual de Implementação**](../01-manual-implementacao/02-proxmox-ve-host.md#22-configuração-do-pool-zfs-data-e-datasets). Use o mesmo nome de pool (`data`) e os mesmos nomes de datasets (`data/docker-volumes`, `data/media`, `data/backups`, etc.).
+        1.  No novo host Proxmox, crie um novo pool ZFS `data` com os HDDs disponíveis no novo servidor, seguindo os passos da [**Seção 4.2 do Manual de Implementação**](../01-manual-implementacao/04-proxmox-ve-host.md#42-configuração-do-pool-zfs-data-e-datasets). Use o mesmo nome de pool (`data`) e os mesmos nomes de datasets (`data/docker-volumes`, `data/media`, `data/backups`, etc.).
         2.  Agora, **restaure o conteúdo de cada dataset** a partir do restic ([Um dataset inteiro](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#um-dataset-inteiro); a mídia, do `rsync`) para os respectivos pontos de montagem no novo pool ZFS (e.g., restaure o conteúdo de `docker-volumes` do seu backup para `/data/docker-volumes` no novo servidor). Este processo pode ser bastante demorado, dependendo do volume de dados e da velocidade do seu backup/rede.
 
 4.  **Configurar o Storage de Backup de VMs no Novo Proxmox** (só se você trouxe as VMs por backup pontual; senão, rode o `vm-deploy.yml` e vá para o passo 6):
@@ -99,7 +99,7 @@ Mover toda a sua configuração Proxmox VE, juntamente com suas máquinas virtua
         *   Adicione-o ao grupo `sudo` e configure `NOPASSWD` para `sudo`.
         *   Na sua máquina de controle Ansible, copie sua chave SSH pública (`~/.ssh/id_ed25519_homelab.pub`) para este novo usuário no host Proxmox usando `ssh-copy-id`.
         *   Teste a conexão SSH e a capacidade de `sudo` sem senha.
-        (Estes são os mesmos passos da [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
+        (Estes são os mesmos passos da [Seção 4.3: Ações Manuais Prévias](../01-manual-implementacao/04-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
     2.  **Execute o Playbook Mestre `full-deploy.yml` (ou o script `restore.sh`):**
         Na raiz do repositório, na máquina de controle Ansible (o `restore.sh` entra sozinho em `server/ansible`):
         ```bash

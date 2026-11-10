@@ -1,8 +1,8 @@
 # ansible/roles/infra/sysadmin-gcp/templates/sysadmin-alerta.service.j2 (instalado como sysadmin-alerta@.service)
-# Aviso de falha (página 19): as units do sysadmin que rodam sozinhas (backup e ansible-pull) têm
+# Aviso de falha (página 02): as units do sysadmin que rodam sozinhas (backup e ansible-pull) têm
 # OnFailure=sysadmin-alerta@%n.service; esta manda o nome da unit ao bot de aprovações. Gerado pelo role infra/sysadmin-gcp.
 [Unit]
-Description=Aviso no Telegram: a unit %i do sysadmin falhou (página 19)
+Description=Aviso no Telegram: a unit %i do sysadmin falhou (página 02)
 Wants=network-online.target
 After=network-online.target
 

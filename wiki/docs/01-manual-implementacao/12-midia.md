@@ -2,7 +2,7 @@
 description: "Stack media: Jellyfin, Seerr, Sonarr, Radarr, Lidarr, Prowlarr, Bazarr, Recyclarr e qBittorrent atrás da ProtonVPN (gluetun), com /data único e importação por hardlink."
 ---
 
-# Seção 10: Mídia (Jellyfin, *arr, Seerr e VPN)
+# Seção 12: Mídia (Jellyfin, *arr, Seerr e VPN)
 
 Um pedido feito no **Seerr** vira download no **qBittorrent**, que só sai para a internet pela **ProtonVPN** (gluetun). O Sonarr, o Radarr ou o Lidarr importam o arquivo **por hardlink** para a biblioteca, o **Bazarr** busca a legenda em pt-BR e o título aparece no **Jellyfin**, dentro e fora de casa.
 
@@ -65,8 +65,8 @@ Como torrents e biblioteca estão no mesmo sistema de arquivos, a importação �
    ansible-playbook -i inventories/home/hosts.ini playbooks/setup-media-stack-volumes.yml --ask-vault-pass
    ```
    O playbook `ansible/playbooks/setup-media-stack-volumes.yml` gera `<NFS>/recyclarr/config/recyclarr.yml` a partir de `ansible/templates/recyclarr.yml.j2` e o `/opt/portainer_stack_envs/media.env` (`0600`, contém as chaves).
-3. Portainer → **Stacks** → **Add Stack** → nome `media` → **Web editor** com `docker/stacks/media/docker-compose.yml` → em **Env** (**Advanced mode**), cole o `/opt/portainer_stack_envs/media.env` ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) → **Deploy the stack**.
-4. Rode de novo o `setup-monitoring-stack-volumes.yml` ([seção 9](09-painel-notificacoes.md)): ele já traz as sondas e os alertas da mídia (`qbittorrent-ou-vpn-fora`, `servico-fora-do-ar`), mas o Prometheus e o Grafana só os carregam depois de reiniciados com a stack `media` no ar (`sudo docker restart prometheus grafana`). Na primeira instalação, a seção 9 vem antes desta; os alertas da mídia ficam em "sem dados" (`OK`) até aqui.
+3. Portainer → **Stacks** → **Add Stack** → nome `media` → **Web editor** com `docker/stacks/media/docker-compose.yml` → em **Env** (**Advanced mode**), cole o `/opt/portainer_stack_envs/media.env` ([como](09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) → **Deploy the stack**.
+4. Rode de novo o `setup-monitoring-stack-volumes.yml` ([seção 11](11-painel-notificacoes.md)): ele já traz as sondas e os alertas da mídia (`qbittorrent-ou-vpn-fora`, `servico-fora-do-ar`), mas o Prometheus e o Grafana só os carregam depois de reiniciados com a stack `media` no ar (`sudo docker restart prometheus grafana`). Na primeira instalação, a seção 11 vem antes desta; os alertas da mídia ficam em "sem dados" (`OK`) até aqui.
 
 ### Variáveis da stack
 
@@ -77,7 +77,7 @@ Como torrents e biblioteca estão no mesmo sistema de arquivos, a importação �
 | `SONARR_API_KEY`, `RADARR_API_KEY`, `LIDARR_API_KEY`, `PROWLARR_API_KEY` | vault `arr_api_keys.*` (viram `<APP>__AUTH__APIKEY`) |
 | `PROTONVPN_WIREGUARD_PRIVATE_KEY` | vault `protonvpn_wireguard_private_key` |
 
-As *arr usam `<APP>__AUTH__METHOD=External`: a interface já está atrás do Authelia, então não pedem um segundo login; as chamadas entre containers usam a chave de API. Para mudar uma chave, edite o vault, rode o playbook de novo, cole o `media.env` atualizado em **Advanced mode** ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
+As *arr usam `<APP>__AUTH__METHOD=External`: a interface já está atrás do Authelia, então não pedem um segundo login; as chamadas entre containers usam a chave de API. Para mudar uma chave, edite o vault, rode o playbook de novo, cole o `media.env` atualizado em **Advanced mode** ([como](09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
 
 ## Primeira configuração
 
@@ -93,7 +93,7 @@ Estes passos ficam no banco de cada aplicação e são feitos na interface, uma 
 5. **Prowlarr:** *Settings → Indexers*: proxy FlareSolverr em `http://flaresolverr:8191` com a tag `flaresolverr` (use a tag nos indexadores atrás de Cloudflare); *Settings → Apps*: Sonarr, Radarr e Lidarr em `http://<app>:<porta>`, com Prowlarr Server `http://prowlarr:9696` e as chaves de `arr_api_keys`; depois, os indexadores.
 6. **Sonarr, Radarr e Lidarr:** *Settings → Download Clients*: qBittorrent em host `gluetun`, porta `8088`, categoria `tv` / `movies` / `music`; *Media Management*: pastas raiz `/data/media/tv`, `/data/media/movies`, `/data/media/music` e **Use Hardlinks instead of Copy** ligado.
 7. **Bazarr:** *Settings → Sonarr/Radarr* com `http://sonarr:8989` e `http://radarr:7878` e as chaves; idioma **Portuguese (Brazil)**; provedores de legenda.
-8. **Homepage:** gere as chaves de API do Bazarr (*Settings → General*) e do Seerr (*Settings → General*) e grave-as em `homepage_widget_keys.bazarr` e `.seerr`; rode o `setup-monitoring-stack-volumes.yml` (ver [Painel e Notificações](09-painel-notificacoes.md)).
+8. **Homepage:** gere as chaves de API do Bazarr (*Settings → General*) e do Seerr (*Settings → General*) e grave-as em `homepage_widget_keys.bazarr` e `.seerr`; rode o `setup-monitoring-stack-volumes.yml` (ver [Painel e Notificações](11-painel-notificacoes.md)).
 
 ### Notificações (NTF-3)
 

@@ -1,8 +1,8 @@
 # ansible/roles/infra/sysadmin-gcp/tasks/segredos.yml
-# Segredos do sysadmin (página 19): o JSON do Secret Manager (sysadmin-segredos) separado por container no tmpfs
+# Segredos do sysadmin (página 02): o JSON do Secret Manager (sysadmin-segredos) separado por container no tmpfs
 # /run/sysadmin pela unit sysadmin-segredos, antes do Docker. O setup-sysadmin.yml inclui este arquivo também no
 # pre_tasks: a chave do Tailscale da VM (/run/sysadmin/host/tailscale_chave) precisa existir antes do role
-# infra/tailscale. Repetir é inofensivo: a unit já ativa não roda de novo (para trocar os segredos, veja a página 19).
+# infra/tailscale. Repetir é inofensivo: a unit já ativa não roda de novo (para trocar os segredos, veja a página 02).
 
 - name: Projeto da GCP (servidor de metadados)
   ansible.builtin.uri:

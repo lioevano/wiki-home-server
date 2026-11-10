@@ -2,7 +2,7 @@
 description: "Rede segura na core-services-vm: Traefik como proxy reverso, Cloudflare Tunnel para acesso externo e Authelia para 2FA."
 ---
 
-# Seção 5: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia)
+# Seção 7: Implementação da Rede Segura (Traefik, Cloudflare Tunnel, Authelia)
 
 Esta seção é fundamental para expor seus serviços auto-hospedados à internet de forma segura, controlada e gerenciada. Implementaremos uma stack de rede robusta na `core-services-vm` composta por:
 
@@ -12,7 +12,7 @@ Esta seção é fundamental para expor seus serviços auto-hospedados à interne
 
 Todos esses componentes rodarão como containers Docker na `core-services-vm`, implantados pelo Ansible (playbook `setup-core-networking.yml`) com Docker Compose. As stacks `apps` e `ai` são implantadas depois, pelo Portainer.
 
-## 5.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso
+## 7.1. Entendendo o Fluxo de Tráfego e o Conceito de Proxy Reverso
 
 Antes de mergulharmos na configuração, é vital entender como o tráfego de um usuário externo alcançará seus serviços internos:
 
@@ -20,7 +20,7 @@ Antes de mergulharmos na configuração, é vital entender como o tráfego de um
 2. **Resolução DNS via Cloudflare:** Os nameservers do seu domínio estão configurados para a Cloudflare. A Cloudflare não resolverá o subdomínio para o seu IP doméstico, mas para um endpoint da rede Cloudflare associado ao seu Cloudflare Tunnel.
 3. **Cloudflare Edge Network:** A requisição do usuário chega à rede global da Cloudflare. Aqui, ela pode se beneficiar de proteções como mitigação de DDoS e Web Application Firewall (WAF) básico da Cloudflare. Seu IP doméstico real permanece oculto.
 4. **Cloudflare Tunnel (`cloudflared` Agent):** O container `cloudflared` rodando na sua `core-services-vm` mantém uma conexão de **saída** persistente e criptografada com o data center da Cloudflare mais próximo. O tráfego destinado aos seus subdomínios configurados no túnel é "puxado" do Cloudflare Edge, através desta conexão segura, para o container `cloudflared` na sua rede local. **Nenhuma porta de entrada precisa ser aberta no seu roteador doméstico.**
-5. **`cloudflared` para Traefik:** O container `cloudflared` recebe o tráfego do túnel e o encaminha para o container Traefik. No nosso `docker-compose.yml`, o Public Hostname do túnel envia o tráfego para `https://traefik:443` (serviço Docker `traefik` na rede `proxy` compartilhada, com *No TLS Verify*; ver a [seção 5.5](#55-configuração-de-dns-na-cloudflare)).
+5. **`cloudflared` para Traefik:** O container `cloudflared` recebe o tráfego do túnel e o encaminha para o container Traefik. No nosso `docker-compose.yml`, o Public Hostname do túnel envia o tráfego para `https://traefik:443` (serviço Docker `traefik` na rede `proxy` compartilhada, com *No TLS Verify*; ver a [seção 7.5](#75-configuração-de-dns-na-cloudflare)).
 6. **Traefik (Proxy Reverso):**
     * Traefik escuta nas portas `80` (HTTP) e `443` (HTTPS) na `core-services-vm` (mapeadas do host da VM para o container Traefik).
     * **Redirecionamento HTTP para HTTPS:** Traefik está configurado para redirecionar automaticamente todo o tráfego chegando na porta `80` para HTTPS na porta `443`.
@@ -35,7 +35,7 @@ Antes de mergulharmos na configuração, é vital entender como o tráfego de um
 !!! tip "Diagrama Visual do Fluxo"
     Para uma representação gráfica detalhada deste fluxo, consulte o diagrama na seção [Fluxo de Rede e Acesso Externo da Visão Geral da Arquitetura](../02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md).
 
-## 5.2. Docker Compose para a Stack Core (`docker/stacks/core/docker-compose.yml`)
+## 7.2. Docker Compose para a Stack Core (`docker/stacks/core/docker-compose.yml`)
 
 Esta stack fundamental inclui os containers Traefik e Cloudflared. Crie o arquivo `server/docker/stacks/core/docker-compose.yml` com o seguinte conteúdo:
 
@@ -158,14 +158,14 @@ services:
     Variáveis como `${CORE_SERVICES_VM_IP_VAR}`, `${VM_NFS_MOUNT_BASE_PATH}`, `${AUTHELIA_DB_PATH}`, `${ZFS_DOCKER_VOLUMES_DATASET_NAME}`, `${CLOUDFLARE_API_TOKEN_FROM_VAULT}`, `${BASE_DOMAIN_FROM_VAULT}`, e `${CLOUDFLARE_TUNNEL_TOKEN_FROM_VAULT}` são placeholders que serão substituídos:
     pelos valores que o playbook `setup-core-networking.yml` passa no bloco `environment:` da tarefa de deploy (vault, inventário e `group_vars`). A stack `core` não tem `.env` em disco nem é criada no Portainer.
 
-## 5.3. Authelia (parte de `docker/stacks/core/docker-compose.yml`)
+## 7.3. Authelia (parte de `docker/stacks/core/docker-compose.yml`)
 
 Authelia fornecerá o portal de autenticação e o serviço de 2FA. O conteúdo está incluído em `docker/stacks/core/docker-compose.yml` junto com Traefik e Cloudflared.
 
 !!! warning "Banco do Authelia fora dos snapshots ZFS"
     O Postgres do Authelia (`authelia_db`: dispositivos 2FA, sessões e consentimentos OIDC) fica no disco local da `core-services-vm`, em `/opt/local-data/authelia-db`: o Postgres exige ser dono dos arquivos, o que o NFS com `all_squash` não permite (regra DAD-5). O backup é o dump diário `backup-authelia-db` (03:15) em `docker-volumes/authelia/db-dumps/`, instalado pelo `setup-core-networking.yml` ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#bancos-de-dados-dumps-diários)). Os usuários (`users_database.yml`) e a configuração ficam no NFS.
 
-Os serviços `authelia` e `authelia_db` estão no bloco da [seção 5.2](#52-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml). O que importa neles:
+Os serviços `authelia` e `authelia_db` estão no bloco da [seção 7.2](#72-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml). O que importa neles:
 
 | Item | Valor | Por quê |
 |---|---|---|
@@ -177,7 +177,7 @@ Os serviços `authelia` e `authelia_db` estão no bloco da [seção 5.2](#52-doc
 | Banco | `postgres:17-alpine` em `${AUTHELIA_DB_PATH}`, só na rede `internal_services` | Disco local (DAD-5), dump diário no NFS |
 
 
-## 5.4. Playbook `ansible/playbooks/setup-core-networking.yml`
+## 7.4. Playbook `ansible/playbooks/setup-core-networking.yml`
 
 Este playbook Ansible prepara os arquivos de configuração e faz o deploy da stack `core` (Traefik, Cloudflared e Authelia, num único compose).
 
@@ -201,7 +201,7 @@ Este playbook Ansible prepara os arquivos de configuração e faz o deploy da st
 
 Antes de criar o playbook, precisamos dos roles que preparam os arquivos de configuração.
 
-Os dois roles (`traefik-config` e `authelia-config`) só geram arquivos de configuração: não têm `defaults/`. As versões das imagens da stack `core` ficam num lugar só, o compose da [seção 5.2](#52-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml).
+Os dois roles (`traefik-config` e `authelia-config`) só geram arquivos de configuração: não têm `defaults/`. As versões das imagens da stack `core` ficam num lugar só, o compose da [seção 7.2](#72-docker-compose-para-a-stack-core-dockerstackscoredocker-composeyml).
 
 #### Role: `ansible/roles/infra/traefik-config/`
 
@@ -251,7 +251,7 @@ Este role prepara os arquivos de configuração do Traefik.
   when: "'ai-desktop-vm' in groups['virtual_machines']" # Só cria se a VM AI estiver no inventário
   no_log: true # contém o segredo do kanban. (posto_chave_proxy)
 
-# Middlewares dos agentes (página 16) com segredo: no arquivo, e não em label, para não aparecer no docker inspect.
+# Middlewares dos agentes (página 18) com segredo: no arquivo, e não em label, para não aparecer no docker inspect.
 - name: "Copiar os middlewares dos agentes (segredo da tela de aprovações)"
   ansible.builtin.template:
     src: dynamic_agents.yml.j2
@@ -442,7 +442,7 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
-    langfuse-dynamic: # Rastreio de LLM e ferramentas (página 13); login do Langfuse pelo OIDC do mesmo Authelia
+    langfuse-dynamic: # Rastreio de LLM e ferramentas (página 15); login do Langfuse pelo OIDC do mesmo Authelia
       entryPoints: ["websecure"]
       rule: "Host(`langfuse.{{ base_domain }}`)"
       service: "langfuse-svc-dynamic"
@@ -451,7 +451,7 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
-    # Posto de agentes (página 16): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta, e o
+    # Posto de agentes (página 18): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta, e o
     # segredo injetado depois dela é o que o Caddy do posto exige (sem ele, 403).
     kanban-dynamic:
       entryPoints: ["websecure"]
@@ -463,7 +463,7 @@ http:
         - "authelia-forwardauth@docker"
         - "posto-chave"
 
-    # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
+    # Segundo cérebro (página 14). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
     # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
     notas-dynamic:
       entryPoints: ["websecure"]
@@ -498,7 +498,7 @@ http:
     #   middlewares: ["authelia-forwardauth@docker"]
 
   middlewares:
-    posto-chave: # o Caddy do posto só repassa ao Vibe Kanban o que trouxer este segredo (página 16)
+    posto-chave: # o Caddy do posto só repassa ao Vibe Kanban o que trouxer este segredo (página 18)
       headers:
         customRequestHeaders:
           X-Posto-Chave: "{{ posto_chave_proxy }}"
@@ -549,11 +549,11 @@ http:
 
 ##### `templates/dynamic_agents.yml.j2` (Segredo da tela de aprovações)
 
-O `aprovador` ([seção 16](16-posto-agentes.md#aprovação-humana)) declara o router `aprovacoes.` por labels, como qualquer serviço da core, mas o segredo que só o Traefik injeta mora neste arquivo: um label aparece para quem lê o `docker inspect` (o `ops` e o observador listam containers).
+O `aprovador` ([seção 18](18-posto-agentes.md#aprovação-humana)) declara o router `aprovacoes.` por labels, como qualquer serviço da core, mas o segredo que só o Traefik injeta mora neste arquivo: um label aparece para quem lê o `docker inspect` (o `ops` e o observador listam containers).
 
 ```yaml title="ansible/roles/infra/traefik-config/templates/dynamic_agents.yml.j2"
 # ansible/roles/infra/traefik-config/templates/dynamic_agents.yml.j2
-# (Copiado para dynamic/agents.yml no container Traefik.) Middlewares dos agentes com segredo (página 16).
+# (Copiado para dynamic/agents.yml no container Traefik.) Middlewares dos agentes com segredo (página 18).
 http:
   middlewares:
     aprovador-chave: # a tela do aprovador só aceita requisições com este segredo (outro container da rede proxy não)
@@ -582,7 +582,7 @@ http:
         # X-Robots-Tag: none
         # X-XSS-Protection: 1; mode=block (já tratado globalmente)
         # Adicione outros específicos se Nextcloud evoluir suas recomendações.
-        # Uso no router do Nextcloud (stack cloud, página 11; sem Authelia, o login é o OIDC):
+        # Uso no router do Nextcloud (stack cloud, página 13; sem Authelia, o login é o OIDC):
         # traefik.http.routers.nextcloud.middlewares: "nextcloud-dav@file,nextcloud-headers@file"
         # Os headers globais (securityHeaders@file) cobrem o geral; aqui ficam só os específicos do Nextcloud.
         # Exemplo de header que poderia ser específico:
@@ -740,12 +740,12 @@ access_control:
       policy: bypass
 
     # Aplicações públicas (Exposição = publica no catálogo), com login próprio: os apps do Jellyfin
-    # não passam pelo Authelia, e o Seerr entra com a conta do Jellyfin (página 10).
+    # não passam pelo Authelia, e o Seerr entra com a conta do Jellyfin (página 12).
     - domain: "jellyfin.{{ base_domain }}"
       policy: bypass
     - domain: "pedidos.{{ base_domain }}"
       policy: bypass
-    # Fotos e arquivos (página 11): login próprio de cada app pelo OIDC deste Authelia (identity_providers
+    # Fotos e arquivos (página 13): login próprio de cada app pelo OIDC deste Authelia (identity_providers
     # abaixo, com two_factor), que funciona também nos apps de celular e desktop. O Collabora (office.) é
     # aberto pelo navegador dentro do Nextcloud e protegido pelo token WOPI que o Nextcloud gera.
     - domain: "fotos.{{ base_domain }}"
@@ -754,17 +754,17 @@ access_control:
       policy: bypass
     - domain: "office.{{ base_domain }}"
       policy: bypass
-    # Conectores MCP do segundo cérebro (página 12): o claude.ai e o Claude Code fazem OAuth com o mcp-auth-proxy,
+    # Conectores MCP do segundo cérebro (página 14): o claude.ai e o Claude Code fazem OAuth com o mcp-auth-proxy,
     # que manda o login para o OIDC deste Authelia (cliente 'mcp', two_factor, só o grupo admins).
     - domain: "notas.{{ base_domain }}"
       policy: bypass
     - domain: "escrita.{{ base_domain }}"
       policy: bypass
-    # Conector Servidor (base dos agentes, página 13): rota de leitura do hub de MCPs, mesmo esquema (cliente 'mcp').
+    # Conector Servidor (base dos agentes, página 15): rota de leitura do hub de MCPs, mesmo esquema (cliente 'mcp').
     - domain: "servidor.{{ base_domain }}"
       policy: bypass
 
-    # Painéis de administração (authelia_dominios_admins, página 01): só o grupo admins entra. A regra com
+    # Painéis de administração (authelia_dominios_admins, página 03): só o grupo admins entra. A regra com
     # subject só casa com quem está no grupo; a seguinte recusa os demais (sem ela, eles cairiam no curinga).
     - domain:
 {% for sub in authelia_dominios_admins %}
@@ -812,7 +812,7 @@ notifier:
 #     # Para verificar a configuração do notificador ao iniciar Authelia:
 #     # startup_check_address: "email_de_teste_para_receber_notificacao@example.com"
 
-# Provedor OpenID Connect (SSO): Immich e Nextcloud (página 11) e Open WebUI (página 08) entram com a conta e o 2FA deste Authelia.
+# Provedor OpenID Connect (SSO): Immich e Nextcloud (página 13) e Open WebUI (página 10) entram com a conta e o 2FA deste Authelia.
 # Segredos no vault: hmac_secret, a chave RSA de assinatura (jwks) e, de cada cliente, só o digest
 # pbkdf2-sha512 do segredo (o segredo em claro fica com o app).
 identity_providers:
@@ -895,7 +895,7 @@ identity_providers:
         grant_types: ["authorization_code"]
         userinfo_signed_response_alg: "none"
         token_endpoint_auth_method: "client_secret_basic"
-      # Os dois mcp-auth-proxy do segundo cérebro (página 12). Sem PKCE: o proxy não o envia ao provedor; ele
+      # Os dois mcp-auth-proxy do segundo cérebro (página 14). Sem PKCE: o proxy não o envia ao provedor; ele
       # mesmo exige PKCE dos clientes MCP (claude.ai, Claude Code). Só quem está no grupo admins passa.
       - client_id: "mcp"
         client_name: "Conectores MCP (notas e servidor)"
@@ -914,7 +914,7 @@ identity_providers:
         grant_types: ["authorization_code"]
         userinfo_signed_response_alg: "none"
         token_endpoint_auth_method: "client_secret_basic"
-      # Langfuse (página 13): rastreio das chamadas de LLM e de ferramentas; login só pelo SSO.
+      # Langfuse (página 15): rastreio das chamadas de LLM e de ferramentas; login só pelo SSO.
       - client_id: "langfuse"
         client_name: "Langfuse"
         client_secret: "{{ oidc_clients.langfuse.secret_digest }}"
@@ -948,7 +948,7 @@ regulation:
 ```
 
 !!! info "Grupos: quem entra onde"
-    - **`admins`**: os painéis de administração listados em `authelia_dominios_admins` (página 01: Traefik, Portainer, Grafana, Prometheus, n8n, LiteLLM, Open WebUI, Langfuse, Syncthing, as *arr e o qBittorrent) e os clientes OIDC da política `so_admins` (Open WebUI, conectores MCP, Langfuse). Um usuário fora do grupo recebe **acesso negado**, mesmo com 2FA.
+    - **`admins`**: os painéis de administração listados em `authelia_dominios_admins` (página 03: Traefik, Portainer, Grafana, Prometheus, n8n, LiteLLM, Open WebUI, Langfuse, Syncthing, as *arr e o qBittorrent) e os clientes OIDC da política `so_admins` (Open WebUI, conectores MCP, Langfuse). Um usuário fora do grupo recebe **acesso negado**, mesmo com 2FA.
     - **`users`**: os clientes OIDC da política `familia` (Immich e Nextcloud). Só ganha conta neles quem está neste grupo.
     - Os demais subdomínios protegidos (`home.`, `hass.`) aceitam qualquer usuário com 2FA.
 
@@ -1060,7 +1060,7 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
       ansible.builtin.include_tasks: tasks/dump-postgres.yml
       vars:
         dump_nome: authelia
-        dump_descricao: "do Authelia (página 05)"
+        dump_descricao: "do Authelia (página 07)"
         dump_container: authelia_db
         dump_db: authelia
         dump_user: authelia
@@ -1089,7 +1089,7 @@ Este playbook orquestra o deploy da stack de rede. Authelia agora está consolid
 
     Você será solicitado a fornecer a senha do Ansible Vault.
 
-## 5.5. Configuração de DNS na Cloudflare
+## 7.5. Configuração de DNS na Cloudflare
 
 Após o deploy bem-sucedido da stack de rede, especialmente do container `cloudflared` (Cloudflare Tunnel), você precisa configurar seus registros DNS na Cloudflare para que seus subdomínios (e.g., `portainer.seudominio.com`, `traefik.seudominio.com`, `auth.seudominio.com`) apontem corretamente para o seu túnel.
 
@@ -1141,4 +1141,4 @@ O `cloudflared` tentará criar e gerenciar automaticamente um registro CNAME par
 
 Pode levar alguns minutos para que quaisquer novas configurações de DNS ou Public Hostnames se propaguem globalmente.
 
-Com a stack de rede segura implementada e o DNS configurado, você está pronto para o [Deploy Core](06-deploy-core.md).
+Com a stack de rede segura implementada e o DNS configurado, você está pronto para o [Deploy Core](08-deploy-core.md).

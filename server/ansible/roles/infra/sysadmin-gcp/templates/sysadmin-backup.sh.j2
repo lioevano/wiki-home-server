@@ -1,6 +1,6 @@
 #!/bin/bash
 # ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.sh.j2
-# Backup diário da memória do sysadmin (página 19): o dump do banco do Honcho (pg_dump dentro do honcho_db) e o
+# Backup diário da memória do sysadmin (página 02): o dump do banco do Honcho (pg_dump dentro do honcho_db) e o
 # diretório do Hermes (sessões, memória, skills aprendidas) vão para gs://{{ sysadmin_bucket }}/backup/<data>/; a
 # regra de ciclo de vida do bucket apaga depois de 30 dias. O resto da VM se refaz do script e do repositório.
 # Sem segredos: o .env do Hermes (montado de /run/sysadmin) e o auth.json ficam fora do tar, e nada de /run/sysadmin

@@ -5,7 +5,7 @@
 # da LAN só passa se a origem estiver na lista (lista vazia: ninguém pela LAN). Tráfego da VPN (tailscale0) e
 # entre containers não passa por aqui. Rodado pela unit firewall-docker antes de cada (re)início do Docker: cria a
 # DOCKER-USER se ainda não existe, e o Docker a reaproveita (só acrescenta o salto na FORWARD).
-# Página 14. Gerado pelo role infra/docker.
+# Página 16. Gerado pelo role infra/docker.
 set -euo pipefail
 
 LAN="{{ ansible_facts.default_ipv4.interface | default('eth0') }}"

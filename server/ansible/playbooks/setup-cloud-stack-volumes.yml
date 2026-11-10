@@ -1,6 +1,6 @@
 # ansible/playbooks/setup-cloud-stack-volumes.yml
 # Prepara a stack cloud (Nextcloud, cron, Collabora): diretórios, hook de configuração do Nextcloud,
-# dump diário do banco (timer systemd) e cloud.env (página 11).
+# dump diário do banco (timer systemd) e cloud.env (página 13).
 - name: Setup Cloud Stack Volumes and Environment
   hosts: core_services
   become: true
@@ -67,7 +67,7 @@
       ansible.builtin.include_tasks: tasks/dump-postgres.yml
       vars:
         dump_nome: nextcloud
-        dump_descricao: "do Nextcloud (página 11)"
+        dump_descricao: "do Nextcloud (página 13)"
         dump_container: nextcloud_db
         dump_db: nextcloud
         dump_user: nextcloud

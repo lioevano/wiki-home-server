@@ -1,5 +1,5 @@
 # ansible/roles/infra/tailscale/templates/Corefile.j2
-# DNS da VPN (página 14): para quem está no Tailscale (split DNS restrito ao domínio), todo <app>.<domínio>
+# DNS da VPN (página 16): para quem está no Tailscale (split DNS restrito ao domínio), todo <app>.<domínio>
 # aponta para o Traefik na core-services-vm, pela VPN. Outras zonas são recusadas: o resto da internet
 # continua resolvendo pelo DNS normal do aparelho.
 {{ base_domain }}:53 {

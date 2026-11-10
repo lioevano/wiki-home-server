@@ -67,7 +67,7 @@ são **erros**; `ORPHAN`, `UNMARKED`, `DESC`, `REF-PENDING` são avisos (`REF-PE
 - `.env` reais das stacks nunca são versionados; o contrato é `server/docker/stacks/.env.template`.
 - Não execute `ansible-playbook` contra hosts reais sem `--check`/`--syntax-check`, nem `ansible-vault`,
   `ssh`, `docker compose up/down` ou `git push`, sem confirmação explícita do usuário.
-  - **Exceção para o sysadmin da [página 19](wiki/docs/01-manual-implementacao/19-sysadmin-gcp.md):**
+  - **Exceção para o sysadmin da [página 02](wiki/docs/01-manual-implementacao/02-sysadmin-gcp.md):**
     o botão do executor no bot de aprovações conta como confirmação explícita do Léo para `ansible-playbook` real,
     `ansible-vault` e `ssh`, e só vale para aquele pedido (mesma ação e alvo, uma vez, em 30 minutos). O
     push em branch de trabalho e abertura de PR pela conta de máquina são permitidos sem botão (spec S1/S7);

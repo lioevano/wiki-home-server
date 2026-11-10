@@ -2,9 +2,9 @@
 description: "VPN com Tailscale na core-services-vm e no host Proxmox, com tags e ACL versionada: acesso de fora sem o limite do túnel, rota de controle do hub só pela VPN, DNS da VPN e firewall das portas do Docker."
 ---
 
-# Seção 14: VPN (Tailscale) e firewall das portas do Docker
+# Seção 16: VPN (Tailscale) e firewall das portas do Docker
 
-O túnel da Cloudflare publica as aplicações na internet, mas recusa requisições acima de 100 MB e passa tudo pela Cloudflare. A **VPN** é o caminho privado: com o Tailscale ligado no PC ou no celular, os mesmos endereços `https://<app>.seudominio.com` vão direto ao Traefik de casa, cifrados pelo WireGuard e sem limite de tamanho. A rota de controle do hub de MCPs ([seção 13](13-agentes-base.md)) passa a existir **só** pela VPN.
+O túnel da Cloudflare publica as aplicações na internet, mas recusa requisições acima de 100 MB e passa tudo pela Cloudflare. A **VPN** é o caminho privado: com o Tailscale ligado no PC ou no celular, os mesmos endereços `https://<app>.seudominio.com` vão direto ao Traefik de casa, cifrados pelo WireGuard e sem limite de tamanho. A rota de controle do hub de MCPs ([seção 15](15-agentes-base.md)) passa a existir **só** pela VPN.
 
 ```mermaid
 flowchart LR
@@ -28,21 +28,21 @@ flowchart LR
 
 ## Firewall das portas publicadas pelo Docker
 
-Portas publicadas pelo Docker (`ports:`) passam por fora do UFW. Para cada porta em `firewall_docker_portas` (página 01), quem chega pela **interface da LAN** só passa se a origem estiver na lista; lista vazia quer dizer "ninguém pela LAN". Tráfego da VPN (`tailscale0`) e entre containers não passa por essas regras.
+Portas publicadas pelo Docker (`ports:`) passam por fora do UFW. Para cada porta em `firewall_docker_portas` (página 03), quem chega pela **interface da LAN** só passa se a origem estiver na lista; lista vazia quer dizer "ninguém pela LAN". Tráfego da VPN (`tailscale0`) e entre containers não passa por essas regras.
 
 | VM | Porta | Quem alcança pela LAN | Por quê |
 |---|---|---|---|
 | core | 9090 (Prometheus) | host Proxmox e `ai-desktop-vm` | `remote_write` dos Alloys; sem isso, qualquer aparelho da LAN injetaria métricas |
 | core | 3100 (Loki) | host Proxmox e `ai-desktop-vm` | Logs dos Alloys; o Loki não tem autenticação |
 | core | 4100 (hub, rota de controle) | ninguém (só pela VPN) | Ações no servidor só por canal cifrado e com a chave do cliente |
-| core | 4200 (hub, rota dos autônomos) | `ai-desktop-vm` | Agentes do posto e o assistente rodam lá ([seção 16](16-posto-agentes.md)) |
+| core | 4200 (hub, rota dos autônomos) | `ai-desktop-vm` | Agentes do posto e o assistente rodam lá ([seção 18](18-posto-agentes.md)) |
 | ai | 9001 (Portainer Agent) | `core-services-vm` | Só o Portainer central gerencia a VM |
 | ai | 3100 (Langfuse) | `core-services-vm` | O Traefik e o hub ficam na core |
-| ai | 3005 (Vibe Kanban) | `core-services-vm` | Sem login próprio: só o Traefik, com o Authelia na frente ([seção 16](16-posto-agentes.md)) |
+| ai | 3005 (Vibe Kanban) | `core-services-vm` | Sem login próprio: só o Traefik, com o Authelia na frente ([seção 18](18-posto-agentes.md)) |
 
 O LiteLLM (4000), a Open WebUI (3000), o painel e a sincronização do Syncthing (8384, 22000) continuam abertos na LAN: o PC e o celular os usam em casa, cada um com o próprio login.
 
-O script é gerado pelo role `infra/docker` (página 04) e rodado pela unit `firewall-docker`, que roda **antes** de cada (re)início do Docker: as regras já estão lá quando os containers sobem, sem janela aberta no boot. Para conferir: `sudo iptables -L HOMESERVER -n -v`.
+O script é gerado pelo role `infra/docker` (página 06) e rodado pela unit `firewall-docker`, que roda **antes** de cada (re)início do Docker: as regras já estão lá quando os containers sobem, sem janela aberta no boot. Para conferir: `sudo iptables -L HOMESERVER -n -v`.
 
 ```bash title="ansible/roles/infra/docker/templates/firewall-docker.sh.j2"
 #!/bin/bash
@@ -52,7 +52,7 @@ O script é gerado pelo role `infra/docker` (página 04) e rodado pela unit `fir
 # da LAN só passa se a origem estiver na lista (lista vazia: ninguém pela LAN). Tráfego da VPN (tailscale0) e
 # entre containers não passa por aqui. Rodado pela unit firewall-docker antes de cada (re)início do Docker: cria a
 # DOCKER-USER se ainda não existe, e o Docker a reaproveita (só acrescenta o salto na FORWARD).
-# Página 14. Gerado pelo role infra/docker.
+# Página 16. Gerado pelo role infra/docker.
 set -euo pipefail
 
 LAN="{{ ansible_facts.default_ipv4.interface | default('eth0') }}"
@@ -77,7 +77,7 @@ $IPT -A "$CADEIA" -j RETURN
 
 ```yaml title="ansible/playbooks/setup-vpn.yml"
 # ansible/playbooks/setup-vpn.yml
-# VPN (página 14): Tailscale como subnet router e o DNS da VPN, na core-services-vm.
+# VPN (página 16): Tailscale como subnet router e o DNS da VPN, na core-services-vm.
 - name: VPN (Tailscale) e DNS da VPN
   hosts: core_services
   become: true
@@ -91,7 +91,7 @@ $IPT -A "$CADEIA" -j RETURN
 
 ```yaml title="ansible/roles/infra/tailscale/tasks/main.yml"
 # ansible/roles/infra/tailscale/tasks/main.yml
-# VPN (página 14): Tailscale como nó do tailnet. Na core-services-vm e no host Proxmox é subnet router dos três
+# VPN (página 16): Tailscale como nó do tailnet. Na core-services-vm e no host Proxmox é subnet router dos três
 # IPs da casa (/32; as duas pontas anunciam as mesmas rotas, para failover); a core ainda roda o CoreDNS que
 # responde *.<domínio> com o IP da core para quem está na VPN (split DNS configurado no painel do Tailscale).
 # Serve a Ubuntu (VMs, VM do GCP) e a Debian (host Proxmox): o repositório sai de ansible_facts.distribution.
@@ -150,7 +150,7 @@ $IPT -A "$CADEIA" -j RETURN
       Este nó não está no tailnet e não há chave de uso único (tailscale_auth_key vazia). Host Proxmox: gere uma
       chave nova com tag:homeserver e rode o scripts/gcp/preparar-host.sh (preparar_host do sysadmin, com a chave
       nova no segredo do GCP) ou grave-a em tailscale_auth_key_host no vault. Core: a chave anterior era de uso
-      único; gere outra com tag:homeserver e grave-a em tailscale_auth_key no vault (vault_preencher). VM do GCP: tailscale_chave_sysadmin no segredo sysadmin-segredos (página 14).
+      único; gere outra com tag:homeserver e grave-a em tailscale_auth_key no vault (vault_preencher). VM do GCP: tailscale_chave_sysadmin no segredo sysadmin-segredos (página 16).
     quiet: true
   when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') not in ['Running', 'Starting', 'Stopped']
 
@@ -250,7 +250,7 @@ $IPT -A "$CADEIA" -j RETURN
 
 ```text title="ansible/roles/infra/tailscale/templates/Corefile.j2"
 # ansible/roles/infra/tailscale/templates/Corefile.j2
-# DNS da VPN (página 14): para quem está no Tailscale (split DNS restrito ao domínio), todo <app>.<domínio>
+# DNS da VPN (página 16): para quem está no Tailscale (split DNS restrito ao domínio), todo <app>.<domínio>
 # aponta para o Traefik na core-services-vm, pela VPN. Outras zonas são recusadas: o resto da internet
 # continua resolvendo pelo DNS normal do aparelho.
 {{ base_domain }}:53 {
@@ -270,8 +270,8 @@ $IPT -A "$CADEIA" -j RETURN
 
 ```yaml title="ansible/roles/infra/tailscale/defaults/main.yml"
 # ansible/roles/infra/tailscale/defaults/main.yml
-# Padrões do role infra/tailscale (página 14). tailscale_hostname, tailscale_rotas e tailscale_auth_key não têm
-# padrão: cada play informa (tailscale_rotas vem do group_vars, página 01).
+# Padrões do role infra/tailscale (página 16). tailscale_hostname, tailscale_rotas e tailscale_auth_key não têm
+# padrão: cada play informa (tailscale_rotas vem do group_vars, página 03).
 # Tags do nó, aplicadas só na primeira entrada (tailscale up); a ACL (scripts/tailscale/acl.json) decide por elas.
 tailscale_tags: ["tag:homeserver"]
 # Aceitar as rotas anunciadas pelos outros nós: as máquinas da casa não precisam; um PC Linux de uso pessoal, sim.
@@ -309,6 +309,8 @@ tailscale_ufw: true
 
 ## Primeira configuração
 
+Com o sysadmin, os passos 1 a 3 já foram feitos na fase 0 ([seção 2, passo 1.5](02-sysadmin-gcp.md#15-tailscale)), incluindo o HTTPS do tailnet (*DNS → HTTPS Certificates*).
+
 1. **Conta Tailscale** (plano gratuito) em `login.tailscale.com`.
 2. **ACL primeiro (painel → Access controls):** cole o conteúdo de `scripts/tailscale/acl.json` (bloco acima; JSON estrito, sem comentários, então a explicação fica aqui). Ela vem **antes** das chaves: o painel só cria chave com uma tag que esteja nos `tagOwners`. Ela faz quatro coisas:
     - `tagOwners`: só os administradores da conta (`autogroup:admin`) criam nós com `tag:homeserver` (as máquinas da casa) e `tag:sysadmin` (a VM do sysadmin no GCP).
@@ -320,7 +322,7 @@ tailscale_ufw: true
 
     Esta ACL é **mais estreita que a antiga** ("todos alcançam todos"): um aparelho seu não alcança outro aparelho seu pelo Tailscale (celular para PC, por exemplo). Se quiser isso, acrescente em `acls` uma regra com `autogroup:member` na origem e `autogroup:member:*` no destino.
 3. **Três chaves de uso único** (*Settings → Keys → Generate auth key*, **não reutilizável** e **pré-aprovada**, cada uma com a sua tag):
-    - **core**, `tag:homeserver`: em `tailscale_auth_key` no vault (página 01; com o sysadmin, pelo `vault_preencher`). Só serve para o primeiro `tailscale up` da core.
+    - **core**, `tag:homeserver`: em `tailscale_auth_key` no vault (página 03; com o sysadmin, pelo `vault_preencher`). Só serve para o primeiro `tailscale up` da core.
     - **host Proxmox**, `tag:homeserver`: no segredo do GCP (`tailscale_chave_homeserver`, pedida pelo `criar-sysadmin.sh`); o `preparar-host.sh` entra com ela. Sem o sysadmin, ou se o host sair do tailnet e precisar entrar de novo, ela vai em `tailscale_auth_key_host` no vault e o `setup-proxmox-host.yml` faz a entrada.
     - **VM do sysadmin no GCP**, `tag:sysadmin`: no segredo do GCP (`tailscale_chave_sysadmin`, pedida pelo `criar-sysadmin.sh`).
 
@@ -337,9 +339,9 @@ tailscale_ufw: true
 | Aplicação | Com a VPN |
 |---|---|
 | Todas (`https://<app>.seudominio.com`) | Vão direto ao Traefik, sem a Cloudflare e sem o limite de 100 MB. O Authelia continua na frente de quem já estava atrás dele |
-| Immich e Nextcloud | Vídeos e arquivos grandes sobem de qualquer lugar. A troca de URL pelo Wi-Fi no app do Immich vira opcional ([seção 11](11-fotos-arquivos.md)) |
-| Syncthing | O celular conecta direto em `tcp://<IP da ai-desktop-vm>:22000`, sem relay ([seção 12](12-segundo-cerebro.md)) |
-| Hub de MCPs (rota de controle) | `http://<IP da core>:4100/mcp` só responde pela VPN, também em casa ([seção 13](13-agentes-base.md)) |
+| Immich e Nextcloud | Vídeos e arquivos grandes sobem de qualquer lugar. A troca de URL pelo Wi-Fi no app do Immich vira opcional ([seção 13](13-fotos-arquivos.md)) |
+| Syncthing | O celular conecta direto em `tcp://<IP da ai-desktop-vm>:22000`, sem relay ([seção 14](14-segundo-cerebro.md)) |
+| Hub de MCPs (rota de controle) | `http://<IP da core>:4100/mcp` só responde pela VPN, também em casa ([seção 15](15-agentes-base.md)) |
 | Proxmox | Nó próprio da VPN (`pve`): `https://<IP do host>:8006` responde pela rota `/32`, mesmo longe de casa |
 
 ## Falhas
@@ -350,7 +352,7 @@ tailscale_ufw: true
 | Rota não aprovada no painel (ou core antiga sem `tag:homeserver`) | O aparelho entra na VPN mas não alcança as VMs | Painel → Machines → `homeserver` e `pve` → *Edit route settings* (ou confira a tag `tag:homeserver` e o `autoApprovers`; core sem tag: reautentique como no passo 3) |
 | Nome não resolve pela VPN | `fotos.seudominio.com` cai na Cloudflare (limite de 100 MB) | Confira o nameserver restrito ao domínio no painel e `docker logs coredns` |
 | Claude Code sem as ferramentas do hub | A 4100 só responde pela VPN | Ligue o Tailscale no PC |
-| Uma aplicação da LAN parou de alcançar a 9090, 3100, 3005, 4100, 4200 ou 9001 | Bloqueada pelo `firewall_docker_portas` | Acrescente a origem à lista (página 01) e rode o `setup-base-ubuntu.yml` |
+| Uma aplicação da LAN parou de alcançar a 9090, 3100, 3005, 4100, 4200 ou 9001 | Bloqueada pelo `firewall_docker_portas` | Acrescente a origem à lista (página 03) e rode o `setup-base-ubuntu.yml` |
 
 ## Teste de ponta a ponta
 

@@ -1,4 +1,4 @@
-# Observador (sub-projeto 4c2, página 15): só a biblioteca padrão do Python, nenhuma dependência instalada.
+# Observador (sub-projeto 4c2, página 17): só a biblioteca padrão do Python, nenhuma dependência instalada.
 # Construída pelo setup-agents-volumes.yml em /opt/observador-image.
 FROM python:3.13-slim
 COPY observador /app/observador

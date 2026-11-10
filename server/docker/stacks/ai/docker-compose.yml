@@ -2,14 +2,14 @@
 # Stack de IA: gateway LiteLLM (+ Postgres), Ollama (Vulkan), Open WebUI e Diun. Logs e métricas do host e
 # dos containers: Alloy na VM. Roda na ai-desktop-vm (gerenciada pelo Portainer central via Portainer Agent).
 # Variáveis: /opt/portainer_stack_envs/ai.env, gerado por ansible/playbooks/setup-ai-volumes.yml.
-# Página: 01-manual-implementacao/08-stack-ia.md
+# Página: 01-manual-implementacao/10-stack-ia.md
 version: '3.9'
 
 networks:
   ai_network:
     name: ai_network
     driver: bridge
-  # Rede dos MCPs do segundo cérebro (criada pela stack notes, página 12): suba a stack notes antes desta.
+  # Rede dos MCPs do segundo cérebro (criada pela stack notes, página 14): suba a stack notes antes desta.
   notes_mcp:
     external: true
   # Só o diun_ai alcança o proxy do socket: com CONTAINERS=1 ele mostra o Env de qualquer container (as chaves
@@ -40,7 +40,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - TYPESAFE_API_KEY=${TYPESAFE_API_KEY}
-      # Rastreio no Langfuse (callback langfuse_otel; página 13)
+      # Rastreio no Langfuse (callback langfuse_otel; página 15)
       - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
       - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
       - LANGFUSE_OTEL_HOST=${LANGFUSE_OTEL_HOST}
@@ -130,10 +130,10 @@ services:
       - OAUTH_ROLES_CLAIM=groups
       - OAUTH_ALLOWED_ROLES=admins
       - OAUTH_ADMIN_ROLES=admins
-      - ENABLE_LOGIN_FORM=${OPENWEBUI_LOGIN_FORM} # true só até vincular o admin; depois false (página 08)
+      - ENABLE_LOGIN_FORM=${OPENWEBUI_LOGIN_FORM} # true só até vincular o admin; depois false (página 10)
       - ENABLE_PASSWORD_AUTH=${OPENWEBUI_LOGIN_FORM} # sem o formulário, a API de senha também sai
       - DEFAULT_USER_ROLE=pending # o papel vem do grupo (OAUTH_ADMIN_ROLES), nunca do "primeiro a entrar"
-      # Ferramentas MCP do segundo cérebro (página 12). Sem access_grants = só administradores as usam.
+      # Ferramentas MCP do segundo cérebro (página 14). Sem access_grants = só administradores as usam.
       - 'TOOL_SERVER_CONNECTIONS=[{"type": "mcp", "url": "http://qmd:8181/mcp", "auth_type": "none", "key": "", "config": {"enable": true}, "info": {"id": "notas", "name": "Notas (busca)", "description": "Busca nos vaults Pessoal, Trabalho e Estudos e nos documentos do Nextcloud (só leitura)"}}, {"type": "mcp", "url": "http://notes_escrita:8000/mcp", "auth_type": "none", "key": "", "config": {"enable": true}, "info": {"id": "escrita", "name": "Notas (escrita)", "description": "Cria e edita notas nos vaults Trabalho e Estudos"}}]'
       - TZ=${SYSTEM_TIMEZONE}
     depends_on:
@@ -157,7 +157,7 @@ services:
       - DIUN_PROVIDERS_DOCKER_ENDPOINT=tcp://docker-socket-proxy-ai:2375 # só leitura, sem o socket no container
       - DIUN_PROVIDERS_DOCKER_WATCHBYDEFAULT=true
       # Versões fixadas: o Diun olha as tags do repositório de cada imagem e avisa quando sai uma versão nova
-      # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 09.
+      # (só tags de versão; latest, develop e 16-alpine não contam). Política de versões: página 11.
       - DIUN_DEFAULTS_WATCHREPO=true
       - DIUN_DEFAULTS_SORTTAGS=semver
       - DIUN_DEFAULTS_MAXTAGS=3 # poucas tags por repositório: o Docker Hub limita os pulls anônimos por IP

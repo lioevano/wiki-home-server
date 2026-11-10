@@ -13,8 +13,8 @@ from test_midia import _env, _svc
 
 APPS = ROOT / "server/docker/stacks/apps/docker-compose.yml"
 AI = ROOT / "server/docker/stacks/ai/docker-compose.yml"
-P07 = ROOT / "wiki/docs/01-manual-implementacao/07-deploy-apps.md"
-P09 = ROOT / "wiki/docs/01-manual-implementacao/09-painel-notificacoes.md"
+P09 = ROOT / "wiki/docs/01-manual-implementacao/09-deploy-apps.md"
+P11 = ROOT / "wiki/docs/01-manual-implementacao/11-painel-notificacoes.md"
 
 
 def _regras():
@@ -52,7 +52,7 @@ for (const [env, json, esperado] of casos) {{
 
 def test_publicar_workflow_no_n8n_2():
     """#53: no n8n 2.x, update:workflow --active está obsoleto; o comando é publish:workflow."""
-    texto = P09.read_text(encoding="utf-8")
+    texto = P11.read_text(encoding="utf-8")
     assert "n8n publish:workflow --id=HsNotificar00001" in texto
     assert "update:workflow" not in texto
 

@@ -1,6 +1,6 @@
 # ansible/roles/infra/sysadmin-gcp/defaults/main.yml
-# Padrões do role infra/sysadmin-gcp (página 19): a VM do sysadmin na GCP. Versões, modelos, rede e bloqueios vêm do
-# group_vars (página 01, carregado por vars_files); gcp_projeto vem do servidor de metadados (tasks/segredos.yml).
+# Padrões do role infra/sysadmin-gcp (página 02): a VM do sysadmin na GCP. Versões, modelos, rede e bloqueios vêm do
+# group_vars (página 03, carregado por vars_files); gcp_projeto vem do servidor de metadados (tasks/segredos.yml).
 # Nada aqui é segredo: os segredos vêm do Secret Manager para o tmpfs /run/sysadmin.
 
 # Os dados ficam em /opt/sysadmin (SYSADMIN_DATA_PATH do compose), fixo: as units e o ansible-pull também o usam.

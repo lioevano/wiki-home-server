@@ -1,4 +1,4 @@
-"""Testes do observador (sub-projeto 4c2, página 15): configuração, cliente MCP (JSON e SSE), laço do agente,
+"""Testes do observador (sub-projeto 4c2, página 17): configuração, cliente MCP (JSON e SSE), laço do agente,
 filtro de alertas, servidor HTTP e agendador. O hub e o LiteLLM são servidores HTTP falsos, locais."""
 from __future__ import annotations
 

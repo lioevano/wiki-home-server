@@ -189,7 +189,7 @@ def test_authelia_bypass_para_publicas_antes_do_curinga():
 
 # --- Correções da revisão final ---
 
-PAGINA10 = ROOT / "wiki/docs/01-manual-implementacao/10-midia.md"
+PAGINA12 = ROOT / "wiki/docs/01-manual-implementacao/12-midia.md"
 
 
 def test_vpn_fora_detectado_pela_saude_do_gluetun():
@@ -205,7 +205,7 @@ def test_vpn_fora_detectado_pela_saude_do_gluetun():
 def test_qbittorrent_reinicia_junto_com_o_gluetun():
     # Container com network_mode: service:gluetun perde a rede quando o gluetun é recriado.
     assert _svc(MEDIA)["qbittorrent"]["depends_on"]["gluetun"]["restart"] is True
-    texto = PAGINA10.read_text(encoding="utf-8")
+    texto = PAGINA12.read_text(encoding="utf-8")
     assert "docker restart qbittorrent" in texto
 
 
@@ -214,13 +214,13 @@ def test_traefik_repassa_ip_real_do_cliente():
     cfg = yaml.safe_load(render("roles/infra/traefik-config/templates/traefik.yml.j2",
                                 base_domain="seudominio.com", letsencrypt_email="a@b.c"))
     assert "172.16.0.0/12" in cfg["entryPoints"]["websecure"]["forwardedHeaders"]["trustedIPs"]
-    texto = PAGINA10.read_text(encoding="utf-8")
+    texto = PAGINA12.read_text(encoding="utf-8")
     assert "Known proxies" in texto
 
 
 def test_assistentes_publicos_logo_apos_o_deploy():
     # Jellyfin e Seerr ficam públicos: o assistente inicial vem antes de qualquer outro passo.
-    texto = PAGINA10.read_text(encoding="utf-8")
+    texto = PAGINA12.read_text(encoding="utf-8")
     primeira = texto.index("## Primeira configuração")
     passos = texto[primeira:]
     assert passos.index("**Jellyfin") < passos.index("**ProtonVPN")

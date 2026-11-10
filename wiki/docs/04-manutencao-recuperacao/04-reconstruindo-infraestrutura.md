@@ -30,7 +30,7 @@ Siga estes passos metodicamente:
     *   Verifique todas as conexões de hardware (cabos SATA para os HDDs do pool ZFS, RAM, CPU, etc.) para garantir que estão firmes.
 
 2.  **Instalar o Proxmox VE Base no Novo SSD:**
-    *   Siga rigorosamente os passos da [**Seção 2.1: Instalação do Proxmox VE no Servidor Físico**](../01-manual-implementacao/02-proxmox-ve-host.md#21-instalação-do-proxmox-ve-no-servidor-físico) para instalar uma cópia limpa do Proxmox VE no novo SSD NVMe.
+    *   Siga rigorosamente os passos da [**Seção 4.1: Instalação do Proxmox VE no Servidor Físico**](../01-manual-implementacao/04-proxmox-ve-host.md#41-instalação-do-proxmox-ve-no-servidor-físico) para instalar uma cópia limpa do Proxmox VE no novo SSD NVMe.
     *   **Configuração de Rede do Host:** Durante a instalação, configure a rede do novo host Proxmox com o **mesmo endereço IP estático** que o servidor Proxmox antigo usava (e.g., `192.168.15.10`). Isso simplificará enormemente a restauração das configurações Ansible e a conectividade.
     *   **Senha Root:** Você pode usar a mesma senha `root` que usava antes (se lembrar e estiver no seu Ansible Vault) ou definir uma nova. Se definir uma nova, lembre-se de atualizar a variável `proxmox_api_password` no seu Ansible Vault posteriormente.
 
@@ -53,16 +53,16 @@ Siga estes passos metodicamente:
         ```
         O estado deve ser `ONLINE`, e seus datasets (`docker-volumes`, `media`, `backups`, etc.) devem agora estar acessíveis nos seus pontos de montagem usuais (e.g., `/data/docker-volumes`).
     *   **Se os HDDs do pool `/data` foram perdidos e você precisa restaurar do backup:**
-        1.  Crie um novo pool ZFS `data` e os datasets seguindo a [Seção 2.2](../01-manual-implementacao/02-proxmox-ve-host.md#22-configuração-do-pool-zfs-data-e-datasets) (mesmos nomes e cotas).
+        1.  Crie um novo pool ZFS `data` e os datasets seguindo a [Seção 4.2](../01-manual-implementacao/04-proxmox-ve-host.md#42-configuração-do-pool-zfs-data-e-datasets) (mesmos nomes e cotas).
         2.  Instale o restic (`apt install restic`). O host novo ainda não tem os arquivos de `/etc/restic`: na máquina de controle, `ansible-vault view inventories/home/group_vars/all/vault.yml` mostra `restic_senha` e `restic_repositorios`; no host, exporte `RESTIC_REPOSITORY`, `RESTIC_PASSWORD` e, para a nuvem, `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` (ou rode o `setup-proxmox-host.yml`, que grava tudo). Use o disco externo, se ele sobreviveu, ou a nuvem, e restaure cada dataset de `restic_datasets` como em [Um dataset inteiro](02-backup-restore-estrategia.md#um-dataset-inteiro). A mídia não está no backup: as *arr baixam de novo o que estiver na biblioteca.
         3.  Este é o passo mais demorado (da nuvem, pode levar dias). Comece por `docker-volumes`, que é pequeno e destrava o resto.
 
 4.  **Recriar as VMs:**
-    *   Com a máquina de controle pronta (passo 5), rode `playbooks/vm-deploy.yml`: ele recria a `core-services-vm` e a `ai-desktop-vm` com os mesmos IDs, IPs e o passthrough da GPU ([seção 3](../01-manual-implementacao/03-provisionamento-vms.md)). As VMs ganham discos novos; os bancos voltam pelos dumps no passo 7.
+    *   Com a máquina de controle pronta (passo 5), rode `playbooks/vm-deploy.yml`: ele recria a `core-services-vm` e a `ai-desktop-vm` com os mesmos IDs, IPs e o passthrough da GPU ([seção 5](../01-manual-implementacao/05-provisionamento-vms.md)). As VMs ganham discos novos; os bancos voltam pelos dumps no passo 7.
     *   O `/etc/pve/qemu-server/` no backup do restic (`/etc` do host) mostra a definição exata das VMs antigas, se precisar comparar.
 
 5.  **Preparar sua Máquina de Controle Ansible e o Repositório:**
-    *   Se sua máquina de controle Ansible original foi perdida ou não está configurada, prepare uma nova seguindo a [**Seção 1.1: Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)**](../01-manual-implementacao/01-maquina-controle-ansible.md#11-instalação-do-ambiente-de-controle-scriptsbootstrapsh).
+    *   Se sua máquina de controle Ansible original foi perdida ou não está configurada, prepare uma nova seguindo a [**Seção 3.1: Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)**](../01-manual-implementacao/03-maquina-controle-ansible.md#31-instalação-do-ambiente-de-controle-scriptsbootstrapsh).
     *   Clone seu repositório `homeserver` do seu serviço Git remoto (GitHub, GitLab, etc.) para sua máquina de controle.
     *   Certifique-se de que você tem acesso à sua **senha do Ansible Vault**.
 
@@ -70,8 +70,8 @@ Siga estes passos metodicamente:
     Este é o passo onde a mágica da Infraestrutura como Código acontece!
 
     1.  **Preparar o Novo Host Proxmox para ser Gerenciado pelo Ansible:**
-        *   **Reentrada no tailnet.** O nó `pve` antigo morreu com o SSD, e a chave `tag:homeserver` com que ele entrou era de uso único. No painel do Tailscale (*Machines*), remova o `pve` antigo e gere uma **chave nova** de uso único, pré-aprovada, com `tag:homeserver` ([seção 14](../01-manual-implementacao/14-vpn-tailscale.md#primeira-configuração)). Depois, um dos dois caminhos:
-            *   **Com o sysadmin ([seção 19](../01-manual-implementacao/19-sysadmin-gcp.md#4-preparar-o-host-proxmox)):** grave a chave nova no segredo do GCP (campo `tailscale_chave_homeserver`) e recarregue os segredos na VM; depois peça um **novo `preparar_host`** e cole o comando no console do host novo. Ele também recria o usuário do Ansible e autoriza a chave do executor, o que dispensa os itens manuais abaixo.
+        *   **Reentrada no tailnet.** O nó `pve` antigo morreu com o SSD, e a chave `tag:homeserver` com que ele entrou era de uso único. No painel do Tailscale (*Machines*), remova o `pve` antigo e gere uma **chave nova** de uso único, pré-aprovada, com `tag:homeserver` ([seção 16](../01-manual-implementacao/16-vpn-tailscale.md#primeira-configuração)). Depois, um dos dois caminhos:
+            *   **Com o sysadmin ([seção 2](../01-manual-implementacao/02-sysadmin-gcp.md#4-preparar-o-host-proxmox)):** grave a chave nova no segredo do GCP (campo `tailscale_chave_homeserver`) e recarregue os segredos na VM; depois peça um **novo `preparar_host`** e cole o comando no console do host novo. Ele também recria o usuário do Ansible e autoriza a chave do executor, o que dispensa os itens manuais abaixo.
                 ```bash title="Exemplo: chave nova do host no segredo do GCP (Cloud Shell)"
                 read -rs -p "Chave nova tag:homeserver: " CHAVE; echo; export CHAVE
                 gcloud secrets versions access latest --secret=sysadmin-segredos \
@@ -83,11 +83,11 @@ Siga estes passos metodicamente:
                 ```
             *   **Pela máquina de controle na LAN (caminho manual):** faça os itens abaixo e grave a chave nova em `tailscale_auth_key_host` no vault; o `setup-proxmox-host.yml` (dentro do `full-deploy.yml`) faz a entrada no tailnet. Sem chave, ele para antes do `tailscale up` com uma mensagem que aponta estes dois caminhos.
         *   No shell do novo host Proxmox (como `root`), crie o usuário Ansible dedicado (`{{ proxmox_ansible_user_on_host }}` e.g., `proxmox_ansible_user`).
-        *   Adicione-o ao grupo `sudo` e configure `NOPASSWD` para `sudo` (conforme detalhado na [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
+        *   Adicione-o ao grupo `sudo` e configure `NOPASSWD` para `sudo` (conforme detalhado na [Seção 4.3: Ações Manuais Prévias](../01-manual-implementacao/04-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
         *   Na sua máquina de controle Ansible, copie sua chave SSH pública (`~/.ssh/id_ed25519_homelab.pub`) para este novo usuário no host Proxmox usando `ssh-copy-id`.
         *   Teste a conexão SSH e a capacidade de `sudo` sem senha.
     2.  **Executar o Playbook `full-deploy.yml` (ou o script `restore.sh`):**
-        *   **Antes, a chave nova da core.** A `core-services-vm` recriada (passo 4) também perdeu o login no tailnet, e a `tailscale_auth_key` do vault era de uso único. No painel do Tailscale, remova o nó `core` antigo e gere outra chave de uso único, pré-aprovada, com `tag:homeserver`; grave-a em `tailscale_auth_key` no vault, pelo `vault_preencher` do sysadmin (com o PR do vault mesclado antes do playbook, [seção 19](../01-manual-implementacao/19-sysadmin-gcp.md#3-o-pr-do-vault)) ou pelo `ansible-vault edit` na máquina de controle. Sem ela, o `setup-vpn.yml` (dentro do `full-deploy.yml`) para antes do `tailscale up`, com uma mensagem que diz isso. Enquanto a core não volta, o host segue alcançável pelo Tailscale (ele também anuncia as três rotas `/32`). Uma VM que só foi desligada, ou um `tailscale down`, não precisa de chave: o role religa o nó.
+        *   **Antes, a chave nova da core.** A `core-services-vm` recriada (passo 4) também perdeu o login no tailnet, e a `tailscale_auth_key` do vault era de uso único. No painel do Tailscale, remova o nó `core` antigo e gere outra chave de uso único, pré-aprovada, com `tag:homeserver`; grave-a em `tailscale_auth_key` no vault, pelo `vault_preencher` do sysadmin (com o PR do vault mesclado antes do playbook, [seção 2](../01-manual-implementacao/02-sysadmin-gcp.md#3-o-pr-do-vault)) ou pelo `ansible-vault edit` na máquina de controle. Sem ela, o `setup-vpn.yml` (dentro do `full-deploy.yml`) para antes do `tailscale up`, com uma mensagem que diz isso. Enquanto a core não volta, o host segue alcançável pelo Tailscale (ele também anuncia as três rotas `/32`). Uma VM que só foi desligada, ou um `tailscale down`, não precisa de chave: o role religa o nó.
 
         Na raiz do repositório, na máquina de controle Ansible (o `restore.sh` entra sozinho em `server/ansible`):
         ```bash
@@ -109,7 +109,7 @@ Siga estes passos metodicamente:
         Para cada stack do Portainer (na `core-services-vm`: `apps`, `media`, `photos`, `cloud` e `agents`; na `ai-desktop-vm`: `notes`, `langfuse` e `ai`, nesta ordem; a `core` já foi implantada pelo `setup-core-networking.yml`):
         1.  Vá para "Stacks" -> "+ Add stack".
         2.  Cole o conteúdo do arquivo `docker-compose.yml` da respectiva stack.
-        3.  Em **Env** (**Advanced mode**), cole o `.env` que o Ansible recriou na VM (`/opt/portainer_stack_envs/<stack>.env`; [como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)). Ele já traz os segredos do vault.
+        3.  Em **Env** (**Advanced mode**), cole o `.env` que o Ansible recriou na VM (`/opt/portainer_stack_envs/<stack>.env`; [como](../01-manual-implementacao/09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)). Ele já traz os segredos do vault.
         4.  Clique em "**Deploy the stack**".
     *   **Dados das Aplicações:** Como o conteúdo do dataset `/data/docker-volumes` (e outros como `/data/media`) foi restaurado (seja pela importação do pool ZFS original ou de um backup off-site), suas aplicações Docker, ao serem reiniciadas com seus volumes corretamente mapeados, devem encontrar seus dados e configurações anteriores.
         *   **Bancos de dados:** as VMs novas nascem com os bancos vazios em `/opt/local-data`. Para cada um (Authelia, Grafana, Nextcloud, LiteLLM), pare o container da aplicação, restaure o dump mais recente no container do banco e suba a aplicação de novo ([Bancos de dados](02-backup-restore-estrategia.md#bancos-de-dados)). O Immich restaura o dele pela própria tela de [restauração](https://docs.immich.app/administration/backup-and-restore), a partir de `photos/backups/`. Faça o Authelia primeiro: sem ele, ninguém entra nos outros.

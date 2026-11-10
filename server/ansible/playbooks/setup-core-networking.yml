@@ -70,7 +70,7 @@
       ansible.builtin.include_tasks: tasks/dump-postgres.yml
       vars:
         dump_nome: authelia
-        dump_descricao: "do Authelia (página 05)"
+        dump_descricao: "do Authelia (página 07)"
         dump_container: authelia_db
         dump_db: authelia
         dump_user: authelia

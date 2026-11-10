@@ -4,7 +4,7 @@ description: "Backup 3-2-1 do homeserver: dumps diários dos bancos, restic no h
 
 # Estratégia de Backup e Procedimentos de Restauração
 
-O backup é automático e segue a regra **3-2-1**: três cópias, em duas mídias, uma delas fora de casa. Nada aqui depende de lembrar de rodar um comando. Quando algo falha, chega o alerta `timer-falhou` no Telegram ([seção 9](../01-manual-implementacao/09-painel-notificacoes.md)).
+O backup é automático e segue a regra **3-2-1**: três cópias, em duas mídias, uma delas fora de casa. Nada aqui depende de lembrar de rodar um comando. Quando algo falha, chega o alerta `timer-falhou` no Telegram ([seção 11](../01-manual-implementacao/11-painel-notificacoes.md)).
 
 | Cópia | Onde | O que tem | Quem faz |
 |---|---|---|---|
@@ -14,7 +14,7 @@ O backup é automático e segue a regra **3-2-1**: três cópias, em duas mídia
 
 Além disso:
 
-- **`data/notes`:** snapshots automáticos para desfazer edições da IA ([seção 12](../01-manual-implementacao/12-segundo-cerebro.md#desfazer-uma-edição)).
+- **`data/notes`:** snapshots automáticos para desfazer edições da IA ([seção 14](../01-manual-implementacao/14-segundo-cerebro.md#desfazer-uma-edição)).
 - **Vaults do Obsidian:** cópia completa no PC e no celular (Syncthing).
 - **Repositório:** fica no GitHub. O `vault.yml` vai criptografado.
 
@@ -32,7 +32,7 @@ Além disso:
 | `media` (filmes, séries, músicas, torrents) | **não** | Pode ser baixada de novo e não cabe na nuvem. Para mudar, inclua o dataset em `restic_datasets` |
 | `docker-volumes/prometheus/data` e `loki/data` | **não** (`restic_excluir`) | Métricas e logs mudam o tempo todo; perder o histórico não para nada |
 | `docker-volumes/ollama/models`, `photos/thumbs` e `photos/encoded-video` | **não** (`restic_excluir`) | Modelos se baixam de novo; miniaturas e vídeos convertidos o Immich regera (*Administração → Tarefas*) |
-| Disco local das VMs (`/opt/local-data`): bancos, índice do qmd, documentos convertidos, banco do Syncthing, estado dos mcp-auth-proxy, base dos agentes (config do hub `agentgateway`, clone e segredos do runner do `ops`; [seção 13](../01-manual-implementacao/13-agentes-base.md)), Langfuse | só os **bancos**, pelos dumps | O resto é regerável pelos playbooks a partir do vault, ou é descartável (traces do Langfuse) |
+| Disco local das VMs (`/opt/local-data`): bancos, índice do qmd, documentos convertidos, banco do Syncthing, estado dos mcp-auth-proxy, base dos agentes (config do hub `agentgateway`, clone e segredos do runner do `ops`; [seção 15](../01-manual-implementacao/15-agentes-base.md)), Langfuse | só os **bancos**, pelos dumps | O resto é regerável pelos playbooks a partir do vault, ou é descartável (traces do Langfuse) |
 | Discos das VMs | **não** | As VMs são recriadas pelo `vm-deploy.yml` e pelos playbooks ([reconstrução](04-reconstruindo-infraestrutura.md)) |
 
 ## Bancos de dados: dumps diários
@@ -69,8 +69,8 @@ Qualquer falha deixa a unit em `failed` e dispara o alerta `timer-falhou`: o All
    UUID=<uuid-do-disco>  /mnt/backup-externo  ext4  defaults,nofail,x-systemd.device-timeout=10s  0  2
    ```
    O backup confere a `montagem` antes de gravar. Com o disco desligado, aquele repositório falha (e você é avisado), em vez de encher o disco do sistema.
-2. **Nuvem:** crie um bucket privado no Backblaze B2 (ou outro S3) e uma *application key* só para ele. O endereço no formato `s3:https://<endpoint>/<bucket>/homeserver` e as chaves vão para `restic_repositorios` (página 01). O restic cifra tudo antes de enviar.
-3. **Vault:** `restic_senha` (`openssl rand -base64 32`) e `restic_repositorios`, conforme o `vault.yml.example` (página 01).
+2. **Nuvem:** crie um bucket privado no Backblaze B2 (ou outro S3) e uma *application key* só para ele. O endereço no formato `s3:https://<endpoint>/<bucket>/homeserver` e as chaves vão para `restic_repositorios` (página 03). O restic cifra tudo antes de enviar.
+3. **Vault:** `restic_senha` (`openssl rand -base64 32`) e `restic_repositorios`, conforme o `vault.yml.example` (página 03).
 4. Aplique: `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass --check`, depois sem `--check`.
 5. **Primeira rodada,** pelo shell do host Proxmox: `systemctl start --no-block backup-restic.service` (sem o `--no-block`, o comando só volta quando o backup terminar) e acompanhe com `journalctl -fu backup-restic`. Na primeira vez, o script cria os repositórios (`restic init`). A primeira cópia para a nuvem pode levar dias; as seguintes só mandam o que mudou.
 
@@ -319,7 +319,7 @@ Restaure o `docker-volumes` (ou só a pasta `db-dumps` do banco) e use o dump ma
 docker exec -i <container> pg_restore -U <usuário> -d <banco> --clean --if-exists < <app>-<data>.dump
 ```
 
-Os detalhes de cada aplicação: Nextcloud e Immich na [seção 11](../01-manual-implementacao/11-fotos-arquivos.md), LiteLLM na [seção 8](../01-manual-implementacao/08-stack-ia.md). Para o Authelia e o Grafana, pare o container da aplicação (`authelia`, `grafana`), restaure no `authelia_db`/`grafana_db` e suba de novo.
+Os detalhes de cada aplicação: Nextcloud e Immich na [seção 13](../01-manual-implementacao/13-fotos-arquivos.md), LiteLLM na [seção 10](../01-manual-implementacao/10-stack-ia.md). Para o Authelia e o Grafana, pare o container da aplicação (`authelia`, `grafana`), restaure no `authelia_db`/`grafana_db` e suba de novo.
 
 ### O host Proxmox e as VMs
 
@@ -327,7 +327,7 @@ O host e as VMs são recriados, não restaurados: reinstale o Proxmox, rode o `s
 
 ## Snapshots ZFS
 
-Os snapshots automáticos (`zfs-auto-snapshot`, instalado pelo `setup-proxmox-host.yml`) valem **só para `data/notes`**, pela propriedade `com.sun:auto-snapshot`. Eles servem para desfazer edições da IA nos vaults pelo `.zfs/snapshot` ([seção 12](../01-manual-implementacao/12-segundo-cerebro.md#desfazer-uma-edição)). Snapshot no mesmo pool não é backup: se o pool se perde, ele vai junto. Nos datasets com `quota` (`photos`, `files`), os snapshots ainda consumiriam a cota.
+Os snapshots automáticos (`zfs-auto-snapshot`, instalado pelo `setup-proxmox-host.yml`) valem **só para `data/notes`**, pela propriedade `com.sun:auto-snapshot`. Eles servem para desfazer edições da IA nos vaults pelo `.zfs/snapshot` ([seção 14](../01-manual-implementacao/14-segundo-cerebro.md#desfazer-uma-edição)). Snapshot no mesmo pool não é backup: se o pool se perde, ele vai junto. Nos datasets com `quota` (`photos`, `files`), os snapshots ainda consumiriam a cota.
 
 Para um ponto de volta antes de uma mudança arriscada, tire um à mão e apague depois ([guia de snapshots](../03-guias-sustentacao/11-guia-snapshots-zfs.md)):
 

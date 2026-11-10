@@ -2,9 +2,9 @@
 description: "Observador: IA que lê o servidor pela rota de leitura do hub, analisa cada alerta do Grafana e manda um boletim diário ao Telegram, sem agir."
 ---
 
-# Seção 15: IA que observa o servidor
+# Seção 17: IA que observa o servidor
 
-O **observador** é uma IA que acompanha o servidor sozinha e conta no Telegram o que viu. Ela **só lê**: reiniciar, redeployar ou rodar Ansible continua com você, pela rota de controle do hub e com a sua aprovação ([seção 13](13-agentes-base.md)).
+O **observador** é uma IA que acompanha o servidor sozinha e conta no Telegram o que viu. Ela **só lê**: reiniciar, redeployar ou rodar Ansible continua com você, pela rota de controle do hub e com a sua aprovação ([seção 15](15-agentes-base.md)).
 
 - **Quando um alerta dispara**, ela investiga (métricas, logs, containers) e manda uma análise curta: o que está acontecendo, as evidências, a causa provável e o próximo passo sugerido. A análise chega logo depois do aviso do próprio alerta.
 - **Toda manhã** (07:30), ela manda um boletim de saúde: alertas, discos, memória, containers reiniciando, erros que se repetem nos logs e as tarefas de backup.
@@ -81,9 +81,9 @@ A ligação com o resto:
 
 - **Compose:** serviço `observador` em `docker/stacks/agents/docker-compose.yml`, nas redes `agents_internal` (hub) e `proxy` (o Grafana chama o `/alerta`, e o webhook do n8n), sem porta publicada; `/etc/localtime` montado para a hora do boletim.
 - **Playbook:** `ansible/playbooks/setup-agents-volumes.yml` constrói a imagem em `/opt/observador-image` (refeita quando o código muda) e grava `OBSERVADOR_*`, `AGENTS_TOKEN_OBSERVADOR` e `LITELLM_KEY_OBSERVADOR` no `agents.env`.
-- **Hub:** segunda chave da rota de leitura em `ansible/templates/agents/agentgateway.yaml.j2` ([seção 13](13-agentes-base.md)).
-- **Grafana:** integração `observador-webhook` em `ansible/templates/grafana/alerting/contact-points.yml.j2`, `OBSERVADOR_TOKEN` no ambiente do Grafana (`monitoring.env`) e a regra `observador-falhou` em `ansible/templates/grafana/alerting/rules.yml.j2` ([seção 9](09-painel-notificacoes.md)).
-- **Variáveis:** `observador_version`, `observador_modelo`, `observador_boletim_hora` e `litellm_key_budgets.observador` no `group_vars`; `litellm_client_keys.observador`, `agents_tokens_internos.observador` e `observador_token` no vault ([seção 1](01-maquina-controle-ansible.md)).
+- **Hub:** segunda chave da rota de leitura em `ansible/templates/agents/agentgateway.yaml.j2` ([seção 15](15-agentes-base.md)).
+- **Grafana:** integração `observador-webhook` em `ansible/templates/grafana/alerting/contact-points.yml.j2`, `OBSERVADOR_TOKEN` no ambiente do Grafana (`monitoring.env`) e a regra `observador-falhou` em `ansible/templates/grafana/alerting/rules.yml.j2` ([seção 11](11-painel-notificacoes.md)).
+- **Variáveis:** `observador_version`, `observador_modelo`, `observador_boletim_hora` e `litellm_key_budgets.observador` no `group_vars`; `litellm_client_keys.observador`, `agents_tokens_internos.observador` e `observador_token` no vault ([seção 3](03-maquina-controle-ansible.md)).
 
 Cada análise grava uma linha no log do container, coletada pelo Alloy:
 
@@ -95,9 +95,9 @@ No Langfuse, cada chamada ao modelo vira um trace (`observador-alerta` ou `obser
 
 ## Primeira configuração
 
-1. **Vault** ([seção 1](01-maquina-controle-ansible.md)): `litellm_client_keys.observador` (`echo sk-$(openssl rand -hex 24)`), `agents_tokens_internos.observador` e `observador_token` (`openssl rand -hex 32` cada).
+1. **Vault** ([seção 3](03-maquina-controle-ansible.md)): `litellm_client_keys.observador` (`echo sk-$(openssl rand -hex 24)`), `agents_tokens_internos.observador` e `observador_token` (`openssl rand -hex 32` cada).
 2. **Chave no LiteLLM:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-keys.yml --ask-vault-pass` (cria a chave `observador` com o orçamento).
-3. **Stack agents:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-agents-volumes.yml --ask-vault-pass` (imagem, chave no hub e `agents.env`); depois, no Portainer, **Update the stack** da `agents` com o `agents.env` novo colado em *Advanced mode* ([seção 13](13-agentes-base.md)). Depois, `docker restart agentgateway`, para o hub carregar a chave nova da rota de leitura.
+3. **Stack agents:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-agents-volumes.yml --ask-vault-pass` (imagem, chave no hub e `agents.env`); depois, no Portainer, **Update the stack** da `agents` com o `agents.env` novo colado em *Advanced mode* ([seção 15](15-agentes-base.md)). Depois, `docker restart agentgateway`, para o hub carregar a chave nova da rota de leitura.
 4. **Grafana:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-monitoring-stack-volumes.yml --ask-vault-pass` e **Update the stack** da `apps` (o Grafana precisa do `OBSERVADOR_TOKEN` no ambiente para ler o ponto de contato).
 
 ## Teste de ponta a ponta

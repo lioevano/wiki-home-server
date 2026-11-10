@@ -2,7 +2,7 @@
 description: "Painel Homepage e notificações no Telegram via n8n: Grafana Alerting, blackbox-exporter, Diun, workflow notificar, passos manuais e teste de ponta a ponta."
 ---
 
-# Seção 9: Painel e Notificações
+# Seção 11: Painel e Notificações
 
 Duas integrações transversais do [Índice de Integrações](../02-visao-geral-arquitetura/10-indice-integracoes.md): `notificacoes` (n8n → Telegram) e `painel` (Homepage). As aplicações envolvidas estão no [Catálogo](../02-visao-geral-arquitetura/09-catalogo-aplicacoes.md): `homepage`, `docker-socket-proxy`, `blackbox-exporter`, `diun` e o `n8n` como provedor das notificações.
 
@@ -33,8 +33,8 @@ O `setup-monitoring-stack-volumes.yml` gera em `<NFS>/grafana/provisioning/alert
 
 | Arquivo | Conteúdo |
 |---|---|
-| `rules.yml` | 15 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `qbittorrent-ou-vpn-fora` (duas probes com `app: qbittorrent`: a WebUI em `gluetun:8088` e o servidor de saúde do gluetun em `gluetun:9999`, que responde 500 quando o túnel da VPN cai), `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta` (o `up` do job `alloy` de cada host, ou de um alvo do blackbox), `zfs-degradado`, `container-reiniciando` (zeragens do contador de CPU do container no cAdvisor do Alloy; reinícios mais rápidos que 1 s escapam), `authelia-logins-falhos`, `llm-gasto-alto` (gasto do LiteLLM nas últimas 24 h acima de `llm_gasto_diario_alerta`; [seção 8](08-stack-ia.md#chaves-orçamentos-e-uso)), `timer-falhou` (uma tarefa agendada em `failed`: conversão e indexação do segundo cérebro, [seção 12](12-segundo-cerebro.md#conversão-e-indexação-periódicas), um dump diário de banco `backup-*-db` ou o backup `backup-restic` do host ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)); pelo coletor `systemd` do Alloy, com janela de 30 min para não repetir a cada rodada), `ops-acao-falhou` (uma ação da IA no servidor — reiniciar container, redeploy de stack ou Ansible — terminou em erro, pelo log JSON do `ops`; [seção 13](13-agentes-base.md#ações-e-aprovação)), `observador-falhou` (a IA que observa o servidor não conseguiu analisar um alerta ou fazer o boletim: LiteLLM fora, orçamento estourado ou hub fora; [seção 15](15-ia-observa.md)) |
-| `contact-points.yml` | `n8n` (webhook interno com `Authorization: Bearer`; segunda integração `observador-webhook`, que manda o mesmo alerta à IA que observa o servidor, [seção 15](15-ia-observa.md)) e `telegram-direto` (bot do Telegram) |
+| `rules.yml` | 15 regras na pasta **Homeserver**: `servico-fora-do-ar`, `n8n-fora-do-ar`, `qbittorrent-ou-vpn-fora` (duas probes com `app: qbittorrent`: a WebUI em `gluetun:8088` e o servidor de saúde do gluetun em `gluetun:9999`, que responde 500 quando o túnel da VPN cai), `certificado-vencendo`, `disco-cheio`, `ram-alta`, `cpu-alta`, `host-sem-resposta` (o `up` do job `alloy` de cada host, ou de um alvo do blackbox), `zfs-degradado`, `container-reiniciando` (zeragens do contador de CPU do container no cAdvisor do Alloy; reinícios mais rápidos que 1 s escapam), `authelia-logins-falhos`, `llm-gasto-alto` (gasto do LiteLLM nas últimas 24 h acima de `llm_gasto_diario_alerta`; [seção 10](10-stack-ia.md#chaves-orçamentos-e-uso)), `timer-falhou` (uma tarefa agendada em `failed`: conversão e indexação do segundo cérebro, [seção 14](14-segundo-cerebro.md#conversão-e-indexação-periódicas), um dump diário de banco `backup-*-db` ou o backup `backup-restic` do host ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)); pelo coletor `systemd` do Alloy, com janela de 30 min para não repetir a cada rodada), `ops-acao-falhou` (uma ação da IA no servidor — reiniciar container, redeploy de stack ou Ansible — terminou em erro, pelo log JSON do `ops`; [seção 15](15-agentes-base.md#ações-e-aprovação)), `observador-falhou` (a IA que observa o servidor não conseguiu analisar um alerta ou fazer o boletim: LiteLLM fora, orçamento estourado ou hub fora; [seção 17](17-ia-observa.md)) |
+| `contact-points.yml` | `n8n` (webhook interno com `Authorization: Bearer`; segunda integração `observador-webhook`, que manda o mesmo alerta à IA que observa o servidor, [seção 17](17-ia-observa.md)) e `telegram-direto` (bot do Telegram) |
 | `policies.yml` | tudo vai para `n8n`, agrupado por `alertname` e `app`; só `n8n-fora-do-ar` vai para `telegram-direto` |
 
 **Limites** (disco 85%, RAM 90% por 10 min, CPU 90% por 15 min, fora do ar há 3 min, certificado com menos de 14 dias, mais de 3 reinícios do mesmo container em 15 min, mais de 5 logins falhos em 10 min) ficam no topo de `ansible/templates/grafana/alerting/rules.yml.j2`. Regras sem dados ficam em `OK` (não disparam).
@@ -167,7 +167,7 @@ NOTIFICACOES_WEBHOOK_TOKEN=<notificacoes_webhook_token do vault>
 
 ### Webhooks nas aplicações (NTF-3)
 
-Sonarr, Radarr, Lidarr, Prowlarr, Seerr e Jellyfin ([Mídia](10-midia.md#notificações-ntf-3)) e Home Assistant ([página de apps](07-deploy-apps.md#notas-por-serviço)) mandam eventos próprios ao n8n.
+Sonarr, Radarr, Lidarr, Prowlarr, Seerr e Jellyfin ([Mídia](12-midia.md#notificações-ntf-3)) e Home Assistant ([página de apps](09-deploy-apps.md#notas-por-serviço)) mandam eventos próprios ao n8n.
 
 ### Bot do Telegram e importação do workflow
 
@@ -176,9 +176,9 @@ Sonarr, Radarr, Lidarr, Prowlarr, Seerr e Jellyfin ([Mídia](10-midia.md#notific
 3. Gere o token do webhook (`openssl rand -hex 32`) em `notificacoes_webhook_token`.
 4. Rode os playbooks e atualize as stacks (sempre `--check` antes):
    - `setup-core-networking.yml` — regra do Authelia que libera `/webhook/` (reinicie o Authelia: `sudo docker restart authelia`);
-   - `setup-n8n-volumes.yml` e `setup-monitoring-stack-volumes.yml` — workflow, alertas, blackbox, Diun e Homepage; depois atualize a stack `apps` no Portainer (página 07);
+   - `setup-n8n-volumes.yml` e `setup-monitoring-stack-volumes.yml` — workflow, alertas, blackbox, Diun e Homepage; depois atualize a stack `apps` no Portainer (página 09);
    - `setup-ai-volumes.yml` — `diun_ai`; depois atualize a stack `ai`.
-   As variáveis `TELEGRAM_*` e `NOTIFICACOES_WEBHOOK_TOKEN` saem iguais no `n8n.env` e no `monitoring.env`; o `apps.env` que os playbooks montam (página 07) mantém só a primeira de cada nome.
+   As variáveis `TELEGRAM_*` e `NOTIFICACOES_WEBHOOK_TOKEN` saem iguais no `n8n.env` e no `monitoring.env`; o `apps.env` que os playbooks montam (página 09) mantém só a primeira de cada nome.
 5. Importe e ative o workflow (na `core-services-vm`):
    ```bash
    sudo docker exec n8n_app n8n import:workflow --input=/home/node/.n8n/workflows/notificar.json

@@ -1,5 +1,5 @@
 # docker/stacks/posto/docker-compose.yml
-# Posto de agentes (sub-projeto 4c3, página 16), na ai-desktop-vm: Vibe Kanban (tela) e os agentes Claude Code
+# Posto de agentes (sub-projeto 4c3, página 18), na ai-desktop-vm: Vibe Kanban (tela) e os agentes Claude Code
 # que ele roda, cada tarefa num worktree. Os agentes usam o LiteLLM (chave agentes) e os MCPs do servidor (rota
 # dos autônomos do hub, ações só com aprovação) e das notas. O Vibe Kanban não tem login próprio e escuta só no
 # 127.0.0.1 do container; quem atende a porta é o Caddy ao lado (mesma rede do container), que só repassa o que
@@ -31,7 +31,7 @@ services:
       TZ: ${SYSTEM_TIMEZONE}
       HOST: 127.0.0.1 # Vibe Kanban (e o proxy de pré-visualização) só no próprio container
       PORT: "3000"
-      # Claude Code pelo LiteLLM (chave e orçamento dos agentes); nomes reais dos modelos Claude (página 08).
+      # Claude Code pelo LiteLLM (chave e orçamento dos agentes); nomes reais dos modelos Claude (página 10).
       ANTHROPIC_BASE_URL: http://litellm:4000
       ANTHROPIC_AUTH_TOKEN: ${LITELLM_KEY_AGENTES}
       ANTHROPIC_DEFAULT_OPUS_MODEL: claude-opus-5-5

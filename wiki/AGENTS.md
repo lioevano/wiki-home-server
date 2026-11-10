@@ -9,6 +9,7 @@ A wiki é a **fonte da verdade** do projeto. Siga estas regras ao criar ou edita
   `03-guias-sustentacao/`, `04-manutencao-recuperacao/`, mais `05-referencia-rapida.md` e `index.md`.
 - Arquivos `NN-nome-em-kebab.md`, numerados na ordem de leitura dentro da seção; cada seção tem `index.md`.
 - **Toda página nova entra no `nav` do `mkdocs.yml`** (o `check` acusa `NAV` se faltar).
+- **Página renomeada ganha redirecionamento:** acrescente o par `antigo: novo` em `plugins → redirects → redirect_maps` do `mkdocs.yml`, para o endereço publicado não quebrar (`test_convencoes.py` confere). No manual, o `nav` segue a numeração de `00` a `19`.
 
 ## Front-matter obrigatório
 

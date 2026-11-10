@@ -1,5 +1,5 @@
 # ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2
-# Segredos do sysadmin (página 19): lê o JSON sysadmin-segredos do Secret Manager (conta de serviço da VM) e o separa
+# Segredos do sysadmin (página 02): lê o JSON sysadmin-segredos do Secret Manager (conta de serviço da VM) e o separa
 # por container no tmpfs /run/sysadmin (separar_segredos.py; falha fechada, nada vai para o disco). O Docker exige
 # esta unit (drop-in 20-sysadmin.conf): sem segredos, a stack não sobe. Enquanto a main não tem vault.yml, traz
 # também o vault.yml cifrado que o criar-sysadmin.sh deixou no bucket. Para trocar os segredos: nova versão no
@@ -11,7 +11,7 @@
 # (RestartMode=normal, o padrão), a primeira falha derrubaria o job do Docker ("dependency") até o dia seguinte.
 # Gerado pelo role infra/sysadmin-gcp.
 [Unit]
-Description=Segredos do sysadmin: Secret Manager para /run/sysadmin (página 19)
+Description=Segredos do sysadmin: Secret Manager para /run/sysadmin (página 02)
 Wants=network-online.target
 After=network-online.target snapd.seeded.service
 Before=docker.service

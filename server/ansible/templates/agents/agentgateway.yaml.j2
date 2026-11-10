@@ -1,4 +1,4 @@
-# Hub de MCPs da base dos agentes (página 13). Gerado pelo setup-agents-volumes.yml em
+# Hub de MCPs da base dos agentes (página 15). Gerado pelo setup-agents-volumes.yml em
 # {{ '{{' }} vm_local_data_path {{ '}}' }}/agentgateway/config.yaml. Sem segredos: chaves dos clientes só como hash;
 # tokens dos alvos em arquivos (/segredos); autenticação do rastreio por variável de ambiente.
 # yaml-language-server: $schema=https://agentgateway.dev/schema/config
@@ -70,7 +70,7 @@ binds:
           - keyHash: "sha256:{{ agents_tokens_internos.proxy | hash('sha256') }}"
             metadata:
               cliente: mcp_auth_servidor
-          # O observador (página 15) lê pela mesma rota, com chave própria (cliente observador nos logs).
+          # O observador (página 17) lê pela mesma rota, com chave própria (cliente observador nos logs).
           - keyHash: "sha256:{{ agents_tokens_internos.observador | hash('sha256') }}"
             metadata:
               cliente: observador
@@ -90,7 +90,7 @@ binds:
           failureMode: failOpen
 {{ alvos('leitura', 'leitura') }}
 # Rota de controle: porta publicada no IP da core-services-vm, que a LAN não alcança (firewall_docker_portas):
-# só pela VPN (página 14), com a chave de cada cliente.
+# só pela VPN (página 16), com a chave de cada cliente.
 - port: 4100
   listeners:
   - name: controle
@@ -115,7 +115,7 @@ binds:
           prefixMode: always
           failureMode: failOpen
 {{ alvos('controle', 'controle') }}
-# Rota dos autônomos (página 16): agentes do posto e o assistente, na ai-desktop-vm (a 4200 só aceita a VM de IA
+# Rota dos autônomos (página 18): agentes do posto e o assistente, na ai-desktop-vm (a 4200 só aceita a VM de IA
 # pela LAN). Leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e agem só pelo ops_controle,
 # que exige a aprovação do Léo de todo cliente fora de OPS_CLIENTES_SEM_APROVACAO.
 - port: 4200

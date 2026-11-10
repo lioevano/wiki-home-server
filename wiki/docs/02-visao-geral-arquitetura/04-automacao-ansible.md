@@ -33,7 +33,7 @@ A organização dos arquivos Ansible no nosso projeto é crucial para a manuteni
 ## Fluxo de Trabalho Típico com Ansible
 
 1.  **Definir o Estado Desejado:** Você descreve o estado final que deseja para seus sistemas nos playbooks e roles Ansible (e.g., "o pacote nginx deve estar instalado", "o serviço Docker deve estar rodando", "esta linha deve existir no arquivo de configuração X").
-2.  **Executar o Playbook:** A partir da sua [máquina de controle Ansible](../01-manual-implementacao/01-maquina-controle-ansible.md), você executa um comando como:
+2.  **Executar o Playbook:** A partir da sua [máquina de controle Ansible](../01-manual-implementacao/03-maquina-controle-ansible.md), você executa um comando como:
     ```bash
     ansible-playbook playbooks/meu-playbook.yml --ask-vault-pass
     ```

@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-photos-stack-volumes.yml
-# Prepara a stack photos (Immich): diretórios, immich.json e photos.env (página 11).
+# Prepara a stack photos (Immich): diretórios, immich.json e photos.env (página 13).
 - name: Setup Photos Stack Volumes and Environment
   hosts: core_services
   become: true

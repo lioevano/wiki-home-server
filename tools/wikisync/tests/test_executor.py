@@ -1,4 +1,4 @@
-"""Executor do sysadmin (sub-projeto 5a, página 19): configuração, portão de aprovação e comandos remotos."""
+"""Executor do sysadmin (sub-projeto 5a, página 02): configuração, portão de aprovação e comandos remotos."""
 from __future__ import annotations
 
 import json

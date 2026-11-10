@@ -22,7 +22,7 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
-    langfuse-dynamic: # Rastreio de LLM e ferramentas (página 13); login do Langfuse pelo OIDC do mesmo Authelia
+    langfuse-dynamic: # Rastreio de LLM e ferramentas (página 15); login do Langfuse pelo OIDC do mesmo Authelia
       entryPoints: ["websecure"]
       rule: "Host(`langfuse.{{ base_domain }}`)"
       service: "langfuse-svc-dynamic"
@@ -31,7 +31,7 @@ http:
       middlewares:
         - "authelia-forwardauth@docker"
 
-    # Posto de agentes (página 16): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta, e o
+    # Posto de agentes (página 18): o Vibe Kanban não tem login próprio; o Authelia (grupo admins) é a porta, e o
     # segredo injetado depois dela é o que o Caddy do posto exige (sem ele, 403).
     kanban-dynamic:
       entryPoints: ["websecure"]
@@ -43,7 +43,7 @@ http:
         - "authelia-forwardauth@docker"
         - "posto-chave"
 
-    # Segundo cérebro (página 12). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
+    # Segundo cérebro (página 14). notas. e escrita. sem Authelia: o mcp-auth-proxy faz o OAuth do claude.ai e
     # manda o login para o OIDC do Authelia (regras bypass no configuration.yml). sync. é o painel do Syncthing.
     notas-dynamic:
       entryPoints: ["websecure"]
@@ -78,7 +78,7 @@ http:
     #   middlewares: ["authelia-forwardauth@docker"]
 
   middlewares:
-    posto-chave: # o Caddy do posto só repassa ao Vibe Kanban o que trouxer este segredo (página 16)
+    posto-chave: # o Caddy do posto só repassa ao Vibe Kanban o que trouxer este segredo (página 18)
       headers:
         customRequestHeaders:
           X-Posto-Chave: "{{ posto_chave_proxy }}"

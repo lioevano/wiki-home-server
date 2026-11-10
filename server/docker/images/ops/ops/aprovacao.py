@@ -1,4 +1,4 @@
-"""Cliente do aprovador (página 16): ações de clientes autônomos (agentes, assistente) só rodam com um pedido
+"""Cliente do aprovador (página 18): ações de clientes autônomos (agentes, assistente) só rodam com um pedido
 aprovado pelo Léo, no Telegram ou na tela aprovacoes. Sem aprovador configurado, recusa (falha fechada)."""
 from __future__ import annotations
 

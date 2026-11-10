@@ -54,7 +54,7 @@
       ansible.builtin.include_tasks: tasks/dump-postgres.yml
       vars:
         dump_nome: grafana
-        dump_descricao: "do Grafana (página 07)"
+        dump_descricao: "do Grafana (página 09)"
         dump_container: grafana_db
         dump_db: grafana
         dump_user: grafana
@@ -227,7 +227,7 @@
           - { name: 'TELEGRAM_BOT_TOKEN', value: "{{ telegram_bot_token }}" }
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
-          - { name: 'OBSERVADOR_TOKEN', value: "{{ observador_token }}" } # Grafana → observador (página 15)
+          - { name: 'OBSERVADOR_TOKEN', value: "{{ observador_token }}" } # Grafana → observador (página 17)
           - { name: 'MONITORING_HOMEPAGE_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/homepage/config" }
           - { name: 'HOMEPAGE_VAR_JELLYFIN_KEY', value: "{{ homepage_widget_keys.jellyfin }}" }
           - { name: 'HOMEPAGE_VAR_RADARR_KEY', value: "{{ arr_api_keys.radarr }}" }
@@ -248,5 +248,5 @@
           - { name: 'GRAFANA_DB_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_db_password }}" }
           - { name: 'GRAFANA_ADMIN_INITIAL_PASSWORD_FROM_PORTAINER_ENV', value: "{{ grafana_admin_initial_password }}" }
 
-    - name: "Montar o apps.env da stack apps (página 07)"
+    - name: "Montar o apps.env da stack apps (página 09)"
       ansible.builtin.include_tasks: tasks/apps-env.yml

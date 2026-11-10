@@ -2,11 +2,11 @@
 description: "Instala e configura o host Proxmox VE: repositórios, pool ZFS, servidor NFS, firewall e o coletor Grafana Alloy."
 ---
 
-# Seção 2: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS)
+# Seção 4: Instalação e Configuração Base do Proxmox VE (Incluindo Servidor NFS)
 
 Nesta seção crucial, instalaremos o Proxmox VE no seu servidor físico. Em seguida, realizaremos as configurações base essenciais, incluindo a criação de um pool ZFS resiliente para armazenamento de dados e a configuração de um servidor NFS para compartilhar esses dados com as futuras máquinas virtuais que hospedarão nossos containers Docker.
 
-## 2.1. Instalação do Proxmox VE no Servidor Físico
+## 4.1. Instalação do Proxmox VE no Servidor Físico
 
 Siga estes passos cuidadosamente para instalar o Proxmox VE:
 
@@ -65,7 +65,7 @@ Siga estes passos cuidadosamente para instalar o Proxmox VE:
     !!! note "Aviso de Subscrição Proxmox VE"
         Ao logar, você verá uma caixa de diálogo "No valid subscription". Para uso doméstico e aprendizado, uma subscrição paga não é necessária. Você pode simplesmente clicar em "OK". As atualizações do Proxmox VE podem ser obtidas do repositório "no-subscription", que será configurado automaticamente pelo nosso playbook Ansible na próxima etapa.
 
-## 2.2. Configuração do Pool ZFS `/data` e Datasets
+## 4.2. Configuração do Pool ZFS `/data` e Datasets
 
 Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando seus dois HDDs de 500GB. Este pool, que chamaremos de `data`, será o local principal para armazenar os dados persistentes das suas aplicações Docker, arquivos de mídia, downloads e backups de VMs.
 
@@ -127,10 +127,10 @@ Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando se
     root@pve:~# zfs create data/docker-volumes
     root@pve:~# zfs create data/media
     root@pve:~# zfs create data/backups
-    # Fotos e arquivos com cota (ajuste os tamanhos ao seu acervo; ver a página 11):
+    # Fotos e arquivos com cota (ajuste os tamanhos ao seu acervo; ver a página 13):
     root@pve:~# zfs create -o quota=150G data/photos
     root@pve:~# zfs create -o quota=75G data/files
-    # Vaults do Obsidian (segundo cérebro, página 12). refquota (não quota): os snapshots automáticos não
+    # Vaults do Obsidian (segundo cérebro, página 14). refquota (não quota): os snapshots automáticos não
     # contam no limite, então a IA e o Syncthing nunca têm a escrita recusada por causa deles.
     root@pve:~# zfs create -o refquota=20G data/notes
     # A raiz de cada dataset nasce root:root 0755; com all_squash, toda escrita das VMs chega como o dockeruser
@@ -151,7 +151,7 @@ Com o Proxmox VE instalado, vamos criar um pool ZFS espelhado (RAID 1) usando se
         * **Compartilhamento Granular via NFS:** Facilita a exportação de diretórios específicos.
         * **Organização:** Mantém seus dados logicamente separados dentro do pool.
 
-## 2.3. Playbook `setup-proxmox-host.yml` (Configurações Iniciais, Hardening, Servidor NFS)
+## 4.3. Playbook `setup-proxmox-host.yml` (Configurações Iniciais, Hardening, Servidor NFS)
 
 Agora que o Proxmox VE está instalado e o pool ZFS básico (`data`) e seus datasets principais foram criados manualmente, usaremos o Ansible para automatizar o restante da configuração do host. Isso inclui atualizar o sistema, instalar pacotes, configurar o firewall do Proxmox, fortalecer o SSH e, crucialmente, configurar o servidor NFS para compartilhar os datasets ZFS com as VMs.
 
@@ -183,7 +183,7 @@ Antes de poder executar o playbook `setup-proxmox-host.yml` pela primeira vez, v
     ```
 
 2. **Copiar sua Chave SSH Pública para o Novo Usuário Ansible no Host Proxmox:**
-    Na sua **máquina de controle Ansible** (onde você gerou a chave SSH `id_ed25519_homelab` na [Seção 1.1](01-maquina-controle-ansible.md#ação-chave-ssh-essencial-para-automação)), execute o comando `ssh-copy-id`. Isso copia sua chave pública para o arquivo `~/.ssh/authorized_keys` do usuário `proxmox_ansible_user` no host Proxmox, permitindo login SSH sem senha.
+    Na sua **máquina de controle Ansible** (onde você gerou a chave SSH `id_ed25519_homelab` na [Seção 3.1](03-maquina-controle-ansible.md#ação-chave-ssh-essencial-para-automação)), execute o comando `ssh-copy-id`. Isso copia sua chave pública para o arquivo `~/.ssh/authorized_keys` do usuário `proxmox_ansible_user` no host Proxmox, permitindo login SSH sem senha.
 
     ```bash
     # Substitua 'proxmox_ansible_user' pelo nome do usuário que você acabou de criar
@@ -213,7 +213,7 @@ Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os ar
 Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 !!! info "Firewall do Proxmox"
-    As regras de entrada (SSH e Web UI da LAN, NFS v4 na porta 2049 das VMs, Alloy na porta 12345 da `core-services-vm`, e SSH e Web UI pela interface `tailscale0` com origem `100.64.0.0/10`, o caminho do executor do [sysadmin](19-sysadmin-gcp.md) até o host) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é `proxmox_node_name` (`group_vars/all/main.yml`), não o nome lógico `proxmox_main_host`. As tarefas específicas do Proxmox (repositórios e firewall) só rodam quando existe `/usr/bin/pveversion`: no Proxmox VE o fato `ansible_distribution` vale `Debian`, então ele não serve para reconhecer o host.
+    As regras de entrada (SSH e Web UI da LAN, NFS v4 na porta 2049 das VMs, Alloy na porta 12345 da `core-services-vm`, e SSH e Web UI pela interface `tailscale0` com origem `100.64.0.0/10`, o caminho do executor do [sysadmin](02-sysadmin-gcp.md) até o host) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é `proxmox_node_name` (`group_vars/all/main.yml`), não o nome lógico `proxmox_main_host`. As tarefas específicas do Proxmox (repositórios e firewall) só rodam quando existe `/usr/bin/pveversion`: no Proxmox VE o fato `ansible_distribution` vale `Debian`, então ele não serve para reconhecer o host.
 
 ```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
@@ -320,7 +320,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 # Regras primeiro: ligar o firewall com DROP antes delas cortaria o acesso ao host.
 # Pelo tailnet (pos 4 e 5): o executor do sysadmin chega ao host pela interface tailscale0 com origem 100.x (o host
-# anuncia a própria /32); sem estas regras, o DROP o trancaria fora (página 19).
+# anuncia a própria /32); sem estas regras, o DROP o trancaria fora (página 02).
 - name: "Permitir SSH, Web UI, NFS, Alloy e o tailnet no Firewall do Host Proxmox"
   community.proxmox.proxmox_firewall:
     level: node
@@ -365,7 +365,7 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     - { regexp: '^#?UsePAM', line: 'UsePAM yes' } # Manter PAM para `su` e outras funcionalidades
   notify: Restart sshd
 
-# --- Snapshots automáticos só nos vaults (segundo cérebro, página 12) ---
+# --- Snapshots automáticos só nos vaults (segundo cérebro, página 14) ---
 # O zfs-auto-snapshot tira snapshots de todo dataset cuja propriedade com.sun:auto-snapshot não seja 'false'.
 # Desligada em todos os pools (os filhos herdam) e ligada só em notes: a mídia não acumula snapshots de arquivos apagados.
 # Retenção padrão do pacote: 15 min ×4, hora ×24, dia ×31, semana ×8, mês ×12.
@@ -439,11 +439,11 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
 {{ zfs_base_pool_path }}/{{ zfs_media_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamentos de fotos (Immich) e arquivos (Nextcloud), montados na core-services-vm; 'files' também na VM de IA,
-# só leitura na montagem, para o conversor de documentos do segundo cérebro (página 12)
+# só leitura na montagem, para o conversor de documentos do segundo cérebro (página 14)
 {{ zfs_base_pool_path }}/{{ zfs_photos_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 {{ zfs_base_pool_path }}/{{ zfs_files_dataset_name }} {{ vm_nfs_allowed_clients_cidr }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
-# Vaults do Obsidian (segundo cérebro, página 12): exportado só para a VM de IA, onde rodam o Syncthing e a busca
+# Vaults do Obsidian (segundo cérebro, página 14): exportado só para a VM de IA, onde rodam o Syncthing e a busca
 {{ zfs_base_pool_path }}/{{ zfs_notes_dataset_name }} {{ ai_desktop_vm_ip_var }}(rw,sync,no_subtree_check,all_squash,anonuid={{ docker_puid }},anongid={{ docker_pgid }})
 
 # Compartilhamento para backups (geralmente não precisa ser montado por VMs,
@@ -513,9 +513,9 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
 
   roles:
     - role: infra/proxmox-host-config # Aplica o role que configura o host
-    - role: infra/alloy # Coletor de logs e métricas (seção 4.4 do manual); sem Docker no host
+    - role: infra/alloy # Coletor de logs e métricas (seção 6.4 do manual); sem Docker no host
     - role: infra/restic # Backup diário dos datasets com restic (página 04/02)
-    - role: infra/tailscale # O host como nó próprio da VPN (página 14); sem CoreDNS e sem UFW (o firewall é o do PVE)
+    - role: infra/tailscale # O host como nó próprio da VPN (página 16); sem CoreDNS e sem UFW (o firewall é o do PVE)
       vars:
         tailscale_hostname: pve
         tailscale_coredns: false
@@ -525,7 +525,7 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
 
 ### Executando o Playbook `setup-proxmox-host.yml`
 
-1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/etc_exports.j2` e `handlers/main.yml`, que o role `ansible/roles/infra/alloy/` existe ([seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)) e que o role `ansible/roles/infra/restic/` existe ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#restic-no-host-proxmox)). O restic precisa de `restic_senha` e `restic_repositorios` no vault; prepare os destinos antes (disco externo e bucket).
+1. **Verifique se o Role Existe:** Certifique-se de que o diretório do role `ansible/roles/infra/proxmox-host-config/` está criado e contém os arquivos `tasks/main.yml`, `templates/etc_exports.j2` e `handlers/main.yml`, que o role `ansible/roles/infra/alloy/` existe ([seção 6.4](06-configuracao-base-vms-ubuntu.md#64-coleta-com-grafana-alloy-ansiblerolesinfraalloy)) e que o role `ansible/roles/infra/restic/` existe ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md#restic-no-host-proxmox)). O restic precisa de `restic_senha` e `restic_repositorios` no vault; prepare os destinos antes (disco externo e bucket).
 2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 
@@ -533,7 +533,7 @@ Este é o playbook que você executará para aplicar o role `proxmox-host-config
     ansible-playbook -i inventories/home/hosts.ini playbooks/setup-proxmox-host.yml --ask-vault-pass
     ```
 
-    Você será solicitado a fornecer a senha do Ansible Vault que você criou na [Seção 1.2](01-maquina-controle-ansible.md#12-criação-e-gerenciamento-de-variáveis-sensíveis-ansible-vault).
+    Você será solicitado a fornecer a senha do Ansible Vault que você criou na [Seção 3.2](03-maquina-controle-ansible.md#32-criação-e-gerenciamento-de-variáveis-sensíveis-ansible-vault).
 
 Após a execução bem-sucedida deste playbook, seu host Proxmox VE estará com as configurações base aplicadas:
 
@@ -546,4 +546,4 @@ Após a execução bem-sucedida deste playbook, seu host Proxmox VE estará com 
 * Grafana Alloy instalado e enviando métricas (inclusive ZFS) e o journal do host para o Prometheus e o Loki.
 * Servidor NFS configurado e exportando os datasets ZFS.
 
-Com o host Proxmox pronto, o próximo passo é o [Provisionamento das Máquinas Virtuais (VMs) com Ansible](03-provisionamento-vms.md).
+Com o host Proxmox pronto, o próximo passo é o [Provisionamento das Máquinas Virtuais (VMs) com Ansible](05-provisionamento-vms.md).

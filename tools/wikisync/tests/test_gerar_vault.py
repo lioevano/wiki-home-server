@@ -1,4 +1,4 @@
-"""scripts/gerar_vault.py (página 01): gera todos os segredos aleatórios do vault.yml nos formatos certos e grava
+"""scripts/gerar_vault.py (página 03): gera todos os segredos aleatórios do vault.yml nos formatos certos e grava
 criptografado. Os digests são conferidos com o binário do Authelia quando ele está no PATH."""
 from __future__ import annotations
 

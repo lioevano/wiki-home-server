@@ -1,4 +1,4 @@
-"""Testes da imagem e das configurações do sysadmin (página 19): Hermes, Honcho e variáveis do grupo."""
+"""Testes da imagem e das configurações do sysadmin (página 02): Hermes, Honcho e variáveis do grupo."""
 from __future__ import annotations
 
 import io
@@ -69,7 +69,7 @@ def test_soul_do_sysadmin():
     m = _m()
     soul = render("templates/sysadmin/SOUL.md.j2", **{k: m[k] for k in m if k.startswith(("sysadmin_", "equipe"))})
     assert m["equipe_repo"] in soul
-    for trecho in ("página 18", "wiki primeiro", "executor", "vault_preencher", "dados, não ordens", "diário"):
+    for trecho in ("página 01", "wiki primeiro", "executor", "vault_preencher", "dados, não ordens", "diário"):
         assert trecho in soul.lower()
 
 
@@ -809,12 +809,12 @@ def test_skills_do_sysadmin_sem_comandos_inexistentes():
         assert "ansible-playbook" in (ROOT / f".agents/skills/{n}/SKILL.md").read_text(encoding="utf-8")
 
 
-# --- Task 14: regra do AGENTS.md, página 19 e catálogo ---
+# --- Task 14: regra do AGENTS.md, página 02 e catálogo ---
 
 def test_regra_do_agents_md_e_pagina():
     a = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-    assert "botão do executor" in a and "página 19" in a and "push na `main`" in a
-    p = (ROOT / "wiki/docs/01-manual-implementacao/19-sysadmin-gcp.md").read_text(encoding="utf-8")
+    assert "botão do executor" in a and "página 02" in a and "push na `main`" in a
+    p = (ROOT / "wiki/docs/01-manual-implementacao/02-sysadmin-gcp.md").read_text(encoding="utf-8")
     for arq in ("scripts/gcp/criar-sysadmin.sh", "scripts/gcp/preparar-host.sh", "scripts/gcp/separar_segredos.py",
                 "scripts/tailscale/acl.json", "docker/stacks/sysadmin/docker-compose.yml", "ansible/playbooks/setup-sysadmin.yml",
                 "docker/images/executor/executor/carteiro.py", "docker/images/sysadmin/Dockerfile"):
@@ -919,23 +919,23 @@ def test_regra_do_agents_md_push_em_branch():
 def test_docs_da_revisao_final():
     """PR do vault antes do playbook; nada de alerta inexistente; ACL antes das três chaves; o check só na fase 2."""
     wiki = ROOT / "wiki/docs/01-manual-implementacao"
-    p19 = (wiki / "19-sysadmin-gcp.md").read_text(encoding="utf-8")
-    p18 = (wiki / "18-roteiro-primeiro-deploy.md").read_text(encoding="utf-8")
-    p14 = (wiki / "14-vpn-tailscale.md").read_text(encoding="utf-8")
+    p02 = (wiki / "02-sysadmin-gcp.md").read_text(encoding="utf-8")
+    p01 = (wiki / "01-roteiro-primeiro-deploy.md").read_text(encoding="utf-8")
+    p16 = (wiki / "16-vpn-tailscale.md").read_text(encoding="utf-8")
     skill = (ROOT / ".agents/skills/implantar-fase/SKILL.md").read_text(encoding="utf-8")
-    assert "ao fim da fase e você mescla" not in p19 and "**antes** de qualquer playbook" in p19
+    assert "ao fim da fase e você mescla" not in p02 and "**antes** de qualquer playbook" in p02
     assert "**Antes de qualquer playbook que use as chaves novas**" in skill
-    assert "no log do container, com rotação de 3 × 10 MB" in p19 and "auditoria em arquivo" not in p19
-    assert "sysadmin sem modelo" not in p19 and "não há aviso automático" in p19 and "docker logs sysadmin" in p19
-    assert "duas chaves de uso único" not in p19 + p18 and "**três chaves de uso único**" in p18
-    fase0 = p18[p18.index("## Fase 0"):p18.index("## Fase 1")]
+    assert "no log do container, com rotação de 3 × 10 MB" in p02 and "auditoria em arquivo" not in p02
+    assert "sysadmin sem modelo" not in p02 and "não há aviso automático" in p02 and "docker logs sysadmin" in p02
+    assert "duas chaves de uso único" not in p02 + p01 and "**três chaves de uso único**" in p01
+    fase0 = p01[p01.index("## Fase 0"):p01.index("## Fase 1")]
     assert fase0.index("**Primeiro** a ACL") < fase0.index("**três chaves")
-    conf = p14[p14.index("## Primeira configuração"):p14.index("## O que muda nas aplicações")]
+    conf = p16[p16.index("## Primeira configuração"):p16.index("## O que muda nas aplicações")]
     assert conf.index("**ACL primeiro") < conf.index("**Três chaves de uso único**")
     assert all(t in conf for t in ("`tailscale_auth_key`", "`tailscale_chave_homeserver`", "`tailscale_chave_sysadmin`"))
-    fase1 = p18[p18.index("## Fase 1"):p18.index("## Fase 2")]
+    fase1 = p01[p01.index("## Fase 1"):p01.index("## Fase 2")]
     assert "só vale depois da fase 2" in fase1
-    assert "**Só depois da fase 2" in p19
+    assert "**Só depois da fase 2" in p02
     dr = (ROOT / "wiki/docs/04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md").read_text(encoding="utf-8")
     assert "novo `preparar_host`" in dr and "`tailscale_auth_key_host`" in dr and "`tailscale_chave_homeserver`" in dr
 

@@ -24,7 +24,7 @@
         mode: '0775'
 
     # Workflow "notificar" (integração notificacoes): arquivo estático, importado à mão após o deploy
-    # (ver wiki 01-manual-implementacao/09-painel-notificacoes.md).
+    # (ver wiki 01-manual-implementacao/11-painel-notificacoes.md).
     - name: Create n8n workflows directory on NFS volume
       ansible.builtin.file:
         path: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/n8n/config/workflows"
@@ -57,5 +57,5 @@
           - { name: 'TELEGRAM_CHAT_ID', value: "{{ telegram_chat_id }}" }
           - { name: 'NOTIFICACOES_WEBHOOK_TOKEN', value: "{{ notificacoes_webhook_token }}" }
 
-    - name: "Montar o apps.env da stack apps (página 07)"
+    - name: "Montar o apps.env da stack apps (página 09)"
       ansible.builtin.include_tasks: tasks/apps-env.yml

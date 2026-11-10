@@ -19,7 +19,7 @@
   roles:
     - role: infra/docker # Instala Docker Engine e o Portainer (server) ou o Portainer Agent (agent)
 
-# Coletor de logs e métricas (seção 4.4). Depois do Docker, cujos containers ele lê.
+# Coletor de logs e métricas (seção 6.4). Depois do Docker, cujos containers ele lê.
 - hosts: ubuntu_vms
   become: yes
   roles:
@@ -34,7 +34,7 @@
   tasks:
     - name: "Incluir role para ambiente desktop (se GUI_ENABLED for true para o host)"
       ansible.builtin.include_role:
-        name: apps/desktop-environment # Role definido na Seção 3.5
+        name: apps/desktop-environment # Role definido na Seção 5.5
       vars:
         # Passa a flag para o role, convertendo para booleano e tratando ausência da variável
         install_gui_flag: "{{ hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool }}"

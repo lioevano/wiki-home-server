@@ -2,9 +2,9 @@
 description: "Stack de IA na ai-desktop-vm: gateway LiteLLM com apelidos de modelo, chaves por cliente e uso, Jev, Open WebUI com OIDC, Ollama com Vulkan e o Claude Code."
 ---
 
-# Seção 8: Stack de IA (gateway LiteLLM, Open WebUI, Ollama e Claude Code)
+# Seção 10: Stack de IA (gateway LiteLLM, Open WebUI, Ollama e Claude Code)
 
-A stack de IA roda na `ai-desktop-vm` (`docker/stacks/ai/docker-compose.yml`), gerenciada pelo Portainer da `core-services-vm` pelo Portainer Agent ([seção 4.2](04-configuracao-base-vms-ubuntu.md#42-role-ansible-docker-ansiblerolesinfradocker)). O centro é o **LiteLLM**: um gateway único para todos os modelos, que guarda as chaves dos provedores, dá a cada cliente uma chave própria com orçamento e registra cada chamada (tokens, custo, latência).
+A stack de IA roda na `ai-desktop-vm` (`docker/stacks/ai/docker-compose.yml`), gerenciada pelo Portainer da `core-services-vm` pelo Portainer Agent ([seção 6.2](06-configuracao-base-vms-ubuntu.md#62-role-ansible-docker-ansiblerolesinfradocker)). O centro é o **LiteLLM**: um gateway único para todos os modelos, que guarda as chaves dos provedores, dá a cada cliente uma chave própria com orçamento e registra cada chamada (tokens, custo, latência).
 
 ```
 Open WebUI ────────────┐                          ┌──► Anthropic (Claude) · OpenAI · Gemini
@@ -21,11 +21,11 @@ n8n / agentes (4c) ────┘     │ Postgres (uso, chaves)└──► Ol
 | `open-webui` | Chat no navegador e no celular (PWA) | `https://openwebui.seudominio.com` (Authelia + OIDC) |
 | `diun_ai` | Avisa de imagens novas (n8n → Telegram) | — |
 
-Logs e métricas do host e dos containers vão pelo Grafana Alloy da VM ([seção 4.4](04-configuracao-base-vms-ubuntu.md#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)); as métricas do LiteLLM saem na porta 4001 para o job `litellm` do Prometheus.
+Logs e métricas do host e dos containers vão pelo Grafana Alloy da VM ([seção 6.4](06-configuracao-base-vms-ubuntu.md#64-coleta-com-grafana-alloy-ansiblerolesinfraalloy)); as métricas do LiteLLM saem na porta 4001 para o job `litellm` do Prometheus.
 
 ## Modelos e apelidos
 
-Os clientes não citam o modelo do provedor, e sim um **apelido**. Para trocar de LLM a qualquer momento, mude o `model` do apelido em `llm_models` (`group_vars/all/main.yml`, [seção 1](01-maquina-controle-ansible.md)), rode o `setup-ai-volumes.yml` e `docker restart litellm_proxy`; nenhum cliente muda.
+Os clientes não citam o modelo do provedor, e sim um **apelido**. Para trocar de LLM a qualquer momento, mude o `model` do apelido em `llm_models` (`group_vars/all/main.yml`, [seção 3](03-maquina-controle-ansible.md)), rode o `setup-ai-volumes.yml` e `docker restart litellm_proxy`; nenhum cliente muda.
 
 | Apelido | Para quê | Modelo inicial |
 |---|---|---|
@@ -70,7 +70,7 @@ router_settings:
 
 litellm_settings:
   # prometheus: métricas no servidor separado da porta 4001 (--prometheus_metrics_port);
-  # langfuse_otel: cada chamada vai para o Langfuse (página 13; LANGFUSE_PUBLIC_KEY/SECRET_KEY/OTEL_HOST no ambiente).
+  # langfuse_otel: cada chamada vai para o Langfuse (página 15; LANGFUSE_PUBLIC_KEY/SECRET_KEY/OTEL_HOST no ambiente).
   callbacks: ["prometheus", "langfuse_otel"]
 
 general_settings:
@@ -81,7 +81,7 @@ general_settings:
 
 ## Deploy
 
-1. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`; modelo na [seção 1](01-maquina-controle-ansible.md)): `litellm_master_key`, `litellm_db_password`, `llm_api_keys.{anthropic,openai,google_gemini,typesafe}`, `litellm_client_keys.{openwebui,claude_code,n8n}` (`echo sk-$(openssl rand -hex 24)`), `openwebui_secret_key` e `oidc_clients.openwebui` (`secret` e `secret_digest`, gerados como os do Immich e do Nextcloud na [seção 11](11-fotos-arquivos.md#deploy)).
+1. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`; modelo na [seção 3](03-maquina-controle-ansible.md)): `litellm_master_key`, `litellm_db_password`, `llm_api_keys.{anthropic,openai,google_gemini,typesafe}`, `litellm_client_keys.{openwebui,claude_code,n8n}` (`echo sk-$(openssl rand -hex 24)`), `openwebui_secret_key` e `oidc_clients.openwebui` (`secret` e `secret_digest`, gerados como os do Immich e do Nextcloud na [seção 13](13-fotos-arquivos.md#deploy)).
 2. **Authelia:** rode o `setup-core-networking.yml` (cliente OIDC `openwebui` e router `llm.`) e `docker restart authelia traefik`.
 3. **Volumes, imagem do Ollama e `ai.env`** (primeiro com `--check`):
    ```bash
@@ -115,11 +115,11 @@ general_settings:
 | `OPENWEBUI_LOGIN_FORM` | `openwebui_login_form` (`group_vars`) |
 | `NOTIFICACOES_WEBHOOK_TOKEN` | vault (Diun) |
 
-Para mudar variáveis ou segredos: edite o vault ou o `group_vars` pela wiki, rode o `setup-ai-volumes.yml` (sem `--diff`, que imprimiria os segredos), cole o `ai.env` atualizado em **Advanced mode** ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack**.
+Para mudar variáveis ou segredos: edite o vault ou o `group_vars` pela wiki, rode o `setup-ai-volumes.yml` (sem `--diff`, que imprimiria os segredos), cole o `ai.env` atualizado em **Advanced mode** ([como](09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack**.
 
 ## Chaves, orçamentos e uso
 
-Cada cliente tem uma **chave virtual** própria (`litellm_client_keys`), nunca a chave mestra: `openwebui`, `claude_code`, `n8n`, `observador` (a IA que observa o servidor, [seção 15](15-ia-observa.md), que chama o LiteLLM da `core-services-vm` pelo IP da LAN), `agentes` (o posto, [seção 16](16-posto-agentes.md)) e `assistente` (o Hermes, [seção 17](17-assistente.md)). O `ansible/playbooks/setup-ai-keys.yml` cria no LiteLLM as que faltam (inclusive as apagadas pela tela), troca a chave de um cliente quando o valor no vault muda (apaga a antiga pelo alias e cria a nova) e ajusta o orçamento das que mudaram (`litellm_key_budgets`, US$ por mês, renovado a cada 30 dias) e os modelos que cada uma enxerga (`litellm_key_models_ocultos`; sem entrada, todos); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.
+Cada cliente tem uma **chave virtual** própria (`litellm_client_keys`), nunca a chave mestra: `openwebui`, `claude_code`, `n8n`, `observador` (a IA que observa o servidor, [seção 17](17-ia-observa.md), que chama o LiteLLM da `core-services-vm` pelo IP da LAN), `agentes` (o posto, [seção 18](18-posto-agentes.md)) e `assistente` (o Hermes, [seção 19](19-assistente.md)). O `ansible/playbooks/setup-ai-keys.yml` cria no LiteLLM as que faltam (inclusive as apagadas pela tela), troca a chave de um cliente quando o valor no vault muda (apaga a antiga pelo alias e cria a nova) e ajusta o orçamento das que mudaram (`litellm_key_budgets`, US$ por mês, renovado a cada 30 dias) e os modelos que cada uma enxerga (`litellm_key_models_ocultos`; sem entrada, todos); pode rodar de novo a qualquer momento. Quando o orçamento de uma chave acaba, aquele cliente recebe erro até a renovação ou até você aumentar o valor e rodar o playbook.
 
 **Ver o uso:** `https://llm.seudominio.com` (atrás do Authelia; entre com a `litellm_master_key`) mostra gasto, tokens e chamadas por chave e por modelo. O Prometheus raspa as métricas do LiteLLM (job `litellm`, porta 4001), e o alerta `llm-gasto-alto` avisa no Telegram quando o gasto das últimas 24 h passa de `llm_gasto_diario_alerta` (US$ 5 por padrão).
 
@@ -130,18 +130,18 @@ O Open WebUI fala só com o LiteLLM (com a chave `openwebui`) — o acesso diret
 O login é o **OIDC do Authelia** (cliente `openwebui`, política `so_admins`; o container chega ao Authelia pela LAN, com `extra_hosts`), além do forward-auth na frente: só entra quem está no grupo `admins` do Authelia, que vira administrador pelo grupo (`OAUTH_ADMIN_ROLES`; o papel padrão de quem chega é `pending`). No primeiro acesso:
 
 1. Abra `https://openwebui.seudominio.com` e entre por **Authelia**; se já existia uma conta local com o mesmo e-mail, as duas se juntam.
-2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, cole o `ai.env` atualizado ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack**. A mesma variável desliga a API de senha (`ENABLE_PASSWORD_AUTH`): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para `true` do mesmo jeito.
+2. Desligue o formulário local: `openwebui_login_form: false` no `group_vars` (pela wiki), rode o `setup-ai-volumes.yml`, cole o `ai.env` atualizado ([como](09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack**. A mesma variável desliga a API de senha (`ENABLE_PASSWORD_AUTH`): sem ela, esconder o formulário não impediria um login por senha direto na API. Se o Authelia cair, volte para `true` do mesmo jeito.
 
 ### Ferramentas: notas
 
-O compose declara, em `TOOL_SERVER_CONNECTIONS`, os dois MCPs do [segundo cérebro](12-segundo-cerebro.md): **Notas (busca)** (`http://qmd:8181/mcp`) e **Notas (escrita)** (`http://notes_escrita:8000/mcp`). O `open-webui` entra na rede `notes_mcp`, criada pela stack `notes`, então a stack `notes` precisa subir **antes** de um novo deploy da stack `ai`. Sem `access_grants`, só administradores usam as ferramentas. Na conversa, ligue-as pelo ícone de ferramentas (ou em *Workspace → Models*, por modelo).
+O compose declara, em `TOOL_SERVER_CONNECTIONS`, os dois MCPs do [segundo cérebro](14-segundo-cerebro.md): **Notas (busca)** (`http://qmd:8181/mcp`) e **Notas (escrita)** (`http://notes_escrita:8000/mcp`). O `open-webui` entra na rede `notes_mcp`, criada pela stack `notes`, então a stack `notes` precisa subir **antes** de um novo deploy da stack `ai`. Sem `access_grants`, só administradores usam as ferramentas. Na conversa, ligue-as pelo ícone de ferramentas (ou em *Workspace → Models*, por modelo).
 
 ## Claude Code no seu PC
 
 O Claude Code roda no seu PC Linux e tem dois modos:
 
 * **`claude`** — o login da sua assinatura Claude, direto na Anthropic. É o uso do dia a dia; não passa pelo gateway.
-* **`claude-gw`** — pelo gateway, com a chave `claude_code`: aparece na tela de uso, respeita o orçamento e serve para automações. Funciona na LAN e, de fora, pela VPN ([seção 14](14-vpn-tailscale.md)). A Anthropic só suporta o Claude Code com modelos Claude, então este perfil usa os nomes reais (`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`), não os apelidos.
+* **`claude-gw`** — pelo gateway, com a chave `claude_code`: aparece na tela de uso, respeita o orçamento e serve para automações. Funciona na LAN e, de fora, pela VPN ([seção 16](16-vpn-tailscale.md)). A Anthropic só suporta o Claude Code com modelos Claude, então este perfil usa os nomes reais (`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`), não os apelidos.
 
 Crie o alias no `~/.bashrc` (a chave fica só no seu PC; nunca num `.claude/settings.json` de repositório):
 

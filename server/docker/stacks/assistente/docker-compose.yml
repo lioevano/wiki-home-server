@@ -1,5 +1,5 @@
 # docker/stacks/assistente/docker-compose.yml
-# Assistente sempre ligado (Hermes Agent, página 17), na ai-desktop-vm. Conversa só pelo Telegram (bot próprio,
+# Assistente sempre ligado (Hermes Agent, página 19), na ai-desktop-vm. Conversa só pelo Telegram (bot próprio,
 # só com os usuários de TELEGRAM_ALLOWED_USERS); sem porta, sem painel, sem API e sem o socket do Docker.
 # Config e segredos em ${ASSISTENTE_DATA_PATH} (config.yaml e .env, gerados por setup-assistente-volumes.yml).
 version: '3.9'

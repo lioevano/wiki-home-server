@@ -15,7 +15,7 @@ http:
         # X-Robots-Tag: none
         # X-XSS-Protection: 1; mode=block (já tratado globalmente)
         # Adicione outros específicos se Nextcloud evoluir suas recomendações.
-        # Uso no router do Nextcloud (stack cloud, página 11; sem Authelia, o login é o OIDC):
+        # Uso no router do Nextcloud (stack cloud, página 13; sem Authelia, o login é o OIDC):
         # traefik.http.routers.nextcloud.middlewares: "nextcloud-dav@file,nextcloud-headers@file"
         # Os headers globais (securityHeaders@file) cobrem o geral; aqui ficam só os específicos do Nextcloud.
         # Exemplo de header que poderia ser específico:

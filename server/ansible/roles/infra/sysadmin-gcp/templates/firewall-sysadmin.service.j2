@@ -1,9 +1,9 @@
 # ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.service.j2
-# Firewall da rede do sysadmin (página 19): aplica a cadeia SYSADMIN (tabela raw) antes de cada (re)início do Docker.
+# Firewall da rede do sysadmin (página 02): aplica a cadeia SYSADMIN (tabela raw) antes de cada (re)início do Docker.
 # O Docker exige esta unit (drop-in 20-sysadmin.conf): sem as regras, a stack não sobe. Gerado pelo role
 # infra/sysadmin-gcp.
 [Unit]
-Description=Firewall da rede do sysadmin (cadeia SYSADMIN na tabela raw; página 19)
+Description=Firewall da rede do sysadmin (cadeia SYSADMIN na tabela raw; página 02)
 Before=docker.service
 PartOf=docker.service
 

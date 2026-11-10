@@ -55,7 +55,7 @@ def test_variaveis_agentes():
 
 def test_vault_agentes():
     v = _vault()
-    # Os agentes saíram da rota de controle: eles e o assistente usam a rota dos autônomos (página 16).
+    # Os agentes saíram da rota de controle: eles e o assistente usam a rota dos autônomos (página 18).
     assert set(v["agents_api_keys"]) == {"claude_code"}
     assert set(v["agents_autonomos_keys"]) == {"agentes", "assistente"}
     assert all(str(x).startswith("ag-") for x in v["agents_api_keys"].values())
@@ -215,7 +215,7 @@ def test_rota_leitura_so_le():
         'mcp.tool.target == "n8n" && mcp.tool.name in ["search_workflows"]',
     ]
     # o login é o OAuth do mcp_auth_servidor; a chave da rota é o token interno que só ele repassa (revisão final, C1)
-    # O observador (página 15) lê pela mesma rota, com chave própria; nenhum dos dois entra na rota de controle.
+    # O observador (página 17) lê pela mesma rota, com chave própria; nenhum dos dois entra na rota de controle.
     assert [k["metadata"]["cliente"] for k in _rota(4000)["policies"]["apiKey"]["keys"]] == ["mcp_auth_servidor", "observador"]
     assert {k["metadata"]["cliente"] for k in _rota(4100)["policies"]["apiKey"]["keys"]}.isdisjoint({"mcp_auth_servidor", "observador"})
 
@@ -337,7 +337,7 @@ LANGFUSE = ROOT / "server/docker/stacks/langfuse/docker-compose.yml"
 PB_LANGFUSE = ROOT / "server/ansible/playbooks/setup-langfuse-volumes.yml"
 AI = ROOT / "server/docker/stacks/ai/docker-compose.yml"
 PB_AI = ROOT / "server/ansible/playbooks/setup-ai-volumes.yml"
-PAG13 = ROOT / "wiki/docs/01-manual-implementacao/13-agentes-base.md"
+PAG15 = ROOT / "wiki/docs/01-manual-implementacao/15-agentes-base.md"
 
 
 def test_langfuse_stack():
@@ -420,7 +420,7 @@ def test_rota_langfuse():
 
 def test_retencao_langfuse():
     """A retenção por projeto do Langfuse é Enterprise (entitlement data-retention): a página documenta a limpeza."""
-    pag = PAG13.read_text(encoding="utf-8")
+    pag = PAG15.read_text(encoding="utf-8")
     assert "### Limpeza dos traces" in pag and "data-retention" in pag
 
 
@@ -454,7 +454,7 @@ def test_observabilidade_agentes():
     assert grupos["ia"]["langfuse"]["siteMonitor"] == alvos["langfuse"]
 
 
-# --- Task 9: página 13, catálogo e índice ---
+# --- Task 9: página 15, catálogo e índice ---
 
 CATALOGO = ROOT / "wiki/docs/02-visao-geral-arquitetura/09-catalogo-aplicacoes.md"
 INDICE = ROOT / "wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md"
@@ -481,13 +481,13 @@ def test_catalogo_e_pagina_agentes():
         assert regra in indice, regra
     backup = BACKUP.read_text(encoding="utf-8")
     assert "agentgateway" in backup and "langfuse" in backup.lower()
-    pag = PAG13.read_text(encoding="utf-8")
+    pag = PAG15.read_text(encoding="utf-8")
     for secao in ("## Arquitetura", "## Tokens e chaves", "## Deploy", "## Conectar o Claude", "## Ações e aprovação",
                   "## Falhas", "## Teste de ponta a ponta"):
         assert secao in pag, secao
     assert "fora dos snapshots" in pag
     mk = (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
-    assert "01-manual-implementacao/13-agentes-base.md" in mk
+    assert "01-manual-implementacao/15-agentes-base.md" in mk
 
 
 # --- Revisão final (4c1) ---
@@ -577,7 +577,7 @@ def test_langfuse_em_utc():
 
 
 def test_rota_dos_autonomos():
-    """Página 16: agentes e assistente leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e
+    """Página 18: agentes e assistente leem como a rota de leitura (Grafana só leitura; casa e n8n só consulta) e
     agem só pelo ops_controle, que exige a aprovação para essas chaves."""
     alvos = _alvos(4200)
     assert alvos["grafana"]["mcp"]["host"] == "http://mcp_grafana_leitura:8000/mcp"

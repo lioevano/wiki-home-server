@@ -83,13 +83,13 @@ scrape_configs:
         labels: {app: 'traefik', __param_module: 'tls_traefik'}
       - targets: ['http://loki:3100/ready']
         labels: {app: 'loki'}
-      # Hub de MCPs (base dos agentes, página 13): o mcp_auth_servidor responde à metadata OAuth sem login.
+      # Hub de MCPs (base dos agentes, página 15): o mcp_auth_servidor responde à metadata OAuth sem login.
       - targets: ['http://mcp_auth_servidor:80/.well-known/oauth-protected-resource']
         labels: {app: 'agentgateway'}
       # ...e o próprio hub (métricas no :15020, sem login): o proxy responde mesmo com o hub fora.
       - targets: ['http://agentgateway:15020/metrics']
         labels: {app: 'agentgateway'}
-      # Aprovação humana dos agentes (página 16).
+      # Aprovação humana dos agentes (página 18).
       - targets: ['http://aprovador:8080/saude']
         labels: {app: 'aprovador'}
 {% if 'ai_desktop' in groups %}
@@ -97,17 +97,17 @@ scrape_configs:
         labels: {app: 'open-webui'}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:4000/health/liveliness']
         labels: {app: 'litellm'}
-      # Segundo cérebro (página 12): os mcp-auth-proxy respondem a metadata OAuth sem login; o Syncthing, a saúde.
+      # Segundo cérebro (página 14): os mcp-auth-proxy respondem a metadata OAuth sem login; o Syncthing, a saúde.
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:8481/.well-known/oauth-protected-resource']
         labels: {app: 'notas'}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:8482/.well-known/oauth-protected-resource']
         labels: {app: 'notas-escrita'}
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:8384/rest/noauth/health']
         labels: {app: 'syncthing'}
-      # Rastreio (base dos agentes, página 13).
+      # Rastreio (base dos agentes, página 15).
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:3100/api/public/health']
         labels: {app: 'langfuse'}
-      # Posto de agentes (página 16): a 3005 aceita a core, onde o blackbox roda.
+      # Posto de agentes (página 18): a 3005 aceita a core, onde o blackbox roda.
       - targets: ['http://{{ ai_desktop_vm_ip_var }}:3005/api/health']
         labels: {app: 'vibe-kanban'}
 {% endif %}
@@ -119,7 +119,7 @@ scrape_configs:
       - target_label: __address__
         replacement: blackbox-exporter:9115
 
-  # Hub de MCPs (página 13): chamadas por rota, alvo e ferramenta (stack agents, rede proxy).
+  # Hub de MCPs (página 15): chamadas por rota, alvo e ferramenta (stack agents, rede proxy).
   - job_name: 'agentgateway'
     static_configs:
       - targets: ['agentgateway:15020']

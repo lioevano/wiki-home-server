@@ -2,15 +2,15 @@
 description: "Configuração base das VMs Ubuntu com Ansible: pacotes, fuso horário, cliente NFS, Docker, Portainer e o coletor Grafana Alloy."
 ---
 
-# Seção 4: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS)
+# Seção 6: Configuração Base das VMs Ubuntu (Docker, Portainer, Cliente NFS)
 
-Com as máquinas virtuais (`core-services-vm` e, opcionalmente, `ai-desktop-vm`) devidamente provisionadas ([Seção 3](03-provisionamento-vms.md)), o próximo passo é realizar a configuração base essencial dentro delas. Este processo é automatizado pelo Ansible e inclui:
+Com as máquinas virtuais (`core-services-vm` e, opcionalmente, `ai-desktop-vm`) devidamente provisionadas ([Seção 5](05-provisionamento-vms.md)), o próximo passo é realizar a configuração base essencial dentro delas. Este processo é automatizado pelo Ansible e inclui:
 
 * Instalação de pacotes comuns e utilitários.
 * Configuração do cliente NFS para montar os volumes de dados ZFS compartilhados pelo host Proxmox.
 * Criação de um usuário e grupo dedicados (`dockeruser`, `dockergroup`) para possuir os arquivos nos volumes NFS e para os containers Docker utilizarem (via PUID/PGID).
 * Configuração do firewall UFW (Uncomplicated Firewall).
-* Instalação do Grafana Alloy, coletor de logs e métricas ([seção 4.4](#44-coleta-com-grafana-alloy-ansiblerolesinfraalloy)).
+* Instalação do Grafana Alloy, coletor de logs e métricas ([seção 6.4](#64-coleta-com-grafana-alloy-ansiblerolesinfraalloy)).
 * Instalação do Docker Engine e Docker Compose na `core-services-vm`.
 * Deploy do container Portainer na `core-services-vm` para gerenciamento gráfico do Docker.
 * (Opcional) Instalação de um ambiente desktop na `ai-desktop-vm` se `GUI_ENABLED=true`.
@@ -21,7 +21,7 @@ Utilizaremos o playbook Ansible `setup-base-ubuntu.yml`. Este playbook orquestra
 3. `infra/alloy`: Aplicado a todas as VMs, depois do Docker (o Alloy lê os containers pelo socket e pelo `/var/lib/docker`).
 E, condicionalmente, o role `apps/desktop-environment`.
 
-## 4.1. Role Ansible `common` (`ansible/roles/common/`)
+## 6.1. Role Ansible `common` (`ansible/roles/common/`)
 
 Este role é fundamental, pois aplica configurações e instala pacotes que são comuns e necessários para todas as nossas VMs baseadas em Ubuntu.
 
@@ -91,12 +91,12 @@ Este arquivo contém as tarefas principais do role `common`.
   loop: # Itera sobre os datasets ZFS definidos em group_vars/all/main.yml
     - { dataset_name: "{{ zfs_docker_volumes_dataset_name }}" }
     - { dataset_name: "{{ zfs_media_dataset_name }}" }
-    # Arquivos do Nextcloud também na VM de IA, só leitura: origem do conversor de documentos (página 12).
+    # Arquivos do Nextcloud também na VM de IA, só leitura: origem do conversor de documentos (página 14).
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'ai_desktop' in group_names", opts: "ro,hard,intr,_netdev,x-systemd.mount-timeout=60s,noatime,nodiratime,rsize=1048576,vers=4.2" }
     # Fotos (Immich) e arquivos (Nextcloud) na core-services-vm, onde rodam as stacks photos e cloud.
     - { dataset_name: "{{ zfs_photos_dataset_name }}", when_condition: "'core_services' in group_names" }
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'core_services' in group_names" }
-    # Vaults do Obsidian (segundo cérebro, página 12): só na VM de IA (grupo 'ai_desktop' do inventário).
+    # Vaults do Obsidian (segundo cérebro, página 14): só na VM de IA (grupo 'ai_desktop' do inventário).
     - { dataset_name: "{{ zfs_notes_dataset_name }}", when_condition: "'ai_desktop' in group_names" }
   when: item.when_condition is not defined or item.when_condition # Permite loop condicional
   # NOTA: O dataset de backups (zfs_backups_dataset_name) geralmente não precisa ser montado nas VMs.
@@ -134,7 +134,7 @@ Este arquivo contém as tarefas principais do role `common`.
 # --- Firewall UFW (Uncomplicated Firewall) ---
 # Em todas as VMs: entrada negada por padrão, saída liberada. Vale para os serviços do próprio host (SSH,
 # Alloy na 12345, VNC). Portas publicadas pelo Docker não passam pelo UFW: elas são limitadas pela cadeia
-# HOMESERVER na DOCKER-USER (firewall_docker_portas, role infra/docker; página 14) e pela autenticação de cada serviço.
+# HOMESERVER na DOCKER-USER (firewall_docker_portas, role infra/docker; página 16) e pela autenticação de cada serviço.
 - name: "UFW: liberar SSH (antes de ligar, para não perder a conexão)"
   community.general.ufw:
     rule: allow
@@ -220,9 +220,9 @@ Handlers para o role `common`.
     * Adicionar o usuário Ansible da VM (`{{ vm_ansible_user_name }}`) também ao grupo `{{ docker_group_name_on_vm }}`.
   * **Configurar Firewall UFW:** em **todas** as VMs, entrada negada por padrão; libera SSH (antes de ligar o firewall), HTTP/S do Traefik só na `core-services-vm` e VNC só onde `GUI_ENABLED` é verdadeiro. A porta 12345 do Alloy é liberada pelo role `infra/alloy`. Portas publicadas pelo Docker não passam pelo UFW: quem as limita é o firewall do role `docker` (abaixo).
 
-## 4.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)
+## 6.2. Role Ansible `docker` (`ansible/roles/infra/docker/`)
 
-Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portainer_mode` (em `ansible/roles/infra/docker/defaults/main.yml`) decide o que cada uma recebe além do Docker: `server` na `core-services-vm` (o Portainer completo, a rede `proxy` e o diretório no NFS) e `agent` nas demais (o **Portainer Agent** na porta 9001, publicada só no IP da LAN, pelo qual o Portainer central gerencia as stacks daquela VM); a VM do sysadmin na GCP ([seção 19](19-sysadmin-gcp.md)) reaproveita o role com `nenhum` (sem Portainer) e com `docker_usuarios_grupo` vazio (sem usuários extras e sem o reinício da VM). As portas publicadas pelo Docker não passam pelo UFW. O agente tem duas proteções: o firewall do role (cadeia `HOMESERVER` na `DOCKER-USER`, gerada de `firewall_docker_portas`), que só deixa a `core-services-vm` alcançar a 9001 pela LAN ([seção 14](14-vpn-tailscale.md#firewall-das-portas-publicadas-pelo-docker)), e o segredo `portainer_agent_secret` do vault (`AGENT_SECRET`), que o Portainer central também recebe. Suas principais responsabilidades são:
+Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portainer_mode` (em `ansible/roles/infra/docker/defaults/main.yml`) decide o que cada uma recebe além do Docker: `server` na `core-services-vm` (o Portainer completo, a rede `proxy` e o diretório no NFS) e `agent` nas demais (o **Portainer Agent** na porta 9001, publicada só no IP da LAN, pelo qual o Portainer central gerencia as stacks daquela VM); a VM do sysadmin na GCP ([seção 2](02-sysadmin-gcp.md)) reaproveita o role com `nenhum` (sem Portainer) e com `docker_usuarios_grupo` vazio (sem usuários extras e sem o reinício da VM). As portas publicadas pelo Docker não passam pelo UFW. O agente tem duas proteções: o firewall do role (cadeia `HOMESERVER` na `DOCKER-USER`, gerada de `firewall_docker_portas`), que só deixa a `core-services-vm` alcançar a 9001 pela LAN ([seção 16](16-vpn-tailscale.md#firewall-das-portas-publicadas-pelo-docker)), e o segredo `portainer_agent_secret` do vault (`AGENT_SECRET`), que o Portainer central também recebe. Suas principais responsabilidades são:
 
 * Instalar o Docker Engine e o plugin Docker Compose.
 * Adicionar os usuários de `docker_usuarios_grupo` (padrão: `{{ vm_ansible_user_name }}` e `{{ docker_user_name_on_vm }}`) ao grupo `docker` do sistema para permitir a execução de comandos Docker sem `sudo`.
@@ -256,7 +256,7 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
     update_cache: yes # Atualiza o cache após adicionar o repo
 
 # Antes da instalação: o daemon já sobe assim, sem imagens a migrar. Com o image store do containerd
-# (padrão no Docker 29) o cAdvisor do Alloy não encontra os containers (seção 4.4).
+# (padrão no Docker 29) o cAdvisor do Alloy não encontra os containers (seção 6.4).
 - name: "Garantir o diretório /etc/docker"
   ansible.builtin.file:
     path: /etc/docker
@@ -354,7 +354,7 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
   community.docker.docker_container:
     name: portainer
     image: "{{ portainer_ce_image }}" # versão fixada em defaults/main.yml (a mesma do agente)
-    # HTTP na 9000 só dentro da rede Docker 'proxy' (não é publicada): é por onde o MCP ops (página 13) fala com a
+    # HTTP na 9000 só dentro da rede Docker 'proxy' (não é publicada): é por onde o MCP ops (página 15) fala com a
     # API do Portainer. Publicá-la mandaria senha e chave de API em texto claro pela LAN.
     command: ["--http-enabled"]
     restart_policy: unless-stopped
@@ -384,7 +384,7 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
       traefik.http.services.portainer-svc.loadbalancer.server.port: "9443" # Porta interna do Portainer (HTTPS)
       traefik.http.services.portainer-svc.loadbalancer.server.scheme: "https" # Esquema para o backend
       # Middleware de Autenticação Authelia
-      # Refere-se ao middleware Authelia que será definido no docker-compose do Authelia (Seção 5).
+      # Refere-se ao middleware Authelia que será definido no docker-compose do Authelia (Seção 7).
       traefik.http.routers.portainer.middlewares: "authelia-forwardauth@docker"
   when: docker_portainer_mode == 'server'
 
@@ -406,7 +406,7 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
       - "/var/lib/docker/volumes:/var/lib/docker/volumes"
   when: docker_portainer_mode == 'agent'
 
-# Firewall das portas publicadas pelo Docker (página 14): o UFW não vê esse tráfego. As regras ficam na cadeia
+# Firewall das portas publicadas pelo Docker (página 16): o UFW não vê esse tráfego. As regras ficam na cadeia
 # DOCKER-USER e são refeitas antes de cada início do Docker (Before= e PartOf=docker.service): quando os
 # containers sobem, as regras já estão lá.
 - name: "Script do firewall das portas publicadas pelo Docker"
@@ -426,7 +426,7 @@ Este role roda em todas as VMs Ubuntu (`ubuntu_vms`). A variável `docker_portai
     mode: '0644'
     content: |
       [Unit]
-      Description=Regras da cadeia DOCKER-USER (portas publicadas pelo Docker; página 14)
+      Description=Regras da cadeia DOCKER-USER (portas publicadas pelo Docker; página 16)
       Before=docker.service
       PartOf=docker.service
 
@@ -462,7 +462,7 @@ Handler para o role `docker`.
     daemon_reload: true
   when: not ansible_check_mode # numa VM nova, no --check, o Docker ainda não existe
 
-# Regras novas em firewall_docker_portas (página 14).
+# Regras novas em firewall_docker_portas (página 16).
 - name: Aplicar firewall do Docker
   ansible.builtin.systemd_service:
     name: firewall-docker.service
@@ -483,7 +483,7 @@ Handler para o role `docker`.
   # em sessões SSH subsequentes sem precisar fazer logout/login manual.
 ```
 
-## 4.3. Playbook `ansible/playbooks/setup-base-ubuntu.yml`
+## 6.3. Playbook `ansible/playbooks/setup-base-ubuntu.yml`
 
 Este playbook orquestra a aplicação dos roles `common` e `docker` (e `apps/desktop-environment` condicionalmente) às VMs apropriadas.
 
@@ -511,7 +511,7 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
   roles:
     - role: infra/docker # Instala Docker Engine e o Portainer (server) ou o Portainer Agent (agent)
 
-# Coletor de logs e métricas (seção 4.4). Depois do Docker, cujos containers ele lê.
+# Coletor de logs e métricas (seção 6.4). Depois do Docker, cujos containers ele lê.
 - hosts: ubuntu_vms
   become: yes
   roles:
@@ -526,7 +526,7 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
   tasks:
     - name: "Incluir role para ambiente desktop (se GUI_ENABLED for true para o host)"
       ansible.builtin.include_role:
-        name: apps/desktop-environment # Role definido na Seção 3.5
+        name: apps/desktop-environment # Role definido na Seção 5.5
       vars:
         # Passa a flag para o role, convertendo para booleano e tratando ausência da variável
         install_gui_flag: "{{ hostvars[inventory_hostname]['GUI_ENABLED'] | default(false) | bool }}"
@@ -535,7 +535,7 @@ Certifique-se de que o arquivo `ansible/playbooks/setup-base-ubuntu.yml` exista 
 
 ### Executando o Playbook `setup-base-ubuntu.yml`
 
-1. **Verifique os Roles:** Certifique-se de que os roles `common`, `infra/docker`, `infra/alloy` (seção 4.4) e `apps/desktop-environment` (se for usar a funcionalidade de GUI) estão criados e preenchidos com o código correto nos seus respectivos diretórios dentro de `ansible/roles/`.
+1. **Verifique os Roles:** Certifique-se de que os roles `common`, `infra/docker`, `infra/alloy` (seção 6.4) e `apps/desktop-environment` (se for usar a funcionalidade de GUI) estão criados e preenchidos com o código correto nos seus respectivos diretórios dentro de `ansible/roles/`.
 2. **Execute a Partir da Máquina de Controle:** Na sua máquina de controle Ansible, entre na pasta `server/ansible` do repositório.
 3. **Execute o Playbook:**
 
@@ -554,7 +554,7 @@ Após a execução bem-sucedida deste playbook:
 * A `core-services-vm` terá o Docker Engine instalado e o container Portainer CE rodando.
 * A `ai-desktop-vm`, se `GUI_ENABLED=true` foi definido para ela no inventário, terá o ambiente XFCE e TightVNCServer instalados.
 
-## 4.4. Coleta com Grafana Alloy (`ansible/roles/infra/alloy/`)
+## 6.4. Coleta com Grafana Alloy (`ansible/roles/infra/alloy/`)
 
 O **Grafana Alloy** é o coletor único da infraestrutura: roda instalado no sistema (pacote `alloy` do repositório apt da Grafana, serviço systemd) no host Proxmox e nas duas VMs. Ele substitui o Promtail (fim da vida em 2026-03-02) e o node_exporter, e acrescenta métricas por container:
 
@@ -571,7 +571,7 @@ O **Grafana Alloy** é o coletor único da infraestrutura: roda instalado no sis
 O role é aplicado pelo `setup-base-ubuntu.yml` (VMs) e pelo `setup-proxmox-host.yml` (host). A versão fica fixada em `alloy_version` no `group_vars/all/main.yml`; para atualizar, troque o valor e rode os dois playbooks.
 
 !!! warning "Alloy como root nas VMs"
-    Para ler os logs e as métricas dos containers, o Alloy roda como **root** nas VMs (drop-in `/etc/systemd/system/alloy.service.d/override.conf`): o cAdvisor lê `/var/lib/docker`, que só o root acessa, e o grupo `docker` sozinho não basta (e já equivaleria a root). No host Proxmox, sem Docker, ele roda como o usuário `alloy` (grupos `adm` e `systemd-journal`). O Docker é instalado sem o *image store* do containerd (`/etc/docker/daemon.json`, seção 4.2): com ele, padrão no Docker 29, o cAdvisor não encontra os containers. A interface do Alloy (`http://<host>:12345`) não tem autenticação e mostra a configuração (sem segredos); o firewall libera a porta só para a `core-services-vm` (UFW nas VMs; PVE Firewall no host). Na `core-services-vm` a origem liberada é `172.16.0.0/12`, porque o Prometheus em container chega ao IP do próprio host vindo da rede Docker.
+    Para ler os logs e as métricas dos containers, o Alloy roda como **root** nas VMs (drop-in `/etc/systemd/system/alloy.service.d/override.conf`): o cAdvisor lê `/var/lib/docker`, que só o root acessa, e o grupo `docker` sozinho não basta (e já equivaleria a root). No host Proxmox, sem Docker, ele roda como o usuário `alloy` (grupos `adm` e `systemd-journal`). O Docker é instalado sem o *image store* do containerd (`/etc/docker/daemon.json`, seção 6.2): com ele, padrão no Docker 29, o cAdvisor não encontra os containers. A interface do Alloy (`http://<host>:12345`) não tem autenticação e mostra a configuração (sem segredos); o firewall libera a porta só para a `core-services-vm` (UFW nas VMs; PVE Firewall no host). Na `core-services-vm` a origem liberada é `172.16.0.0/12`, porque o Prometheus em container chega ao IP do próprio host vindo da rede Docker.
 
 ### `defaults/main.yml`
 
@@ -766,7 +766,7 @@ loki.source.file "var_log" {
 }
 
 // ---------- Métricas do host ----------
-// O coletor systemd (além dos padrões) expõe o estado das units notes-* (timers do segundo cérebro, página 12)
+// O coletor systemd (além dos padrões) expõe o estado das units notes-* (timers do segundo cérebro, página 14)
 // e backup-* (dumps diários dos bancos), usado pelo alerta timer-falhou. Restrito a elas para não gerar uma
 // série por unit do sistema.
 prometheus.exporter.unix "host" {
@@ -859,4 +859,4 @@ prometheus.scrape "cadvisor" {
 !!! tip "Dashboards"
     Nenhum dashboard é provisionado. No Grafana, **Dashboards → New → Import** aceita os dashboards da comunidade para node exporter e cAdvisor (busque por "Node Exporter Full" e "cAdvisor" em grafana.com/grafana/dashboards); escolha o datasource Prometheus ao importar.
 
-Com esta base sólida, suas VMs estão prontas para o próximo passo crucial: a [Implementação da Rede Segura](05-rede-segura.md), que configurará Traefik, Cloudflare Tunnel e Authelia.
+Com esta base sólida, suas VMs estão prontas para o próximo passo crucial: a [Implementação da Rede Segura](07-rede-segura.md), que configurará Traefik, Cloudflare Tunnel e Authelia.

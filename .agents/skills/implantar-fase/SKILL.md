@@ -5,12 +5,12 @@ description: Use quando o Léo pedir "vamos para a fase N" (ou /implantar-fase N
 
 # Implantar uma fase do roteiro
 
-O roteiro é `wiki/docs/01-manual-implementacao/18-roteiro-primeiro-deploy.md` (fases 0 a 11). Você conduz, o Léo aprova: toda ação que muda a casa passa por botão no bot de aprovações.
+O roteiro é `wiki/docs/01-manual-implementacao/01-roteiro-primeiro-deploy.md` (fases 0 a 11). Você conduz, o Léo aprova: toda ação que muda a casa passa por botão no bot de aprovações.
 
 ## Sequência
 
 1. **Combine a fase.** O Léo manda "vamos para a fase N" ou `/implantar-fase N`. Se faltar o número, pergunte.
-2. **Leia e confira.** Leia a fase na página 18 e as seções que ela cita. Confira o estado real com `diagnostico(host, comando)` (só leitura, sem botão): `systemctl status`, `docker ps`, `df -h`, `free -m`, `ip`, `ss -tlnp`, `tailscale status`. Não presuma que um passo anterior está feito.
+2. **Leia e confira.** Leia a fase na página 01 e as seções que ela cita. Confira o estado real com `diagnostico(host, comando)` (só leitura, sem botão): `systemctl status`, `docker ps`, `df -h`, `free -m`, `ip`, `ss -tlnp`, `tailscale status`. Não presuma que um passo anterior está feito.
 3. **Abra o diário da fase.** É uma issue com a etiqueta `diario` no repositório da equipe (`lioevano/homeserver-equipe`, o valor de `equipe_repo`): título `Fase N — <nome>`, a lista de passos marcável (`- [ ]`) e, nos comentários, o log completo (comandos, saídas resumidas, links). Siga a skill `equipe` para etiquetas e regras. O Telegram recebe só o resumo e o link do diário.
 4. **Entregue ao Léo o que é dele**, numa mensagem só, cada item com o link da seção da wiki, e espere a confirmação:
    - contas (Cloudflare, provedores de LLM, Tailscale, GCP, GitHub, bots no BotFather, teto de gasto);

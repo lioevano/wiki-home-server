@@ -1,5 +1,5 @@
 # ansible/roles/infra/sysadmin-gcp/tasks/main.yml
-# A VM do sysadmin na GCP (página 19), configurada por ela mesma (ansible-pull do setup-sysadmin.yml, depois dos
+# A VM do sysadmin na GCP (página 02), configurada por ela mesma (ansible-pull do setup-sysadmin.yml, depois dos
 # roles infra/docker e infra/tailscale): swap, segredos no tmpfs, firewall da rede do sysadmin, clones, plugin do
 # Honcho, configurações do Hermes e do Honcho, as duas imagens locais, a stack, o painel pelo Tailscale Serve e os
 # timers de atualização e de backup. Não usa o vault de casa: os segredos vêm do Secret Manager para /run/sysadmin.
@@ -112,7 +112,7 @@
       when: not ansible_check_mode
 
 # O Docker só sobe com os segredos separados e o firewall aplicado (Requires: se um falhar, o Docker não sobe).
-# Os segredos só são lidos no boot: depois de trocá-los no Secret Manager, reinicie a unit e a stack (página 19).
+# Os segredos só são lidos no boot: depois de trocá-los no Secret Manager, reinicie a unit e a stack (página 02).
 - name: Docker só depois das units do sysadmin
   ansible.builtin.copy:
     dest: /etc/systemd/system/docker.service.d/20-sysadmin.conf

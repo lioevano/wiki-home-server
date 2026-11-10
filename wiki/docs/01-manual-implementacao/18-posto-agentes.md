@@ -2,11 +2,11 @@
 description: "Posto de agentes: Claude Code em paralelo pelo Vibe Kanban na ai-desktop-vm, e cada ação no servidor esperando a sua aprovação no Telegram ou na tela."
 ---
 
-# Seção 16: Posto de agentes e aprovação humana
+# Seção 18: Posto de agentes e aprovação humana
 
 O **posto** roda agentes Claude Code no servidor, em paralelo, cada tarefa num *worktree* próprio de um repositório, e você os acompanha numa tela web: o **Vibe Kanban** (`https://kanban.seudominio.com`). Você cria a tarefa, escolhe o agente, revisa o diff e pede o PR.
 
-Os agentes trabalham sem você olhando. Por isso, **toda ação deles no servidor** (reiniciar um container, redeployar uma stack, aplicar um playbook) vira um **pedido** que espera o seu "aprovar". Você decide por botões no Telegram ou na tela `https://aprovacoes.seudominio.com`. A mesma regra vale para o assistente do Telegram ([seção 17](17-assistente.md)).
+Os agentes trabalham sem você olhando. Por isso, **toda ação deles no servidor** (reiniciar um container, redeployar uma stack, aplicar um playbook) vira um **pedido** que espera o seu "aprovar". Você decide por botões no Telegram ou na tela `https://aprovacoes.seudominio.com`. A mesma regra vale para o assistente do Telegram ([seção 19](19-assistente.md)).
 
 ```mermaid
 flowchart LR
@@ -29,7 +29,7 @@ flowchart LR
 | Vibe Kanban | compilado do código-fonte na tag `posto_vibe_kanban_tag` | Tarefas em colunas, um *worktree* e um terminal por tentativa, revisão de diff com comentários, PR |
 | `posto_porteiro` | stack `posto`, mesma rede do container `posto` (imagem `caddy`) | Atende a porta 3005 e só repassa ao Vibe Kanban o que veio pelo Traefik ([abaixo](#porteiro-do-vibe-kanban)) |
 | `aprovador` | stack `agents`, `core-services-vm` (imagem local `localhost/homeserver/aprovador`) | Pedidos de ação com botões no Telegram e a tela `aprovacoes.`; o `ops` só executa com um pedido aprovado |
-| Rota `autonomos` do hub | `http://<IP da core>:4200/mcp`, só da `ai-desktop-vm` | O que a rota de leitura mostra e as ações do `ops`, sem as escritas do Grafana, da casa e do n8n ([seção 13](13-agentes-base.md)) |
+| Rota `autonomos` do hub | `http://<IP da core>:4200/mcp`, só da `ai-desktop-vm` | O que a rota de leitura mostra e as ações do `ops`, sem as escritas do Grafana, da casa e do n8n ([seção 15](15-agentes-base.md)) |
 
 ## Por que compilar o Vibe Kanban
 
@@ -43,7 +43,7 @@ O pacote npm do Vibe Kanban baixa um binário de um CDN da Bloop, que encerrou a
 O Vibe Kanban não tem login e aceita qualquer requisição que chegue nele. Por isso ele escuta só no `127.0.0.1` do próprio container (`HOST=127.0.0.1`), e quem atende a porta 3005 é o **porteiro**: um Caddy (`posto_porteiro`) que divide a rede do container `posto` (`network_mode: service:posto`). O porteiro:
 
 - deixa passar `/api/health`, para as sondas do Prometheus e do painel;
-- repassa o resto só se a requisição trouxer o cabeçalho `X-Posto-Chave` com o segredo `posto_chave_proxy`, que o Traefik injeta **depois** do Authelia (middleware `posto-chave`, [seção 5](05-rede-segura.md)), e retira o cabeçalho antes de repassar;
+- repassa o resto só se a requisição trouxer o cabeçalho `X-Posto-Chave` com o segredo `posto_chave_proxy`, que o Traefik injeta **depois** do Authelia (middleware `posto-chave`, [seção 7](07-rede-segura.md)), e retira o cabeçalho antes de repassar;
 - responde 403 a todo o resto, sem painel de administração (`admin off`).
 
 Assim, nenhum container das redes `ai_network` e `notes_mcp` (Open WebUI, LiteLLM, as notas, o assistente) chega ao Vibe Kanban, e a porta 3005 continua aceitando só a core (firewall das portas do Docker). O `Caddyfile` sai de `ansible/templates/posto/Caddyfile.j2`, com o segredo, em `0600`; o playbook para se o segredo tiver menos de 32 caracteres. O preço: a pré-visualização de apps do Vibe Kanban (outra porta, também no `127.0.0.1`) não abre de fora.
@@ -88,9 +88,9 @@ Quem pode decidir: no Telegram, só o seu usuário (`telegram_chat_id`, mais `ap
 
 | Recurso | Como | Observação |
 |---|---|---|
-| LLM | `ANTHROPIC_BASE_URL=http://litellm:4000` (rede `ai_network`), chave `litellm_client_keys.agentes` | Orçamento em `litellm_key_budgets.agentes`; uso na tela do LiteLLM (`llm.`) e traces no Langfuse. Nomes reais dos modelos Claude ([seção 8](08-stack-ia.md)) |
+| LLM | `ANTHROPIC_BASE_URL=http://litellm:4000` (rede `ai_network`), chave `litellm_client_keys.agentes` | Orçamento em `litellm_key_budgets.agentes`; uso na tela do LiteLLM (`llm.`) e traces no Langfuse. Nomes reais dos modelos Claude ([seção 10](10-stack-ia.md)) |
 | Servidor | MCP `servidor` → rota `autonomos` (chave `agents_autonomos_keys.agentes`) | Lê métricas, logs, alertas, containers e stacks; age só pelo `ops`, com aprovação |
-| Notas | MCPs `notas` (`http://qmd:8181/mcp`, busca) e `escrita` (`http://notes_escrita:8000/mcp`, só Trabalho e Estudos) | Pela rede interna `notes_mcp` ([seção 12](12-segundo-cerebro.md)) |
+| Notas | MCPs `notas` (`http://qmd:8181/mcp`, busca) e `escrita` (`http://notes_escrita:8000/mcp`, só Trabalho e Estudos) | Pela rede interna `notes_mcp` ([seção 14](14-segundo-cerebro.md)) |
 | Repositórios | `/repos` no disco local da VM (`/opt/local-data/posto/repos`) | Você clona; o agente trabalha num *worktree* por tentativa |
 | GitHub | `gh` com `GH_TOKEN=posto_github_token` (opcional) | Token *fine-grained*, só os repositórios de trabalho, com *Contents* e *Pull requests*; **nunca** escrita no `wiki-home-server` |
 | Prometheus e Loki da core | Portas 9090 e 3100 da core, abertas à `ai-desktop-vm` para o Alloy | Limite conhecido: o firewall vê o IP da VM, não o container, então um agente com o perfil `AUTONOMO` também alcança essas portas (consultar métricas e mandar métricas ou logs falsos). Nada muda no servidor por elas; desconfie de métricas e logs estranhos com origem na VM de IA |
@@ -112,14 +112,14 @@ Os MCPs vêm de `/etc/claude-code/managed-mcp.json` (gerado de `ansible/template
 - `docker/images/aprovador/aprovador/servidor.py` — API do `ops` (token), tela (chave do proxy, `Remote-User`, `Origin`).
 - `docker/images/aprovador/aprovador/__main__.py` — `python -m aprovador`.
 - `docker/images/ops/ops/aprovacao.py` — o cliente do `aprovador` no `ops` (falha fechada se não estiver configurado).
-- Serviço `aprovador` e as variáveis do `ops_controle` em `docker/stacks/agents/docker-compose.yml`; imagem e `agents.env` em `ansible/playbooks/setup-agents-volumes.yml` ([seção 13](13-agentes-base.md)).
+- Serviço `aprovador` e as variáveis do `ops_controle` em `docker/stacks/agents/docker-compose.yml`; imagem e `agents.env` em `ansible/playbooks/setup-agents-volumes.yml` ([seção 15](15-agentes-base.md)).
 - Testes: `tools/wikisync/tests/test_aprovacao.py` (o `aprovador` e o fluxo no `ops`, de ponta a ponta) e `tools/wikisync/tests/test_posto_assistente.py`.
 
 ## Primeira configuração
 
-1. **Vault** ([seção 1](01-maquina-controle-ansible.md)): `litellm_client_keys.agentes` (`echo sk-$(openssl rand -hex 24)`), `agents_autonomos_keys.agentes` (`ag-` + `openssl rand -hex 24`), `aprovador_token`, `aprovador_chave_proxy` e `posto_chave_proxy` (`openssl rand -hex 32` cada) e, se quiser PRs pelo `gh`, `posto_github_token` (sem escrita no `wiki-home-server`; proteja a `main`, veja acima).
+1. **Vault** ([seção 3](03-maquina-controle-ansible.md)): `litellm_client_keys.agentes` (`echo sk-$(openssl rand -hex 24)`), `agents_autonomos_keys.agentes` (`ag-` + `openssl rand -hex 24`), `aprovador_token`, `aprovador_chave_proxy` e `posto_chave_proxy` (`openssl rand -hex 32` cada) e, se quiser PRs pelo `gh`, `posto_github_token` (sem escrita no `wiki-home-server`; proteja a `main`, veja acima).
 2. **Chave no LiteLLM:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-keys.yml --ask-vault-pass`.
-3. **Firewall, rotas e Authelia:** `setup-base-ubuntu.yml` (portas 4200 e 3005, [seção 14](14-vpn-tailscale.md)), `setup-core-networking.yml` (rota `kanban.` com o segredo do porteiro, o middleware `aprovador-chave` e os domínios `kanban`/`aprovacoes` só para `admins`) e `setup-monitoring-stack-volumes.yml` (sondas e painel).
+3. **Firewall, rotas e Authelia:** `setup-base-ubuntu.yml` (portas 4200 e 3005, [seção 16](16-vpn-tailscale.md)), `setup-core-networking.yml` (rota `kanban.` com o segredo do porteiro, o middleware `aprovador-chave` e os domínios `kanban`/`aprovacoes` só para `admins`) e `setup-monitoring-stack-volumes.yml` (sondas e painel).
 4. **Hub e aprovador:** `setup-agents-volumes.yml`; no Portainer, **Update the stack** da `agents` com o `agents.env` novo em *Advanced mode*; depois `docker restart agentgateway`.
 5. **Posto:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-posto-volumes.yml --ask-vault-pass` (a primeira compilação demora). No Portainer, ambiente `ai-desktop-vm`: **Add stack** `posto` com `docker/stacks/posto/docker-compose.yml` e o `posto.env` em *Advanced mode*.
 6. **Primeiro uso:** clone o repositório no posto (`docker exec -it posto git clone https://github.com/<você>/<repo>.git /repos/<repo>`), abra `https://kanban.seudominio.com`, crie o projeto apontando para `/repos/<repo>` e escolha o agente **Claude Code**.

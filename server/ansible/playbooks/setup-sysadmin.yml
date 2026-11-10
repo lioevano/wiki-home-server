@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-sysadmin.yml
-# Sysadmin no GCP (página 19). Roda NA PRÓPRIA VM da GCP, por ansible-pull da main (primeiro boot e timer diário):
+# Sysadmin no GCP (página 02). Roda NA PRÓPRIA VM da GCP, por ansible-pull da main (primeiro boot e timer diário):
 #   ansible-pull -U https://github.com/lioevano/wiki-home-server.git -C main -d /opt/sysadmin/pull \
 #     -i server/ansible/inventories/home/hosts.ini -l sysadmin-gcp server/ansible/playbooks/setup-sysadmin.yml
 # com ANSIBLE_CONFIG=<clone>/server/ansible/ansible.cfg e ANSIBLE_VARS_ENABLED= (sem group_vars automáticos: o vault

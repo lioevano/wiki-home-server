@@ -1,5 +1,5 @@
 #!/bin/bash
-# Cria o sysadmin na GCP (página 19). O Léo roda UMA vez no Cloud Shell, com o projeto já escolhido
+# Cria o sysadmin na GCP (página 02). O Léo roda UMA vez no Cloud Shell, com o projeto já escolhido
 # (gcloud config set project <projeto>) e o faturamento ligado:
 #   curl -fsSL https://raw.githubusercontent.com/lioevano/wiki-home-server/main/server/scripts/gcp/criar-sysadmin.sh | bash
 # Cria as APIs, a conta de serviço sysadmin-vm (papéis mínimos), o bucket, a regra que recusa toda entrada, o alerta
@@ -285,7 +285,7 @@ CICLO
     # só no primeiro boot que der certo; depois o timer diário cuida das atualizações.
     cat >"$TMP/startup.sh.modelo" <<'STARTUP'
 #!/bin/bash
-# Primeiro boot do sysadmin (página 19): instala o ansible-core e faz o primeiro ansible-pull da main.
+# Primeiro boot do sysadmin (página 02): instala o ansible-core e faz o primeiro ansible-pull da main.
 # O progresso aparece no console serial (gcloud compute instances get-serial-port-output).
 set -uo pipefail
 MARCA=/var/lib/sysadmin-primeiro-boot
@@ -365,7 +365,7 @@ STARTUP
     echo
     echo "A VM se configura sozinha (de 20 a 40 min: as imagens são construídas na e2-micro). Acompanhe com:"
     echo "  gcloud compute instances get-serial-port-output $VM --zone=$ZONA | tail -n 30"
-    echo "Quando o nó 'sysadmin' aparecer no Tailscale, siga a página 19 (teste de ponta a ponta)."
+    echo "Quando o nó 'sysadmin' aparecer no Tailscale, siga a página 02 (teste de ponta a ponta)."
     # Os temporários (chave SSH, senha do vault, clone) são apagados pelo trap ao sair.
 }
 

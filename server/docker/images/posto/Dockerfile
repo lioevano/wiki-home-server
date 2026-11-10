@@ -1,4 +1,4 @@
-# Posto de agentes (sub-projeto 4c3, página 16): o servidor do Vibe Kanban (compilado do código-fonte pelo
+# Posto de agentes (sub-projeto 4c3, página 18): o servidor do Vibe Kanban (compilado do código-fonte pelo
 # setup-posto-volumes.yml, imagem localhost/homeserver/vibe-kanban) com Node, git, gh e o Claude Code em cache.
 ARG VIBE_KANBAN_IMAGE
 FROM ${VIBE_KANBAN_IMAGE} AS vibe

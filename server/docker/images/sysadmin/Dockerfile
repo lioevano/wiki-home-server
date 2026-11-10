@@ -1,4 +1,4 @@
-# Sysadmin (página 19): a imagem oficial do Hermes Agent mais o que o sysadmin usa no trabalho: Ansible, gh, git,
+# Sysadmin (página 02): a imagem oficial do Hermes Agent mais o que o sysadmin usa no trabalho: Ansible, gh, git,
 # ssh, o ambiente do `tools/dev.py` (check, test, lint, build), as coleções do Ansible e o cliente do Honcho
 # (honcho-ai) para o plugin.
 #

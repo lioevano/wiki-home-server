@@ -102,7 +102,7 @@
 
 # Regras primeiro: ligar o firewall com DROP antes delas cortaria o acesso ao host.
 # Pelo tailnet (pos 4 e 5): o executor do sysadmin chega ao host pela interface tailscale0 com origem 100.x (o host
-# anuncia a própria /32); sem estas regras, o DROP o trancaria fora (página 19).
+# anuncia a própria /32); sem estas regras, o DROP o trancaria fora (página 02).
 - name: "Permitir SSH, Web UI, NFS, Alloy e o tailnet no Firewall do Host Proxmox"
   community.proxmox.proxmox_firewall:
     level: node
@@ -147,7 +147,7 @@
     - { regexp: '^#?UsePAM', line: 'UsePAM yes' } # Manter PAM para `su` e outras funcionalidades
   notify: Restart sshd
 
-# --- Snapshots automáticos só nos vaults (segundo cérebro, página 12) ---
+# --- Snapshots automáticos só nos vaults (segundo cérebro, página 14) ---
 # O zfs-auto-snapshot tira snapshots de todo dataset cuja propriedade com.sun:auto-snapshot não seja 'false'.
 # Desligada em todos os pools (os filhos herdam) e ligada só em notes: a mídia não acumula snapshots de arquivos apagados.
 # Retenção padrão do pacote: 15 min ×4, hora ×24, dia ×31, semana ×8, mês ×12.

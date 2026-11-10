@@ -2,7 +2,7 @@
 # Stack de arquivos: Nextcloud (arquivos, calendário, contatos), cron, Redis, Postgres e Collabora.
 # Variáveis: /opt/portainer_stack_envs/cloud.env, gerado por ansible/playbooks/setup-cloud-stack-volumes.yml.
 # Configuração do Nextcloud no hook ansible/templates/nextcloud/10-homeserver.sh.j2 (apps, OIDC, Collabora).
-# Página: 01-manual-implementacao/11-fotos-arquivos.md
+# Página: 01-manual-implementacao/13-fotos-arquivos.md
 
 # html e config no disco local da VM: o occ e o cron.php exigem que quem roda seja o dono do config.php, e o
 # entrypoint faz chown dos arquivos — nada disso funciona no NFS com all_squash. Os dados ficam no dataset

@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-posto-volumes.yml
-# Posto de agentes (página 16): compila o Vibe Kanban do código-fonte na tag fixada (sem telemetria, sem o CDN
+# Posto de agentes (página 18): compila o Vibe Kanban do código-fonte na tag fixada (sem telemetria, sem o CDN
 # do projeto), constrói a imagem do posto (Node, git, gh, Claude Code em cache), cria os diretórios no disco
 # local da ai-desktop-vm, gera os MCPs gerenciados e o posto.env. Roda antes do deploy da stack no Portainer.
 # A primeira compilação leva dezenas de minutos; depois, só quando posto_vibe_kanban_tag muda.

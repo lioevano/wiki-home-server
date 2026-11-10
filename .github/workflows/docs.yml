@@ -32,6 +32,14 @@ jobs:
       - name: Ambiente
         run: python tools/dev.py setup
 
+      # O FastMCP do ops fica fora do requirements-dev (incharia a imagem do sysadmin); o teste do cabeçalho do hub
+      # precisa dele na versão fixada (ops_fastmcp_version) para rodar em vez de pular.
+      - name: FastMCP do ops (versão do group_vars)
+        run: |
+          v=$(sed -n 's/^ops_fastmcp_version: *"\([0-9][0-9.]*\)".*/\1/p' server/ansible/inventories/home/group_vars/all/main.yml)
+          test -n "$v"
+          .venv/bin/python -m pip install --quiet "fastmcp==$v"
+
       - name: Testes do wikisync
         run: python tools/dev.py test
 

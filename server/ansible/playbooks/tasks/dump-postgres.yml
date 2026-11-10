@@ -2,7 +2,7 @@
 # Dump diário de um Postgres que roda no disco local da VM (regra DAD-5), gravado no NFS, onde o restic do
 # host Proxmox o copia (página 04/02). Incluído com include_tasks pelos playbooks de cada banco, com:
 #   dump_nome      nome curto (vira backup-<nome>-db.service/.timer e /usr/local/sbin/backup-<nome>-db.sh)
-#   dump_descricao para a Description da unit (ex.: "do Nextcloud (página 11)")
+#   dump_descricao para a Description da unit (ex.: "do Nextcloud (página 13)")
 #   dump_container, dump_db, dump_user, dump_destino, dump_horario (OnCalendar)
 #   dump_extra_dir opcional: diretório copiado junto, em .tar.gz
 - name: "Dump {{ dump_nome }}: diretório no NFS"

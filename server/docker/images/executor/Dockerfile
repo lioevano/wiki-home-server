@@ -1,4 +1,4 @@
-# Executor do sysadmin (sub-projeto 5a, página 19): FastMCP + ansible-core, como o ops, mais o aprovador (pedidos
+# Executor do sysadmin (sub-projeto 5a, página 02): FastMCP + ansible-core, como o ops, mais o aprovador (pedidos
 # e Telegram). O contexto de build traz requirements.txt, requirements.yml e as pastas ops, aprovador e executor.
 # Não desliga a checagem de chave dos hosts: o known_hosts é assunto do deploy.
 FROM python:3.13-slim

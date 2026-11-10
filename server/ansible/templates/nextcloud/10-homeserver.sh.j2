@@ -1,7 +1,7 @@
 #!/bin/bash
 # ansible/templates/nextcloud/10-homeserver.sh.j2
 # Hook before-starting da imagem oficial do Nextcloud (roda como www-data a cada início do container,
-# depois da instalação). Gerado pelo setup-cloud-stack-volumes.yml; página 11.
+# depois da instalação). Gerado pelo setup-cloud-stack-volumes.yml; página 13.
 # Idempotente: cada passo pode rodar de novo sem efeito. Sem 'set -e' de propósito: se o hook falhar,
 # o entrypoint não sobe o Nextcloud; uma falha passageira (loja de apps fora, Collabora ainda subindo)
 # vira só um aviso no log (docker logs nextcloud_app).

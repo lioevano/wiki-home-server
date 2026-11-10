@@ -596,7 +596,7 @@ def test_openwebui_usa_os_mcps():
 
 from test_midia import PROM_VARS  # noqa: E402
 
-PAGINA12 = ROOT / "wiki/docs/01-manual-implementacao/12-segundo-cerebro.md"
+PAGINA14 = ROOT / "wiki/docs/01-manual-implementacao/14-segundo-cerebro.md"
 
 
 def test_sondas_e_painel_notes():
@@ -630,7 +630,7 @@ def test_catalogo_e_indice_notes():
     }
     for app, cols in esperado.items():
         assert cat[app][1:10] == cols, app
-        assert "12-segundo-cerebro.md" in cat[app][10]
+        assert "14-segundo-cerebro.md" in cat[app][10]
     assert "`mcp`" in cat["authelia"][8]
     indice = (ROOT / "wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md").read_text(encoding="utf-8")
     assert "\n## mcp\n" in indice
@@ -639,15 +639,15 @@ def test_catalogo_e_indice_notes():
     index_md = (ROOT / "INDEX.md").read_text(encoding="utf-8")
     for trecho in ("| `notas` |", "| `notas-escrita` |", "| `syncthing` |", "| `mcp` |",
                    "| `docker/stacks/notes/docker-compose.yml` |", "| `ansible/playbooks/setup-notes-volumes.yml` |",
-                   "`01-manual-implementacao/12-segundo-cerebro.md`"):
+                   "`01-manual-implementacao/14-segundo-cerebro.md`"):
         assert trecho in index_md, trecho
 
 
 def test_pagina_segundo_cerebro():
-    texto = PAGINA12.read_text(encoding="utf-8")
+    texto = PAGINA14.read_text(encoding="utf-8")
     for trecho in ("setup-notes-volumes.yml", "systemctl start notes-documentos.timer notes-indice.timer",
                    ".zfs/snapshot", "claude mcp add --transport http", "Syncthing-Fork", "notes_nextcloud_usuario",
                    "fora dos snapshots", "## Falhas", "## Teste de ponta a ponta"):
         assert trecho in texto, trecho
     backup = (ROOT / "wiki/docs/04-manutencao-recuperacao/02-backup-restore-estrategia.md").read_text(encoding="utf-8")
-    assert "notes" in backup and "12-segundo-cerebro.md" in backup
+    assert "notes" in backup and "14-segundo-cerebro.md" in backup

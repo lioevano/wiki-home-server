@@ -70,7 +70,7 @@ sequenceDiagram
 *   **Ingress Rules ou `--hostname`:**
     *   Você pode definir "Public Hostnames" (Ingress Rules) no dashboard Cloudflare Zero Trust para especificar quais subdomínios são expostos através do túnel e para qual serviço interno eles devem ser encaminhados (neste caso, para o Traefik).
     *   Alternativamente, a flag `--hostname` no comando `cloudflared` pode registrar automaticamente um ou mais hostnames para o túnel.
-*   **Encaminhamento para Traefik:** O `cloudflared` é configurado para encaminhar todo o tráfego recebido do túnel para o serviço Traefik na rede Docker interna (`https://traefik:443`, com *No TLS Verify*; ver a seção 5.5 da página de rede segura).
+*   **Encaminhamento para Traefik:** O `cloudflared` é configurado para encaminhar todo o tráfego recebido do túnel para o serviço Traefik na rede Docker interna (`https://traefik:443`, com *No TLS Verify*; ver a seção 7.5 da página de rede segura).
 
 ### 3. Traefik (Proxy Reverso)
 
@@ -104,7 +104,7 @@ Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e o
 
 ### 5. VPN (Tailscale): o caminho privado
 
-Além do túnel, os mesmos endereços funcionam pela **VPN** ([seção 14](../01-manual-implementacao/14-vpn-tailscale.md)). Com o Tailscale ligado, o aparelho resolve `<app>.seudominio.com` no CoreDNS de casa (split DNS) e fala direto com o Traefik pela VPN, sem passar pela Cloudflare e sem o limite de 100 MB por requisição. O Authelia continua na frente das mesmas aplicações. A rota de controle do hub de MCPs só existe por esse caminho.
+Além do túnel, os mesmos endereços funcionam pela **VPN** ([seção 16](../01-manual-implementacao/16-vpn-tailscale.md)). Com o Tailscale ligado, o aparelho resolve `<app>.seudominio.com` no CoreDNS de casa (split DNS) e fala direto com o Traefik pela VPN, sem passar pela Cloudflare e sem o limite de 100 MB por requisição. O Authelia continua na frente das mesmas aplicações. A rota de controle do hub de MCPs só existe por esse caminho.
 
 ## Vantagens desta Abordagem
 

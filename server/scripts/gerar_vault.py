@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # scripts/gerar_vault.py
-# Gera o vault.yml a partir do vault.yml.example (página 01): todos os segredos aleatórios (senhas de banco,
+# Gera o vault.yml a partir do vault.yml.example (página 03): todos os segredos aleatórios (senhas de banco,
 # tokens internos, chaves do LiteLLM e do hub, segredos e digests do OIDC, chave RSA do Authelia, chave SSH do
 # runner do ops, segredos do Langfuse...) e já criptografa com o ansible-vault. O que vem de fora (Cloudflare,
 # Telegram, provedores de LLM, Tailscale, B2, tokens criados nas telas depois do deploy) fica com o texto do
@@ -142,7 +142,7 @@ def gerar(modelo: str, senha_admin: str, senha_vault: str, agora: str) -> tuple[
     linhas = modelo.splitlines()
     saida: list[str] = [
         "# ansible/inventories/home/group_vars/all/vault.yml",
-        f"# Gerado por scripts/gerar_vault.py em {agora} a partir do vault.yml.example (página 01).",
+        f"# Gerado por scripts/gerar_vault.py em {agora} a partir do vault.yml.example (página 03).",
         "# Edite SEMPRE com: ansible-vault edit inventories/home/group_vars/all/vault.yml",
     ]
     pilha: list[tuple[int, str]] = []

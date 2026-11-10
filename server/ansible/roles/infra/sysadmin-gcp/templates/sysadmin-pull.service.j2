@@ -1,5 +1,5 @@
 # ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.service.j2
-# Atualização diária do sysadmin (página 19): ansible-pull da main, que só muda pelo merge do Léo. O container do
+# Atualização diária do sysadmin (página 02): ansible-pull da main, que só muda pelo merge do Léo. O container do
 # sysadmin não alcança o host (firewall), então ele não se reconfigura. Gerado pelo role infra/sysadmin-gcp.
 #   WorkingDirectory=/      o -i relativo só existe depois do checkout: o ansible-pull baixa a main com o inventário
 #                           localhost e só depois troca para o clone (de dentro do clone, o checkout seria pulado).
@@ -9,7 +9,7 @@
 # O ansible-core e as coleções seguem o group_vars e o requirements.yml do clone anterior (o primeiro boot os instala
 # antes): uma versão nova vale a partir da execução seguinte, nunca no meio de uma.
 [Unit]
-Description=Atualização diária do sysadmin: ansible-pull da main (página 19)
+Description=Atualização diária do sysadmin: ansible-pull da main (página 02)
 Wants=network-online.target
 After=network-online.target docker.service
 # Falhou: aviso no bot de aprovações.

@@ -2,7 +2,7 @@
 # Variáveis padrão para o role proxmox-vm.
 # Valores obrigatórios (vm_id, vm_name, vm_ipconfig) devem ser definidos no playbook que chama o role.
 
-# Nome do template Proxmox a ser clonado (deve corresponder ao template criado na Seção 3.1)
+# Nome do template Proxmox a ser clonado (deve corresponder ao template criado na Seção 5.1)
 vm_template: "{{ proxmox_ubuntu_template_name }}" # Definido em group_vars/all/main.yml
 
 # Recursos padrão da VM (podem ser sobrescritos por VM)

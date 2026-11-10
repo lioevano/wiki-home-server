@@ -4,7 +4,7 @@ description: "Como passar dispositivos de hardware adicionais (USB, discos, PCI)
 
 # Passthrough de Hardware Adicional para VMs e Containers
 
-Além do passthrough de GPU já abordado para a `ai-desktop-vm` ([Seção 3.4 do Manual de Implementação](../01-manual-implementacao/03-provisionamento-vms.md#34-configuração-de-gpu-passthrough-host-proxmox)), você pode encontrar cenários onde precisa passar outros tipos de dispositivos de hardware do seu host Proxmox VE diretamente para suas máquinas virtuais (VMs) ou, subsequentemente, para containers Docker rodando dentro dessas VMs.
+Além do passthrough de GPU já abordado para a `ai-desktop-vm` ([Seção 5.4 do Manual de Implementação](../01-manual-implementacao/05-provisionamento-vms.md#54-configuração-de-gpu-passthrough-host-proxmox)), você pode encontrar cenários onde precisa passar outros tipos de dispositivos de hardware do seu host Proxmox VE diretamente para suas máquinas virtuais (VMs) ou, subsequentemente, para containers Docker rodando dentro dessas VMs.
 
 Exemplos comuns incluem:
 *   **Pendrives USB:** Para acesso a armazenamento externo, dongles de licença, etc.
@@ -24,7 +24,7 @@ A configuração de GPU passthrough é um processo específico e detalhado que e
 4.  Identificação dos **IDs PCI** da GPU e de quaisquer dispositivos de áudio associados a ela.
 5.  Adição dos dispositivos PCI à configuração da VM no Proxmox, geralmente com opções como `pcie=1`, `x-vga=1` (para a GPU principal da VM) e `romfile` (se necessário).
 
-Para um passo a passo detalhado, consulte a [**Seção 3.4 do Manual de Implementação: Configuração de GPU Passthrough (Host Proxmox)**](../01-manual-implementacao/03-provisionamento-vms.md#34-configuração-de-gpu-passthrough-host-proxmox) e as configurações específicas no playbook `vm-deploy.yml` para a `ai-desktop-vm`.
+Para um passo a passo detalhado, consulte a [**Seção 5.4 do Manual de Implementação: Configuração de GPU Passthrough (Host Proxmox)**](../01-manual-implementacao/05-provisionamento-vms.md#54-configuração-de-gpu-passthrough-host-proxmox) e as configurações específicas no playbook `vm-deploy.yml` para a `ai-desktop-vm`.
 
 ## Passthrough de Dispositivos USB do Host Proxmox para VMs
 
@@ -101,7 +101,7 @@ O processo para passar outros tipos de dispositivos PCI (que não sejam GPUs) pa
     *   Módulos `vfio` carregados.
 2.  **Identifique o Dispositivo PCI e seu Grupo IOMMU:**
     *   No host Proxmox, use `lspci -nn` para encontrar o dispositivo e seus IDs `[VENDOR:DEVICE]`.
-    *   Use o script de verificação de grupos IOMMU (da Seção 3.4) para garantir que o dispositivo está em um grupo IOMMU isolado ou em um grupo com outros dispositivos que você também deseja passar (ou que não se importa em perder para o host).
+    *   Use o script de verificação de grupos IOMMU (da Seção 5.4) para garantir que o dispositivo está em um grupo IOMMU isolado ou em um grupo com outros dispositivos que você também deseja passar (ou que não se importa em perder para o host).
 3.  **Blacklist Drivers no Host (se o host estiver usando o dispositivo):**
     Se o Proxmox host estiver usando o dispositivo PCI (e.g., uma placa de rede que você quer dedicar a uma VM firewall), você precisará impedir que o driver do host carregue para ele. Adicione os IDs do dispositivo a `/etc/modprobe.d/vfio-pci-blacklist.conf` (ou similar) com `options vfio-pci ids=VENDOR:DEVICE,...` e, possivelmente, blacklist o driver específico (e.g., `blacklist e1000e`). Atualize initramfs e reinicie o host.
 4.  **Adicione o Dispositivo PCI à Configuração da VM:**

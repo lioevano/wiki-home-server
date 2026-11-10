@@ -14,7 +14,7 @@ contactPoints:
           httpMethod: POST
           authorization_scheme: Bearer
           authorization_credentials: "${NOTIFICACOES_WEBHOOK_TOKEN}"
-      # IA que observa o servidor (página 15): recebe o mesmo alerta, investiga pela rota de leitura do hub e
+      # IA que observa o servidor (página 17): recebe o mesmo alerta, investiga pela rota de leitura do hub e
       # manda a análise pelo n8n. Integração independente: se o observador estiver fora, o n8n recebe igual.
       - uid: observador-webhook
         type: webhook

@@ -1,5 +1,5 @@
 # ansible/playbooks/tasks/apps-env.yml
-# Monta o apps.env da stack apps (página 07) a partir dos .env que os playbooks dela geram: productivity,
+# Monta o apps.env da stack apps (página 09) a partir dos .env que os playbooks dela geram: productivity,
 # automation, n8n e monitoring. Todos repetem as variáveis comuns e alguns as do Telegram com o mesmo valor;
 # fica só a primeira de cada nome, sem comentários. Incluído no fim de cada um desses playbooks.
 - name: "apps.env: juntar os .env da stack apps sem nomes repetidos"

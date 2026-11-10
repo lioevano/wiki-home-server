@@ -7,7 +7,7 @@
     daemon_reload: true
   when: not ansible_check_mode # numa VM nova, no --check, o Docker ainda não existe
 
-# Regras novas em firewall_docker_portas (página 14).
+# Regras novas em firewall_docker_portas (página 16).
 - name: Aplicar firewall do Docker
   ansible.builtin.systemd_service:
     name: firewall-docker.service

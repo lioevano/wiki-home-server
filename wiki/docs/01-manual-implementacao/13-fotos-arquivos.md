@@ -2,7 +2,7 @@
 description: "Stacks photos (Immich) e cloud (Nextcloud, cron e Collabora), públicas pelo túnel com login OIDC do Authelia, datasets com cota e bancos no disco local."
 ---
 
-# Seção 11: Fotos e Arquivos (Immich, Nextcloud e Collabora)
+# Seção 13: Fotos e Arquivos (Immich, Nextcloud e Collabora)
 
 O **Immich** substitui o Google Fotos: o app do celular envia cada foto e vídeo para o servidor, com linha do tempo, rostos, busca e links de compartilhamento. O **Nextcloud** substitui o Google Drive: sincroniza pastas do computador, guarda calendário e contatos e, com o **Collabora**, edita documentos no navegador. Os dois entram com a sua conta e o seu 2FA do **Authelia** (OIDC), inclusive nos apps.
 
@@ -25,7 +25,7 @@ casa (Wi-Fi) ─────────────────────► 
 | `cloud` | `nextcloud_redis` / `nextcloud_db` | Cache e banco (Postgres) | — |
 | `cloud` | `collabora` | Edição de documentos (Nextcloud Office) | `http://collabora:9980` |
 
-Os três endereços públicos ficam fora do forward-auth do Authelia (regras `bypass` na [seção 5](05-rede-segura.md)): os apps de celular e de desktop não passam por ele. O login de cada app vai direto para o Authelia, com `two_factor`, pelo provedor OIDC configurado no mesmo `configuration.yml`. Os dois clientes usam a política `familia`: só quem está no grupo `users` do Authelia entra (e só então o Nextcloud cria a conta). Quem já entrou no Authelia em outro subdomínio não precisa entrar de novo. A conversa do servidor com o Authelia (descoberta e troca do código) vai pela LAN: `immich_server` e `nextcloud_app` resolvem `auth.<domínio>` para o Traefik na `core-services-vm` (`extra_hosts`), então o login funciona mesmo com a internet fora (o navegador ou o app ainda precisam alcançar `auth.`).
+Os três endereços públicos ficam fora do forward-auth do Authelia (regras `bypass` na [seção 7](07-rede-segura.md)): os apps de celular e de desktop não passam por ele. O login de cada app vai direto para o Authelia, com `two_factor`, pelo provedor OIDC configurado no mesmo `configuration.yml`. Os dois clientes usam a política `familia`: só quem está no grupo `users` do Authelia entra (e só então o Nextcloud cria a conta). Quem já entrou no Authelia em outro subdomínio não precisa entrar de novo. A conversa do servidor com o Authelia (descoberta e troca do código) vai pela LAN: `immich_server` e `nextcloud_app` resolvem `auth.<domínio>` para o Traefik na `core-services-vm` (`extra_hosts`), então o login funciona mesmo com a internet fora (o navegador ou o app ainda precisam alcançar `auth.`).
 
 ## Dados
 
@@ -41,15 +41,15 @@ Os três endereços públicos ficam fora do forward-auth do Authelia (regras `by
     O Immich exige o banco em disco local ("never a network share"), e o do Nextcloud foi junto. O html e o config do Nextcloud também ficam no disco local: o `occ` e o cron só rodam como o dono do `config.php`, e o entrypoint entrega os arquivos ao `www-data` com `chown`, o que o NFS com `all_squash` não permite. Esses diretórios ficam fora dos snapshots ZFS: o backup deles são os **dumps diários** no NFS:
 
     * **Immich:** o próprio Immich grava um dump por dia às 02:00 em `photos/backups/` e guarda os 14 últimos.
-    * **Nextcloud:** o timer `backup-nextcloud-db.timer` roda `/usr/local/sbin/backup-nextcloud-db.sh` às 03:30 e grava `nextcloud-<data>.dump` (banco) e `nextcloud-config-<data>.tar.gz` (o `config/`, com `instanceid`, `secret` e `passwordsalt`) em `docker-volumes/nextcloud/db-dumps/`, guardando duas semanas. Se o dump falhar, o alerta `timer-falhou` avisa ([seção 9](09-painel-notificacoes.md)).
+    * **Nextcloud:** o timer `backup-nextcloud-db.timer` roda `/usr/local/sbin/backup-nextcloud-db.sh` às 03:30 e grava `nextcloud-<data>.dump` (banco) e `nextcloud-config-<data>.tar.gz` (o `config/`, com `instanceid`, `secret` e `passwordsalt`) em `docker-volumes/nextcloud/db-dumps/`, guardando duas semanas. Se o dump falhar, o alerta `timer-falhou` avisa ([seção 11](11-painel-notificacoes.md)).
 
     Os dois estão na [estratégia de backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md).
 
-Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-ve-host.md); com cota, o alerta `disco-cheio` avisa quando um deles está quase cheio. Para mudar: `zfs set quota=<tamanho> data/photos`.
+Os datasets `photos` e `files` são criados com cota na [seção 4](04-proxmox-ve-host.md); com cota, o alerta `disco-cheio` avisa quando um deles está quase cheio. Para mudar: `zfs set quota=<tamanho> data/photos`.
 
 ## Deploy
 
-1. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`; modelo e comandos de geração no [`vault.yml.example`](01-maquina-controle-ansible.md)):
+1. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`; modelo e comandos de geração no [`vault.yml.example`](03-maquina-controle-ansible.md)):
     * `authelia_oidc_hmac_secret` (`openssl rand -hex 32`) e `authelia_oidc_jwks_key` (`openssl genrsa 2048`);
     * `oidc_clients.immich` e `oidc_clients.nextcloud`: `secret` (`openssl rand -hex 32`) e `secret_digest`, gerado com `docker run --rm authelia/authelia:4.39.28 authelia crypto hash generate pbkdf2 --variant sha512 --password <secret>` (o valor depois de `Digest: `);
     * `immich_db_password`; `nextcloud_db_password` e `nextcloud_admin_initial_password` (já existiam).
@@ -94,11 +94,11 @@ Os datasets `photos` e `files` são criados com cota na [seção 2](02-proxmox-v
    docker exec -u www-data nextcloud_app php occ group:adduser admin <seu usuário do Authelia>
    ```
    A conta `ncadmin` fica para emergência, por `https://nextcloud.seudominio.com/login?direct=1`.
-3. **Homepage:** no Immich, *Conta → Configurações da conta → Chaves de API*, crie uma chave com a permissão `server.statistics` e grave-a em `homepage_widget_keys.immich`; a do Nextcloud segue a [seção 9](09-painel-notificacoes.md). Rode o `setup-monitoring-stack-volumes.yml`.
+3. **Homepage:** no Immich, *Conta → Configurações da conta → Chaves de API*, crie uma chave com a permissão `server.statistics` e grave-a em `homepage_widget_keys.immich`; a do Nextcloud segue a [seção 11](11-painel-notificacoes.md). Rode o `setup-monitoring-stack-volumes.yml`.
 
 ## Clientes
 
-* **Immich (Android):** servidor `https://fotos.seudominio.com`, **Entrar com Authelia**. Em *Configurações → Rede*, ligue a **troca automática de URL**: o Wi-Fi de casa usa `http://<IP da core-services-vm>:2283`, e fora dele o app usa `https://fotos.seudominio.com`. Ative o backup das pastas da câmera. O túnel da Cloudflare recusa requisições acima de 100 MB, então vídeos maiores só sobem em casa (o app tenta de novo sozinho); deixe desligado o uso de dados móveis para vídeos. Com o **Tailscale** ligado no celular ([seção 14](14-vpn-tailscale.md)), `https://fotos.seudominio.com` vai direto ao Traefik de casa, sem esse limite, e a troca de URL vira opcional.
+* **Immich (Android):** servidor `https://fotos.seudominio.com`, **Entrar com Authelia**. Em *Configurações → Rede*, ligue a **troca automática de URL**: o Wi-Fi de casa usa `http://<IP da core-services-vm>:2283`, e fora dele o app usa `https://fotos.seudominio.com`. Ative o backup das pastas da câmera. O túnel da Cloudflare recusa requisições acima de 100 MB, então vídeos maiores só sobem em casa (o app tenta de novo sozinho); deixe desligado o uso de dados móveis para vídeos. Com o **Tailscale** ligado no celular ([seção 16](16-vpn-tailscale.md)), `https://fotos.seudominio.com` vai direto ao Traefik de casa, sem esse limite, e a troca de URL vira opcional.
 * **Nextcloud (desktop Linux/macOS):** servidor `https://nextcloud.seudominio.com`; o login abre o navegador, que passa pelo Authelia. Para os arquivos grandes passarem pelo túnel, feche o cliente e acrescente, na seção `[General]` de `~/.config/Nextcloud/nextcloud.cfg` (Linux) ou `~/Library/Preferences/Nextcloud/nextcloud.cfg` (macOS):
   ```ini
   maxChunkSize=50000000
@@ -126,7 +126,7 @@ Depois: `setup-photos-stack-volumes.yml` e `docker restart immich_server` (o Imm
 
 ## Atualizações
 
-* **Immich:** leia as notas da release, troque `immich_version` e, se o `docker-compose.yml` oficial da versão nova mudar a imagem do Valkey ou do Postgres, copie as novas no `docker/stacks/photos/docker-compose.yml`. Rode o `setup-photos-stack-volumes.yml`, cole o `photos.env` atualizado ([como](07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack** com **Re-pull image**.
+* **Immich:** leia as notas da release, troque `immich_version` e, se o `docker-compose.yml` oficial da versão nova mudar a imagem do Valkey ou do Postgres, copie as novas no `docker/stacks/photos/docker-compose.yml`. Rode o `setup-photos-stack-volumes.yml`, cole o `photos.env` atualizado ([como](09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e **Update the stack** com **Re-pull image**.
 * **Nextcloud:** suba **uma versão principal por vez** (o Nextcloud não pula versões): `nextcloud_major` de `34` para `35`, `setup-cloud-stack-volumes.yml`, cole o `cloud.env` atualizado e **Update the stack** com **Re-pull image**. Acompanhe `docker logs -f nextcloud_app` até o fim da atualização; os apps incompatíveis ficam desativados e voltam quando houver versão nova deles.
 
 ## Falhas
@@ -136,9 +136,9 @@ Depois: `setup-photos-stack-volumes.yml` e `docker restart immich_server` (o Imm
 | Authelia fora do ar | Login novo falha nos dois apps; sessões abertas e apps já logados continuam | Immich: `immich_password_login: true`, playbook e `docker restart immich_server`; entre por `https://fotos.<domínio>/auth/login?autoLaunch=0` (sem isso, a tela pula direto para o Authelia). Nextcloud: `ncadmin` por `/login?direct=1` |
 | Upload acima de 100 MB pelo túnel | A Cloudflare responde 413 | Nextcloud: pedaços de 50 MB (navegador e `maxChunkSize` no desktop). Immich: o vídeo sobe em casa, pela URL local |
 | Collabora não abre o documento | O Nextcloud recusa as chamadas WOPI | Confira `wopi_allowlist` (redes Docker), `aliasgroup1` e o `extra_hosts` do `collabora`; `docker logs collabora` |
-| Editor do Collabora em branco dentro do Nextcloud | O navegador recusou o iframe de `office.` | O Traefik aplica `X-Frame-Options: SAMEORIGIN` em tudo; o Collabora manda `Content-Security-Policy: frame-ancestors`, que os navegadores atuais respeitam no lugar dele. Se o console do navegador acusar `X-Frame-Options`, o middleware global não pode ser desligado só para um router: tire o `customFrameOptionsValue` do `securityHeaders` ([seção 5](05-rede-segura.md)) e confie no cabeçalho de cada aplicação (a conferir no primeiro deploy) |
+| Editor do Collabora em branco dentro do Nextcloud | O navegador recusou o iframe de `office.` | O Traefik aplica `X-Frame-Options: SAMEORIGIN` em tudo; o Collabora manda `Content-Security-Policy: frame-ancestors`, que os navegadores atuais respeitam no lugar dele. Se o console do navegador acusar `X-Frame-Options`, o middleware global não pode ser desligado só para um router: tire o `customFrameOptionsValue` do `securityHeaders` ([seção 7](07-rede-segura.md)) e confie no cabeçalho de cada aplicação (a conferir no primeiro deploy) |
 | Aviso no log do hook (`homeserver-hook: aviso`) | O Nextcloud sobe com aquele passo pendente | Corrija a causa (ex.: loja de apps fora do ar) e `docker restart nextcloud_app` |
-| Cota cheia | Uploads falham; alerta `disco-cheio` | `zfs set quota=<maior> data/photos` (ou `data/files`) ou mova o dataset para os discos novos ([seção 2](02-proxmox-ve-host.md)) |
+| Cota cheia | Uploads falham; alerta `disco-cheio` | `zfs set quota=<maior> data/photos` (ou `data/files`) ou mova o dataset para os discos novos ([seção 4](04-proxmox-ve-host.md)) |
 | Disco local da VM perdido | Bancos perdidos; fotos e arquivos intactos no NFS | Immich: [restauração do backup](https://docs.immich.app/administration/backup-and-restore) a partir de `photos/backups/` (container `immich_db`, usuário `immich`). Nextcloud: abaixo |
 
 **Restaurar o Nextcloud** (a partir dos arquivos mais recentes em `docker-volumes/nextcloud/db-dumps/`): pare `nextcloud_app` e `nextcloud_cron`; devolva o config com `sudo tar -xzf nextcloud-config-<data>.tar.gz -C /opt/local-data/nextcloud/config`; suba só o `nextcloud_db` (vazio) e rode `docker exec -i nextcloud_db pg_restore -U nextcloud -d nextcloud --clean --if-exists < nextcloud-<data>.dump`; depois suba o resto e rode `docker exec -u www-data nextcloud_app php occ maintenance:data-fingerprint`.

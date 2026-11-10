@@ -127,14 +127,14 @@ Para máxima segurança, performance e mínimo consumo de recursos ao hospedar u
               # seja correspondida antes de quaisquer regras mais genéricas.
               traefik.http.routers.meu_blog_raiz.priority: "100" # Um número alto significa maior prioridade
               # Sem middlewares: NÃO inclua 'authelia-forwardauth@docker' num blog público. Os headers de
-              # segurança (securityHeaders@file) já valem para todo o entrypoint websecure (página 05).
+              # segurança (securityHeaders@file) já valem para todo o entrypoint websecure (página 07).
               # Serviço Traefik (como Traefik se conecta ao container Nginx)
               traefik.http.services.meu_blog_raiz.loadbalancer.server.port: "80" # Nginx escuta na porta 80 dentro do container por padrão
         ```
     *   **Preparação Ansible:** Crie um playbook (e.g., `setup-blog-raiz-volumes.yml`) para:
         1.  Criar o diretório NFS na `core-services-vm` (e.g., `{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/meu_blog_raiz/html/` e opcionalmente `.../meu_blog_raiz/nginx_conf/`).
         2.  Gerar o arquivo `/opt/portainer_stack_envs/blog_raiz.env` com as variáveis de caminho (e.g., `BLOG_RAIZ_HTML_PATH`).
-    *   **Deploy via Portainer:** Siga o processo em [Deploy Core](../01-manual-implementacao/06-deploy-core.md) para stacks core, ou [Deploy de Apps](../01-manual-implementacao/07-deploy-apps.md) para stacks de aplicações.
+    *   **Deploy via Portainer:** Siga o processo em [Deploy Core](../01-manual-implementacao/08-deploy-core.md) para stacks core, ou [Deploy de Apps](../01-manual-implementacao/09-deploy-apps.md) para stacks de aplicações.
 
 ## 3. Configurando o Traefik para o Domínio Raiz
 
@@ -149,7 +149,7 @@ Independentemente de você usar um blog estático ou uma aplicação dinâmica (
         *   Isso é importante se você tem outras regras mais genéricas. A prioridade mais alta garante que a regra específica para o domínio raiz seja avaliada e correspondida primeiro.
     *   **Middlewares:**
         *   **NÃO inclua `authelia-forwardauth@docker`** para um blog ou site que deve ser publicamente acessível sem login.
-        *   Os headers de segurança (`securityHeaders@file`, [Seção 5.4](../01-manual-implementacao/05-rede-segura.md#templatessecurity_headersymlj2-middleware-de-segurança)) já são aplicados a todo o entrypoint `websecure`; não repita o middleware no router.
+        *   Os headers de segurança (`securityHeaders@file`, [Seção 7.4](../01-manual-implementacao/07-rede-segura.md#templatessecurity_headersymlj2-middleware-de-segurança)) já são aplicados a todo o entrypoint `websecure`; não repita o middleware no router.
 
 *   **Redirecionamento de `www` para não-`www` (ou vice-versa) - Opcional, mas Recomendado para SEO:**
     É uma boa prática escolher uma forma canônica para o seu domínio (com `www` ou sem `www`) e redirecionar a outra para ela. Suponha que você queira que `https://www.seudominio.com` redirecione para `https://seudominio.com`.
@@ -177,7 +177,7 @@ Independentemente de você usar um blog estático ou uma aplicação dinâmica (
     O `www.` já é coberto pelo hostname curinga do túnel; o domínio raiz não (veja abaixo).
 
 *   **Hostname do domínio raiz no túnel (obrigatório):**
-    O hostname curinga `*` do Cloudflare Tunnel ([seção 5.5](../01-manual-implementacao/05-rede-segura.md#55-configuração-de-dns-na-cloudflare)) só cobre subdomínios: `seudominio.com` sozinho não casa com `*.seudominio.com`. Em **Zero Trust → Networks → Tunnels → (seu túnel) → Public Hostname → Add a public hostname**, crie um com **Subdomain vazio**, **Domain** `seudominio.com`, serviço `HTTPS` → `traefik:443` e, em *Additional application settings → TLS*, **No TLS Verify** ligado (o mesmo dos outros). A Cloudflare cria o CNAME do domínio raiz para o túnel (o *CNAME flattening* resolve o apex).
+    O hostname curinga `*` do Cloudflare Tunnel ([seção 7.5](../01-manual-implementacao/07-rede-segura.md#75-configuração-de-dns-na-cloudflare)) só cobre subdomínios: `seudominio.com` sozinho não casa com `*.seudominio.com`. Em **Zero Trust → Networks → Tunnels → (seu túnel) → Public Hostname → Add a public hostname**, crie um com **Subdomain vazio**, **Domain** `seudominio.com`, serviço `HTTPS` → `traefik:443` e, em *Additional application settings → TLS*, **No TLS Verify** ligado (o mesmo dos outros). A Cloudflare cria o CNAME do domínio raiz para o túnel (o *CNAME flattening* resolve o apex).
 *   **Authelia:** o domínio raiz não casa com a regra curinga `*.seudominio.com` e cairia na `default_policy: deny`. Isso só importa se o router do blog usar o middleware do Authelia, o que ele **não** deve fazer; sem o middleware, o Authelia nem é consultado.
 
 ## 4. Se Optar por uma Aplicação de Blog Dinâmica (WordPress, Ghost, etc.)

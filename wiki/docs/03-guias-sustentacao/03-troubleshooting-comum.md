@@ -11,7 +11,7 @@ Mesmo com uma configuração cuidadosa e automatizada, problemas podem (e irão!
 Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o troubleshooting:
 
 1.  **Logs de Containers Docker:**
-    *   **Via Grafana (Loki), o primeiro lugar a olhar:** o Alloy de cada VM manda os logs de **todos** os containers e do journal para o Loki. Em `https://grafana.seudominio.com` → **Explore** → fonte **Loki**, filtre por `{container_name="traefik"}` (ou `{unit="notes-documentos.service"}` para uma tarefa agendada) e busque texto com `|= "error"`. Dá para ver as duas VMs e o host Proxmox na mesma tela, com o histórico de antes do reinício do container. Os alertas que chegam no Telegram também ficam em *Alerting* ([seção 9](../01-manual-implementacao/09-painel-notificacoes.md)).
+    *   **Via Grafana (Loki), o primeiro lugar a olhar:** o Alloy de cada VM manda os logs de **todos** os containers e do journal para o Loki. Em `https://grafana.seudominio.com` → **Explore** → fonte **Loki**, filtre por `{container_name="traefik"}` (ou `{unit="notes-documentos.service"}` para uma tarefa agendada) e busque texto com `|= "error"`. Dá para ver as duas VMs e o host Proxmox na mesma tela, com o histórico de antes do reinício do container. Os alertas que chegam no Telegram também ficam em *Alerting* ([seção 11](../01-manual-implementacao/11-painel-notificacoes.md)).
     *   **Via Portainer:** A maneira mais fácil de visualizar logs de containers individuais.
         1.  Acesse o Portainer (`https://portainer.seudominio.com`).
         2.  Navegue até o endpoint Docker correto (e.g., `local` para `core-services-vm`).
@@ -206,7 +206,7 @@ Familiarize-se com estas ferramentas. Elas serão suas melhores amigas durante o
     5.  **Sincronia de Relógio:**
         *   Certifique-se de que o relógio na `core-services-vm` (e, portanto, nos containers) está sincronizado corretamente com um servidor NTP. Desvios significativos de tempo podem afetar a validação de códigos TOTP para 2FA.
     6.  **Configuração do Middleware `authelia-forwardauth@docker` no Traefik:**
-        *   No `docker-compose.yml` da stack `core` (serviço `authelia`, [seção 5.3](../01-manual-implementacao/05-rede-segura.md#53-authelia-parte-de-dockerstackscoredocker-composeyml)), a definição do middleware `traefik.http.middlewares.authelia-forwardauth.forwardauth.address` está correta, apontando para `http://authelia:9091/api/authz/forward-auth`?
+        *   No `docker-compose.yml` da stack `core` (serviço `authelia`, [seção 7.3](../01-manual-implementacao/07-rede-segura.md#73-authelia-parte-de-dockerstackscoredocker-composeyml)), a definição do middleware `traefik.http.middlewares.authelia-forwardauth.forwardauth.address` está correta, apontando para `http://authelia:9091/api/authz/forward-auth`?
         *   Os serviços que você quer proteger no Traefik estão referenciando este middleware corretamente (e.g., `middlewares: "authelia-forwardauth@docker"`)?
 
 ### 5. Problemas com Certificados SSL/TLS (Let's Encrypt via Traefik)

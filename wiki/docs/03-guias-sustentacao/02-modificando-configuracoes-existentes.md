@@ -58,7 +58,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         *   Definem os serviços, imagens, volumes, redes, portas, variáveis de ambiente e labels Traefik para cada stack de aplicação.
         *   **As modificações são feitas nestes arquivos e depois aplicadas via Portainer ("Update the stack").**
     *   **Variáveis de Ambiente e Secrets:**
-        *   Ao criar/editar uma stack no Portainer, cole o `.env` gerado pelo Ansible na VM em **Advanced mode** ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
+        *   Ao criar/editar uma stack no Portainer, cole o `.env` gerado pelo Ansible na VM em **Advanced mode** ([como](../01-manual-implementacao/09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
         *   **Secrets críticos** (senhas de banco de dados, tokens de API) ficam no vault e chegam ao `.env` pelo playbook da stack; para mudá-los, edite o vault e rode o playbook de novo. Nada é digitado na UI do Portainer.
     *   **Volumes Docker Persistentes (Mapeados para os Diretórios NFS):**
         *   Contêm os dados e arquivos de configuração internos das suas aplicações Docker (e.g., o `config.php` do Nextcloud dentro do seu volume de config, o banco de dados SQLite do Sonarr, a biblioteca do Jellyfin). As modificações de configuração *dentro* da aplicação são salvas aqui.
@@ -118,7 +118,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
 4.  **Aplique a Mudança (Método Preferencial Primeiro):**
 
     *   **Se a Configuração é Gerenciada pelo Ansible (Ideal):**
-        1.  **Comece pela wiki** (ela é a fonte da verdade). Ache no `INDEX.md` a página que documenta o arquivo. Se o arquivo tem bloco literal na página, edite o bloco; se não, descreva a mudança na página e edite o arquivo. Depois, `python tools/dev.py check`, `sync` (confira o diff) e `sync --yes`, e então `test`, `build` e `lint`. Os segredos são a exceção: `ansible-vault edit inventories/home/group_vars/all/vault.yml`, mas a chave nova entra antes no `vault.yml.example` da página 01.
+        1.  **Comece pela wiki** (ela é a fonte da verdade). Ache no `INDEX.md` a página que documenta o arquivo. Se o arquivo tem bloco literal na página, edite o bloco; se não, descreva a mudança na página e edite o arquivo. Depois, `python tools/dev.py check`, `sync` (confira o diff) e `sync --yes`, e então `test`, `build` e `lint`. Os segredos são a exceção: `ansible-vault edit inventories/home/group_vars/all/vault.yml`, mas a chave nova entra antes no `vault.yml.example` da página 03.
         2.  Execute o playbook Ansible relevante para aplicar a mudança (sempre `--check` antes). Exemplo:
             ```bash
             ansible-playbook -i inventories/home/hosts.ini playbooks/setup-core-networking.yml --ask-vault-pass
@@ -129,7 +129,7 @@ Entender onde cada configuração está armazenada é o primeiro e mais crucial 
         2.  No Portainer, navegue até a stack que você deseja modificar.
         3.  Clique em "**Editor**".
         4.  Cole o conteúdo do `docker-compose.yml` atualizado.
-        5.  Se mudou variáveis ou segredos, rode antes o playbook da stack e cole o `.env` atualizado em **Advanced mode** ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
+        5.  Se mudou variáveis ou segredos, rode antes o playbook da stack e cole o `.env` atualizado em **Advanced mode** ([como](../01-manual-implementacao/09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)).
         6.  Clique em "**Update the stack**".
             *   Marque a opção "**Re-pull image and redeploy**" se você alterou a tag da imagem de um serviço e quer que o Portainer puxe a nova versão da imagem.
     *   **Se a Mudança é na Configuração Estática do Traefik ou Authelia (arquivos `.yml` principais):**

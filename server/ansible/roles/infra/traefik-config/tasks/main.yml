@@ -39,7 +39,7 @@
   when: "'ai-desktop-vm' in groups['virtual_machines']" # Só cria se a VM AI estiver no inventário
   no_log: true # contém o segredo do kanban. (posto_chave_proxy)
 
-# Middlewares dos agentes (página 16) com segredo: no arquivo, e não em label, para não aparecer no docker inspect.
+# Middlewares dos agentes (página 18) com segredo: no arquivo, e não em label, para não aparecer no docker inspect.
 - name: "Copiar os middlewares dos agentes (segredo da tela de aprovações)"
   ansible.builtin.template:
     src: dynamic_agents.yml.j2

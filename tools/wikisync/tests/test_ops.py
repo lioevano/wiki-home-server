@@ -1,5 +1,6 @@
-"""Testes unitários do MCP ops (base dos agentes, página 13): política, Portainer, auditoria, ferramentas e runner.
-Sem rede, sem FastMCP e sem ansible-playbook reais: o Portainer e os comandos são falsos."""
+"""Testes unitários do MCP ops (base dos agentes, página 15): política, Portainer, auditoria, ferramentas e runner.
+Sem rede e sem ansible-playbook reais: o Portainer e os comandos são falsos. Só o teste do cabeçalho do hub usa o
+FastMCP de verdade (pula sem ele, ou noutra versão que a do ops_fastmcp_version)."""
 from __future__ import annotations
 
 import json
@@ -470,7 +471,7 @@ def test_cliente_no_registro_e_no_aviso(capsys):
 
 
 def test_cliente_desconhecido_falha_fechado(capsys):
-    """Sem o cabeçalho do hub, não dá para saber se é um agente autônomo: a ação exige aprovação (página 16)."""
+    """Sem o cabeçalho do hub, não dá para saber se é um agente autônomo: a ação exige aprovação (página 18)."""
     cfg = _cfg()
     falso = PortainerFalso()
     fs = ferramentas(cfg, Portainer(cfg, falso), None, None)  # cliente padrão: ""
@@ -484,6 +485,51 @@ def test_cliente_desconhecido_falha_fechado(capsys):
 def test_servidor_le_o_cliente_do_cabecalho_do_hub():
     srv = (IMG / "ops/server.py").read_text(encoding="utf-8")
     assert "get_http_headers" in srv and "x-homeserver-cliente" in srv
+
+
+def test_cliente_do_cabecalho_numa_requisicao_http_de_verdade():
+    """O _cliente lê o x-homeserver-cliente de uma chamada HTTP real do FastMCP fixado (ops_fastmcp_version). Se a API
+    do FastMCP mudar, o _cliente devolve "" em silêncio e todo agente vira "desconhecido" (pede aprovação): este
+    teste é quem percebe. Pula sem o FastMCP no ambiente (pip install fastmcp==<ops_fastmcp_version>)."""
+    fastmcp = pytest.importorskip("fastmcp")
+    import asyncio
+    import socket
+    import threading
+    import time
+
+    import uvicorn
+    import yaml
+    from fastmcp.client import Client
+    from fastmcp.client.transports import StreamableHttpTransport
+
+    from ops.server import _cliente
+
+    m = yaml.safe_load((ROOT / "server/ansible/inventories/home/group_vars/all/main.yml").read_text(encoding="utf-8"))
+    if fastmcp.__version__ != m["ops_fastmcp_version"]:
+        pytest.skip(f"fastmcp {fastmcp.__version__} difere do fixado {m['ops_fastmcp_version']}")
+    mcp = fastmcp.FastMCP("teste")
+    mcp.tool(lambda: _cliente() or "-", name="quem")
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        porta = s.getsockname()[1]
+    servidor = uvicorn.Server(uvicorn.Config(mcp.http_app(path="/mcp"), host="127.0.0.1", port=porta, log_level="error"))
+    fio = threading.Thread(target=servidor.run, daemon=True)
+    fio.start()
+    for _ in range(100):
+        if servidor.started:
+            break
+        time.sleep(0.05)
+
+    async def chamar(cabecalhos):
+        async with Client(StreamableHttpTransport(f"http://127.0.0.1:{porta}/mcp", headers=cabecalhos)) as c:
+            r = await c.call_tool("quem", {})
+            return r.content[0].text
+    try:
+        assert asyncio.run(chamar({"x-homeserver-cliente": "observador"})) == "observador"
+        assert asyncio.run(chamar({})) == "-"
+    finally:
+        servidor.should_exit = True
+        fio.join(timeout=5)
 
 
 def _falso_com_nome_repetido():

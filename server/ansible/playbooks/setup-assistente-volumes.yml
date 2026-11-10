@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-assistente-volumes.yml
-# Assistente sempre ligado (Hermes Agent, página 17): diretório de dados no disco local da ai-desktop-vm,
+# Assistente sempre ligado (Hermes Agent, página 19): diretório de dados no disco local da ai-desktop-vm,
 # config.yaml e .env (0600) a partir da wiki, e o assistente.env da stack. Roda antes do deploy no Portainer.
 - name: Preparar a stack assistente
   hosts: ai_desktop

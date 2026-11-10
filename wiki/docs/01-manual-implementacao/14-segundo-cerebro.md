@@ -2,7 +2,7 @@
 description: "Stack notes na VM de IA: vaults do Obsidian sincronizados pelo Syncthing, busca local com qmd sobre as notas e os documentos do Nextcloud, e MCP para o Claude com escopo por vault."
 ---
 
-# Seção 12: Segundo cérebro (Obsidian, Syncthing, busca local e MCP)
+# Seção 14: Segundo cérebro (Obsidian, Syncthing, busca local e MCP)
 
 Os vaults do Obsidian **Pessoal**, **Trabalho** e **Estudos**, editados no PC e no celular, ficam sincronizados com o servidor pelo **Syncthing**. No servidor, o **qmd** indexa as notas e os documentos do Nextcloud (convertidos para Markdown) com busca local, sem custo de API. O Claude (app, claude.ai e Claude Code), o Open WebUI e os agentes acessam tudo por **MCP**, com escopo por vault:
 
@@ -21,7 +21,7 @@ Os vaults do Obsidian **Pessoal**, **Trabalho** e **Estudos**, editados no PC e 
 
 ## Dados
 
-O dataset `data/notes` (cota de 20G, [seção 2](02-proxmox-ve-host.md)) é exportado só para a `ai-desktop-vm` e tem snapshots automáticos a cada 15 minutos ([guia de snapshots](../03-guias-sustentacao/11-guia-snapshots-zfs.md)): é por eles que se desfaz uma edição da IA. O dataset `files` do Nextcloud é montado **só leitura** na mesma VM.
+O dataset `data/notes` (cota de 20G, [seção 4](04-proxmox-ve-host.md)) é exportado só para a `ai-desktop-vm` e tem snapshots automáticos a cada 15 minutos ([guia de snapshots](../03-guias-sustentacao/11-guia-snapshots-zfs.md)): é por eles que se desfaz uma edição da IA. O dataset `files` do Nextcloud é montado **só leitura** na mesma VM.
 
 
 | Dado | Onde | Proteção |
@@ -32,8 +32,8 @@ O dataset `data/notes` (cota de 20G, [seção 2](02-proxmox-ve-host.md)) é expo
 
 ## Deploy
 
-1. **Host Proxmox:** crie o dataset (`zfs create -o refquota=20G data/notes` e o `chown`, [seção 2](02-proxmox-ve-host.md)) e rode o `setup-proxmox-host.yml` (export do `notes` para a VM de IA, `zfs-auto-snapshot` e a propriedade por dataset). Depois, `setup-base-ubuntu.yml` para montar `notes` e `files` (só leitura) na `ai-desktop-vm`.
-2. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`): `syncthing_gui_password`, `syncthing_api_key` (`openssl rand -hex 24`), `mcp_auth_hmac_secret` (`openssl rand -base64 32`) e `oidc_clients.mcp` — `secret` (`openssl rand -hex 32`) e `secret_digest` gerado como os outros clientes ([seção 11](11-fotos-arquivos.md#deploy)). No `group_vars`, `notes_nextcloud_usuario` = o seu id no Nextcloud (`docker exec -u www-data nextcloud_app php occ user:list`).
+1. **Host Proxmox:** crie o dataset (`zfs create -o refquota=20G data/notes` e o `chown`, [seção 4](04-proxmox-ve-host.md)) e rode o `setup-proxmox-host.yml` (export do `notes` para a VM de IA, `zfs-auto-snapshot` e a propriedade por dataset). Depois, `setup-base-ubuntu.yml` para montar `notes` e `files` (só leitura) na `ai-desktop-vm`.
+2. **Vault** (`ansible-vault edit inventories/home/group_vars/all/vault.yml`, a partir de `server/ansible`): `syncthing_gui_password`, `syncthing_api_key` (`openssl rand -hex 24`), `mcp_auth_hmac_secret` (`openssl rand -base64 32`) e `oidc_clients.mcp` — `secret` (`openssl rand -hex 32`) e `secret_digest` gerado como os outros clientes ([seção 13](13-fotos-arquivos.md#deploy)). No `group_vars`, `notes_nextcloud_usuario` = o seu id no Nextcloud (`docker exec -u www-data nextcloud_app php occ user:list`).
 3. **Authelia e Traefik:** rode o `setup-core-networking.yml` (cliente `mcp`, regras `bypass` de `notas.` e `escrita.`, routers `notas.`, `escrita.` e `sync.`) e `docker restart authelia`.
 4. **Volumes, imagens e `.env`** (primeiro com `--check`; o build das três imagens leva alguns minutos):
    ```bash
@@ -52,7 +52,7 @@ Todos os seus arquivos do Nextcloud (`<files>/<notes_nextcloud_usuario>/files`),
 Se a origem estiver vazia ou não existir (por exemplo, o NFS do `files` não montou), o conversor **não apaga nada** e termina com código 2 — o alerta `timer-falhou` avisa. Com o NFS desmontado, a unit falha já no `ExecStartPre` (`mountpoint -q`), e o mesmo alerta avisa. Para recomeçar do zero, apague `/opt/local-data/notes-documentos` inteiro.
 
 ```python title="ansible/templates/notes/conversor.py"
-"""Converte os documentos do Nextcloud para Markdown, de forma incremental (segundo cérebro, página 12).
+"""Converte os documentos do Nextcloud para Markdown, de forma incremental (segundo cérebro, página 14).
 
 Uso: conversor.py --origem DIR --destino DIR --extensoes pdf,docx,... --max-mb N
 Cada <origem>/<rel> vira <destino>/<rel>.md, com o caminho original no cabeçalho. O manifesto
@@ -202,7 +202,7 @@ if __name__ == "__main__":
 A imagem do conversor (construída pelo `setup-notes-volumes.yml`):
 
 ```jinja title="ansible/templates/notes/Dockerfile.conversor.j2"
-# Imagem do conversor de documentos do segundo cérebro (página 12).
+# Imagem do conversor de documentos do segundo cérebro (página 14).
 FROM python:3.13-slim
 RUN pip install --no-cache-dir "markitdown[pdf,docx,pptx,xlsx]=={{ markitdown_version }}"
 COPY conversor.py /app/conversor.py
@@ -217,7 +217,7 @@ O **qmd** junta busca por palavra-chave (BM25), busca semântica e reordenação
 A imagem local, construída pelo `setup-notes-volumes.yml` (reconstrói quando o Dockerfile muda):
 
 ```jinja title="ansible/templates/notes/Dockerfile.qmd.j2"
-# Imagem do qmd (busca local do segundo cérebro, página 12): Node 22 + Mesa/RADV para o Vulkan.
+# Imagem do qmd (busca local do segundo cérebro, página 14): Node 22 + Mesa/RADV para o Vulkan.
 FROM node:22-bookworm-slim
 RUN apt-get update \
  && apt-get install -y --no-install-recommends mesa-vulkan-drivers libvulkan1 ca-certificates \
@@ -228,7 +228,7 @@ RUN npm install -g @tobilu/qmd@{{ qmd_version }}
 As coleções (gerado em `docker-volumes/qmd/config/index.yml`). O contexto de cada coleção é devolvido junto com os resultados, para o Claude saber o que pode alterar:
 
 ```jinja title="ansible/templates/notes/index.yml.j2"
-# Coleções do qmd (segundo cérebro, página 12). Gerado pelo setup-notes-volumes.yml; não edite na VM.
+# Coleções do qmd (segundo cérebro, página 14). Gerado pelo setup-notes-volumes.yml; não edite na VM.
 {% set ignorar = ['.obsidian/**', '.trash/**', '**/*.sync-conflict-*'] %}
 {% set colecoes = {
   'pessoal': 'Vault Pessoal do Obsidian. Somente leitura: não há ferramenta que altere estas notas.',
@@ -255,7 +255,7 @@ collections:
 O MCP oficial de arquivos (`@modelcontextprotocol/server-filesystem`) roda dentro do **supergateway**, que o expõe em `http://notes_escrita:8000/mcp` (Streamable HTTP), também só na rede `notes_mcp`. O container monta **apenas** `trabalho/` e `estudos/`: o vault Pessoal e os arquivos do Nextcloud não existem para ele, então nenhuma instrução (nem uma nota maliciosa) consegue alterá-los. A pasta `.obsidian` de cada vault entra **só leitura** por cima: ela guarda os plugins do Obsidian, que rodam JavaScript no PC — uma injeção de prompt não pode instalar ou ligar um plugin. O playbook cria essas pastas antes do deploy (a montagem precisa delas). O resto do container é **só leitura** (`read_only: true`, com `/tmp` em memória): o cliente MCP pode pedir outras pastas (as *roots* do protocolo substituem as da linha de comando), mas fora de `trabalho/` e `estudos/` só existem os arquivos do sistema, e nenhum aceita escrita. Continua possível a IA escrever blocos `dataviewjs` ou de Templater numa nota; se você usa esses plugins, revise o que a IA escreveu antes de abrir a nota. Ferramentas: ler, listar, buscar por nome, criar, sobrescrever (`write_file`), editar trechos (`edit_file`, com prévia), criar pastas e mover — **não há ferramenta de apagar**, e mover não sobrescreve um destino existente.
 
 ```jinja title="ansible/templates/notes/Dockerfile.escrita.j2"
-# Imagem do MCP de escrita do segundo cérebro (página 12): server-filesystem exposto em HTTP pelo supergateway.
+# Imagem do MCP de escrita do segundo cérebro (página 14): server-filesystem exposto em HTTP pelo supergateway.
 FROM node:24-bookworm-slim
 RUN npm install -g supergateway@{{ supergateway_version }} @modelcontextprotocol/server-filesystem@{{ mcp_filesystem_version }}
 USER node
@@ -263,7 +263,7 @@ USER node
 
 ## Sincronização (Syncthing)
 
-O servidor é um nó sempre ligado do Syncthing. Cada vault é uma pasta do Syncthing, compartilhada entre o servidor, o PC (Syncthing) e o celular (**Syncthing-Fork**, do F-Droid). Fora de casa, os aparelhos se encontram pelos relays públicos do Syncthing: o tráfego é criptografado de ponta a ponta e o relay não lê nada. Com o Tailscale ligado ([seção 14](14-vpn-tailscale.md)), o endereço fixo `tcp://<IP da ai-desktop-vm>:22000` funciona também fora de casa e a conexão é direta, sem relay.
+O servidor é um nó sempre ligado do Syncthing. Cada vault é uma pasta do Syncthing, compartilhada entre o servidor, o PC (Syncthing) e o celular (**Syncthing-Fork**, do F-Droid). Fora de casa, os aparelhos se encontram pelos relays públicos do Syncthing: o tráfego é criptografado de ponta a ponta e o relay não lê nada. Com o Tailscale ligado ([seção 16](16-vpn-tailscale.md)), o endereço fixo `tcp://<IP da ai-desktop-vm>:22000` funciona também fora de casa e a conexão é direta, sem relay.
 
 O `setup-notes-volumes.yml` gera as chaves e o `config.xml` antes do primeiro deploy, com o usuário `syncthing_gui_user` e a senha `syncthing_gui_password` do vault no painel. O painel fica em `https://sync.<domínio>` (atrás do Authelia) e em `http://<IP da ai-desktop-vm>:8384` na rede de casa.
 
@@ -285,13 +285,13 @@ Se você e a IA editarem a mesma nota ao mesmo tempo, o Syncthing guarda as duas
 
 ## Conectores para o Claude
 
-Os dois MCPs são publicados pelo túnel em `https://notas.<domínio>/mcp` (busca) e `https://escrita.<domínio>/mcp` (escrita), cada um atrás de um **mcp-auth-proxy**. O claude.ai exige OAuth com registro dinâmico de cliente, que o Authelia (4.39) não oferece; o proxy faz esse papel e manda o login para o OIDC do Authelia (cliente `mcp`, com 2FA). Só quem está no grupo `admins` passa. Os proxies falam com o Authelia pela LAN (`extra_hosts` de `auth.` para o Traefik na `core-services-vm`). Por isso os dois subdomínios ficam fora do forward-auth do Authelia (regras `bypass` e routers sem middleware na [seção 5](05-rede-segura.md)); o hostname curinga `*` do túnel já os encaminha ao Traefik. O `sync.` fica atrás do Authelia como os demais.
+Os dois MCPs são publicados pelo túnel em `https://notas.<domínio>/mcp` (busca) e `https://escrita.<domínio>/mcp` (escrita), cada um atrás de um **mcp-auth-proxy**. O claude.ai exige OAuth com registro dinâmico de cliente, que o Authelia (4.39) não oferece; o proxy faz esse papel e manda o login para o OIDC do Authelia (cliente `mcp`, com 2FA). Só quem está no grupo `admins` passa. Os proxies falam com o Authelia pela LAN (`extra_hosts` de `auth.` para o Traefik na `core-services-vm`). Por isso os dois subdomínios ficam fora do forward-auth do Authelia (regras `bypass` e routers sem middleware na [seção 7](07-rede-segura.md)); o hostname curinga `*` do túnel já os encaminha ao Traefik. O `sync.` fica atrás do Authelia como os demais.
 
 | Cliente | Como conectar |
 |---|---|
 | claude.ai (navegador e app) | **Configurações → Conectores → Adicionar conector personalizado**, um para cada URL acima (`Notas` e `Notas – escrita`). O botão **Conectar** abre o login do Authelia. Os conectores criados no navegador aparecem no app do celular. |
 | Claude Code (PC) | `claude mcp add --transport http notas https://notas.<domínio>/mcp` e `claude mcp add --transport http escrita https://escrita.<domínio>/mcp`; depois `/mcp` → **Authenticate** abre o login no navegador. |
-| Open WebUI | Já vem configurado ([seção 8](08-stack-ia.md#ferramentas-notas)): ferramentas **Notas (busca)** e **Notas (escrita)**, pela rede interna, só para administradores. |
+| Open WebUI | Já vem configurado ([seção 10](10-stack-ia.md#ferramentas-notas)): ferramentas **Notas (busca)** e **Notas (escrita)**, pela rede interna, só para administradores. |
 
 Dica: deixe só o conector de busca ligado na conversa e ligue o de escrita quando quiser que o Claude crie ou edite notas.
 
@@ -300,7 +300,7 @@ Dica: deixe só o conector de busca ligado na conversa e ligue o de escrita quan
 Dois timers systemd na `ai-desktop-vm`, instalados pelo `setup-notes-volumes.yml` (habilitados, mas só iniciados depois do deploy da stack): `notes-documentos` converte os documentos do Nextcloud a cada 10 minutos, e `notes-indice` roda `qmd update` (lê o que mudou) e `qmd embed` (gera os vetores) 5 minutos depois. O `flock` impede duas rodadas ao mesmo tempo — a primeira conversão e o primeiro `embed` podem levar horas; enquanto isso, as rodadas seguintes saem sem fazer nada. Se uma rodada falhar, o Alloy (coletor `systemd`) vê a unit em `failed` e o Grafana manda o alerta **timer-falhou** (uma vez: a regra olha os últimos 30 minutos, então a falha que se repete a cada rodada não gera um aviso novo a cada 10 minutos).
 
 ```jinja title="ansible/templates/notes/notes-documentos.service.j2"
-# Conversão dos documentos do Nextcloud (segundo cérebro, página 12). Origem só leitura.
+# Conversão dos documentos do Nextcloud (segundo cérebro, página 14). Origem só leitura.
 [Unit]
 Description=Converte os documentos do Nextcloud para Markdown (segundo cérebro)
 Requires=docker.service
@@ -331,7 +331,7 @@ WantedBy=timers.target
 ```
 
 ```jinja title="ansible/templates/notes/notes-indice.service.j2"
-# Reindexação do qmd (segundo cérebro, página 12): lê o que mudou e gera os vetores novos.
+# Reindexação do qmd (segundo cérebro, página 14): lê o que mudou e gera os vetores novos.
 [Unit]
 Description=Atualiza o índice do qmd (segundo cérebro)
 Requires=docker.service

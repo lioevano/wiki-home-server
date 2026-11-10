@@ -43,13 +43,13 @@ Para esta implementação, estou utilizando o seguinte setup:
 
 ### Máquina de Controle Ansible
 
-Para esta função, você precisará de uma máquina secundária (ou sua máquina principal) para executar os comandos Ansible remotamente.
+A máquina de controle é o **sysadmin** ([seção 2](02-sysadmin-gcp.md)): uma VM `e2-micro` do Google Cloud, no nível gratuito, criada pelo Cloud Shell no navegador **antes** do servidor. Não há hardware a comprar; você precisa de:
 
-*   Um computador pessoal ou notebook.
-*   **Sistema Operacional Suportado:**
-    *   Linux (Ubuntu, Fedora, etc.)
-    *   macOS
-    *   Windows com WSL2 (Windows Subsystem for Linux 2)
+*   Um projeto do Google Cloud com faturamento ligado (cartão cadastrado; o orçamento de alerta é de US$ 2).
+*   O Telegram no celular (é por onde você conversa com o sysadmin e aprova cada ação).
+*   Um gerenciador de senhas: as chaves, os tokens e as senhas que a criação mostra uma vez vão para ele.
+
+Uma máquina de controle **local** (Linux, macOS ou Windows com WSL2) só é necessária se você quiser rodar o Ansible à mão ([seção 3](03-maquina-controle-ansible.md#a-máquina-de-controle-local)).
 
 ### Rede Doméstica
 
@@ -63,6 +63,7 @@ Para esta função, você precisará de uma máquina secundária (ou sua máquin
     *   [Ventoy](https://www.ventoy.net/en/download.html) (Windows, macOS, Linux) _<- Minha escolha pessoal pela flexibilidade._
     *   [Rufus](https://rufus.ie/) (Windows)
     *   [Balena Etcher](https://www.balena.io/etcher/) (Windows, macOS, Linux)
+*   **Contas do sysadmin** (o passo a passo está na [seção 2](02-sysadmin-gcp.md#1-o-que-você-leva-para-o-cloud-shell)): Google Cloud, Anthropic e Gemini (AI Studio), quatro bots do Telegram, uma conta de máquina no GitHub e o Tailscale.
 *   **Cliente SSH:**
     *   OpenSSH (nativo em Linux e macOS).
     *   PuTTY (popular para Windows, ou use o cliente SSH nativo do Windows Terminal/PowerShell).
@@ -199,7 +200,7 @@ AUTHELIA_STORAGE_POSTGRES_PASSWORD_FROM_VAULT=
 # Banco do Authelia no disco local da VM (/opt/local-data/authelia-db); dump diário para o NFS.
 AUTHELIA_DB_PATH=
 
-# --- Stack cloud (Nextcloud, cron, Collabora; página 11) ---
+# --- Stack cloud (Nextcloud, cron, Collabora; página 13) ---
 # Banco no disco local da VM; dados no dataset files (NFS).
 NEXTCLOUD_MAJOR=
 CLOUD_STACK_NEXTCLOUD_HTML_PATH=
@@ -230,7 +231,7 @@ LIDARR_API_KEY=
 PROWLARR_API_KEY=
 PROTONVPN_WIREGUARD_PRIVATE_KEY=
 
-# --- Stack photos (Immich; página 11) ---
+# --- Stack photos (Immich; página 13) ---
 # Banco e cache de modelos no disco local da VM; uploads no dataset photos (NFS).
 IMMICH_VERSION=
 PHOTOS_STACK_UPLOAD_PATH=
@@ -280,7 +281,7 @@ N8N_SUBDOMAIN=n8n
 N8N_CONFIG_PATH=
 AUTO_STACK_HOMEASSISTANT_CONFIG_PATH=
 
-# --- Stack ai (LiteLLM + Postgres, Ollama com Vulkan, Open WebUI, Diun; página 08) ---
+# --- Stack ai (LiteLLM + Postgres, Ollama com Vulkan, Open WebUI, Diun; página 10) ---
 AI_DESKTOP_VM_IP=
 AI_STACK_LITELLM_CONFIG_PATH=
 AI_STACK_LITELLM_DB_PATH=
@@ -300,7 +301,7 @@ OPENWEBUI_SECRET_KEY=
 OPENWEBUI_OAUTH_CLIENT_SECRET=
 OPENWEBUI_LOGIN_FORM=
 
-# --- Stack notes (segundo cérebro: Syncthing, qmd, escrita, mcp-auth-proxy; página 12) ---
+# --- Stack notes (segundo cérebro: Syncthing, qmd, escrita, mcp-auth-proxy; página 14) ---
 CORE_SERVICES_VM_IP=
 NOTES_STACK_DATA_PATH=
 NOTES_STACK_SYNCTHING_CONFIG_PATH=
@@ -316,7 +317,7 @@ SYNCTHING_API_KEY=
 MCP_OIDC_CLIENT_SECRET=
 MCP_AUTH_HMAC_SECRET=
 
-# --- Stack agents (base dos agentes: hub, mcp-grafana, ops; core-services-vm; página 13) ---
+# --- Stack agents (base dos agentes: hub, mcp-grafana, ops; core-services-vm; página 15) ---
 CORE_SERVICES_VM_IP_VAR=
 AI_DESKTOP_VM_IP=
 OPS_IMAGE=
@@ -343,13 +344,13 @@ APROVADOR_VALIDADE_MIN=
 APROVADOR_TELEGRAM_USUARIOS=
 OPS_CLIENTES_SEM_APROVACAO=
 
-# --- Stack posto (posto de agentes, Vibe Kanban; ai-desktop-vm; página 16) ---
+# --- Stack posto (posto de agentes, Vibe Kanban; ai-desktop-vm; página 18) ---
 POSTO_IMAGE=
 POSTO_DATA_PATH=
 LITELLM_KEY_AGENTES=
 POSTO_GITHUB_TOKEN=
 
-# --- Stack assistente (Hermes Agent; ai-desktop-vm; página 17) ---
+# --- Stack assistente (Hermes Agent; ai-desktop-vm; página 19) ---
 ASSISTENTE_DATA_PATH=
 OBSERVADOR_IMAGE=
 OBSERVADOR_TOKEN=
@@ -357,7 +358,7 @@ OBSERVADOR_MODELO=
 OBSERVADOR_BOLETIM_HORA=
 LITELLM_KEY_OBSERVADOR=
 
-# --- Stack langfuse (rastreio; ai-desktop-vm; página 13) e callback do LiteLLM (stack ai) ---
+# --- Stack langfuse (rastreio; ai-desktop-vm; página 15) e callback do LiteLLM (stack ai) ---
 LANGFUSE_DATA_PATH=
 LANGFUSE_SALT=
 LANGFUSE_ENCRYPTION_KEY=
@@ -372,7 +373,7 @@ LANGFUSE_OIDC_CLIENT_SECRET=
 LANGFUSE_OTEL_HOST=
 LANGFUSE_OTEL_AUTH=
 
-# --- Stack sysadmin (sysadmin no GCP; página 19) ---
+# --- Stack sysadmin (sysadmin no GCP; página 02) ---
 SYSADMIN_IMAGE_TAG=
 EXECUTOR_IMAGE_TAG=
 SYSADMIN_DATA_PATH=
@@ -410,5 +411,5 @@ Estes são os pilares que sustentam a arquitetura:
     *   **Monitoramento:** Acompanhamento da saúde do sistema para detecção proativa de problemas.
     *   **Infraestrutura como Código (IaC):** Ansible permite reconstruir a infraestrutura de forma consistente e rápida.
 
-Com este planejamento e estrutura inicial, você está pronto para avançar para a configuração da sua [Máquina de Controle Ansible](01-maquina-controle-ansible.md).
+Com este planejamento e estrutura inicial, você está pronto para seguir o [Roteiro do primeiro deploy](01-roteiro-primeiro-deploy.md): a fase 0 são as contas, e a fase 1 cria o [sysadmin](02-sysadmin-gcp.md), a máquina de controle.
 

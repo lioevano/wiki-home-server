@@ -1,6 +1,6 @@
 #!/bin/bash
 # ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2
-# Firewall da rede do sysadmin (página 19): o container do sysadmin sai para a internet, mas não alcança o tailnet, a
+# Firewall da rede do sysadmin (página 02): o container do sysadmin sai para a internet, mas não alcança o tailnet, a
 # LAN de casa nem o servidor de metadados da GCP (de onde se tiraria o token da conta de serviço da VM).
 # Por que na tabela raw (PREROUTING) e não na cadeia reservada do Docker para usuários: (1) o Tailscale, ao reiniciar, põe `-j ts-forward` (que
 # termina em `-o tailscale0 -j ACCEPT`) acima do salto do Docker na FORWARD, e o tráfego para o tailnet seria aceito

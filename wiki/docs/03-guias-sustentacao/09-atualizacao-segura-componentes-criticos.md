@@ -175,7 +175,7 @@ Traefik e Authelia são componentes críticos da nossa camada de rede e seguran�
 Este processo é geralmente menos arriscado que os componentes de infraestrutura, mas ainda requer cuidado.
 
 *   **Aviso de Novas Versões (Diun):**
-    *   O Diun (`diun` na `core-services-vm`, `diun_ai` na `ai-desktop-vm`) verifica os registros e avisa no Telegram, via n8n, quando sai uma tag de versão nova da imagem de um container (ver [Painel e Notificações](../01-manual-implementacao/09-painel-notificacoes.md)). Ele **não** atualiza nada: toda imagem tem versão fixada no compose, e a atualização é sempre o processo manual abaixo.
+    *   O Diun (`diun` na `core-services-vm`, `diun_ai` na `ai-desktop-vm`) verifica os registros e avisa no Telegram, via n8n, quando sai uma tag de versão nova da imagem de um container (ver [Painel e Notificações](../01-manual-implementacao/11-painel-notificacoes.md)). Ele **não** atualiza nada: toda imagem tem versão fixada no compose, e a atualização é sempre o processo manual abaixo.
 *   **Atualização Manual (Recomendado para Controle Fino ou Tags de Versão Específicas):**
     1.  **Leia as Notas de Release** da aplicação específica para a nova versão. Algumas aplicações (especialmente complexas como Nextcloud) podem ter passos de migração ou comandos `occ` que precisam ser executados após uma atualização.
     2.  **Faça Backup dos Volumes de Dados da Aplicação:** Crie um snapshot ZFS do subdiretório relevante em `data/docker-volumes` (e.g., `data/docker-volumes/nextcloud`). Se a aplicação usa um banco de dados dedicado (como o PostgreSQL para Nextcloud), faça um dump desse banco de dados.

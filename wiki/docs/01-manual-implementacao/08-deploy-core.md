@@ -2,7 +2,7 @@
 description: "Deploy da stack core (Traefik, Cloudflared e Authelia) pelo Ansible, com o playbook setup-core-networking.yml."
 ---
 
-# Seção 6: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia)
+# Seção 8: Deploy da Infraestrutura Core (Traefik + Cloudflared + Authelia)
 
 A stack core é a base de rede: Traefik (proxy reverso), Cloudflared (túnel) e Authelia (autenticação 2FA). Tudo consolidado em `docker/stacks/core/docker-compose.yml`.
 
@@ -10,7 +10,7 @@ Diferente das stacks `apps` e `ai`, a `core` **não é criada no Portainer**: o 
 
 ## Pré-requisitos
 
-- Seções 1 a 5 concluídas: VMs provisionadas e configuradas (`setup-base-ubuntu.yml`), roles e templates da [Rede Segura](05-rede-segura.md) no repositório.
+- Seções 2 a 7 concluídas: VMs provisionadas e configuradas (`setup-base-ubuntu.yml`), roles e templates da [Rede Segura](07-rede-segura.md) no repositório.
 - No vault (`ansible/inventories/home/group_vars/all/vault.yml`):
     - `cloudflare_tunnel_token`: token do túnel gerado no Cloudflare Zero Trust.
     - `cloudflare_api_token`: API Token com permissão de DNS na zona (desafio DNS-01 do Let's Encrypt).
@@ -32,11 +32,11 @@ O playbook:
 3. Copia o compose para `/opt/stacks/core/` na VM e sobe a stack, passando as variáveis no bloco `environment:` da tarefa (sem `.env` em disco).
 4. Espera o healthcheck do Traefik.
 
-Detalhes de cada passo estão na [seção 5.4](05-rede-segura.md#54-playbook-ansibleplaybookssetup-core-networkingyml). Para mudar uma variável ou um segredo da stack, altere o vault ou `group_vars` e rode o playbook de novo.
+Detalhes de cada passo estão na [seção 7.4](07-rede-segura.md#74-playbook-ansibleplaybookssetup-core-networkingyml). Para mudar uma variável ou um segredo da stack, altere o vault ou `group_vars` e rode o playbook de novo.
 
 ## Depois do deploy
 
-1. Configure os Public Hostnames do túnel (`https://traefik:443`, com *No TLS Verify*), conforme a [seção 5.5](05-rede-segura.md#55-configuração-de-dns-na-cloudflare).
+1. Configure os Public Hostnames do túnel (`https://traefik:443`, com *No TLS Verify*), conforme a [seção 7.5](07-rede-segura.md#75-configuração-de-dns-na-cloudflare).
 2. Acesse `https://auth.seudominio.com` e registre o 2FA.
 3. Acesse `https://portainer.seudominio.com` para seguir com as stacks `apps` e `ai` nas próximas seções.
 

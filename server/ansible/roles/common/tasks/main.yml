@@ -59,12 +59,12 @@
   loop: # Itera sobre os datasets ZFS definidos em group_vars/all/main.yml
     - { dataset_name: "{{ zfs_docker_volumes_dataset_name }}" }
     - { dataset_name: "{{ zfs_media_dataset_name }}" }
-    # Arquivos do Nextcloud também na VM de IA, só leitura: origem do conversor de documentos (página 12).
+    # Arquivos do Nextcloud também na VM de IA, só leitura: origem do conversor de documentos (página 14).
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'ai_desktop' in group_names", opts: "ro,hard,intr,_netdev,x-systemd.mount-timeout=60s,noatime,nodiratime,rsize=1048576,vers=4.2" }
     # Fotos (Immich) e arquivos (Nextcloud) na core-services-vm, onde rodam as stacks photos e cloud.
     - { dataset_name: "{{ zfs_photos_dataset_name }}", when_condition: "'core_services' in group_names" }
     - { dataset_name: "{{ zfs_files_dataset_name }}", when_condition: "'core_services' in group_names" }
-    # Vaults do Obsidian (segundo cérebro, página 12): só na VM de IA (grupo 'ai_desktop' do inventário).
+    # Vaults do Obsidian (segundo cérebro, página 14): só na VM de IA (grupo 'ai_desktop' do inventário).
     - { dataset_name: "{{ zfs_notes_dataset_name }}", when_condition: "'ai_desktop' in group_names" }
   when: item.when_condition is not defined or item.when_condition # Permite loop condicional
   # NOTA: O dataset de backups (zfs_backups_dataset_name) geralmente não precisa ser montado nas VMs.
@@ -102,7 +102,7 @@
 # --- Firewall UFW (Uncomplicated Firewall) ---
 # Em todas as VMs: entrada negada por padrão, saída liberada. Vale para os serviços do próprio host (SSH,
 # Alloy na 12345, VNC). Portas publicadas pelo Docker não passam pelo UFW: elas são limitadas pela cadeia
-# HOMESERVER na DOCKER-USER (firewall_docker_portas, role infra/docker; página 14) e pela autenticação de cada serviço.
+# HOMESERVER na DOCKER-USER (firewall_docker_portas, role infra/docker; página 16) e pela autenticação de cada serviço.
 - name: "UFW: liberar SSH (antes de ligar, para não perder a conexão)"
   community.general.ufw:
     rule: allow

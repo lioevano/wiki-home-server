@@ -2,13 +2,13 @@
 description: "Sysadmin no GCP: Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub."
 ---
 
-# Seção 19: Sysadmin no GCP
+# Seção 2: Sysadmin no GCP
 
 ## Como funciona
 
-O **sysadmin** é um agente que existe **antes** do servidor. Ele roda numa VM `e2-micro` do Google Cloud (nível gratuito, `us-east1`), você o comanda pelo Telegram, e ele conduz o [roteiro do primeiro deploy](18-roteiro-primeiro-deploy.md) fase a fase: lê a wiki, confere o estado real da casa, monta os pedidos e **espera o seu botão** para tudo que muda o servidor. Depois do deploy, continua como o coordenador da equipe de agentes da casa. É também o jeito recomendado de ter a [máquina de controle do Ansible](01-maquina-controle-ansible.md#o-sysadmin-como-caminho-recomendado).
+O **sysadmin** é um agente que existe **antes** do servidor. Ele roda numa VM `e2-micro` do Google Cloud (nível gratuito, `us-east1`), você o comanda pelo Telegram, e ele conduz o [roteiro do primeiro deploy](01-roteiro-primeiro-deploy.md) fase a fase: lê a wiki, confere o estado real da casa, monta os pedidos e **espera o seu botão** para tudo que muda o servidor. Depois do deploy, continua como o coordenador da equipe de agentes da casa. É também o jeito recomendado de ter a [máquina de controle do Ansible](03-maquina-controle-ansible.md).
 
-O agente é o [Hermes](17-assistente.md) (v0.22.5) com memória no [Honcho](https://github.com/plastic-labs/honcho) (v3.6.0) próprio. O **modelo** é o Claude da Anthropic (Sonnet por padrão, Haiku para resumos), com o Gemini (AI Studio) de reserva. Ele **não usa o LiteLLM de casa**: o sysadmin existe antes dela e é quem a conserta.
+O agente é o [Hermes](19-assistente.md) (v0.22.5) com memória no [Honcho](https://github.com/plastic-labs/honcho) (v3.6.0) próprio. O **modelo** é o Claude da Anthropic (Sonnet por padrão, Haiku para resumos), com o Gemini (AI Studio) de reserva. Ele **não usa o LiteLLM de casa**: o sysadmin existe antes dela e é quem a conserta.
 
 ```mermaid
 flowchart LR
@@ -36,7 +36,7 @@ flowchart LR
 | `honcho_api`, `honcho_deriver`, `honcho_db` | containers na VM (Honcho `v3.6.0`, Postgres com pgvector) | Memória do sysadmin, *workspace* `sysadmin` com os pares Léo e sysadmin. Sem Redis, sem telemetria; o deriver e os *embeddings* usam a chave do Gemini |
 | Bot do sysadmin | `telegram_bot_sysadmin` (segredo do GCP) | A conversa. Só responde ao seu `telegram_chat_id` |
 | Bot de aprovações | `telegram_bot_aprovacoes` | Só o executor o lê: os botões de aprovar ou recusar e o canal de segredos. Separar conversa e aprovação evita que o modelo veja segredos. Não é o bot de avisos de casa |
-| Conta de máquina | `lioevano-sysadmin` no GitHub | Abre PRs e issues; não consegue dar o merge do próprio PR |
+| Conta de máquina | `lioevano-sysadmin` no GitHub | Abre PRs e issues; não consegue mesclar nada na `main` sem a sua aprovação |
 | `homeserver-equipe` | repositório privado | Pedidos entre agentes ([A equipe](#a-equipe)) |
 | Secret Manager e bucket | `sysadmin-segredos` e `gs://<projeto>-sysadmin` | Um único segredo JSON, lido na partida para o `tmpfs` `/run/sysadmin`; o bucket guarda o vault de entrada e os backups |
 
@@ -45,7 +45,7 @@ Os seis containers dividem 1 GB de RAM com 4 GB de swap (cifrada, com chave nova
 ### Como uma fase corre
 
 1. Você manda `/implantar-fase 3` (ou "vamos para a fase 3"). Os comandos do Telegram são os **nomes das skills**: `/implantar-fase N`, `/status-implantacao` e `/equipe`; `/status` é o comando nativo do Hermes. Linguagem natural também serve.
-2. O sysadmin lê a fase na [página 18](18-roteiro-primeiro-deploy.md) e confere o estado real com o `diagnostico` (só leitura, sem botão).
+2. O sysadmin lê a fase na [página 01](01-roteiro-primeiro-deploy.md) e confere o estado real com o `diagnostico` (só leitura, sem botão).
 3. Abre o **diário da fase**: uma issue com a etiqueta `diario` no `homeserver-equipe`, com a lista de passos e o log completo. O Telegram recebe só o resumo e o link.
 4. Manda numa mensagem só o que **é seu** (contas, físico, telas que pedem uma pessoa, stacks no Portainer, merges) e espera a confirmação.
 5. Segredo que falta: `vault_preencher` (você responde ao bot de aprovações). Wiki errada ou incompleta: PR primeiro; ele só segue depois do seu merge.
@@ -88,12 +88,12 @@ Todo pedido com botão vale só para a **mesma ferramenta, alvo e argumentos**, 
 
 - Alcançar a casa pelo terminal: o container não tem a chave SSH, e o tailnet, a LAN de casa e o servidor de metadados do GCP estão bloqueados para a rede dele ([Rede e ACL](#rede-e-acl)). Tudo passa pelo executor.
 - Ler a senha do vault, a chave SSH e a chave do Tailscale da casa: esses arquivos vão só ao executor.
-- Dar `git push` na `main` nem fazer o merge do próprio PR (`AGENTS.md`: a exceção da página 19 vale para `ansible-playbook`, `ansible-vault` e `ssh` com o botão, nunca para push na `main`).
+- Dar `git push` na `main` nem mesclar PR (`AGENTS.md`: a exceção da página 02 vale para `ansible-playbook`, `ansible-vault` e `ssh` com o botão, nunca para push na `main`). O *ruleset* barra o push e o merge sem a sua aprovação; mesclar é sempre com você, mesmo depois de aprovado.
 - Usar navegador, `computer_use`, subagentes (`delegation`), tarefas agendadas (`cronjob`), conexões novas (`connections`), busca na web, geração de mídia e voz, nem as outras plataformas de mensagem. Esses grupos estão em `agent.disabled_toolsets` no `config.yaml`. Ficam **ligados** `terminal`, `code_execution`, `file` (dentro do container), `skills`, `memory`, `todo`, `clarify` e `session_search`, mais o MCP do executor. A aprovação de comandos do próprio Hermes está desligada (`approvals.mode: off`): o container do sysadmin não guarda nada de valor, e os portões que valem são os do executor; assim você não recebe botão para um `rm` no clone.
 - Responder a outra pessoa: o Hermes só aceita o `telegram_chat_id`.
 
 !!! warning "Por que dois containers"
-    Um agente com terminal, internet e a chave SSH da casa seria uma injeção de prompt longe de entregar a casa. Por isso o `sysadmin` (que lê issues, PRs, logs e páginas de terceiros) não tem nada de valor, e o `executor` (que tem a senha do vault e a chave SSH) não tem modelo, não aceita conexões e só obedece a botões do seu id. É o padrão `ops` mais `aprovador` da [seção 16](16-posto-agentes.md#aprovação-humana), aqui no mesmo compose.
+    Um agente com terminal, internet e a chave SSH da casa seria uma injeção de prompt longe de entregar a casa. Por isso o `sysadmin` (que lê issues, PRs, logs e páginas de terceiros) não tem nada de valor, e o `executor` (que tem a senha do vault e a chave SSH) não tem modelo, não aceita conexões e só obedece a botões do seu id. É o padrão `ops` mais `aprovador` da [seção 18](18-posto-agentes.md#aprovação-humana), aqui no mesmo compose.
 
 !!! info "Dados que saem de casa"
     O que você conversa, as saídas de diagnóstico e trechos de log vão à Anthropic, ao Google (reserva, deriver e *embeddings*) e ao GitHub (repositório privado da equipe). Segredos não: o canal de segredos não passa pelo modelo nem pelas issues.
@@ -103,8 +103,8 @@ Todo pedido com botão vale só para a **mesma ferramenta, alvo e argumentos**, 
 A VM **recusa toda entrada**: uma regra do firewall do GCP (`sysadmin-recusa-entrada`, prioridade 100) anula o `default-allow-ssh` da rede padrão. Telegram, Tailscale, GitHub e as APIs são conexões de saída. O acesso de manutenção é por SSH **pelo Tailscale**.
 
 1. **Tailscale da VM:** entra sozinha no primeiro boot com a chave de uso único da `tag:sysadmin` (`--accept-routes`). Nós com tag não expiram a chave.
-2. **Host Proxmox como nó próprio** (`pve`, `tag:homeserver`): anuncia as rotas `/32` do host, da core e da `ai`. Depois do `setup-vpn.yml` a core anuncia as mesmas três rotas (failover do Tailscale): se a core cair, as rotas seguem pelo host e o host continua alcançável. Os passos estão na [seção 14](14-vpn-tailscale.md#primeira-configuração).
-3. **ACL:** cole no painel do Tailscale (*Access controls*) o conteúdo de `scripts/tailscale/acl.json`, que a [seção 14](14-vpn-tailscale.md#primeira-configuração) mostra por inteiro e explica linha a linha (JSON estrito não aceita comentários). Em resumo: o `tag:sysadmin` alcança só o host (`:22`, `:8006`) e as VMs (`:22`, `:443`, `:53` na core; `:22` na `ai`); os seus aparelhos alcançam o sysadmin em `:22` e `:443`; **nada da casa alcança o `tag:sysadmin`**, para que um servidor comprometido não chegue ao sysadmin. O `autoApprovers` só aprova as três rotas `/32`.
+2. **Host Proxmox como nó próprio** (`pve`, `tag:homeserver`): anuncia as rotas `/32` do host, da core e da `ai`. Depois do `setup-vpn.yml` a core anuncia as mesmas três rotas (failover do Tailscale): se a core cair, as rotas seguem pelo host e o host continua alcançável. Os passos estão na [seção 16](16-vpn-tailscale.md#primeira-configuração).
+3. **ACL:** cole no painel do Tailscale (*Access controls*) o conteúdo de `scripts/tailscale/acl.json`, que a [seção 16](16-vpn-tailscale.md#primeira-configuração) mostra por inteiro e explica linha a linha (JSON estrito não aceita comentários). Em resumo: o `tag:sysadmin` alcança só o host (`:22`, `:8006`) e as VMs (`:22`, `:443`, `:53` na core; `:22` na `ai`); os seus aparelhos alcançam o sysadmin em `:22` e `:443`; **nada da casa alcança o `tag:sysadmin`**, para que um servidor comprometido não chegue ao sysadmin. O `autoApprovers` só aprova as três rotas `/32`.
 
 !!! note "A ACL nova é mais estreita que a padrão"
     Sem uma regra de aparelho para aparelho, o seu celular não alcança o seu PC pelo Tailscale (a ACL antiga, de "tudo para todos", alcançava). Se quiser, acrescente em `acls` uma regra com `autogroup:member` na origem e `autogroup:member:*` no destino.
@@ -116,22 +116,64 @@ A VM **recusa toda entrada**: uma regra do firewall do GCP (`sysadmin-recusa-ent
 
 ## Criar o sysadmin
 
-O passo a passo tem quatro tempos: contas (fase 0 do [roteiro](18-roteiro-primeiro-deploy.md#fase-0--fora-do-servidor)), o `criar-sysadmin.sh` no Cloud Shell, o PR do vault e o `preparar_host` quando o Proxmox estiver instalado.
+O sysadmin é criado **antes** do servidor: ele é a máquina de controle, e daí em diante quem conduz o [roteiro](01-roteiro-primeiro-deploy.md) é ele. O passo a passo tem quatro tempos: as contas abaixo (a parte do sysadmin na fase 0 do roteiro), o `criar-sysadmin.sh` no Cloud Shell, o PR do vault e o `preparar_host` quando o Proxmox estiver instalado. Faça as contas nesta ordem (a ACL do Tailscale, em especial, vem antes das chaves).
 
 ### 1. O que você leva para o Cloud Shell
 
-Tudo isso é da fase 0 (você nunca pede a ninguém para criar):
+Tudo isso é seu (você nunca pede a ninguém para criar). Guarde cada chave e token no gerenciador de senhas à medida que cria: o `criar-sysadmin.sh` pede todos de uma vez, sem eco.
 
-- **Projeto do GCP dedicado**, com faturamento ligado (o nível gratuito exige um cartão cadastrado) e a região `us-east1`, `us-central1` ou `us-west1` (o script recusa outras).
-- **Anthropic:** chave da API própria do sysadmin (separada das de casa) e o teto de gasto no console.
-- **Gemini:** chave do AI Studio, **plano pago** (o deriver e os *embeddings* do Honcho e a reserva do Hermes).
-- **Quatro bots no @BotFather** (`/newbot`), cada um com seu token: o do **sysadmin**, o de **aprovações do sysadmin**, o de **avisos** (n8n e `aprovador` de casa) e o do **assistente**. Um bot só aceita um leitor por vez. Mande `/start` aos dois do sysadmin e anote o id do seu chat (`telegram_chat_id`).
-- **GitHub:** a conta de máquina `lioevano-sysadmin`, colaboradora do `wiki-home-server` com escrita; um *ruleset* na `main` com PR obrigatório, **1 aprovação**, aprovação do último push por outra pessoa, sem *force push* e **sem ninguém na lista de exceções**; o repositório privado `lioevano/homeserver-equipe` com as etiquetas do protocolo; e dois tokens *fine-grained* ([A equipe](#a-equipe)).
-- **Tailscale:** a ACL colada **antes** das chaves (o painel só cria chave com uma tag que esteja nos `tagOwners`), o HTTPS do tailnet ligado e as chaves de uso único e pré-aprovadas. O script pede duas: a `tag:sysadmin` (a VM) e a `tag:homeserver` do host Proxmox, que vão para o segredo do GCP. A fase 0 do [roteiro](18-roteiro-primeiro-deploy.md#fase-0--fora-do-servidor) cria **três**: a terceira, `tag:homeserver` da core, vai para o vault (`tailscale_auth_key`) pelo `vault_preencher`.
+#### 1.1. Projeto do Google Cloud
+
+1. Em [console.cloud.google.com](https://console.cloud.google.com/), crie um **projeto novo, só para o sysadmin** (seletor de projetos → *New project*). Um projeto próprio é obrigatório: a regra que recusa toda entrada vale para a rede inteira do projeto ([Rede e ACL](#rede-e-acl)).
+2. Vincule uma **conta de faturamento** ao projeto (*Billing*). A `e2-micro` em `us-east1`, `us-central1` ou `us-west1` está no nível gratuito, mas o GCP exige o cartão cadastrado; o script recusa outras regiões e cria o alerta de orçamento de US$ 2.
+3. Conta nova começa no **período de teste** (*Free Trial*): ative a **conta completa** (*Activate full account*, ou *Upgrade* em *Billing*). Sem isso, quando o teste acaba o GCP para tudo o que foi criado nele, e o sysadmin para junto. O nível gratuito continua valendo depois da ativação.
+4. Anote o **id do projeto** (não o nome). APIs, conta de serviço, bucket, firewall e a VM ficam com o script.
+
+#### 1.2. Chaves dos modelos
+
+1. **Anthropic** ([console.anthropic.com](https://console.anthropic.com/)): um *workspace* `sysadmin`, com **limite de gasto próprio**, e nele a chave de API do sysadmin, separada das de casa. O limite do *workspace* segura o custo se algo sair do controle sem cortar as chaves da casa (um teto só na organização valeria para todas).
+2. **Gemini** ([aistudio.google.com](https://aistudio.google.com/)): uma chave de API **no projeto do sysadmin** (o do 1.1, com faturamento: **plano pago**), para o gasto entrar no alerta de US$ 2. Ela serve ao deriver e aos *embeddings* do Honcho e é a reserva do Hermes.
+
+#### 1.3. Bots do Telegram
+
+1. No [@BotFather](https://t.me/BotFather), `/newbot` **quatro vezes**, um token para cada: o do **sysadmin** (a conversa), o de **aprovações do sysadmin** (botões e segredos), o de **avisos** (n8n e `aprovador` de casa) e o do **assistente**. Um bot só aceita um leitor por vez, por isso são quatro.
+2. Mande `/start` aos bots do sysadmin e de aprovações e descubra o id do seu chat (`telegram_chat_id`): é o `chat.id` da resposta de `getUpdates`.
+
+```bash title="Exemplo: o id do seu chat, depois do /start (troque o token)"
+read -rs -p "Token do bot de aprovações: " T; echo
+curl -s "https://api.telegram.org/bot$T/getUpdates" | python3 -c 'import json, sys; print({u["message"]["chat"]["id"] for u in json.load(sys.stdin)["result"] if "message" in u})'
+unset T
+```
+
+#### 1.4. GitHub
+
+1. **Conta de máquina.** Crie a conta `lioevano-sysadmin`, com e-mail próprio e **2FA** ligado (o código do 2FA também vai para o gerenciador de senhas). O GitHub aceita uma conta de máquina além da sua pessoal, desde que só automatize.
+2. **Colaboradora.** No `wiki-home-server`, *Settings → Collaborators → Add people* e convide a conta de máquina; aceite o convite entrando com ela. Num repositório de conta pessoal, todo colaborador tem **escrita**: quem protege a `main` é o *ruleset* do passo seguinte.
+3. **Ruleset da `main`.** *Settings → Rules → Rulesets → New branch ruleset*: nome `main`, *Enforcement* **Active**, alvo *Include default branch*, e as regras *Restrict deletions*, *Block force pushes* e *Require a pull request before merging* com **1 aprovação** e *Require approval of the most recent reviewable push*. Na *Bypass list*, só o papel *Repository admin* (você), no modo **For pull requests only**: você mescla os seus próprios PRs sem esperar aprovação de ninguém, mas nem você empurra direto para a `main`. A conta de máquina não entra na lista: ela abre PRs, e nada dela entra na `main` sem a sua aprovação, nem um push depois que você aprovou. A partir daqui, toda mudança, inclusive as do Claude e as suas, entra por PR. Não exija *status checks*: o `server-lint` só roda em PRs que mexem no `server/` ou no `tools/`, e um PR só da wiki ficaria esperando um check que nunca vem.
+4. **Repositório da equipe.** Crie o `lioevano/homeserver-equipe`, **privado**, convide a conta de máquina como colaboradora (e aceite) e crie as etiquetas do protocolo ([A equipe](#a-equipe)):
+
+```bash title="Exemplo: as etiquetas do homeserver-equipe (gh autenticado na sua conta)"
+R=lioevano/homeserver-equipe
+for p in sysadmin metricas apps variaveis atualizacoes backup assistente; do gh label create "papel:$p" -R "$R" --color 1d76db; done
+for e in aberto em-andamento feito bloqueado; do gh label create "estado:$e" -R "$R" --color 0e8a16; done
+gh label create diario -R "$R" --color 5319e7 --description "diário de fase do sysadmin"
+```
+
+5. **Token da conta de máquina** (`github_token_sysadmin`). Entre com a conta de máquina e crie um token **clássico** (*Settings → Developer settings → Personal access tokens → Tokens (classic)*) com **só o escopo `repo`** e validade definida (anote quando vence; para trocar, grave o novo em `github_token_sysadmin` no segredo do GCP e reinicie a unit dos segredos, como na [reentrada do host](../04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md#passos-detalhados-para-reconstrução-da-infraestrutura)). Tem de ser clássico: o GitHub não deixa um token *fine-grained* contribuir num repositório em que a conta é só colaboradora, e cada um só alcança os repositórios de um dono. O escopo `repo` vale para os repositórios em que a conta de máquina é colaboradora (só estes dois) e, **sem** o escopo `workflow`, ela não consegue alterar o CI (`.github/workflows/`).
+6. **Token do carteiro** (`github_token_carteiro`). Na **sua** conta, um token *fine-grained*: *Resource owner* você, *Only select repositories* `homeserver-equipe`, permissão de repositório **Issues: Read-only** (o *Metadata* de leitura vem junto). Ele só lê issues e comentários.
+
+#### 1.5. Tailscale
+
+1. **Conta e aparelhos.** Crie a conta (plano gratuito) em [login.tailscale.com](https://login.tailscale.com/) e instale o Tailscale no PC e no celular, entrando com ela: o painel do Hermes e o SSH de manutenção da VM só existem pelo tailnet, já no teste da fase 1.
+2. **ACL primeiro.** No painel, *Access controls*: cole o `scripts/tailscale/acl.json` inteiro ([seção 16](16-vpn-tailscale.md#primeira-configuração)). O painel só cria chave com uma tag que esteja nos `tagOwners` dela.
+3. **HTTPS do tailnet.** Em *DNS*, ligue *MagicDNS* e *HTTPS Certificates*: o painel do Hermes é publicado pelo `tailscale serve`.
+4. **Três chaves**, em *Settings → Keys → Generate auth key*, cada uma **de uso único** (*Reusable* desligado), **pré-aprovada**, não efêmera e com a tag: `tag:sysadmin` (a VM do GCP) e `tag:homeserver` (o host Proxmox), que o `criar-sysadmin.sh` pede e guarda no segredo do GCP, e outra `tag:homeserver`, a da core, que vai para o vault (`tailscale_auth_key`) pelo `vault_preencher` na fase 1. As chaves vencem (90 dias, por padrão): a do host só é usada na fase 2 e a da core na fase 3; se passar disso, gere outra (a do host vai para o segredo do GCP como na [reentrada do host](../04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md#passos-detalhados-para-reconstrução-da-infraestrutura); a da core, pelo `vault_preencher`).
+
+Com tudo isso em mãos, a criação da VM é um comando só.
 
 ### 2. Criar a VM (Cloud Shell)
 
-Com o projeto escolhido, rode **uma vez** no Cloud Shell (precisa de Python 3.12 ou mais novo):
+Abra o **Cloud Shell** (o ícone `>_` no alto do console do GCP, com o projeto do [1.1](#11-projeto-do-google-cloud) selecionado) e rode **uma vez** (precisa de Python 3.12 ou mais novo; sem ele, o script para na etapa 9 e mostra a versão que achou; o segredo já gravado é reaproveitado quando você rodar de novo):
 
 ```bash title="Exemplo: criar o sysadmin no Cloud Shell"
 gcloud config set project <projeto>
@@ -176,7 +218,7 @@ Mande `/status-implantacao` para ver a fase atual, as pendências suas, os pedid
 Os agentes se coordenam por **issues** no repositório privado `lioevano/homeserver-equipe` (`equipe_repo`). Não há porta nova em lugar nenhum (todos só saem para o GitHub), não há custo, há histórico, e você acompanha e intervém pelo app do GitHub. O protocolo completo é a skill `equipe` (`.agents/skills/equipe/SKILL.md`); este é o resumo.
 
 - **Etiquetas:** `papel:<nome>` (`sysadmin`, `metricas`, `apps`, `variaveis`, `atualizacoes`, `backup`, `assistente`); `estado:aberto`, depois `estado:em-andamento`, e por fim `estado:feito` ou `estado:bloqueado`; `diario` para os diários de fase. Crie todas ao criar o repositório (`gh label create`).
-- **Colaboradores:** você, a conta de máquina do sysadmin e, na 5b, as contas dos agentes da casa, cada um só com *Issues: read/write* no repositório. O **carteiro** usa um token *fine-grained* só de leitura de issues.
+- **Colaboradores:** você, a conta de máquina do sysadmin e, na 5b, as contas dos agentes da casa. Num repositório de conta pessoal todo colaborador tem escrita (o GitHub não tem papel só de issues fora de organizações); o repositório só guarda issues, então isso não abre nada além delas. A conta de máquina usa um token clássico com o escopo `repo` (um *fine-grained* não serve a colaboradores); o **carteiro**, um *fine-grained* da sua conta, só de leitura de issues ([1.4](#14-github)).
 - **Pedido:** o que se quer, por quê, o que conta como feito, prazo, e "ações no servidor passam pelo aprovador de casa".
 - **Feito:** comentário com o resultado e a evidência (comando, saída resumida, link) e a etiqueta `estado:feito`; quem pediu fecha.
 
@@ -236,7 +278,7 @@ Faça depois que o nó `sysadmin` aparecer no Tailscale e o bot responder:
 
 1. `/status` no bot do sysadmin: o Hermes responde. Depois `/status-implantacao`. Dentro do container, `hermes memory status` mostra o Honcho.
 2. Peça algo que dependa da equipe ("peça ao assistente um resumo do servidor"): o sysadmin abre a issue com `papel:` e `estado:aberto` no `homeserver-equipe`, e um comentário no GitHub acorda o sysadmin (o carteiro) com aviso na sua conversa.
-3. **Só depois da fase 2 do [roteiro](18-roteiro-primeiro-deploy.md#fase-2--host-e-vms)** (na fase 1 ainda não há host): `ansible_check` e `ansible_aplicar` de um playbook inofensivo, um que você sabe que já está aplicado e não muda nada: chegam os botões no **bot de aprovações** com commit, autor e assunto; aprove os dois.
+3. **Só depois da fase 2 do [roteiro](01-roteiro-primeiro-deploy.md#fase-2--host-e-vms)** (na fase 1 ainda não há host): `ansible_check` e `ansible_aplicar` de um playbook inofensivo, um que você sabe que já está aplicado e não muda nada: chegam os botões no **bot de aprovações** com commit, autor e assunto; aprove os dois.
 4. `vault_preencher` de uma chave de teste: o bot pergunta, você responde, a mensagem some do chat e o `saida/vault.yml` atualiza (`vault_status`). Confira que o valor não aparece na conversa com o sysadmin.
 5. Peça um `comando` e **recuse** no botão: ele diz que foi recusado e nada roda.
 6. De outra conta do Telegram, mande mensagem aos dois bots: nenhuma resposta.

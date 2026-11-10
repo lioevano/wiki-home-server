@@ -87,12 +87,12 @@ access_control:
       policy: bypass
 
     # Aplicações públicas (Exposição = publica no catálogo), com login próprio: os apps do Jellyfin
-    # não passam pelo Authelia, e o Seerr entra com a conta do Jellyfin (página 10).
+    # não passam pelo Authelia, e o Seerr entra com a conta do Jellyfin (página 12).
     - domain: "jellyfin.{{ base_domain }}"
       policy: bypass
     - domain: "pedidos.{{ base_domain }}"
       policy: bypass
-    # Fotos e arquivos (página 11): login próprio de cada app pelo OIDC deste Authelia (identity_providers
+    # Fotos e arquivos (página 13): login próprio de cada app pelo OIDC deste Authelia (identity_providers
     # abaixo, com two_factor), que funciona também nos apps de celular e desktop. O Collabora (office.) é
     # aberto pelo navegador dentro do Nextcloud e protegido pelo token WOPI que o Nextcloud gera.
     - domain: "fotos.{{ base_domain }}"
@@ -101,17 +101,17 @@ access_control:
       policy: bypass
     - domain: "office.{{ base_domain }}"
       policy: bypass
-    # Conectores MCP do segundo cérebro (página 12): o claude.ai e o Claude Code fazem OAuth com o mcp-auth-proxy,
+    # Conectores MCP do segundo cérebro (página 14): o claude.ai e o Claude Code fazem OAuth com o mcp-auth-proxy,
     # que manda o login para o OIDC deste Authelia (cliente 'mcp', two_factor, só o grupo admins).
     - domain: "notas.{{ base_domain }}"
       policy: bypass
     - domain: "escrita.{{ base_domain }}"
       policy: bypass
-    # Conector Servidor (base dos agentes, página 13): rota de leitura do hub de MCPs, mesmo esquema (cliente 'mcp').
+    # Conector Servidor (base dos agentes, página 15): rota de leitura do hub de MCPs, mesmo esquema (cliente 'mcp').
     - domain: "servidor.{{ base_domain }}"
       policy: bypass
 
-    # Painéis de administração (authelia_dominios_admins, página 01): só o grupo admins entra. A regra com
+    # Painéis de administração (authelia_dominios_admins, página 03): só o grupo admins entra. A regra com
     # subject só casa com quem está no grupo; a seguinte recusa os demais (sem ela, eles cairiam no curinga).
     - domain:
 {% for sub in authelia_dominios_admins %}
@@ -159,7 +159,7 @@ notifier:
 #     # Para verificar a configuração do notificador ao iniciar Authelia:
 #     # startup_check_address: "email_de_teste_para_receber_notificacao@example.com"
 
-# Provedor OpenID Connect (SSO): Immich e Nextcloud (página 11) e Open WebUI (página 08) entram com a conta e o 2FA deste Authelia.
+# Provedor OpenID Connect (SSO): Immich e Nextcloud (página 13) e Open WebUI (página 10) entram com a conta e o 2FA deste Authelia.
 # Segredos no vault: hmac_secret, a chave RSA de assinatura (jwks) e, de cada cliente, só o digest
 # pbkdf2-sha512 do segredo (o segredo em claro fica com o app).
 identity_providers:
@@ -242,7 +242,7 @@ identity_providers:
         grant_types: ["authorization_code"]
         userinfo_signed_response_alg: "none"
         token_endpoint_auth_method: "client_secret_basic"
-      # Os dois mcp-auth-proxy do segundo cérebro (página 12). Sem PKCE: o proxy não o envia ao provedor; ele
+      # Os dois mcp-auth-proxy do segundo cérebro (página 14). Sem PKCE: o proxy não o envia ao provedor; ele
       # mesmo exige PKCE dos clientes MCP (claude.ai, Claude Code). Só quem está no grupo admins passa.
       - client_id: "mcp"
         client_name: "Conectores MCP (notas e servidor)"
@@ -261,7 +261,7 @@ identity_providers:
         grant_types: ["authorization_code"]
         userinfo_signed_response_alg: "none"
         token_endpoint_auth_method: "client_secret_basic"
-      # Langfuse (página 13): rastreio das chamadas de LLM e de ferramentas; login só pelo SSO.
+      # Langfuse (página 15): rastreio das chamadas de LLM e de ferramentas; login só pelo SSO.
       - client_id: "langfuse"
         client_name: "Langfuse"
         client_secret: "{{ oidc_clients.langfuse.secret_digest }}"

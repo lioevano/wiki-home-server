@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-notes-volumes.yml
-# Diretórios, imagens locais, configuração do qmd e notes.env da stack notes (segundo cérebro). Página 12.
+# Diretórios, imagens locais, configuração do qmd e notes.env da stack notes (segundo cérebro). Página 14.
 # Roda antes do deploy da stack no Portainer.
 - name: Preparar volumes, imagens e configuração da stack notes
   hosts: ai_desktop
@@ -147,7 +147,7 @@
           pull: true
         force_source: "{{ dockerfile_escrita.changed }}"
 
-    # --- Timers: conversão dos documentos e reindexação (habilitados; iniciados depois do deploy, página 12) ---
+    # --- Timers: conversão dos documentos e reindexação (habilitados; iniciados depois do deploy, página 14) ---
     - name: Instalar as units do segundo cérebro
       ansible.builtin.template:
         src: "../templates/notes/{{ item }}.j2"

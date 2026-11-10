@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Separa o JSON do Secret Manager em arquivos por container, no tmpfs /run/sysadmin (página 19).
+"""Separa o JSON do Secret Manager em arquivos por container, no tmpfs /run/sysadmin (página 02).
 
 Uso (na VM, antes de subir o Docker):
     gcloud secrets versions access latest --secret=sysadmin | sudo python3 separar_segredos.py --destino /run/sysadmin

@@ -1,5 +1,5 @@
 # ansible/roles/infra/tailscale/tasks/main.yml
-# VPN (página 14): Tailscale como nó do tailnet. Na core-services-vm e no host Proxmox é subnet router dos três
+# VPN (página 16): Tailscale como nó do tailnet. Na core-services-vm e no host Proxmox é subnet router dos três
 # IPs da casa (/32; as duas pontas anunciam as mesmas rotas, para failover); a core ainda roda o CoreDNS que
 # responde *.<domínio> com o IP da core para quem está na VPN (split DNS configurado no painel do Tailscale).
 # Serve a Ubuntu (VMs, VM do GCP) e a Debian (host Proxmox): o repositório sai de ansible_facts.distribution.
@@ -58,7 +58,7 @@
       Este nó não está no tailnet e não há chave de uso único (tailscale_auth_key vazia). Host Proxmox: gere uma
       chave nova com tag:homeserver e rode o scripts/gcp/preparar-host.sh (preparar_host do sysadmin, com a chave
       nova no segredo do GCP) ou grave-a em tailscale_auth_key_host no vault. Core: a chave anterior era de uso
-      único; gere outra com tag:homeserver e grave-a em tailscale_auth_key no vault (vault_preencher). VM do GCP: tailscale_chave_sysadmin no segredo sysadmin-segredos (página 14).
+      único; gere outra com tag:homeserver e grave-a em tailscale_auth_key no vault (vault_preencher). VM do GCP: tailscale_chave_sysadmin no segredo sysadmin-segredos (página 16).
     quiet: true
   when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') not in ['Running', 'Starting', 'Stopped']
 

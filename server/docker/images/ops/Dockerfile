@@ -1,4 +1,4 @@
-# MCP ops (página 13): FastMCP + ansible-core. Construída pelo setup-agents-volumes.yml em /opt/ops-image,
+# MCP ops (página 15): FastMCP + ansible-core. Construída pelo setup-agents-volumes.yml em /opt/ops-image,
 # junto com o requirements.txt (versões do group_vars) e o requirements.yml das coleções do repositório.
 FROM python:3.13-slim
 RUN apt-get update \

@@ -1,4 +1,4 @@
-# Aprovador (sub-projeto 4c3, página 16): só a biblioteca padrão do Python, nenhuma dependência instalada.
+# Aprovador (sub-projeto 4c3, página 18): só a biblioteca padrão do Python, nenhuma dependência instalada.
 # Construída pelo setup-agents-volumes.yml em /opt/aprovador-image.
 FROM python:3.13-slim
 COPY aprovador /app/aprovador

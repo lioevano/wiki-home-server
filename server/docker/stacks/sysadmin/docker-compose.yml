@@ -1,5 +1,5 @@
 # docker/stacks/sysadmin/docker-compose.yml
-# Sysadmin no GCP (página 19): Hermes (gateway e painel), executor, Honcho (API, deriver e banco). Roda na VM da GCP.
+# Sysadmin no GCP (página 02): Hermes (gateway e painel), executor, Honcho (API, deriver e banco). Roda na VM da GCP.
 # Segredos separados por container em /run/sysadmin (tmpfs; scripts/gcp/separar_segredos.py, antes do Docker). O
 # sysadmin nunca recebe a senha do vault, a chave SSH nem a chave do Tailscale da casa: isso fica só no executor.
 # Os env_file são required: false porque o `dev.py lint` roda sem /run/sysadmin; a falha fechada está no

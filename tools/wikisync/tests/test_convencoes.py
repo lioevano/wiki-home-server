@@ -45,6 +45,38 @@ def test_guias_numerados_sem_buraco():
         assert numeros == list(range(1, len(numeros) + 1)), secao.name
 
 
+def test_manual_numerado_na_ordem_da_nav():
+    """O manual vai de 00 a 19 sem buraco, e o nav do mkdocs.yml segue a numeração: a ordem de leitura é a do
+    número (o roteiro e o sysadmin, que vêm antes do servidor, são 01 e 02)."""
+    import yaml
+    manual = DOCS / "01-manual-implementacao"
+    nomes = sorted(p.name for p in manual.glob("[0-9][0-9]-*.md"))
+    assert [int(n[:2]) for n in nomes] == list(range(len(nomes)))
+
+    class Leitor(yaml.SafeLoader):
+        pass
+    Leitor.add_multi_constructor("", lambda loader, sufixo, no: None)   # as tags !!python/... do mkdocs.yml
+    nav = yaml.load((ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8"), Leitor)["nav"]
+    implementacao = next(v for item in nav for k, v in item.items() if "Implementação" in k)
+    na_nav = [list(item.values())[0].split("/")[-1] for item in implementacao]
+    assert na_nav == ["index.md"] + nomes
+
+
+def test_paginas_renomeadas_redirecionam():
+    """Endereço publicado não some: toda origem dos redirecionamentos é uma página que não existe mais, e todo destino
+    existe (renomeou uma página → acrescente o par em plugins.redirects do mkdocs.yml)."""
+    import yaml
+
+    class Leitor(yaml.SafeLoader):
+        pass
+    Leitor.add_multi_constructor("", lambda loader, sufixo, no: None)
+    plugins = yaml.load((ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8"), Leitor)["plugins"]
+    mapa = next(p["redirects"]["redirect_maps"] for p in plugins if isinstance(p, dict) and "redirects" in p)
+    for origem, destino in mapa.items():
+        assert not (DOCS / origem).exists(), origem
+        assert (DOCS / destino).exists(), destino
+
+
 def test_full_deploy_cobre_todos_os_playbooks_de_volumes():
     """Um playbook setup-*-volumes.yml novo precisa entrar no full-deploy.yml (senão a reconstrução o esquece)."""
     import yaml

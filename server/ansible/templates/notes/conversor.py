@@ -1,4 +1,4 @@
-"""Converte os documentos do Nextcloud para Markdown, de forma incremental (segundo cérebro, página 12).
+"""Converte os documentos do Nextcloud para Markdown, de forma incremental (segundo cérebro, página 14).
 
 Uso: conversor.py --origem DIR --destino DIR --extensoes pdf,docx,... --max-mb N
 Cada <origem>/<rel> vira <destino>/<rel>.md, com o caminho original no cabeçalho. O manifesto

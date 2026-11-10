@@ -1,5 +1,5 @@
 #!/bin/bash
-# Prepara o host Proxmox para o sysadmin (página 19). O Léo cola no console do host o comando que o bot de
+# Prepara o host Proxmox para o sysadmin (página 02). O Léo cola no console do host o comando que o bot de
 # aprovações envia:  curl -fsSL <raw>/server/scripts/gcp/preparar-host.sh | bash -s -- '<tskey>' '<chave pública>' '<usuário>' '<rotas>'
 # Pode ser repetido: não duplica o sudoers nem a chave autorizada. Nunca imprime a chave do Tailscale.
 set -euo pipefail

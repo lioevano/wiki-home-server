@@ -36,7 +36,7 @@ flowchart LR
 3. **Commit único** com a wiki, o `server/` e o `INDEX.md` (skill `update-index`), em português.
 4. **Push na `main`.** Dois workflows rodam sozinhos:
     - `.github/workflows/server-lint.yml` (mudanças em `server/`, `tools/` ou no lint): `setup`, `lint` e `check`.
-    - `.github/workflows/docs.yml` (mudanças em `wiki/` ou `tools/`): `test`, `check`, `build` e publicação em `https://wiki.seudominio.com` (branch `gh-pages`).
+    - `.github/workflows/docs.yml` (mudanças em `wiki/` ou `tools/`): `test` (com o FastMCP na versão do `ops_fastmcp_version`, para o teste do cabeçalho do hub rodar), `check`, `build` e publicação em `https://wiki.seudominio.com` (branch `gh-pages`).
 
     Acompanhe em *Actions* no GitHub (ou `gh run list`). Um vermelho na `main` se corrige antes de qualquer deploy.
 5. **Aplicar nos hosts**, a partir de `server/ansible` na máquina de controle, sempre simulando antes:
@@ -46,24 +46,24 @@ flowchart LR
     ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml --ask-vault-pass
     ```
 
-    Se o playbook gerou um `.env` novo, abra a stack no Portainer, cole o `.env` novo em **Advanced mode** ([como](../01-manual-implementacao/07-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
+    Se o playbook gerou um `.env` novo, abra a stack no Portainer, cole o `.env` novo em **Advanced mode** ([como](../01-manual-implementacao/09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
 
 !!! tip "Branches"
     Para mudanças grandes (um sub-projeto inteiro), trabalhe numa branch e abra um pull request: o `server-lint` roda também em PRs. Mudanças pequenas vão direto na `main`, já validadas localmente.
 
 ## Deploy assistido pela IA
 
-O MCP `ops` ([seção 13](../01-manual-implementacao/13-agentes-base.md)) é a forma controlada de "CD" deste servidor. A IA pode simular (`ops_ansible_check`) e aplicar (`ops_ansible_aplicar`) só os playbooks liberados em `ops_playbooks_permitidos`, sempre no commit que acabou de simular e com a sua aprovação a cada aplicação. Os playbooks de base (host Proxmox, VMs, rede core) continuam só na máquina de controle.
+O MCP `ops` ([seção 15](../01-manual-implementacao/15-agentes-base.md)) é a forma controlada de "CD" deste servidor. A IA pode simular (`ops_ansible_check`) e aplicar (`ops_ansible_aplicar`) só os playbooks liberados em `ops_playbooks_permitidos`, sempre no commit que acabou de simular e com a sua aprovação a cada aplicação. Os playbooks de base (host Proxmox, VMs, rede core) continuam só na máquina de controle.
 
 ## Deploy completo (`full-deploy.yml`)
 
-Para o primeiro deploy ou para reconstruir tudo ([Reconstruindo a infraestrutura](04-reconstruindo-infraestrutura.md)), o `full-deploy.yml` roda os playbooks de configuração na ordem certa. Ele **não** cria as VMs (isso é o `vm-deploy.yml`, [seção 3](../01-manual-implementacao/03-provisionamento-vms.md)) nem implanta as stacks no Portainer, e deixa de fora o `setup-ai-keys.yml`, que só funciona com a stack `ai` no ar.
+Para o primeiro deploy ou para reconstruir tudo ([Reconstruindo a infraestrutura](04-reconstruindo-infraestrutura.md)), o `full-deploy.yml` roda os playbooks de configuração na ordem certa. Ele **não** cria as VMs (isso é o `vm-deploy.yml`, [seção 5](../01-manual-implementacao/05-provisionamento-vms.md)) nem implanta as stacks no Portainer, e deixa de fora o `setup-ai-keys.yml`, que só funciona com a stack `ai` no ar.
 
 ```yaml title="ansible/playbooks/full-deploy.yml"
 # ansible/playbooks/full-deploy.yml
 # Orquestra a configuração completa da infraestrutura (sem criar VMs e sem implantar as stacks).
 # Ordem: host e VMs, rede core e VPN, depois os volumes e .env de cada stack. O setup-ai-keys.yml fica de fora:
-# ele só funciona com a stack ai no ar (rode-o depois do deploy dela, página 08).
+# ele só funciona com a stack ai no ar (rode-o depois do deploy dela, página 10).
 
 - import_playbook: setup-proxmox-host.yml
 - import_playbook: setup-base-ubuntu.yml
@@ -93,4 +93,4 @@ cd ansible
 ansible-playbook -i inventories/home/hosts.ini playbooks/full-deploy.yml --ask-vault-pass
 ```
 
-Depois dele, implante as stacks no Portainer na ordem do manual (seções 6 a 13) e siga o roteiro [A conferir no primeiro deploy](../01-manual-implementacao/index.md#a-conferir-no-primeiro-deploy).
+Depois dele, implante as stacks no Portainer na ordem do manual (seções 8 a 15) e siga o roteiro [A conferir no primeiro deploy](../01-manual-implementacao/index.md#a-conferir-no-primeiro-deploy).

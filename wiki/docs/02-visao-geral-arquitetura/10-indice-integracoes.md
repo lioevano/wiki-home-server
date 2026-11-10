@@ -33,7 +33,7 @@ Uma seção pode ter subseções extras **de referência** (ex.: `### Origem dos
 | Provedor | `traefik` |
 | Aplica-se a | Exposição ≠ interna |
 | Arquivos | `docker/stacks/<stack>/docker-compose.yml` (labels do serviço principal); para `ansible:<role>`, `ansible/roles/<role>/tasks/main.yml`; routers definidos por arquivo em `ansible/roles/infra/traefik-config/templates/*.yml.j2` |
-| Páginas | página da aplicação; `01-manual-implementacao/05-rede-segura.md` |
+| Páginas | página da aplicação; `01-manual-implementacao/07-rede-segura.md` |
 | Manual | — |
 
 ### Regras
@@ -61,7 +61,7 @@ Todas as aplicações com Exposição ≠ interna perdem acesso externo: remover
 | Provedor | `authelia` |
 | Aplica-se a | Exposição ≠ interna |
 | Arquivos | labels do serviço principal; `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` |
-| Páginas | página da aplicação; `01-manual-implementacao/05-rede-segura.md` (bloco literal do `configuration.yml.j2`) |
+| Páginas | página da aplicação; `01-manual-implementacao/07-rede-segura.md` (bloco literal do `configuration.yml.j2`) |
 | Manual | — |
 
 ### Regras
@@ -72,10 +72,10 @@ Todas as aplicações com Exposição ≠ interna perdem acesso externo: remover
 
 ### Ao adicionar (por consumidor)
 1. `protegida`: acrescentar `authelia-forwardauth@docker` aos middlewares do router; conferir que a curinga continua `two_factor`.
-2. `publica`: adicionar a regra `bypass` no bloco literal do `configuration.yml.j2` (página 05) antes da curinga → `dev.py sync`.
+2. `publica`: adicionar a regra `bypass` no bloco literal do `configuration.yml.j2` (página 07) antes da curinga → `dev.py sync`.
 
 ### Ao remover (por consumidor)
-1. Retirar a regra específica do subdomínio do `configuration.yml.j2` (via página 05), se houver.
+1. Retirar a regra específica do subdomínio do `configuration.yml.j2` (via página 07), se houver.
 2. Retirar o middleware das labels (ou o serviço).
 
 ### Ao remover o provedor
@@ -90,11 +90,11 @@ Toda aplicação `protegida` ficaria exposta sem login: **bloquear** até que ca
 | Provedor | `cloudflared` |
 | Aplica-se a | Exposição ≠ interna |
 | Arquivos | — (configuração do túnel é remota, no painel da Cloudflare) |
-| Páginas | `01-manual-implementacao/05-rede-segura.md` (seção Public Hostnames) |
+| Páginas | `01-manual-implementacao/07-rede-segura.md` (seção Public Hostnames) |
 | Manual | Public Hostname `<Subdomínio>` → `https://traefik:443` (com *No TLS Verify*) no túnel, **ou** hostname curinga `*` já configurado |
 
 ### Regras
-- **EXT-1** — a página 05 documenta o Public Hostname curinga `*` **ou** a página da aplicação registra o hostname específico a criar. Se nenhum dos dois: `✋` (passo manual pendente), não `❌`. *Evidência:* texto das páginas.
+- **EXT-1** — a página 07 documenta o Public Hostname curinga `*` **ou** a página da aplicação registra o hostname específico a criar. Se nenhum dos dois: `✋` (passo manual pendente), não `❌`. *Evidência:* texto das páginas.
 
 ### Ao adicionar (por consumidor)
 1. Se não houver curinga: registrar na página da aplicação o passo manual "criar Public Hostname `<Subdomínio>`" e listá-lo nos passos manuais do plano.
@@ -114,7 +114,7 @@ Nenhuma aplicação fica acessível pela internet; tratar como remoção de `ace
 | Provedor | `prometheus` |
 | Aplica-se a | Métricas = sim |
 | Arquivos | `ansible/templates/prometheus.yml.j2`; playbook `ansible/playbooks/setup-monitoring-stack-volumes.yml` (renderiza o template); `ansible/roles/infra/alloy/templates/config.alloy.j2` (métricas de host e containers por `remote_write`) |
-| Páginas | página da aplicação; `01-manual-implementacao/07-deploy-apps.md` |
+| Páginas | página da aplicação; `01-manual-implementacao/09-deploy-apps.md` |
 | Manual | — |
 
 ### Regras
@@ -123,7 +123,7 @@ Nenhuma aplicação fica acessível pela internet; tratar como remoção de `ace
 
 Métricas de host e por container não dependem desta integração: o Alloy de cada host as envia por `remote_write` (`node_*` e, nas VMs, `container_*` do cAdvisor), para qualquer aplicação, sem regra por consumidor. MET-1 vale para as aplicações com `/metrics` próprio.
 
-Exceção da VM `gcp`: o sysadmin ([página 19](../01-manual-implementacao/19-sysadmin-gcp.md)) não roda Alloy, e portanto não envia métricas de host nem de container. Veja a exceção em [logs](#logs).
+Exceção da VM `gcp`: o sysadmin ([página 02](../01-manual-implementacao/02-sysadmin-gcp.md)) não roda Alloy, e portanto não envia métricas de host nem de container. Veja a exceção em [logs](#logs).
 
 ### Ao adicionar (por consumidor)
 1. Confirmar na documentação oficial a porta/caminho de métricas; adicionar o job em `prometheus.yml.j2` (template estrutural) e citar na página da aplicação.
@@ -143,7 +143,7 @@ Remover `prometheus.yml.j2` e as tarefas que o renderizam no `setup-monitoring-s
 | Provedor | `loki` (coleta pelo `alloy`) |
 | Aplica-se a | todas |
 | Arquivos | compose do consumidor; `ansible/roles/infra/alloy/templates/config.alloy.j2` (role `infra/alloy`, aplicado por `setup-base-ubuntu.yml` e `setup-proxmox-host.yml`); `ansible/templates/loki-local-config.yaml.j2` |
-| Páginas | `01-manual-implementacao/04-configuracao-base-vms-ubuntu.md` (seção 4.4); `01-manual-implementacao/07-deploy-apps.md` |
+| Páginas | `01-manual-implementacao/06-configuracao-base-vms-ubuntu.md` (seção 6.4); `01-manual-implementacao/09-deploy-apps.md` |
 | Manual | — |
 
 ### Regras
@@ -162,7 +162,7 @@ Remover `loki` e `loki-local-config.yaml.j2` e os blocos `loki.*` do `config.all
 
 ### Exceção: VM `gcp` (sysadmin)
 
-As aplicações com VM `gcp` (`sysadmin`, `executor` e `honcho`, [página 19](../01-manual-implementacao/19-sysadmin-gcp.md)) ficam **fora de LOG-2 e de `metricas`**: a e2-micro tem 1 GB de RAM e o Alloy não cabe, e a VM não está em `ubuntu_vms` nem alcança o Loki e o Prometheus de casa (o sysadmin não pode ter rota para o tailnet). Os logs ficam no `journalctl` e no `docker logs` da própria VM, e o estado do sysadmin aparece no `/status` do Hermes e no painel dele. LOG-1 continua valendo (nenhum serviço sobrescreve `logging:`). Pelo mesmo motivo, NTF-2 (Diun) não se aplica: as imagens são fixadas no `group_vars` e atualizadas por PR de versão.
+As aplicações com VM `gcp` (`sysadmin`, `executor` e `honcho`, [página 02](../01-manual-implementacao/02-sysadmin-gcp.md)) ficam **fora de LOG-2 e de `metricas`**: a e2-micro tem 1 GB de RAM e o Alloy não cabe, e a VM não está em `ubuntu_vms` nem alcança o Loki e o Prometheus de casa (o sysadmin não pode ter rota para o tailnet). Os logs ficam no `journalctl` e no `docker logs` da própria VM, e o estado do sysadmin aparece no `/status` do Hermes e no painel dele. LOG-1 continua valendo (nenhum serviço sobrescreve `logging:`). Pelo mesmo motivo, NTF-2 (Diun) não se aplica: as imagens são fixadas no `group_vars` e atualizadas por PR de versão.
 
 ---
 
@@ -246,7 +246,7 @@ Toda variável é emitida **pelo playbook da stack**, com o nome exato usado no 
 | Provedor | `litellm` |
 | Aplica-se a | `+llm` |
 | Arquivos | compose do consumidor (`environment:`); `ansible/templates/litellm_config.yaml.j2` |
-| Páginas | `01-manual-implementacao/08-stack-ia.md`; `02-visao-geral-arquitetura/07-apis-llm-estrategia.md` |
+| Páginas | `01-manual-implementacao/10-stack-ia.md`; `02-visao-geral-arquitetura/07-apis-llm-estrategia.md` |
 | Manual | — |
 
 ### Regras
@@ -273,7 +273,7 @@ Consumidores ficam sem LLM: remover `+llm` de todos e decidir com o usuário se 
 | Provedor | `authelia` (OIDC; o OAuth exigido pelos clientes MCP é feito pelo `mcp-auth-proxy` de cada consumidor) |
 | Aplica-se a | `+mcp` |
 | Arquivos | compose do consumidor (serviço principal `mcp-auth-proxy` e o servidor MCP); `ansible/roles/infra/authelia-config/templates/configuration.yml.j2` (cliente `mcp`); `ansible/roles/infra/traefik-config/templates/dynamic_ai_services.yml.j2` |
-| Páginas | `01-manual-implementacao/12-segundo-cerebro.md`; `01-manual-implementacao/05-rede-segura.md` |
+| Páginas | `01-manual-implementacao/14-segundo-cerebro.md`; `01-manual-implementacao/07-rede-segura.md` |
 | Manual | conectar o cliente (claude.ai: Conectores; Claude Code: `claude mcp add --transport http`) — página da aplicação |
 
 ### Regras
@@ -287,7 +287,7 @@ Consumidores ficam sem LLM: remover `+llm` de todos e decidir com o usuário se 
 
 ### Ao adicionar (por consumidor)
 1. Serviço `mcp-auth-proxy` como principal (variáveis de MCP-1, porta publicada no IP da VM para o Traefik), servidor MCP só na rede interna, com as montagens mínimas.
-2. Redirect `https://<Subdomínio>.{{ base_domain }}/.auth/oidc/callback` no cliente `mcp` do `configuration.yml.j2` (página 05), regra `bypass` (AUT-3) e router sem middleware no *file provider*.
+2. Redirect `https://<Subdomínio>.{{ base_domain }}/.auth/oidc/callback` no cliente `mcp` do `configuration.yml.j2` (página 07), regra `bypass` (AUT-3) e router sem middleware no *file provider*.
 3. Página da aplicação: escopo de leitura e escrita, e como conectar o cliente.
 
 ### Ao remover (por consumidor)
@@ -333,7 +333,7 @@ Não se aplica.
 | Provedor | `n8n` (workflow `notificar`, arquivo `ansible/files/n8n/notificar.json`); coletores: Grafana Alerting (`ansible/templates/grafana/alerting/*.yml.j2`), `blackbox-exporter`, `diun` |
 | Aplica-se a | todas |
 | Arquivos | `ansible/templates/prometheus.yml.j2` (job `blackbox_http`); compose do consumidor (webhook nativo, se houver) |
-| Páginas | página da aplicação; `01-manual-implementacao/09-painel-notificacoes.md` |
+| Páginas | página da aplicação; `01-manual-implementacao/11-painel-notificacoes.md` |
 | Manual | webhook configurado na interface da aplicação (NTF-3), quando ela não aceita configuração por arquivo ou variável |
 
 Entrada única: `POST /webhook/notificar` no n8n com `Authorization: Bearer <NOTIFICACOES_WEBHOOK_TOKEN>` — interna `http://n8n:5678/webhook/notificar` (stack `apps`), externa `https://n8n.seudominio.com/webhook/notificar`. A regra `bypass` do Authelia para `n8n.{{ base_domain }}` com `resources: ["^/webhook/.*$"]` é parte desta integração (não é desvio de AUT-3/AUT-4). Alertas globais (disco, RAM, CPU, ZFS, hosts, certificados, logins falhos no Authelia) ficam no provedor, em `ansible/templates/grafana/alerting/rules.yml.j2`, e não são por aplicação.
@@ -364,7 +364,7 @@ Desativar os coletores (contato `n8n` do Grafana, webhook do Diun e do `scripts/
 | Provedor | `homepage` |
 | Aplica-se a | Exposição ≠ interna |
 | Arquivos | `ansible/templates/homepage/services.yaml.j2`; `.env` da Homepage (chaves `HOMEPAGE_VAR_*`) |
-| Páginas | página da aplicação; `01-manual-implementacao/09-painel-notificacoes.md` |
+| Páginas | página da aplicação; `01-manual-implementacao/11-painel-notificacoes.md` |
 | Manual | gerar a chave de API na interface da aplicação e gravá-la no vault (PNL-2) |
 
 Aplicação `interna` entra com `+painel` em Ajustes (atalho para a URL da LAN).
@@ -375,7 +375,7 @@ Aplicação `interna` entra com `+painel` em Ajustes (atalho para a URL da LAN).
 - **PNL-3 (sobra)** — nenhuma entrada no `services.yaml.j2` sem aplicação correspondente no catálogo. *Evidência:* template.
 
 ### Ao adicionar (por consumidor)
-1. Entrada no `services.yaml.j2` (PNL-1); se houver widget: entrada, variável `HOMEPAGE_VAR_*` no compose da Homepage, `.env.template`, chave em `homepage_widget_keys` no `vault.yml.example` e emissão no playbook (PNL-2); passo manual da chave na página 09.
+1. Entrada no `services.yaml.j2` (PNL-1); se houver widget: entrada, variável `HOMEPAGE_VAR_*` no compose da Homepage, `.env.template`, chave em `homepage_widget_keys` no `vault.yml.example` e emissão no playbook (PNL-2); passo manual da chave na página 11.
 
 ### Ao remover (por consumidor)
 1. Retirar a entrada, a variável `HOMEPAGE_VAR_*`, a chave do vault e a emissão.
@@ -391,4 +391,4 @@ Desvios encontrados na primeira auditoria (2026-10-13) que dependem de decisão 
 
 Nenhuma pendência de regra em aberto: LOG-2, ROT-3 e MET-2 foram decididas em 2026-10-13 (coleta de logs na VM de IA — hoje pelo Alloy, que substituiu o Promtail em 2026-10-19 —, Open WebUI `protegida`, job `glances` removido).
 
-**Fora das regras** (para a reestruturação): a stack `apps` é um compose único, mas recebe quatro `.env` separados (os playbooks os juntam no `apps.env`, ver página 07); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW; as que não têm autenticação própria (9090, 3100, 4100, 9001) são limitadas pela cadeia `HOMESERVER` na `DOCKER-USER` (`firewall_docker_portas`, [seção 14](../01-manual-implementacao/14-vpn-tailscale.md#firewall-das-portas-publicadas-pelo-docker)); as demais, pela LAN e pelo login de cada serviço. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.
+**Fora das regras** (para a reestruturação): a stack `apps` é um compose único, mas recebe quatro `.env` separados (os playbooks os juntam no `apps.env`, ver página 09); portas publicadas pelo Docker (ex.: Loki 3100, LiteLLM 4000) contornam o UFW; as que não têm autenticação própria (9090, 3100, 4100, 9001) são limitadas pela cadeia `HOMESERVER` na `DOCKER-USER` (`firewall_docker_portas`, [seção 16](../01-manual-implementacao/16-vpn-tailscale.md#firewall-das-portas-publicadas-pelo-docker)); as demais, pela LAN e pelo login de cada serviço. Os demais itens registrados na auditoria inicial foram corrigidos em 2026-10-13.

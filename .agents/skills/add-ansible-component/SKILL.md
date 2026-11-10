@@ -20,7 +20,7 @@ description: Use when creating or restructuring an Ansible role, playbook, inven
 ## Passos
 
 1. Escreva cada arquivo novo como **bloco literal** na página da wiki do assunto (`title="ansible/roles/..."`), com o texto explicando o porquê.
-2. Variável nova: atualize o bloco literal de `main.yml` ou de `vault.yml.example` (página `01-maquina-controle-ansible.md`).
+2. Variável nova: atualize o bloco literal de `main.yml` ou de `vault.yml.example` (página `03-maquina-controle-ansible.md`).
 3. Grupo novo: atualize o bloco literal do `hosts.ini` na mesma página.
 4. `dev.py check` → `LIT-MISSING`/`LIT-DIFF` esperados → `dev.py sync` → `--yes`.
 5. Se o playbook entra no fluxo completo, inclua-o no bloco de `full-deploy.yml` (página `04-manutencao-recuperacao/03-cicd-basico-ansible.md`).

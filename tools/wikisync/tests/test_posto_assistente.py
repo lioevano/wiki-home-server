@@ -1,4 +1,4 @@
-"""Posto de agentes (4c3, página 16) e assistente (4c4, página 17): stacks, playbooks e configs geradas."""
+"""Posto de agentes (4c3, página 18) e assistente (4c4, página 19): stacks, playbooks e configs geradas."""
 from __future__ import annotations
 
 import json
@@ -73,7 +73,7 @@ def test_porteiro_do_posto():
 def test_posto_usa_o_litellm_com_chave_propria():
     e = _env(_svc(POSTO)["posto"])
     assert e["ANTHROPIC_BASE_URL"] == "http://litellm:4000" and e["ANTHROPIC_AUTH_TOKEN"] == "${LITELLM_KEY_AGENTES}"
-    assert e["ANTHROPIC_DEFAULT_SONNET_MODEL"] == "claude-sonnet-5-5"  # nomes reais (página 08)
+    assert e["ANTHROPIC_DEFAULT_SONNET_MODEL"] == "claude-sonnet-5-5"  # nomes reais (página 10)
     assert not any("MASTER" in v or "ANTHROPIC_API_KEY" in v for v in e.values())
     assert set(_svc(POSTO)["posto"]["networks"]) == {"ai_network", "notes_mcp"}
     assert _main()["litellm_key_budgets"]["agentes"] > 0 and "agentes" in _vault()["litellm_client_keys"]

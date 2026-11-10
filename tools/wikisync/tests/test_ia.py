@@ -270,7 +270,7 @@ def test_catalogo_ia():
     assert lt[4] == "protegida" and lt[5] == "`llm`" and lt[7] == "sim"
     indice = (ROOT / "wiki/docs/02-visao-geral-arquitetura/10-indice-integracoes.md").read_text(encoding="utf-8")
     assert "**LLM-4**" in indice and "${TYPESAFE_API_KEY}" in indice
-    pagina = (ROOT / "wiki/docs/01-manual-implementacao/08-stack-ia.md").read_text(encoding="utf-8")
+    pagina = (ROOT / "wiki/docs/01-manual-implementacao/10-stack-ia.md").read_text(encoding="utf-8")
     for trecho in ("setup-ai-keys.yml", "claude-gw", "ANTHROPIC_BASE_URL", "/v1/messages", "openwebui_login_form",
                    "Vulkan", "decisao", "llm."):
         assert trecho in pagina, trecho
@@ -307,7 +307,7 @@ def test_playbook_chaves_hash_rotacao_e_apagadas():
 
 
 def test_doc_jev_pela_rota_unificada():
-    pagina = (ROOT / "wiki/docs/01-manual-implementacao/08-stack-ia.md").read_text(encoding="utf-8")
+    pagina = (ROOT / "wiki/docs/01-manual-implementacao/10-stack-ia.md").read_text(encoding="utf-8")
     assert "/v1/systemone" in pagina and '"model": "decisao"' in pagina
 
 

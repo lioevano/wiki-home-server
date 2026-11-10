@@ -2,7 +2,7 @@
 description: "Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal e com ações aprovadas."
 ---
 
-# Seção 17: Assistente sempre ligado (Hermes Agent)
+# Seção 19: Assistente sempre ligado (Hermes Agent)
 
 O **assistente** é um agente que você chama pelo Telegram, de qualquer lugar: "como está o servidor?", "anota isso em estudos", "o que eu escrevi sobre o backup?", "o que eu pedi ontem sobre o backup?". Ele roda o [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Nous Research) na `ai-desktop-vm`, em modo *gateway*, e conversa por um **bot próprio** do Telegram.
 
@@ -20,7 +20,7 @@ flowchart LR
 | Peça | Onde | O que faz |
 |---|---|---|
 | `assistente` | stack `assistente`, `ai-desktop-vm` (imagem `nousresearch/hermes-agent:v0.22.5`) | Conversa pelo Telegram e guarda memória |
-| Bot do assistente | `hermes_telegram_bot_token` | Separado do bot de avisos, que o `aprovador` lê ([seção 16](16-posto-agentes.md)) |
+| Bot do assistente | `hermes_telegram_bot_token` | Separado do bot de avisos, que o `aprovador` lê ([seção 18](18-posto-agentes.md)) |
 | Modelo | LiteLLM, `assistente_modelo` (padrão `principal`), chave `litellm_client_keys.assistente` | Orçamento em `litellm_key_budgets.assistente`; traces no Langfuse |
 
 ## O que ele pode e o que não pode
@@ -28,9 +28,9 @@ flowchart LR
 | Pode | Como |
 |---|---|
 | Ler o servidor (métricas, logs, alertas, containers, stacks) | MCP `servidor`, pela rota `autonomos` do hub (chave `agents_autonomos_keys.assistente`) |
-| Agir no servidor (reiniciar, redeploy, Ansible) | Pelo mesmo MCP, **cada ação esperando a sua aprovação** no bot de avisos ou em `aprovacoes.` ([seção 16](16-posto-agentes.md#aprovação-humana)) |
+| Agir no servidor (reiniciar, redeploy, Ansible) | Pelo mesmo MCP, **cada ação esperando a sua aprovação** no bot de avisos ou em `aprovacoes.` ([seção 18](18-posto-agentes.md#aprovação-humana)) |
 | Buscar em todas as notas e documentos | MCP `notas` (`http://qmd:8181/mcp`) |
-| Escrever notas em Trabalho e Estudos | MCP `escrita` (`http://notes_escrita:8000/mcp`); o vault Pessoal nem está montado lá ([seção 12](12-segundo-cerebro.md)) |
+| Escrever notas em Trabalho e Estudos | MCP `escrita` (`http://notes_escrita:8000/mcp`); o vault Pessoal nem está montado lá ([seção 14](14-segundo-cerebro.md)) |
 | Lembrar de você e do que conversaram | Memória do Hermes (`memory`) e a busca nas conversas |
 
 **Não pode:** rodar comandos (`terminal`), executar código (`code_execution`), mexer em arquivos do container (`file`), navegar ou buscar na internet (`browser`, `web`, `search`), acrescentar MCPs (`connections`), instalar skills (`skills`), delegar a subagentes (`delegation`), agendar tarefas e lembretes (`cronjob`). Esses grupos estão em `agent.disabled_toolsets` no `config.yaml`. Um assistente aberto a mensagens e que lê conteúdo de notas e logs é alvo de injeção de prompt; sem terminal, código nem conexões novas, o pior caso fica restrito às notas de Trabalho e Estudos (com snapshots a cada 15 minutos) e a ações que você precisa aprovar.
@@ -56,8 +56,8 @@ O `config.yaml` é regravado a cada execução do playbook: o que mudar por coma
 ## Primeira configuração
 
 1. **Bot:** no Telegram, fale com o @BotFather, `/newbot`, e guarde o token em `hermes_telegram_bot_token` no vault.
-2. **Vault** ([seção 1](01-maquina-controle-ansible.md)): `litellm_client_keys.assistente` (`echo sk-$(openssl rand -hex 24)`) e `agents_autonomos_keys.assistente` (`ag-` + `openssl rand -hex 24`).
-3. **Chaves:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-keys.yml --ask-vault-pass` (LiteLLM) e `setup-agents-volumes.yml` + `docker restart agentgateway` (hub), se ainda não fez na [seção 16](16-posto-agentes.md).
+2. **Vault** ([seção 3](03-maquina-controle-ansible.md)): `litellm_client_keys.assistente` (`echo sk-$(openssl rand -hex 24)`) e `agents_autonomos_keys.assistente` (`ag-` + `openssl rand -hex 24`).
+3. **Chaves:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-ai-keys.yml --ask-vault-pass` (LiteLLM) e `setup-agents-volumes.yml` + `docker restart agentgateway` (hub), se ainda não fez na [seção 18](18-posto-agentes.md).
 4. **Assistente:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-assistente-volumes.yml --ask-vault-pass`. No Portainer, ambiente `ai-desktop-vm`: **Add stack** `assistente` com `docker/stacks/assistente/docker-compose.yml` e o `assistente.env` em *Advanced mode*.
 5. No Telegram, abra o bot novo e mande `/start`.
 

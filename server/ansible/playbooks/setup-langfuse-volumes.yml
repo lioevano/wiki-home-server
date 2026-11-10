@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-langfuse-volumes.yml
-# Langfuse (página 13): diretórios no disco local da ai-desktop-vm e langfuse.env da stack langfuse.
+# Langfuse (página 15): diretórios no disco local da ai-desktop-vm e langfuse.env da stack langfuse.
 # Dados descartáveis (traces): ficam fora dos snapshots e sem backup (DAD-5). Roda antes do deploy no Portainer.
 - name: Preparar a stack langfuse
   hosts: ai_desktop

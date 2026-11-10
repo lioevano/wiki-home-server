@@ -3,7 +3,7 @@
 # Variáveis: /opt/portainer_stack_envs/photos.env, gerado por ansible/playbooks/setup-photos-stack-volumes.yml.
 # Imagens de immich_redis e immich_db copiadas do docker-compose.yml oficial da release em IMMICH_VERSION
 # (https://github.com/immich-app/immich/releases): ao atualizar o Immich, confira e copie de novo.
-# Página: 01-manual-implementacao/11-fotos-arquivos.md
+# Página: 01-manual-implementacao/13-fotos-arquivos.md
 
 services:
   immich_server:

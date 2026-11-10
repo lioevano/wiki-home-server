@@ -85,6 +85,6 @@ Nesta arquitetura, utilizamos principalmente VMs KVM para isolamento completo de
     *   Configuração no nível do kernel do Proxmox (GRUB, módulos `vfio`).
     *   Blacklisting dos drivers da GPU no host para que `vfio-pci` possa controlá-la.
     *   Isolamento IOMMU adequado (a GPU e seus dispositivos associados devem estar em grupos IOMMU que não contenham outros dispositivos críticos do host).
-*   **Implementação:** Detalhada na [Seção 3.4 do Manual de Implementação](../01-manual-implementacao/03-provisionamento-vms.md#34-configuração-de-gpu-passthrough-host-proxmox).
+*   **Implementação:** Detalhada na [Seção 5.4 do Manual de Implementação](../01-manual-implementacao/05-provisionamento-vms.md#54-configuração-de-gpu-passthrough-host-proxmox).
 
 A virtualização com Proxmox VE oferece uma base flexível e poderosa para construir e expandir seu servidor doméstico, permitindo o isolamento de serviços e o gerenciamento eficiente de recursos.

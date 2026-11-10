@@ -30,5 +30,5 @@
       6. De um cliente VNC na sua máquina de controle, conecte-se a {{ inventory_hostname }}:1 (ou IP_DA_VM:5901).
       Se você estiver usando GPU passthrough com um monitor conectado à RX 5600XT na VM,
       você precisará instalar os drivers AMD apropriados DENTRO da VM ai-desktop-vm
-      (ver Seção 7.1) para que a GUI utilize a GPU passada.
+      (passthrough na seção 5.4) para que a GUI utilize a GPU passada.
   when: install_gui_flag | default(false) | bool

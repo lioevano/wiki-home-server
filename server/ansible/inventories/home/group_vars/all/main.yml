@@ -48,14 +48,14 @@ zfs_media_dataset_name: "media"             # Mídia e torrents no mesmo dataset
 zfs_backups_dataset_name: "backups"
 zfs_photos_dataset_name: "photos"           # Fotos do Immich (uploads, miniaturas e dumps do banco). Criado com cota.
 zfs_files_dataset_name: "files"             # Diretório de dados do Nextcloud. Criado com cota.
-zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo cérebro, página 12). Só na VM de IA; snapshots automáticos.
+zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo cérebro, página 14). Só na VM de IA; snapshots automáticos.
 
 # --- Disco local das VMs ---
 # Bancos que não podem ficar em NFS (o Postgres exige ser dono dos arquivos) ficam aqui, fora dos snapshots
 # ZFS; o backup deles são os dumps diários gravados no NFS (página 04/02).
 vm_local_data_path: "/opt/local-data"
 
-# --- VPN e firewall das portas do Docker (página 14) ---
+# --- VPN e firewall das portas do Docker (página 16) ---
 # Rotas anunciadas na VPN (/32): o host Proxmox e as duas VMs. A core e o host anunciam as mesmas (failover).
 tailscale_rotas: ["{{ proxmox_host_ip_var }}/32", "{{ core_services_vm_ip_var }}/32", "{{ ai_desktop_vm_ip_var }}/32"]
 tailscale_hostname: "homeserver"
@@ -116,9 +116,9 @@ portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
 
 # --- Subdomínios de serviços ---
 # Subdomínio do n8n (resulta em n8n.<base_domain>). Se mudar, troque também 'n8n' em authelia_dominios_admins
-# e na regra de bypass do /webhook/ do Authelia (página 05).
+# e na regra de bypass do /webhook/ do Authelia (página 07).
 n8n_subdomain: "n8n"
-# Painéis de administração: o Authelia só deixa entrar quem está no grupo admins (página 05). Os demais
+# Painéis de administração: o Authelia só deixa entrar quem está no grupo admins (página 07). Os demais
 # subdomínios protegidos (home., hass.) aceitam qualquer usuário com 2FA.
 authelia_dominios_admins: [traefik, portainer, grafana, prometheus, n8n, llm, openwebui, langfuse, sync,
                            sonarr, radarr, lidarr, prowlarr, bazarr, qbittorrent, kanban, aprovacoes]
@@ -127,7 +127,7 @@ authelia_dominios_admins: [traefik, portainer, grafana, prometheus, n8n, llm, op
 # Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.
 alloy_version: "1.20.*"
 
-# --- Fotos e arquivos (página 11) ---
+# --- Fotos e arquivos (página 13) ---
 # Versão do Immich: todos os containers usam a mesma; atualize de propósito, lendo as notas da release.
 immich_version: "v3.3.3"
 # Versão principal do Nextcloud (imagem nextcloud:<major>-apache). Suba uma versão principal por vez.
@@ -137,7 +137,7 @@ immich_password_login: true
 # Ajustes da configuração do Immich, mesclados por cima da base do immich.json (chaves da documentação do Immich).
 immich_config_overrides: {}
 
-# --- IA: gateway LiteLLM (página 08) ---
+# --- IA: gateway LiteLLM (página 10) ---
 # Modelos servidos pelo LiteLLM. 'chave' é o nome da variável de ambiente do provedor (o valor vem do vault
 # e só o container do LiteLLM o recebe). Os apelidos (principal, rapido, local, decisao) são o que os clientes
 # usam: para trocar de LLM, mude o 'model' do apelido e rode o setup-ai-volumes.yml + docker restart litellm_proxy.
@@ -165,9 +165,9 @@ litellm_key_budgets:
   openwebui: 20
   claude_code: 50
   n8n: 10
-  observador: 5 # IA que observa o servidor (página 15): estourou, ela para e o alerta observador-falhou avisa
-  agentes: 50 # agentes do posto (Claude Code pelo Vibe Kanban, página 16)
-  assistente: 15 # assistente do Telegram (Hermes, página 17)
+  observador: 5 # IA que observa o servidor (página 17): estourou, ela para e o alerta observador-falhou avisa
+  agentes: 50 # agentes do posto (Claude Code pelo Vibe Kanban, página 18)
+  assistente: 15 # assistente do Telegram (Hermes, página 19)
 # Modelos que uma chave não enxerga (setup-ai-keys.yml). O 'decisao' (Jev) devolve decisões tipadas para
 # automações e não serve para conversa. Cliente fora daqui vê todos.
 litellm_key_models_ocultos:
@@ -177,7 +177,7 @@ ollama_version: "0.40.6"
 # Formulário de login local do Open WebUI: ligado só até vincular o admin pelo OIDC do Authelia; depois, false.
 openwebui_login_form: true
 
-# --- Segundo cérebro (página 12) ---
+# --- Segundo cérebro (página 14) ---
 # Versões fixadas: imagens públicas e as locais construídas pelo setup-notes-volumes.yml.
 syncthing_version: "2.1.6"
 qmd_version: "2.8.3"                 # localhost/homeserver/qmd:<versão> (busca local, Vulkan)
@@ -196,7 +196,7 @@ notes_documentos_max_mb: 50
 # Modelos do qmd ({} = padrões do qmd). Ex.: {embed: "hf:Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-Q8_0.gguf"}
 qmd_modelos: {}
 
-# --- Agentes: base (página 13) ---
+# --- Agentes: base (página 15) ---
 # Versões fixadas: hub de MCPs, MCP do Grafana, imagem local do ops (FastMCP + ansible-core) e Langfuse.
 agentgateway_version: "v1.6.0"
 mcp_grafana_version: "2.1.1"
@@ -230,7 +230,7 @@ ops_playbooks_permitidos:
   - { nome: setup-agents-volumes.yml, descricao: "Base dos agentes: config do hub, imagem do ops e agents.env" }
   - { nome: setup-langfuse-volumes.yml, descricao: "Langfuse: diretórios e langfuse.env" }
 
-# --- IA que observa o servidor (página 15) ---
+# --- IA que observa o servidor (página 17) ---
 # Versão da imagem local localhost/homeserver/observador (código em docker/images/observador; só a biblioteca
 # padrão do Python). Mude ao alterar o código, para o Portainer pegar a imagem nova.
 observador_version: "1.0.0"
@@ -240,7 +240,7 @@ observador_modelo: "rapido"
 # Hora do boletim de saúde no Telegram (HH:MM, fuso da VM); "" desliga.
 observador_boletim_hora: "07:30"
 
-# --- Posto de agentes e aprovação humana (página 16) ---
+# --- Posto de agentes e aprovação humana (página 18) ---
 # Vibe Kanban construído do código-fonte nesta tag (sem telemetria, sem depender do CDN do projeto).
 posto_vibe_kanban_tag: "v0.1.45-20260919085201"
 # Versão do Claude Code que esta tag do Vibe Kanban chama (npx); a imagem do posto já a traz em cache.
@@ -257,14 +257,14 @@ aprovador_validade_min: 30
 # Ids do Telegram que podem decidir, além do telegram_chat_id (precisa de pelo menos um se o chat for um grupo).
 aprovador_telegram_usuarios: []
 
-# --- Assistente sempre ligado (página 17) ---
+# --- Assistente sempre ligado (página 19) ---
 hermes_version: "v0.22.5"
 # Apelido do LiteLLM do assistente (as conversas pedem um modelo melhor que o do observador).
 assistente_modelo: "principal"
 # Quem pode falar com o assistente no Telegram (ids de usuário; o chat privado do Léo tem o id dele).
 assistente_telegram_usuarios: ["{{ telegram_chat_id }}"]
 
-# --- Sysadmin (página 19) ---
+# --- Sysadmin (página 02) ---
 # Versão da imagem localhost/homeserver/sysadmin (mude ao trocar o Dockerfile). O Hermes usa a hermes_version acima.
 sysadmin_version: "1.0.0"
 # Versão da imagem localhost/homeserver/executor (código em docker/images/executor; mude ao alterar o código).

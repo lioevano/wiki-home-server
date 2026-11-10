@@ -405,10 +405,10 @@ def test_catalogo_fotos_arquivos():
         c = cat[app]
         assert c[2] == f"{stack} / core-services-vm", app
         assert c[4] == "publica" and c[5] == f"`{sub}`", app
-        assert "11-fotos-arquivos.md" in c[10], app
+        assert "13-fotos-arquivos.md" in c[10], app
     assert "`nextcloud_cron`" in cat["nextcloud"][3]
-    assert (ROOT / "wiki/docs/01-manual-implementacao/11-fotos-arquivos.md").exists()
-    assert "11-fotos-arquivos.md" in (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
+    assert (ROOT / "wiki/docs/01-manual-implementacao/13-fotos-arquivos.md").exists()
+    assert "13-fotos-arquivos.md" in (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
 
 
 # --- Correções da revisão final ---
@@ -436,7 +436,7 @@ def test_dump_guarda_o_config_do_nextcloud():
 
 
 def test_raiz_dos_datasets_do_dockeruser():
-    pagina = (ROOT / "wiki/docs/01-manual-implementacao/02-proxmox-ve-host.md").read_text(encoding="utf-8")
+    pagina = (ROOT / "wiki/docs/01-manual-implementacao/04-proxmox-ve-host.md").read_text(encoding="utf-8")
     linha = next(l for l in pagina.splitlines() if "chown" in l and "/data/photos" in l)
     for ds in ("/data/docker-volumes", "/data/media", "/data/photos", "/data/files"):
         assert ds in linha, ds

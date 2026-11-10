@@ -52,5 +52,5 @@
         stack_configs:
           - { name: 'AUTO_STACK_HOMEASSISTANT_CONFIG_PATH', value: "{{ vm_nfs_mount_base_path }}/{{ zfs_docker_volumes_dataset_name }}/homeassistant/config" }
 
-    - name: "Montar o apps.env da stack apps (página 07)"
+    - name: "Montar o apps.env da stack apps (página 09)"
       ansible.builtin.include_tasks: tasks/apps-env.yml

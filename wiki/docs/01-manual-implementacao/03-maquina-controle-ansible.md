@@ -1,24 +1,25 @@
 ---
-description: "Prepara a máquina de controle: Ansible, chaves SSH, Ansible Vault, inventário hosts.ini e variáveis globais em group_vars."
+description: "Vault, inventário hosts.ini e variáveis globais que o sysadmin usa e, como alternativa, a máquina de controle local com bootstrap e chave SSH."
 ---
 
-# Seção 1: Configuração da Máquina de Controle Ansible
+# Seção 3: Máquina de controle (vault, inventário e variáveis)
 
-A máquina de controle Ansible é o seu "cockpit" para automação. É a partir dela que você executará os playbooks Ansible para provisionar, configurar e gerenciar toda a sua infraestrutura de servidor doméstico.
+A máquina de controle é de onde os playbooks rodam. Na implantação deste manual ela é o **sysadmin** ([seção 2](02-sysadmin-gcp.md)): uma VM do Google Cloud criada antes do servidor, que você comanda pelo Telegram e que roda `ansible-playbook` e `ssh` pelo **executor**, com o seu botão em cada ação que muda a casa. O `gerar_vault.py` roda no Cloud Shell, dentro do `criar-sysadmin.sh`, e dali em diante é o sysadmin quem preenche o vault (`vault_preencher`) e abre os PRs.
 
-## Pré-requisitos
+Esta seção é o que a máquina de controle usa, seja qual for:
 
-*   Uma máquina (PC/Notebook) com Linux, macOS ou Windows (usando WSL2).
+- **[3.2](#32-criação-e-gerenciamento-de-variáveis-sensíveis-ansible-vault):** o vault (`vault.yml`), o modelo `vault.yml.example` e o gerador `scripts/gerar_vault.py`;
+- **[3.3](#33-configuração-do-inventário-ansible):** o inventário (`hosts.ini`) e as variáveis globais (`group_vars/all/main.yml`), que você ajusta **pela wiki**, por PR do sysadmin, na fase 1 do [roteiro](01-roteiro-primeiro-deploy.md).
+
+## A máquina de controle local
+
+Ela só é necessária se você quiser (ou precisar) rodar o Ansible à mão, por exemplo sem o sysadmin ou num desastre em que ele também se perdeu. Os playbooks e o `vault.yml` são os mesmos; a [3.1](#31-instalação-do-ambiente-de-controle-scriptsbootstrapsh) a prepara.
+
+*   Uma máquina (PC/Notebook) com Linux, macOS ou Windows (usando WSL2), na LAN de casa ou no Tailscale.
 *   Acesso à Internet para baixar pacotes e coleções Ansible.
 *   O repositório `homeserver` clonado do seu repositório Git, ou com a estrutura de diretórios criada conforme a [Seção 0.2: Estrutura do Repositório Git](00-preparacao-planejamento.md#02-estrutura-do-repositório-git-do-projeto-homeserver).
 
-## O sysadmin como caminho recomendado
-
-Você não precisa ter esta máquina de controle: o **sysadmin** ([seção 19](19-sysadmin-gcp.md)) é uma máquina de controle do Ansible pronta, num agente Hermes numa VM do Google Cloud, que você comanda pelo Telegram. O `gerar_vault.py` roda no Cloud Shell, na criação, e dali em diante o sysadmin preenche o vault, roda `ansible-playbook` e `ssh` pelo **executor**, com o seu botão em cada ação que muda a casa, e conduz o [roteiro do primeiro deploy](18-roteiro-primeiro-deploy.md). Este é o caminho recomendado.
-
-O resto desta seção continua valendo quando você quiser (ou precisar) rodar o Ansible à mão: numa máquina sua, com o `bootstrap.sh`, a chave SSH e o vault abaixo. As duas formas usam os mesmos playbooks e o mesmo `vault.yml`.
-
-## 1.1. Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)
+## 3.1. Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)
 
 Para simplificar e padronizar a configuração da sua máquina de controle, utilizaremos o script `bootstrap.sh` fornecido no projeto.
 
@@ -174,7 +175,7 @@ collections:
   - name: ansible.posix
 ```
 
-## 1.2. Criação e Gerenciamento de Variáveis Sensíveis (Ansible Vault)
+## 3.2. Criação e Gerenciamento de Variáveis Sensíveis (Ansible Vault)
 
 Dados sensíveis como senhas, tokens de API e chaves privadas não devem ser armazenados em texto plano no seu repositório Git. O Ansible Vault é a ferramenta integrada do Ansible para criptografar esses dados.
 
@@ -189,7 +190,7 @@ python3 scripts/gerar_vault.py
 
 1. Ele pergunta a senha do `ansible-vault` (Enter em branco gera uma). A mesma senha vai para `ops_vault_password`.
 2. No fim, mostra **uma única vez** o que você precisa anotar no gerenciador de senhas: a senha do vault (se foi gerada), a do admin do Authelia, as dos admins iniciais do Nextcloud e do Grafana, a do painel do Syncthing, a do usuário Ansible das VMs e a do **restic** (sem ela, nenhum backup se restaura).
-3. Mostra a chave pública do runner do `ops`, que vai para o `authorized_keys` do usuário Ansible das VMs ([seção 13](13-agentes-base.md)).
+3. Mostra a chave pública do runner do `ops`, que vai para o `authorized_keys` do usuário Ansible das VMs ([seção 15](15-agentes-base.md)).
 4. Lista as chaves que continuam com o texto do modelo, porque vêm de fora: Cloudflare, domínio e e-mail, chaves dos provedores de LLM, bots do Telegram e o id do chat, ProtonVPN, Tailscale, B2, e os tokens criados nas telas depois do primeiro deploy (Grafana, Portainer, Home Assistant, n8n, widgets do painel). Preencha com `ansible-vault edit inventories/home/group_vars/all/vault.yml`, conforme cada etapa do manual pedir.
 
 O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo formato do `authelia crypto hash generate pbkdf2`), que o Authelia aceita no arquivo de usuários; não precisa do Docker na máquina de controle. Para conferir o resultado antes de usar, rode com `--sem-criptografar --saida /tmp/vault.yml` (texto puro fora do repositório), olhe e apague. O script só usa a biblioteca padrão do Python e o pacote `cryptography`, que já vem com o Ansible; os testes (`tools/wikisync/tests/test_gerar_vault.py`) conferem os formatos e validam os digests com o binário do Authelia.
@@ -198,7 +199,7 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
     ```python title="scripts/gerar_vault.py"
     #!/usr/bin/env python3
     # scripts/gerar_vault.py
-    # Gera o vault.yml a partir do vault.yml.example (página 01): todos os segredos aleatórios (senhas de banco,
+    # Gera o vault.yml a partir do vault.yml.example (página 03): todos os segredos aleatórios (senhas de banco,
     # tokens internos, chaves do LiteLLM e do hub, segredos e digests do OIDC, chave RSA do Authelia, chave SSH do
     # runner do ops, segredos do Langfuse...) e já criptografa com o ansible-vault. O que vem de fora (Cloudflare,
     # Telegram, provedores de LLM, Tailscale, B2, tokens criados nas telas depois do deploy) fica com o texto do
@@ -340,7 +341,7 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
         linhas = modelo.splitlines()
         saida: list[str] = [
             "# ansible/inventories/home/group_vars/all/vault.yml",
-            f"# Gerado por scripts/gerar_vault.py em {agora} a partir do vault.yml.example (página 01).",
+            f"# Gerado por scripts/gerar_vault.py em {agora} a partir do vault.yml.example (página 03).",
             "# Edite SEMPRE com: ansible-vault edit inventories/home/group_vars/all/vault.yml",
         ]
         pilha: list[tuple[int, str]] = []
@@ -543,7 +544,7 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
     # Chave de criptografia do storage do Authelia (mín. 20 caracteres; gere com: openssl rand -hex 32).
     authelia_storage_encryption_key: "CHAVE_DE_CRIPTOGRAFIA_DO_STORAGE_DO_AUTHELIA"
 
-    # --- Authelia como provedor OIDC (login do Immich e do Nextcloud; página 11) ---
+    # --- Authelia como provedor OIDC (login do Immich e do Nextcloud; página 13) ---
     # hmac_secret: texto aleatório (openssl rand -hex 32).
     authelia_oidc_hmac_secret: "SEGREDO_HMAC_DO_OIDC_64_CARACTERES"
     # Chave privada RSA 2048 que assina os tokens: openssl genrsa 2048 (cole o PEM inteiro).
@@ -565,11 +566,11 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
       openwebui:
         secret: "SEGREDO_DO_CLIENTE_OPENWEBUI"
         secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_OPENWEBUI"
-      # Conectores MCP do segundo cérebro (página 12): os dois mcp-auth-proxy usam o mesmo cliente.
+      # Conectores MCP do segundo cérebro (página 14): os dois mcp-auth-proxy usam o mesmo cliente.
       mcp:
         secret: "SEGREDO_DO_CLIENTE_MCP"
         secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_MCP"
-      # Langfuse (página 13).
+      # Langfuse (página 15).
       langfuse:
         secret: "SEGREDO_DO_CLIENTE_LANGFUSE"
         secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_LANGFUSE"
@@ -593,13 +594,13 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
     nextcloud_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_NEXTCLOUD"
     # Senha para o usuário administrador inicial do Nextcloud (criado na primeira execução).
     nextcloud_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_NEXTCLOUD"
-    # Senha do Postgres do Immich (stack photos; página 11). Só letras e números.
+    # Senha do Postgres do Immich (stack photos; página 13). Só letras e números.
     immich_db_password: "SENHA_FORTE_PARA_O_DB_DO_IMMICH"
 
     grafana_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"
     grafana_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"
 
-    # --- APIs de LLM (só o LiteLLM as usa; página 08) ---
+    # --- APIs de LLM (só o LiteLLM as usa; página 10) ---
     # Chave mestra do proxy LiteLLM (gere com: openssl rand -hex 32).
     litellm_master_key: "CHAVE_MESTRA_DO_LITELLM"
     llm_api_keys:
@@ -607,7 +608,7 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
       anthropic: "SUA_CHAVE_ANTHROPIC"
       google_gemini: "SUA_CHAVE_GEMINI"
       typesafe: "SUA_CHAVE_TYPESAFE" # Jev (modelo de decisão); console da TypeSafe AI
-    # Senha do Postgres do LiteLLM (stack ai; página 08). Só letras e números.
+    # Senha do Postgres do LiteLLM (stack ai; página 10). Só letras e números.
     litellm_db_password: "SENHA_FORTE_PARA_O_DB_DO_LITELLM"
     # Uma chave virtual do LiteLLM por cliente (gere com: echo sk-$(openssl rand -hex 24)). Os clientes usam
     # estas, nunca a litellm_master_key; o setup-ai-keys.yml as cria no LiteLLM com o orçamento de cada uma.
@@ -615,9 +616,9 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
       openwebui: "sk-CHAVE_DO_OPEN_WEBUI"
       claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
       n8n: "sk-CHAVE_DO_N8N"
-      observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 15)
-      agentes: "sk-CHAVE_DOS_AGENTES" # posto de agentes (página 16)
-      assistente: "sk-CHAVE_DO_ASSISTENTE" # assistente do Telegram (página 17)
+      observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 17)
+      agentes: "sk-CHAVE_DOS_AGENTES" # posto de agentes (página 18)
+      assistente: "sk-CHAVE_DO_ASSISTENTE" # assistente do Telegram (página 19)
     # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
     openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -628,14 +629,14 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
     # Token que autentica quem chama o webhook do n8n (gere com: openssl rand -hex 32).
     notificacoes_webhook_token: "TOKEN_DO_WEBHOOK_DE_NOTIFICACOES"
 
-    # --- Segundo cérebro (stack notes, página 12) ---
+    # --- Segundo cérebro (stack notes, página 14) ---
     # Senha do painel do Syncthing (usuário em syncthing_gui_user) e chave da API dele (openssl rand -hex 24).
     syncthing_gui_password: "SENHA_DO_PAINEL_DO_SYNCTHING"
     syncthing_api_key: "CHAVE_DA_API_DO_SYNCTHING"
     # Assina os tokens OAuth emitidos pelos mcp-auth-proxy (openssl rand -base64 32). Fixo: trocar invalida os logins.
     mcp_auth_hmac_secret: "BASE64_DE_32_BYTES"
 
-    # --- Mídia (stack media, página 10) ---
+    # --- Mídia (stack media, página 12) ---
     # Chaves de API das *arr, fixadas por variável de ambiente (gere cada uma com: openssl rand -hex 16).
     arr_api_keys:
       sonarr: "CHAVE_DE_API_DO_SONARR_32_HEX"
@@ -645,12 +646,12 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
     # PrivateKey da configuração WireGuard da ProtonVPN gerada com NAT-PMP (Port Forwarding) ligado.
     protonvpn_wireguard_private_key: "CHAVE_PRIVADA_WIREGUARD_DA_PROTONVPN"
 
-    # --- Portainer Agent (ai-desktop-vm; seção 4) ---
+    # --- Portainer Agent (ai-desktop-vm; seção 6) ---
     # Segredo compartilhado entre o Portainer da core-services-vm e o agente das outras VMs (openssl rand -hex 32).
     portainer_agent_secret: "SEGREDO_COMPARTILHADO_DO_PORTAINER_AGENT"
 
     # --- Painel (Homepage): credenciais dos widgets ---
-    # Geradas na interface de cada aplicação depois do primeiro acesso (página 09).
+    # Geradas na interface de cada aplicação depois do primeiro acesso (página 11).
     # O widget do Grafana usa o admin e grafana_admin_initial_password.
     homepage_widget_keys:
       # Sonarr, Radarr, Lidarr e Prowlarr usam arr_api_keys (acima).
@@ -658,43 +659,43 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
       bazarr: "CHAVE_DE_API_DO_BAZARR"
       seerr: "CHAVE_DE_API_DO_SEERR"
       nextcloud: "NC_TOKEN_DO_NEXTCLOUD"
-      immich: "CHAVE_DE_API_DO_IMMICH" # Conta › Configurações da conta › Chaves de API (página 11)
+      immich: "CHAVE_DE_API_DO_IMMICH" # Conta › Configurações da conta › Chaves de API (página 13)
       homeassistant: "TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT"
       portainer: "CHAVE_DE_API_DO_PORTAINER"
       qbittorrent_user: "admin"
       qbittorrent_password: "SENHA_DO_QBITTORRENT"
 
-    # --- Agentes: base (página 13) ---
+    # --- Agentes: base (página 15) ---
     # Chaves dos clientes da rota de controle do hub (LAN): "ag-" + openssl rand -hex 24. No config do hub só vai o hash.
     agents_api_keys:
       claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
-    # Chaves da rota dos autônomos do hub (porta 4200; página 16): as ações deles esperam a sua aprovação.
+    # Chaves da rota dos autônomos do hub (porta 4200; página 18): as ações deles esperam a sua aprovação.
     agents_autonomos_keys:
       agentes: "ag-CHAVE_DOS_AGENTES"
       assistente: "ag-CHAVE_DO_ASSISTENTE"
     # Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends), mcp_auth_servidor → rota de leitura
-    # (proxy) e observador → rota de leitura (observador, página 15).
+    # (proxy) e observador → rota de leitura (observador, página 17).
     # As redes Docker são compartilhadas: sem eles, qualquer container chamaria as ferramentas direto.
     agents_tokens_internos:
       backends: "TOKEN_INTERNO_DOS_BACKENDS"
       proxy: "TOKEN_INTERNO_DO_PROXY"
       observador: "TOKEN_INTERNO_DO_OBSERVADOR"
-    # Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 15.
+    # Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 17.
     observador_token: "TOKEN_DO_GRAFANA_PARA_O_OBSERVADOR"
-    # Aprovador (página 16): token que só o ops_controle usa na API, e o segredo que só o Traefik injeta na tela
+    # Aprovador (página 18): token que só o ops_controle usa na API, e o segredo que só o Traefik injeta na tela
     # (openssl rand -hex 32 cada).
     aprovador_token: "TOKEN_DO_OPS_PARA_O_APROVADOR"
     aprovador_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_A_TELA_DE_APROVACOES"
-    # Posto (página 16): segredo que só o Traefik injeta no kanban. (o Caddy do posto recusa o resto;
+    # Posto (página 18): segredo que só o Traefik injeta no kanban. (o Caddy do posto recusa o resto;
     # openssl rand -hex 32).
     posto_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_O_KANBAN"
     # Token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios de trabalho do posto: Contents
     # e Pull requests). Nunca dê Contents de escrita no wiki-home-server: o ops aplica o que estiver na main.
     # "" deixa sem.
     posto_github_token: ""
-    # Assistente (página 17): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
+    # Assistente (página 19): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
     hermes_telegram_bot_token: "TOKEN_DO_BOT_DO_ASSISTENTE"
-    # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
+    # Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 15.
     grafana_sa_tokens:
       leitura: "glsa_TOKEN_VIEWER"
       controle: "glsa_TOKEN_EDITOR"
@@ -723,7 +724,7 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
       minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
       public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
       secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"
-    # VPN (página 14): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
+    # VPN (página 16): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
     # Painel do Tailscale → Settings → Keys → Generate auth key (não reutilizável, pré-aprovada).
     tailscale_auth_key: "tskey-auth-CHAVE_DE_USO_UNICO"
     # Só se o host Proxmox sair do tailnet e precisar entrar de novo (a primeira entrada é pelo preparar-host.sh).
@@ -753,7 +754,7 @@ O hash inicial da senha do admin do Authelia sai em `pbkdf2-sha512` (o mesmo for
 3.  **Salve e feche o editor.** O arquivo `vault.yml` agora estará criptografado no seu sistema de arquivos.
 4.  **Nunca commite o `vault.yml` em texto puro.** O arquivo criptografado *deve* ser commitado no Git; cópias descriptografadas (`*.decrypted*`) já são ignoradas pelo `.gitignore` do repositório, e o `python tools/dev.py check` (e o CI) falham se o `vault.yml` não começar com `$ANSIBLE_VAULT;`.
 
-## 1.3. Configuração do Inventário Ansible
+## 3.3. Configuração do Inventário Ansible
 
 O inventário Ansible é o coração da sua automação. Ele define:
 
@@ -793,7 +794,7 @@ ai_desktop
 core_services
 ai_desktop
 
-# VM do sysadmin na GCP (página 19). Ela se configura sozinha, por ansible-pull do setup-sysadmin.yml: por isso a
+# VM do sysadmin na GCP (página 02). Ela se configura sozinha, por ansible-pull do setup-sysadmin.yml: por isso a
 # conexão local. Fica fora de virtual_machines e ubuntu_vms (não é VM do Proxmox nem recebe os roles comuns).
 [gcp]
 sysadmin-gcp ansible_connection=local
@@ -817,7 +818,7 @@ ai_desktop_vm_ip_var=192.168.15.68
     *   `proxmox_main_host`, `core-services-vm`, `ai-desktop-vm` são nomes lógicos (apelidos) que você usará nos seus playbooks Ansible para se referir aos hosts.
     *   `ansible_host` especifica o endereço IP real (ou hostname DNS, se você tiver DNS local configurado e funcionando) que o Ansible usará para se conectar ao host.
     *   As variáveis `*_ip_var` são uma convenção para ter os IPs facilmente acessíveis em templates, sem depender da resolução de `ansible_host` dentro do template.
-    *   `sysadmin-gcp` (grupo `gcp`) é a VM do sysadmin na GCP ([seção 19](19-sysadmin-gcp.md)): não tem `ansible_host` porque só é configurada de dentro dela, pelo `ansible-pull` do `setup-sysadmin.yml` (`ansible_connection=local`). Nenhum outro playbook a alcança: nenhum usa `hosts: all` e o grupo não é filho de `virtual_machines` nem de `ubuntu_vms`.
+    *   `sysadmin-gcp` (grupo `gcp`) é a VM do sysadmin na GCP ([seção 2](02-sysadmin-gcp.md)): não tem `ansible_host` porque só é configurada de dentro dela, pelo `ansible-pull` do `setup-sysadmin.yml` (`ansible_connection=local`). Nenhum outro playbook a alcança: nenhum usa `hosts: all` e o grupo não é filho de `virtual_machines` nem de `ubuntu_vms`.
 
 ### Variáveis Globais Não Sensíveis (`ansible/inventories/home/group_vars/all/main.yml`)
 
@@ -877,14 +878,14 @@ zfs_media_dataset_name: "media"             # Mídia e torrents no mesmo dataset
 zfs_backups_dataset_name: "backups"
 zfs_photos_dataset_name: "photos"           # Fotos do Immich (uploads, miniaturas e dumps do banco). Criado com cota.
 zfs_files_dataset_name: "files"             # Diretório de dados do Nextcloud. Criado com cota.
-zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo cérebro, página 12). Só na VM de IA; snapshots automáticos.
+zfs_notes_dataset_name: "notes"             # Vaults do Obsidian (segundo cérebro, página 14). Só na VM de IA; snapshots automáticos.
 
 # --- Disco local das VMs ---
 # Bancos que não podem ficar em NFS (o Postgres exige ser dono dos arquivos) ficam aqui, fora dos snapshots
 # ZFS; o backup deles são os dumps diários gravados no NFS (página 04/02).
 vm_local_data_path: "/opt/local-data"
 
-# --- VPN e firewall das portas do Docker (página 14) ---
+# --- VPN e firewall das portas do Docker (página 16) ---
 # Rotas anunciadas na VPN (/32): o host Proxmox e as duas VMs. A core e o host anunciam as mesmas (failover).
 tailscale_rotas: ["{{ proxmox_host_ip_var }}/32", "{{ core_services_vm_ip_var }}/32", "{{ ai_desktop_vm_ip_var }}/32"]
 tailscale_hostname: "homeserver"
@@ -945,9 +946,9 @@ portainer_env_files_dest_path_on_vm: "/opt/portainer_stack_envs"
 
 # --- Subdomínios de serviços ---
 # Subdomínio do n8n (resulta em n8n.<base_domain>). Se mudar, troque também 'n8n' em authelia_dominios_admins
-# e na regra de bypass do /webhook/ do Authelia (página 05).
+# e na regra de bypass do /webhook/ do Authelia (página 07).
 n8n_subdomain: "n8n"
-# Painéis de administração: o Authelia só deixa entrar quem está no grupo admins (página 05). Os demais
+# Painéis de administração: o Authelia só deixa entrar quem está no grupo admins (página 07). Os demais
 # subdomínios protegidos (home., hass.) aceitam qualquer usuário com 2FA.
 authelia_dominios_admins: [traefik, portainer, grafana, prometheus, n8n, llm, openwebui, langfuse, sync,
                            sonarr, radarr, lidarr, prowlarr, bazarr, qbittorrent, kanban, aprovacoes]
@@ -956,7 +957,7 @@ authelia_dominios_admins: [traefik, portainer, grafana, prometheus, n8n, llm, op
 # Série fixada: aceita correções (1.20.x); para mudar de série, troque o valor e rode os playbooks.
 alloy_version: "1.20.*"
 
-# --- Fotos e arquivos (página 11) ---
+# --- Fotos e arquivos (página 13) ---
 # Versão do Immich: todos os containers usam a mesma; atualize de propósito, lendo as notas da release.
 immich_version: "v3.3.3"
 # Versão principal do Nextcloud (imagem nextcloud:<major>-apache). Suba uma versão principal por vez.
@@ -966,7 +967,7 @@ immich_password_login: true
 # Ajustes da configuração do Immich, mesclados por cima da base do immich.json (chaves da documentação do Immich).
 immich_config_overrides: {}
 
-# --- IA: gateway LiteLLM (página 08) ---
+# --- IA: gateway LiteLLM (página 10) ---
 # Modelos servidos pelo LiteLLM. 'chave' é o nome da variável de ambiente do provedor (o valor vem do vault
 # e só o container do LiteLLM o recebe). Os apelidos (principal, rapido, local, decisao) são o que os clientes
 # usam: para trocar de LLM, mude o 'model' do apelido e rode o setup-ai-volumes.yml + docker restart litellm_proxy.
@@ -994,9 +995,9 @@ litellm_key_budgets:
   openwebui: 20
   claude_code: 50
   n8n: 10
-  observador: 5 # IA que observa o servidor (página 15): estourou, ela para e o alerta observador-falhou avisa
-  agentes: 50 # agentes do posto (Claude Code pelo Vibe Kanban, página 16)
-  assistente: 15 # assistente do Telegram (Hermes, página 17)
+  observador: 5 # IA que observa o servidor (página 17): estourou, ela para e o alerta observador-falhou avisa
+  agentes: 50 # agentes do posto (Claude Code pelo Vibe Kanban, página 18)
+  assistente: 15 # assistente do Telegram (Hermes, página 19)
 # Modelos que uma chave não enxerga (setup-ai-keys.yml). O 'decisao' (Jev) devolve decisões tipadas para
 # automações e não serve para conversa. Cliente fora daqui vê todos.
 litellm_key_models_ocultos:
@@ -1006,7 +1007,7 @@ ollama_version: "0.40.6"
 # Formulário de login local do Open WebUI: ligado só até vincular o admin pelo OIDC do Authelia; depois, false.
 openwebui_login_form: true
 
-# --- Segundo cérebro (página 12) ---
+# --- Segundo cérebro (página 14) ---
 # Versões fixadas: imagens públicas e as locais construídas pelo setup-notes-volumes.yml.
 syncthing_version: "2.1.6"
 qmd_version: "2.8.3"                 # localhost/homeserver/qmd:<versão> (busca local, Vulkan)
@@ -1025,7 +1026,7 @@ notes_documentos_max_mb: 50
 # Modelos do qmd ({} = padrões do qmd). Ex.: {embed: "hf:Qwen/Qwen3-Embedding-0.6B-GGUF/Qwen3-Embedding-0.6B-Q8_0.gguf"}
 qmd_modelos: {}
 
-# --- Agentes: base (página 13) ---
+# --- Agentes: base (página 15) ---
 # Versões fixadas: hub de MCPs, MCP do Grafana, imagem local do ops (FastMCP + ansible-core) e Langfuse.
 agentgateway_version: "v1.6.0"
 mcp_grafana_version: "2.1.1"
@@ -1059,7 +1060,7 @@ ops_playbooks_permitidos:
   - { nome: setup-agents-volumes.yml, descricao: "Base dos agentes: config do hub, imagem do ops e agents.env" }
   - { nome: setup-langfuse-volumes.yml, descricao: "Langfuse: diretórios e langfuse.env" }
 
-# --- IA que observa o servidor (página 15) ---
+# --- IA que observa o servidor (página 17) ---
 # Versão da imagem local localhost/homeserver/observador (código em docker/images/observador; só a biblioteca
 # padrão do Python). Mude ao alterar o código, para o Portainer pegar a imagem nova.
 observador_version: "1.0.0"
@@ -1069,7 +1070,7 @@ observador_modelo: "rapido"
 # Hora do boletim de saúde no Telegram (HH:MM, fuso da VM); "" desliga.
 observador_boletim_hora: "07:30"
 
-# --- Posto de agentes e aprovação humana (página 16) ---
+# --- Posto de agentes e aprovação humana (página 18) ---
 # Vibe Kanban construído do código-fonte nesta tag (sem telemetria, sem depender do CDN do projeto).
 posto_vibe_kanban_tag: "v0.1.45-20260919085201"
 # Versão do Claude Code que esta tag do Vibe Kanban chama (npx); a imagem do posto já a traz em cache.
@@ -1086,14 +1087,14 @@ aprovador_validade_min: 30
 # Ids do Telegram que podem decidir, além do telegram_chat_id (precisa de pelo menos um se o chat for um grupo).
 aprovador_telegram_usuarios: []
 
-# --- Assistente sempre ligado (página 17) ---
+# --- Assistente sempre ligado (página 19) ---
 hermes_version: "v0.22.5"
 # Apelido do LiteLLM do assistente (as conversas pedem um modelo melhor que o do observador).
 assistente_modelo: "principal"
 # Quem pode falar com o assistente no Telegram (ids de usuário; o chat privado do Léo tem o id dele).
 assistente_telegram_usuarios: ["{{ telegram_chat_id }}"]
 
-# --- Sysadmin (página 19) ---
+# --- Sysadmin (página 02) ---
 # Versão da imagem localhost/homeserver/sysadmin (mude ao trocar o Dockerfile). O Hermes usa a hermes_version acima.
 sysadmin_version: "1.0.0"
 # Versão da imagem localhost/homeserver/executor (código em docker/images/executor; mude ao alterar o código).
@@ -1163,4 +1164,4 @@ ops_repo_url: "https://github.com/lioevano/wiki-home-server.git"
 ops_plano_validade_min: 30
 ```
 
-Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](02-proxmox-ve-host.md).
+Com a máquina de controle Ansible devidamente configurada, o inventário definido e os segredos guardados no Vault, você está pronto para prosseguir para a próxima etapa: [Instalação e Configuração Base do Proxmox VE](04-proxmox-ve-host.md).

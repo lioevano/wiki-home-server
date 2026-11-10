@@ -1,5 +1,5 @@
 # ansible/playbooks/setup-ai-volumes.yml
-# Volumes, configs e ai.env da stack de IA (LiteLLM + Postgres, Ollama com Vulkan, Open WebUI, Diun). Página 08.
+# Volumes, configs e ai.env da stack de IA (LiteLLM + Postgres, Ollama com Vulkan, Open WebUI, Diun). Página 10.
 - name: Preparar volumes e configuração da Stack de IA
   hosts: ai_desktop
   become: true
@@ -41,7 +41,7 @@
       ansible.builtin.include_tasks: tasks/dump-postgres.yml
       vars:
         dump_nome: litellm
-        dump_descricao: "do LiteLLM (página 08)"
+        dump_descricao: "do LiteLLM (página 10)"
         dump_container: litellm_db
         dump_db: litellm
         dump_user: litellm

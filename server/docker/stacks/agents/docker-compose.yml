@@ -1,6 +1,6 @@
 # docker/stacks/agents/docker-compose.yml
-# Base dos agentes (página 13), na core-services-vm: hub de MCPs (agentgateway), MCP do Grafana e MCP de
-# operações (ops), cada um em par leitura/controle, e o observador (página 15). A rota de leitura do hub só
+# Base dos agentes (página 15), na core-services-vm: hub de MCPs (agentgateway), MCP do Grafana e MCP de
+# operações (ops), cada um em par leitura/controle, e o observador (página 17). A rota de leitura do hub só
 # alcança as instâncias *_leitura,
 # que nem registram ferramentas de escrita. Variáveis em /opt/portainer_stack_envs/agents.env
 # (setup-agents-volumes.yml). Nenhum MCP publica porta: só o hub, e só a rota de controle, no IP da LAN.
@@ -34,8 +34,8 @@ services:
       - ${AGENTGATEWAY_CONFIG_PATH}:/config/config.yaml:ro
       - ${AGENTGATEWAY_DATA_PATH}/segredos:/segredos:ro # tokens do Home Assistant e do n8n (0400)
     ports:
-      # Só no IP da LAN; quem chega é decidido pelo firewall das portas do Docker (página 14) e pela chave:
-      # controle (4100) só pela VPN; autônomos (4200) só da ai-desktop-vm (página 16).
+      # Só no IP da LAN; quem chega é decidido pelo firewall das portas do Docker (página 16) e pela chave:
+      # controle (4100) só pela VPN; autônomos (4200) só da ai-desktop-vm (página 18).
       # A rota de leitura (4000) e as métricas (15020) ficam na rede interna.
       - "${CORE_SERVICES_VM_IP_VAR}:4100:4100"
       - "${CORE_SERVICES_VM_IP_VAR}:4200:4200"
@@ -74,7 +74,7 @@ services:
       traefik.http.routers.servidor.tls.certresolver: "letsencrypt"
       traefik.http.routers.servidor.service: "servidor-svc"
       traefik.http.services.servidor-svc.loadbalancer.server.port: "80"
-      # Sem forward-auth: o próprio proxy faz o OAuth (o claude.ai não passa pelo Authelia). Bypass na página 05.
+      # Sem forward-auth: o próprio proxy faz o OAuth (o claude.ai não passa pelo Authelia). Bypass na página 07.
     networks:
       - agents_internal
       - proxy
@@ -137,7 +137,7 @@ services:
       OPS_CHAVE_SSH: /segredos/id_ed25519
       ANSIBLE_VAULT_PASSWORD_FILE: /segredos/vault_pass
       # Ações de todo cliente fora desta lista (agentes, assistente, desconhecido) só com pedido aprovado no
-      # aprovador (página 16). Lista vazia: todos pedem aprovação.
+      # aprovador (página 18). Lista vazia: todos pedem aprovação.
       OPS_CLIENTES_SEM_APROVACAO: ${OPS_CLIENTES_SEM_APROVACAO}
       APROVADOR_URL: http://aprovador:8080
       APROVADOR_TOKEN: ${APROVADOR_TOKEN}
@@ -148,9 +148,9 @@ services:
       - agents_internal
       - proxy
 
-  # Aprovação humana das ações dos agentes autônomos (página 16): pedidos com botões no Telegram (bot de avisos,
+  # Aprovação humana das ações dos agentes autônomos (página 18): pedidos com botões no Telegram (bot de avisos,
   # lido por getUpdates) e a tela aprovacoes. (Traefik + Authelia, grupo admins). A tela só aceita requisições com
-  # o segredo que o Traefik injeta (X-Aprovador-Chave, middleware aprovador-chave@file da página 5, fora dos
+  # o segredo que o Traefik injeta (X-Aprovador-Chave, middleware aprovador-chave@file da página 07, fora dos
   # labels): outro container da rede proxy não decide no seu lugar.
   aprovador:
     image: ${APROVADOR_IMAGE}
@@ -183,7 +183,7 @@ services:
       - agents_internal # ops_controle → API
       - proxy # Traefik → tela
 
-  # IA que observa o servidor (página 15): lê pela rota de leitura do hub (chave própria), pensa pelo LiteLLM
+  # IA que observa o servidor (página 17): lê pela rota de leitura do hub (chave própria), pensa pelo LiteLLM
   # da ai-desktop-vm e conta no Telegram, via n8n. Recebe os alertas do Grafana em POST /alerta (porta 8080,
   # sem publicar: o Grafana está na rede proxy). Só a biblioteca padrão do Python; nada que escreva.
   observador:

@@ -45,7 +45,7 @@ authelia_storage_postgres_password: "SENHA_FORTE_PARA_O_USUARIO_AUTHELIA_NO_DB_P
 # Chave de criptografia do storage do Authelia (mín. 20 caracteres; gere com: openssl rand -hex 32).
 authelia_storage_encryption_key: "CHAVE_DE_CRIPTOGRAFIA_DO_STORAGE_DO_AUTHELIA"
 
-# --- Authelia como provedor OIDC (login do Immich e do Nextcloud; página 11) ---
+# --- Authelia como provedor OIDC (login do Immich e do Nextcloud; página 13) ---
 # hmac_secret: texto aleatório (openssl rand -hex 32).
 authelia_oidc_hmac_secret: "SEGREDO_HMAC_DO_OIDC_64_CARACTERES"
 # Chave privada RSA 2048 que assina os tokens: openssl genrsa 2048 (cole o PEM inteiro).
@@ -67,11 +67,11 @@ oidc_clients:
   openwebui:
     secret: "SEGREDO_DO_CLIENTE_OPENWEBUI"
     secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_OPENWEBUI"
-  # Conectores MCP do segundo cérebro (página 12): os dois mcp-auth-proxy usam o mesmo cliente.
+  # Conectores MCP do segundo cérebro (página 14): os dois mcp-auth-proxy usam o mesmo cliente.
   mcp:
     secret: "SEGREDO_DO_CLIENTE_MCP"
     secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_MCP"
-  # Langfuse (página 13).
+  # Langfuse (página 15).
   langfuse:
     secret: "SEGREDO_DO_CLIENTE_LANGFUSE"
     secret_digest: "$pbkdf2-sha512$310000$SALT$HASH_DO_SEGREDO_DO_LANGFUSE"
@@ -95,13 +95,13 @@ docker_pgid: 1000
 nextcloud_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_NEXTCLOUD"
 # Senha para o usuário administrador inicial do Nextcloud (criado na primeira execução).
 nextcloud_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_NEXTCLOUD"
-# Senha do Postgres do Immich (stack photos; página 11). Só letras e números.
+# Senha do Postgres do Immich (stack photos; página 13). Só letras e números.
 immich_db_password: "SENHA_FORTE_PARA_O_DB_DO_IMMICH"
 
 grafana_db_password: "SENHA_FORTE_E_UNICA_PARA_O_DB_DO_GRAFANA"
 grafana_admin_initial_password: "SENHA_FORTE_PARA_O_ADMIN_INICIAL_DO_GRAFANA"
 
-# --- APIs de LLM (só o LiteLLM as usa; página 08) ---
+# --- APIs de LLM (só o LiteLLM as usa; página 10) ---
 # Chave mestra do proxy LiteLLM (gere com: openssl rand -hex 32).
 litellm_master_key: "CHAVE_MESTRA_DO_LITELLM"
 llm_api_keys:
@@ -109,7 +109,7 @@ llm_api_keys:
   anthropic: "SUA_CHAVE_ANTHROPIC"
   google_gemini: "SUA_CHAVE_GEMINI"
   typesafe: "SUA_CHAVE_TYPESAFE" # Jev (modelo de decisão); console da TypeSafe AI
-# Senha do Postgres do LiteLLM (stack ai; página 08). Só letras e números.
+# Senha do Postgres do LiteLLM (stack ai; página 10). Só letras e números.
 litellm_db_password: "SENHA_FORTE_PARA_O_DB_DO_LITELLM"
 # Uma chave virtual do LiteLLM por cliente (gere com: echo sk-$(openssl rand -hex 24)). Os clientes usam
 # estas, nunca a litellm_master_key; o setup-ai-keys.yml as cria no LiteLLM com o orçamento de cada uma.
@@ -117,9 +117,9 @@ litellm_client_keys:
   openwebui: "sk-CHAVE_DO_OPEN_WEBUI"
   claude_code: "sk-CHAVE_DO_CLAUDE_CODE"
   n8n: "sk-CHAVE_DO_N8N"
-  observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 15)
-  agentes: "sk-CHAVE_DOS_AGENTES" # posto de agentes (página 16)
-  assistente: "sk-CHAVE_DO_ASSISTENTE" # assistente do Telegram (página 17)
+  observador: "sk-CHAVE_DO_OBSERVADOR" # IA que observa o servidor (página 17)
+  agentes: "sk-CHAVE_DOS_AGENTES" # posto de agentes (página 18)
+  assistente: "sk-CHAVE_DO_ASSISTENTE" # assistente do Telegram (página 19)
 # Chave de sessão do Open WebUI (gere com: openssl rand -hex 32).
 openwebui_secret_key: "CHAVE_SECRETA_DO_OPEN_WEBUI"
 
@@ -130,14 +130,14 @@ telegram_chat_id: "ID_DO_CHAT_DO_TELEGRAM"
 # Token que autentica quem chama o webhook do n8n (gere com: openssl rand -hex 32).
 notificacoes_webhook_token: "TOKEN_DO_WEBHOOK_DE_NOTIFICACOES"
 
-# --- Segundo cérebro (stack notes, página 12) ---
+# --- Segundo cérebro (stack notes, página 14) ---
 # Senha do painel do Syncthing (usuário em syncthing_gui_user) e chave da API dele (openssl rand -hex 24).
 syncthing_gui_password: "SENHA_DO_PAINEL_DO_SYNCTHING"
 syncthing_api_key: "CHAVE_DA_API_DO_SYNCTHING"
 # Assina os tokens OAuth emitidos pelos mcp-auth-proxy (openssl rand -base64 32). Fixo: trocar invalida os logins.
 mcp_auth_hmac_secret: "BASE64_DE_32_BYTES"
 
-# --- Mídia (stack media, página 10) ---
+# --- Mídia (stack media, página 12) ---
 # Chaves de API das *arr, fixadas por variável de ambiente (gere cada uma com: openssl rand -hex 16).
 arr_api_keys:
   sonarr: "CHAVE_DE_API_DO_SONARR_32_HEX"
@@ -147,12 +147,12 @@ arr_api_keys:
 # PrivateKey da configuração WireGuard da ProtonVPN gerada com NAT-PMP (Port Forwarding) ligado.
 protonvpn_wireguard_private_key: "CHAVE_PRIVADA_WIREGUARD_DA_PROTONVPN"
 
-# --- Portainer Agent (ai-desktop-vm; seção 4) ---
+# --- Portainer Agent (ai-desktop-vm; seção 6) ---
 # Segredo compartilhado entre o Portainer da core-services-vm e o agente das outras VMs (openssl rand -hex 32).
 portainer_agent_secret: "SEGREDO_COMPARTILHADO_DO_PORTAINER_AGENT"
 
 # --- Painel (Homepage): credenciais dos widgets ---
-# Geradas na interface de cada aplicação depois do primeiro acesso (página 09).
+# Geradas na interface de cada aplicação depois do primeiro acesso (página 11).
 # O widget do Grafana usa o admin e grafana_admin_initial_password.
 homepage_widget_keys:
   # Sonarr, Radarr, Lidarr e Prowlarr usam arr_api_keys (acima).
@@ -160,43 +160,43 @@ homepage_widget_keys:
   bazarr: "CHAVE_DE_API_DO_BAZARR"
   seerr: "CHAVE_DE_API_DO_SEERR"
   nextcloud: "NC_TOKEN_DO_NEXTCLOUD"
-  immich: "CHAVE_DE_API_DO_IMMICH" # Conta › Configurações da conta › Chaves de API (página 11)
+  immich: "CHAVE_DE_API_DO_IMMICH" # Conta › Configurações da conta › Chaves de API (página 13)
   homeassistant: "TOKEN_DE_LONGA_DURACAO_DO_HOME_ASSISTANT"
   portainer: "CHAVE_DE_API_DO_PORTAINER"
   qbittorrent_user: "admin"
   qbittorrent_password: "SENHA_DO_QBITTORRENT"
 
-# --- Agentes: base (página 13) ---
+# --- Agentes: base (página 15) ---
 # Chaves dos clientes da rota de controle do hub (LAN): "ag-" + openssl rand -hex 24. No config do hub só vai o hash.
 agents_api_keys:
   claude_code: "ag-CHAVE_DO_CLAUDE_CODE"
-# Chaves da rota dos autônomos do hub (porta 4200; página 16): as ações deles esperam a sua aprovação.
+# Chaves da rota dos autônomos do hub (porta 4200; página 18): as ações deles esperam a sua aprovação.
 agents_autonomos_keys:
   agentes: "ag-CHAVE_DOS_AGENTES"
   assistente: "ag-CHAVE_DO_ASSISTENTE"
 # Tokens internos (openssl rand -hex 32): hub → ops/mcp-grafana (backends), mcp_auth_servidor → rota de leitura
-# (proxy) e observador → rota de leitura (observador, página 15).
+# (proxy) e observador → rota de leitura (observador, página 17).
 # As redes Docker são compartilhadas: sem eles, qualquer container chamaria as ferramentas direto.
 agents_tokens_internos:
   backends: "TOKEN_INTERNO_DOS_BACKENDS"
   proxy: "TOKEN_INTERNO_DO_PROXY"
   observador: "TOKEN_INTERNO_DO_OBSERVADOR"
-# Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 15.
+# Token que o Grafana manda ao observador junto com cada alerta (openssl rand -hex 32). Página 17.
 observador_token: "TOKEN_DO_GRAFANA_PARA_O_OBSERVADOR"
-# Aprovador (página 16): token que só o ops_controle usa na API, e o segredo que só o Traefik injeta na tela
+# Aprovador (página 18): token que só o ops_controle usa na API, e o segredo que só o Traefik injeta na tela
 # (openssl rand -hex 32 cada).
 aprovador_token: "TOKEN_DO_OPS_PARA_O_APROVADOR"
 aprovador_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_A_TELA_DE_APROVACOES"
-# Posto (página 16): segredo que só o Traefik injeta no kanban. (o Caddy do posto recusa o resto;
+# Posto (página 18): segredo que só o Traefik injeta no kanban. (o Caddy do posto recusa o resto;
 # openssl rand -hex 32).
 posto_chave_proxy: "SEGREDO_DO_TRAEFIK_PARA_O_KANBAN"
 # Token do GitHub para os agentes abrirem PRs (fine-grained, só os repositórios de trabalho do posto: Contents
 # e Pull requests). Nunca dê Contents de escrita no wiki-home-server: o ops aplica o que estiver na main.
 # "" deixa sem.
 posto_github_token: ""
-# Assistente (página 17): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
+# Assistente (página 19): bot próprio do Telegram (outro @BotFather; o bot de avisos é lido pelo aprovador).
 hermes_telegram_bot_token: "TOKEN_DO_BOT_DO_ASSISTENTE"
-# Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 13.
+# Tokens de service account do Grafana: leitura (papel Viewer) e controle (papel Editor). Página 15.
 grafana_sa_tokens:
   leitura: "glsa_TOKEN_VIEWER"
   controle: "glsa_TOKEN_EDITOR"
@@ -225,7 +225,7 @@ langfuse_secrets:
   minio_password: "SENHA_DO_MINIO_DO_LANGFUSE"
   public_key: "pk-lf-CHAVE_PUBLICA_DO_PROJETO"
   secret_key: "sk-lf-CHAVE_SECRETA_DO_PROJETO"
-# VPN (página 14): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
+# VPN (página 16): auth key de uso único, só para o primeiro 'tailscale up' da core-services-vm.
 # Painel do Tailscale → Settings → Keys → Generate auth key (não reutilizável, pré-aprovada).
 tailscale_auth_key: "tskey-auth-CHAVE_DE_USO_UNICO"
 # Só se o host Proxmox sair do tailnet e precisar entrar de novo (a primeira entrada é pelo preparar-host.sh).

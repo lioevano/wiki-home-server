@@ -4,7 +4,7 @@ description: "Redes Docker da arquitetura (proxy e internal_services): como func
 
 # Gerenciando Redes Docker
 
-O Docker permite criar redes virtuais para isolar seus containers ou para permitir que eles se comuniquem de forma controlada. Em nossa arquitetura, utilizamos principalmente duas redes Docker `bridge` customizadas, `proxy` e `internal_services`, que foram criadas pelo Ansible ([Seção 5.4 do Manual de Implementação](../01-manual-implementacao/05-rede-segura.md#playbook-ansibleplaybookssetup-core-networkingyml)). Além dessas, o Docker possui uma rede `bridge` padrão.
+O Docker permite criar redes virtuais para isolar seus containers ou para permitir que eles se comuniquem de forma controlada. Em nossa arquitetura, utilizamos principalmente duas redes Docker `bridge` customizadas, `proxy` e `internal_services`, que foram criadas pelo Ansible ([Seção 7.4 do Manual de Implementação](../01-manual-implementacao/07-rede-segura.md#playbook-ansibleplaybookssetup-core-networkingyml)). Além dessas, o Docker possui uma rede `bridge` padrão.
 
 Entender como essas redes funcionam e como gerenciá-las é importante para a conectividade e segurança dos seus serviços.
 

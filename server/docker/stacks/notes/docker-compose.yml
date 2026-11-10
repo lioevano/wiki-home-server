@@ -3,7 +3,7 @@
 # os mcp-auth-proxy que publicam os dois MCPs com login pelo Authelia. Roda na ai-desktop-vm.
 # O escopo de cada serviço é dado pelas montagens: o que não está montado não existe para ele.
 # Variáveis: /opt/portainer_stack_envs/notes.env, gerado por ansible/playbooks/setup-notes-volumes.yml.
-# Página: 01-manual-implementacao/12-segundo-cerebro.md
+# Página: 01-manual-implementacao/14-segundo-cerebro.md
 version: '3.9'
 
 networks:
