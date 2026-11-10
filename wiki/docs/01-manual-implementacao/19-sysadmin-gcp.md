@@ -76,13 +76,13 @@ O alerta de orçamento do GCP fica em **US$ 2**.
 | Abrir PR e issue | Pela conta de máquina `lioevano-sysadmin`; a `main` só muda pelo seu merge |
 | Diagnosticar a casa (só leitura) | `diagnostico(host, comando)`: lista fechada (`systemctl status`, `journalctl -u … -n`, `docker ps`, `docker logs`, `df`, `free`, `ip`, `ss -tlnp`, `ping`, `tailscale status`, `cat /etc/os-release`); qualquer outra forma, inclusive `;`, `&&`, `\|` e redirecionamentos, é recusada |
 | Listar playbooks e consultar pedidos de segredo | `playbooks_listar()` e `vault_status()` |
-| Simular e aplicar um playbook | `ansible_check(playbook, limite)` e `ansible_aplicar(plano_id)`, **cada um com botão** |
+| Simular e aplicar um playbook | `ansible_check(playbook, limite)` e `ansible_aplicar(plano_id)`, **cada um com botão**; o `limite` só aceita um padrão de hosts do inventário (letras, números e `_ . - , : ! & *`, até 200 caracteres): um `@arquivo` faria o Ansible ler um arquivo do executor como lista de hosts |
 | Rodar um comando livre num host | `comando(host, comando)`, **com botão**; uma linha, só caracteres visíveis, até 250 caracteres (o pedido mostra o comando por extenso, e o que passa de cerca de 300 caracteres depois de escapado é cortado). Algo maior vira script versionado por PR |
 | Pedir um segredo | `vault_preencher(chave)`: o bot de aprovações pergunta, **a sua resposta é a aprovação**, o valor vai direto ao vault cifrado e a mensagem é apagada. O valor nunca passa pelo modelo, pelo histórico do Hermes nem pelo Honcho |
 | Preparar o host Proxmox | `preparar_host()`: o bot de aprovações lhe manda o comando que você cola no console do host |
 | Pedir trabalho a outros agentes | Issues no `homeserver-equipe` ([A equipe](#a-equipe)) |
 
-Todo pedido com botão vale só para a **mesma ferramenta, alvo e argumentos**, **uma vez**, em **30 minutos**. Há uma execução por vez, no máximo 5 pedidos pendentes, auditoria em arquivo e saídas cortadas antes de voltar ao modelo. O executor **só aceita botões do seu id** (`telegram_chat_id`), ignora a própria VM do GCP como alvo (rodaria dentro dele, onde estão os segredos) e `setup-sysadmin.yml` não está entre os playbooks permitidos: o sysadmin não se reconfigura.
+Todo pedido com botão vale só para a **mesma ferramenta, alvo e argumentos**, **uma vez**, em **30 minutos**. Há uma execução por vez, no máximo 5 pedidos pendentes, auditoria no log do container, com rotação de 3 × 10 MB (`logging` do compose), e saídas cortadas antes de voltar ao modelo. O executor **só aceita botões do seu id** (`telegram_chat_id`), ignora a própria VM do GCP como alvo (rodaria dentro dele, onde estão os segredos) e `setup-sysadmin.yml` não está entre os playbooks permitidos: o sysadmin não se reconfigura.
 
 **Não pode:**
 
@@ -127,7 +127,7 @@ Tudo isso é da fase 0 (você nunca pede a ninguém para criar):
 - **Gemini:** chave do AI Studio, **plano pago** (o deriver e os *embeddings* do Honcho e a reserva do Hermes).
 - **Quatro bots no @BotFather** (`/newbot`), cada um com seu token: o do **sysadmin**, o de **aprovações do sysadmin**, o de **avisos** (n8n e `aprovador` de casa) e o do **assistente**. Um bot só aceita um leitor por vez. Mande `/start` aos dois do sysadmin e anote o id do seu chat (`telegram_chat_id`).
 - **GitHub:** a conta de máquina `lioevano-sysadmin`, colaboradora do `wiki-home-server` com escrita; um *ruleset* na `main` com PR obrigatório, **1 aprovação**, aprovação do último push por outra pessoa, sem *force push* e **sem ninguém na lista de exceções**; o repositório privado `lioevano/homeserver-equipe` com as etiquetas do protocolo; e dois tokens *fine-grained* ([A equipe](#a-equipe)).
-- **Tailscale:** a ACL colada, o HTTPS do tailnet ligado e **duas chaves de uso único e pré-aprovadas**, uma com `tag:sysadmin` (a VM) e outra com `tag:homeserver` (o host Proxmox).
+- **Tailscale:** a ACL colada **antes** das chaves (o painel só cria chave com uma tag que esteja nos `tagOwners`), o HTTPS do tailnet ligado e as chaves de uso único e pré-aprovadas. O script pede duas: a `tag:sysadmin` (a VM) e a `tag:homeserver` do host Proxmox, que vão para o segredo do GCP. A fase 0 do [roteiro](18-roteiro-primeiro-deploy.md#fase-0--fora-do-servidor) cria **três**: a terceira, `tag:homeserver` da core, vai para o vault (`tailscale_auth_key`) pelo `vault_preencher`.
 
 ### 2. Criar a VM (Cloud Shell)
 
@@ -150,13 +150,13 @@ O `scripts/gcp/criar-sysadmin.sh`:
 !!! danger "Guarde o que aparece na tela"
     No fim ele mostra **uma vez** a senha do painel e a **senha do vault** (e, antes, o bloco com as senhas do `gerar_vault.py`, incluindo a do restic). Guarde no gerenciador de senhas: sem a senha do vault você perde o acesso aos segredos da casa.
 
-Repetir o script é seguro: ele reaproveita o segredo existente (nada de senha, chave SSH ou vault novos) e recria uma VM perdida. Só `REGERAR=1` (com confirmação) gera tudo de novo.
+Repetir o script é seguro: ele reaproveita o segredo existente (nada de senha, chave SSH ou vault novos) e recria uma VM perdida. Se a `main` já tem `vault.yml`, **a `main` manda**: o script não gera vault nem envia `entrada/`, e a VM nova também não traz o de entrada que ficou no bucket. Só `REGERAR=1` (com confirmação) gera tudo de novo.
 
 A VM leva de **20 a 40 minutos** para se configurar (as imagens `sysadmin` e `executor` são compiladas na e2-micro). Acompanhe com `gcloud compute instances get-serial-port-output sysadmin --zone=us-east1-b | tail -n 30`. Quando o nó `sysadmin` aparecer no Tailscale e o bot do sysadmin responder, está de pé. A partir daí, toda a configuração da VM vem de `ansible/playbooks/setup-sysadmin.yml`, que a própria VM puxa da `main` no primeiro boot e num timer diário (05:17 UTC), configurando Docker, Tailscale e o role `infra/sysadmin-gcp`. Ele fica **fora** do `full-deploy.yml`, e só o `main.yml` entra nele, nunca o vault.
 
 ### 3. O PR do vault
 
-O vault de entrada está em `/saida/vault.yml` (cifrado, só leitura para o sysadmin, que não o decifra). Peça: "abra o PR do vault". O sysadmin copia o arquivo para `server/ansible/inventories/home/group_vars/all/vault.yml`, roda o `python tools/dev.py check` e abre o PR; você revisa (é um arquivo cifrado: confira que começa com `$ANSIBLE_VAULT;` e mescle). As chaves que vêm de fora (Cloudflare, domínio, provedores de LLM, ProtonVPN, B2 e a senha do root do Proxmox) ficam com o texto do modelo: o sysadmin as pede **uma a uma** pelo `vault_preencher` quando a fase chegar nelas, e cada preenchimento regrava o `saida/vault.yml`; ele abre um PR novo do vault ao fim da fase e você mescla. O executor só lê o vault da `main`.
+O vault de entrada está em `/saida/vault.yml` (cifrado, só leitura para o sysadmin, que não o decifra). Peça: "abra o PR do vault". O sysadmin copia o arquivo para `server/ansible/inventories/home/group_vars/all/vault.yml`, roda o `python tools/dev.py check` e abre o PR; você revisa (é um arquivo cifrado: confira que começa com `$ANSIBLE_VAULT;` e mescle). As chaves que vêm de fora (Cloudflare, domínio, provedores de LLM, ProtonVPN, B2 e a senha do root do Proxmox) ficam com o texto do modelo: o sysadmin as pede **uma a uma** pelo `vault_preencher` quando a fase chegar nelas, e cada preenchimento regrava o `saida/vault.yml`. Os playbooks rodam com o vault da `main`: o PR do vault com as chaves novas é mesclado **antes** de qualquer playbook que as use, não ao fim da fase (o `vault_status` diz se o `saida/vault.yml` tem edições pendentes sobre a `main` ou já foi superado por ela; superado, ele não vira PR). Mesclado o PR, o executor volta a editar a partir do vault da `main`.
 
 ### 4. Preparar o host Proxmox
 
@@ -189,7 +189,7 @@ Arquivos desta seção (cada task acrescenta o seu):
 - `docker/images/executor/executor/config.py` — configuração do executor lida do ambiente (falha fechada) e a conversão para o `ops`.
 - `docker/images/executor/executor/portao.py` — portão de aprovação: toda ação que muda a casa só roda com pedido aprovado pelo Léo no Telegram.
 - `docker/images/executor/executor/remoto.py` — comandos remotos por Ansible ad-hoc e o validador dos comandos de diagnóstico; hosts de conexão local (o `sysadmin-gcp`) ficam fora: rodariam dentro do próprio executor, onde estão os segredos.
-- `docker/images/executor/executor/vault.py` — edita o vault do Ansible: troca o valor de uma folha do modelo e grava cifrado, de forma atômica, em `saida/vault.yml`.
+- `docker/images/executor/executor/vault.py` — edita o vault do Ansible: troca o valor de uma folha do modelo e grava cifrado, de forma atômica, em `saida/vault.yml`, com o sha256 do vault da `main` em que se baseou em `saida/.base`; se a `main` mudou (PR mesclado) ou não há `.base`, volta a valer o vault da `main`.
 - `docker/images/executor/executor/segredos.py` — canal de segredos: o Léo responde a um pedido no Telegram e o valor vai direto ao vault, sem passar pelo modelo, por log ou por mensagem.
 - `docker/images/executor/executor/leitor.py` — leitor do Telegram do executor: cliques nos botões vão ao aprovador e mensagens ao canal de segredos.
 - `docker/images/executor/executor/carteiro.py` — carteiro: sem modelo, consulta o repositório da equipe e acorda o sysadmin pelo webhook do Hermes (assinatura HMAC V2) quando há novidade para ele.
@@ -205,13 +205,13 @@ Arquivos desta seção (cada task acrescenta o seu):
 - `ansible/templates/sysadmin/honcho.json.j2` — `honcho.json` do plugin: servidor próprio, workspace e pares.
 - `ansible/templates/sysadmin/honcho-config.toml.j2` — `config.toml` do Honcho: só Gemini, sem Redis e sem telemetria.
 - `scripts/gcp/separar_segredos.py` — separa o JSON do Secret Manager em arquivos por container no tmpfs `/run/sysadmin`: o sysadmin nunca recebe a senha do vault, a chave SSH nem a chave do Tailscale da casa; falha fechada se faltar campo.
-- `docker/stacks/sysadmin/docker-compose.yml` — stack do sysadmin na VM da GCP: Hermes (gateway e painel em `127.0.0.1:9119`), executor e Honcho (API, deriver e banco), em redes separadas; `config.yaml`, `SOUL.md`, `honcho.json` e o plugin do Honcho entram só leitura, de `config/` (do root).
+- `docker/stacks/sysadmin/docker-compose.yml` — stack do sysadmin na VM da GCP: Hermes (gateway e painel em `127.0.0.1:9119`), executor e Honcho (API, deriver e banco), em redes separadas, com logs rotacionados (3 × 10 MB por container); `config.yaml`, `SOUL.md`, `honcho.json` e o plugin do Honcho entram só leitura, de `config/` (do root).
 - `ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2` — firewall da rede do sysadmin (cadeia `SYSADMIN` na tabela `raw` PREROUTING, pela bridge `br-sysadmin`): bloqueia o tailnet, a LAN de casa e o servidor de metadados da GCP.
 - `ansible/playbooks/setup-sysadmin.yml` — configura a VM do sysadmin a partir dela mesma (`ansible-pull` da `main`, no primeiro boot e no timer diário): Docker sem Portainer, Tailscale com `tag:sysadmin` e o role `infra/sysadmin-gcp`; só o `main.yml` entra (por `vars_files`), nunca o vault, e fica fora do `full-deploy.yml`.
 - `ansible/roles/infra/sysadmin-gcp/defaults/main.yml` — padrões do role: bucket (`<projeto>-sysadmin`), UIDs do Hermes e do executor, endereços do repositório e do Honcho, fuso dos containers.
 - `ansible/roles/infra/sysadmin-gcp/tasks/main.yml` — swap de 4 GB cifrada (chave aleatória a cada boot), firewall, diretórios em `/opt/sysadmin` (o root não escreve nem roda git onde um container escreve: as configurações e o plugin ficam em `config/`, só leitura, e os clones são criados uma vez e entregues ao dono), as imagens `sysadmin` e `executor` (reconstruídas quando a versão ou o contexto muda, ou quando o último build falhou), a stack, o painel pelo `tailscale serve` e os timers.
 - `ansible/roles/infra/sysadmin-gcp/tasks/segredos.yml` — projeto da GCP pelo servidor de metadados, o `separar_segredos.py` em `/usr/local/lib/sysadmin/` e a unit dos segredos, executada na hora (o playbook a roda antes do Tailscale, que lê a chave do tmpfs).
-- `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2` — unit que, antes do Docker, lê o `sysadmin-segredos` do Secret Manager e o separa em `/run/sysadmin`, tentando de novo a cada minuto se falhar (e traz o `vault.yml` de entrada do bucket, se ainda não houver um em `saida/`); o `gcloud` não grava log em disco.
+- `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2` — unit que, antes do Docker, lê o `sysadmin-segredos` do Secret Manager e o separa em `/run/sysadmin`, tentando de novo a cada minuto se falhar (e traz o `vault.yml` de entrada do bucket, se ainda não houver um em `saida/` e o clone da `main` do executor ainda não tiver `vault.yml`); o `gcloud` não grava log em disco.
 - `ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.service.j2` — unit que aplica o `firewall-sysadmin.sh` antes de cada (re)início do Docker.
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.service.j2` — o `ansible-pull` da `main` (de `/`, com o `ansible.cfg` do clone e sem `group_vars` automáticos, para o vault cifrado não ser lido).
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.timer.j2` — atualização diária às 05:17 UTC.
@@ -219,7 +219,7 @@ Arquivos desta seção (cada task acrescenta o seu):
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.service.j2` — unit do backup.
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.timer.j2` — backup diário às 06:07 UTC.
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin.env.j2` — `.env` da stack, só com valores não secretos: versões, caminhos, a sub-rede do sysadmin, os playbooks e as rotas do executor.
-- `scripts/gcp/criar-sysadmin.sh` — roda uma vez no Cloud Shell: liga as APIs, cria a conta de serviço `sysadmin-vm` (`secretAccessor` só no segredo, `objectAdmin` só no bucket), o bucket `<projeto>-sysadmin` (backups apagados em 30 dias), a regra que recusa toda entrada, o alerta de orçamento de US$ 2, o segredo `sysadmin-segredos` (chaves digitadas sem eco, o resto gerado), o `vault.yml` cifrado em `entrada/` e a VM, cujo startup-script instala o `ansible-core` fixado e faz o primeiro `ansible-pull`, igual ao do timer diário. Repetido, reaproveita o segredo existente (só `REGERAR=1` gera tudo de novo, e o startup-script espera o lock do apt); deixa pronta, desligada, a regra `sysadmin-iap-emergencia` (SSH pelo IAP).
+- `scripts/gcp/criar-sysadmin.sh` — roda uma vez no Cloud Shell: liga as APIs, cria a conta de serviço `sysadmin-vm` (`secretAccessor` só no segredo, `objectAdmin` só no bucket), o bucket `<projeto>-sysadmin` (backups apagados em 30 dias), a regra que recusa toda entrada, o alerta de orçamento de US$ 2, o segredo `sysadmin-segredos` (chaves digitadas sem eco, o resto gerado), o `vault.yml` cifrado em `entrada/` e a VM, cujo startup-script instala o `ansible-core` fixado e faz o primeiro `ansible-pull`, igual ao do timer diário. Repetido, reaproveita o segredo existente (só `REGERAR=1` gera tudo de novo, e o startup-script espera o lock do apt) e, se a `main` já tem `vault.yml`, não gera vault nem envia `entrada/`; deixa pronta, desligada, a regra `sysadmin-iap-emergencia` (SSH pelo IAP).
 
 ## Teste de ponta a ponta
 
@@ -227,7 +227,7 @@ Faça depois que o nó `sysadmin` aparecer no Tailscale e o bot responder:
 
 1. `/status` no bot do sysadmin: o Hermes responde. Depois `/status-implantacao`. Dentro do container, `hermes memory status` mostra o Honcho.
 2. Peça algo que dependa da equipe ("peça ao assistente um resumo do servidor"): o sysadmin abre a issue com `papel:` e `estado:aberto` no `homeserver-equipe`, e um comentário no GitHub acorda o sysadmin (o carteiro) com aviso na sua conversa.
-3. `ansible_check` e `ansible_aplicar` de um playbook inofensivo, um que você sabe que já está aplicado e não muda nada: chegam os botões no **bot de aprovações** com commit, autor e assunto; aprove os dois.
+3. **Só depois da fase 2 do [roteiro](18-roteiro-primeiro-deploy.md#fase-2--host-e-vms)** (na fase 1 ainda não há host): `ansible_check` e `ansible_aplicar` de um playbook inofensivo, um que você sabe que já está aplicado e não muda nada: chegam os botões no **bot de aprovações** com commit, autor e assunto; aprove os dois.
 4. `vault_preencher` de uma chave de teste: o bot pergunta, você responde, a mensagem some do chat e o `saida/vault.yml` atualiza (`vault_status`). Confira que o valor não aparece na conversa com o sysadmin.
 5. Peça um `comando` e **recuse** no botão: ele diz que foi recusado e nada roda.
 6. De outra conta do Telegram, mande mensagem aos dois bots: nenhuma resposta.
@@ -242,7 +242,7 @@ Faça depois que o nó `sysadmin` aparecer no Tailscale e o bot responder:
 | VM parada (manutenção, cobrança) | Bot mudo | `gcloud compute instances start sysadmin --zone=us-east1-b`; na partida, os segredos e os containers sobem sozinhos |
 | VM perdida | Perdem-se a memória e as sessões | Rode o `criar-sysadmin.sh` de novo (reaproveita o segredo; `REGERAR=1` só se quiser trocar tudo) e restaure o dump e o diretório do Hermes do GCS |
 | Falta de memória | Swap e `restart: unless-stopped` | Se repetir, `gcp_tipo_maquina: e2-small` por PR |
-| Anthropic fora ou teto atingido | Reserva no Gemini | Se as duas falharem, o executor avisa pelo bot de aprovações: "sysadmin sem modelo" |
+| Anthropic fora ou teto atingido | Reserva no Gemini; se as duas falharem, **não há aviso automático**: o bot do sysadmin fica mudo | Veja pelo dashboard ou por `docker logs sysadmin` (com o Tailscale ou, sem ele, pelo IAP de emergência); confira o teto no console da Anthropic e a chave e a cota do Gemini |
 | Casa fora ou tailnet caído | `diagnostico` falha; nada destrutivo é possível | O sysadmin relata e espera; com a core fora, o host segue alcançável pelo Tailscale |
 | Playbook falha no meio | Código de saída e o final do log no diário | Correção por PR e `ansible_check` de novo |
 | Aprovação vencida | O executor recusa | Peça de novo (vale 30 minutos) |

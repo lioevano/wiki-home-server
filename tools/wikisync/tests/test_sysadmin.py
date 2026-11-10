@@ -898,3 +898,31 @@ def test_logs_da_stack_com_rotacao():
         assert svc.get("logging") == {"driver": "json-file", "options": {"max-size": "10m", "max-file": "3"}}, nome
 
 
+def test_regra_do_agents_md_push_em_branch():
+    a = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    assert ("push em branch de trabalho e abertura de PR pela conta de máquina são permitidos sem botão (spec S1/S7); "
+            "push na `main` continua proibido para todos") in a.replace("\n    ", " ")
+
+
+def test_docs_da_revisao_final():
+    """PR do vault antes do playbook; nada de alerta inexistente; ACL antes das três chaves; o check só na fase 2."""
+    wiki = ROOT / "wiki/docs/01-manual-implementacao"
+    p19 = (wiki / "19-sysadmin-gcp.md").read_text(encoding="utf-8")
+    p18 = (wiki / "18-roteiro-primeiro-deploy.md").read_text(encoding="utf-8")
+    p14 = (wiki / "14-vpn-tailscale.md").read_text(encoding="utf-8")
+    skill = (ROOT / ".agents/skills/implantar-fase/SKILL.md").read_text(encoding="utf-8")
+    assert "ao fim da fase e você mescla" not in p19 and "**antes** de qualquer playbook" in p19
+    assert "**Antes de qualquer playbook que use as chaves novas**" in skill
+    assert "no log do container, com rotação de 3 × 10 MB" in p19 and "auditoria em arquivo" not in p19
+    assert "sysadmin sem modelo" not in p19 and "não há aviso automático" in p19 and "docker logs sysadmin" in p19
+    assert "duas chaves de uso único" not in p19 + p18 and "**três chaves de uso único**" in p18
+    fase0 = p18[p18.index("## Fase 0"):p18.index("## Fase 1")]
+    assert fase0.index("**Primeiro** a ACL") < fase0.index("**três chaves")
+    conf = p14[p14.index("## Primeira configuração"):p14.index("## O que muda nas aplicações")]
+    assert conf.index("**ACL primeiro") < conf.index("**Três chaves de uso único**")
+    assert all(t in conf for t in ("`tailscale_auth_key`", "`tailscale_chave_homeserver`", "`tailscale_chave_sysadmin`"))
+    fase1 = p18[p18.index("## Fase 1"):p18.index("## Fase 2")]
+    assert "só vale depois da fase 2" in fase1
+    assert "**Só depois da fase 2" in p19
+    dr = (ROOT / "wiki/docs/04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md").read_text(encoding="utf-8")
+    assert "novo `preparar_host`" in dr and "`tailscale_auth_key_host`" in dr and "`tailscale_chave_homeserver`" in dr

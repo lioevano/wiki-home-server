@@ -69,9 +69,10 @@ são **erros**; `ORPHAN`, `UNMARKED`, `DESC`, `REF-PENDING` são avisos (`REF-PE
   `ssh`, `docker compose up/down` ou `git push`, sem confirmação explícita do usuário.
   - **Exceção para o sysadmin da [página 19](wiki/docs/01-manual-implementacao/19-sysadmin-gcp.md):**
     o botão do executor no bot de aprovações conta como confirmação explícita do Léo para `ansible-playbook` real,
-    `ansible-vault` e `ssh`, e só vale para aquele pedido (mesma ação e alvo, uma vez, em 30 minutos). Mas o
-    push na `main` continua proibido para todos, inclusive para o sysadmin: toda mudança entra por PR e pelo merge
-    do Léo.
+    `ansible-vault` e `ssh`, e só vale para aquele pedido (mesma ação e alvo, uma vez, em 30 minutos). O
+    push em branch de trabalho e abertura de PR pela conta de máquina são permitidos sem botão (spec S1/S7);
+    push na `main` continua proibido para todos, inclusive para o sysadmin: toda mudança entra por PR e pelo
+    merge do Léo.
 - Não apague arquivos do `server/` sem que a wiki justifique a remoção.
 
 ## Convenções gerais

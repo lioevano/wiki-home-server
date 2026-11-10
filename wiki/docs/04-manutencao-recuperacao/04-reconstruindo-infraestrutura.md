@@ -70,6 +70,18 @@ Siga estes passos metodicamente:
     Este é o passo onde a mágica da Infraestrutura como Código acontece!
 
     1.  **Preparar o Novo Host Proxmox para ser Gerenciado pelo Ansible:**
+        *   **Reentrada no tailnet.** O nó `pve` antigo morreu com o SSD, e a chave `tag:homeserver` com que ele entrou era de uso único. No painel do Tailscale (*Machines*), remova o `pve` antigo e gere uma **chave nova** de uso único, pré-aprovada, com `tag:homeserver` ([seção 14](../01-manual-implementacao/14-vpn-tailscale.md#primeira-configuração)). Depois, um dos dois caminhos:
+            *   **Com o sysadmin ([seção 19](../01-manual-implementacao/19-sysadmin-gcp.md#4-preparar-o-host-proxmox)):** grave a chave nova no segredo do GCP (campo `tailscale_chave_homeserver`) e recarregue os segredos na VM; depois peça um **novo `preparar_host`** e cole o comando no console do host novo. Ele também recria o usuário do Ansible e autoriza a chave do executor, o que dispensa os itens manuais abaixo.
+                ```bash title="Exemplo: chave nova do host no segredo do GCP (Cloud Shell)"
+                read -rs -p "Chave nova tag:homeserver: " CHAVE; echo; export CHAVE
+                gcloud secrets versions access latest --secret=sysadmin-segredos \
+                  | python3 -c 'import json, os, sys; d = json.load(sys.stdin); d["tailscale_chave_homeserver"] = os.environ["CHAVE"]; print(json.dumps(d))' \
+                  | gcloud secrets versions add sysadmin-segredos --data-file=-
+                unset CHAVE
+                # na VM do sysadmin (SSH pelo Tailscale ou pelo IAP de emergência):
+                sudo systemctl restart sysadmin-segredos
+                ```
+            *   **Pela máquina de controle na LAN (caminho manual):** faça os itens abaixo e grave a chave nova em `tailscale_auth_key_host` no vault; o `setup-proxmox-host.yml` (dentro do `full-deploy.yml`) faz a entrada no tailnet. Sem chave, ele para antes do `tailscale up` com uma mensagem que aponta estes dois caminhos.
         *   No shell do novo host Proxmox (como `root`), crie o usuário Ansible dedicado (`{{ proxmox_ansible_user_on_host }}` e.g., `proxmox_ansible_user`).
         *   Adicione-o ao grupo `sudo` e configure `NOPASSWD` para `sudo` (conforme detalhado na [Seção 2.3: Ações Manuais Prévias](../01-manual-implementacao/02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)).
         *   Na sua máquina de controle Ansible, copie sua chave SSH pública (`~/.ssh/id_ed25519_homelab.pub`) para este novo usuário no host Proxmox usando `ssh-copy-id`.
