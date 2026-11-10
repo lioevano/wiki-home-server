@@ -11,62 +11,13 @@ A segurança é uma preocupação primordial em qualquer servidor, especialmente
 A estratégia de segurança aqui não depende de uma única solução, mas de múltiplas camadas de proteção. Se uma camada falhar ou for contornada, outras ainda estarão em vigor.
 
 ```mermaid
-graph TD
-    subgraph Externa
-        Internet[Internet]
-    end
-
-    subgraph Camada_Cloudflare [1. Perímetro Cloudflare]
-        CF_Firewall[WAF/DDoS Protection]
-        CF_Tunnel_Endpoint[Cloudflare Tunnel Endpoint]
-    end
-
-    subgraph Camada_Rede_Local_Segura [2. Rede Local Segura (Sem Portas Abertas)]
-        Roteador[Roteador Doméstico (Firewall Ativo)]
-        CFT_Agent[cloudflared Agent (Conexão de Saída)]
-    end
-
-    subgraph Camada_Proxy_Autenticacao [3. Proxy Reverso e Autenticação (core-services-vm)]
-        Traefik[Traefik (HTTPS, Roteamento)]
-        Authelia[Authelia (2FA)]
-    end
-
-    subgraph Camada_Host_Proxmox [4. Segurança do Hypervisor]
-        PVE_Firewall[Proxmox VE Firewall]
-        SSH_Hardening_Host[SSH Hardening (Host)]
-        ZFS_Integrity[ZFS (Integridade de Dados)]
-    end
-
-    subgraph Camada_VM [5. Segurança das Máquinas Virtuais]
-        UFW_VM[UFW Firewall (VMs)]
-        Atualizacoes_VM[Atualizações SO VM]
-        User_Isolation_VM[Isolamento de Usuários (VMs)]
-    end
-
-    subgraph Camada_Container_Aplicacao [6. Segurança de Containers e Aplicações]
-        Docker_Isolation[Isolamento de Containers]
-        MinPriv_Container[Princípio Menor Privilégio (PUID/PGID)]
-        App_Passwords[Senhas Fortes de Aplicação]
-        App_Updates[Atualizações de Imagens/Apps Docker]
-    end
-
-    Internet --> CF_Firewall
-    CF_Firewall --> CF_Tunnel_Endpoint
-    CF_Tunnel_Endpoint -.-> CFT_Agent
-    CFT_Agent --> Traefik
-    Traefik <--> Authelia
-    Traefik --> Camada_Container_Aplicacao
-
-    Proxmox --> PVE_Firewall
-    Proxmox --> SSH_Hardening_Host
-    Proxmox --> ZFS_Integrity
-    Proxmox -- Hospeda --> Camada_VM
-
-    Camada_VM -- Contém --> Camada_Proxy_Autenticacao
-    Camada_VM -- Contém --> Camada_Container_Aplicacao
-    Camada_VM --> UFW_VM
-    Camada_VM --> Atualizacoes_VM
-    Camada_VM --> User_Isolation_VM
+flowchart TB
+    net["Internet"] --> c1["1 · Perímetro: Cloudflare<br/>IP oculto, DDoS, WAF, túnel de saída"]
+    c1 --> c2["2 · Proxy e autenticação<br/>Traefik (HTTPS) e Authelia (2FA)"]
+    c2 --> c5["5 · Containers e aplicações<br/>isolamento, menor privilégio, imagens fixadas"]
+    c3["3 · Host Proxmox<br/>firewall do PVE, SSH por chave, ZFS"] -- "hospeda" --> c4["4 · VMs<br/>UFW, firewall das portas do Docker"]
+    c4 -- "roda" --> c2
+    c4 -- "roda" --> c5
 ```
 
 1.  **Camada de Perímetro (Cloudflare):**

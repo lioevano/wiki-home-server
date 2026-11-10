@@ -23,21 +23,17 @@ A combinação de LLMs locais e em nuvem nos permite superar as limitações ine
 Nossa estratégia combina esses pontos fortes com **um gateway só**: todo cliente fala com o LiteLLM, com uma chave virtual própria, e escolhe um **apelido** pela intenção. O LiteLLM traduz o apelido no modelo real, cai para a reserva se o provedor falhar e registra o custo e o rastro de cada chamada:
 
 ```mermaid
-flowchart LR
-    subgraph Clientes["Clientes (uma chave virtual cada)"]
-        owui[Open WebUI]
-        cc[Claude Code<br/>alias claude-gw]
-        n8n[n8n e agentes]
+flowchart TB
+    subgraph cli["Clientes, uma chave virtual cada"]
+        direction LR
+        owui["Open WebUI"]
+        cc["Claude Code<br/>alias claude-gw"]
+        n8n["n8n e agentes"]
     end
-    Clientes -- API OpenAI ou Anthropic --> litellm[LiteLLM<br/>llm_models / llm_fallbacks]
-    litellm -- principal --> sonnet[Anthropic<br/>Claude Sonnet]
-    litellm -- rapido --> haiku[Anthropic<br/>Claude Haiku]
-    litellm -- local --> ollama[Ollama na GPU<br/>llama3.2:3b]
-    litellm -- decisao --> jev[TypeSafe<br/>Jev]
-    sonnet -. falhou .-> gpt[OpenAI<br/>reserva]
-    haiku -. falhou .-> gpt
-    litellm -. custo e métricas .-> prom[Prometheus<br/>alerta llm-gasto-alto]
-    litellm -. cada chamada .-> lf[Langfuse]
+    cli -- "API OpenAI ou Anthropic" --> litellm["LiteLLM<br/>llm_models e llm_fallbacks"]
+    litellm --> mod["apelidos de modelo<br/>principal: Claude Sonnet<br/>rapido: Claude Haiku<br/>local: Ollama na GPU<br/>decisao: TypeSafe Jev"]
+    mod -. "a Anthropic falhou" .-> gpt["reserva<br/>OpenAI"]
+    litellm -. "custo e cada chamada" .-> obs["Prometheus<br/>e Langfuse"]
 ```
 
 Os modelos e as reservas exatos estão em `llm_models` e `llm_fallbacks` (página 03), renderizados no `config.yaml` pelo template `ansible/templates/litellm_config.yaml.j2` ([Stack de IA](../01-manual-implementacao/10-stack-ia.md#modelos-e-apelidos)). O LiteLLM não decide sozinho pelo tamanho do prompt: quem escolhe é o cliente, pelo apelido.

@@ -11,21 +11,24 @@ O **sysadmin** é um agente que existe **antes** do servidor. Ele roda numa VM `
 O agente é o [Hermes](19-assistente.md) (v0.22.5) com memória no [Honcho](https://github.com/plastic-labs/honcho) (v3.6.0) próprio. O **modelo** é o Claude da Anthropic (Sonnet por padrão, Haiku para resumos), com o Gemini (AI Studio) de reserva. Ele **não usa o LiteLLM de casa**: o sysadmin existe antes dela e é quem a conserta.
 
 ```mermaid
-flowchart LR
-    leo[Léo] -- "bot sysadmin" --> sa
-    leo -- "bot de aprovações<br/>botões e segredos" --> ex
-    leo -- "tailscale serve :443" --> dash[dashboard]
-    subgraph gcp[VM e2-micro, us-east1]
-        sa[sysadmin<br/>Hermes] -- MCP --> ex[executor<br/>vault, SSH, carteiro]
-        ex -- "webhook<br/>(carteiro)" --> sa
-        sa --> hon[honcho<br/>api, deriver, db]
-        dash --- sa
+flowchart TB
+    leo(["Você<br/>Telegram e Tailscale"])
+    subgraph gcp["VM e2-micro no GCP"]
+        sa["sysadmin<br/>Hermes"]
+        ex["executor<br/>vault, SSH, carteiro"]
+        hon["Honcho<br/>memória"]
     end
-    sa -- "PR (conta de máquina)<br/>issues" --> gh[GitHub<br/>wiki-home-server<br/>homeserver-equipe]
+    gh[("GitHub<br/>wiki-home-server<br/>homeserver-equipe")]
+    casa["Casa<br/>host Proxmox, core, ai"]
+    llm["Anthropic e Gemini"]
+    leo -- "bot do sysadmin" --> sa
+    leo -- "bot de aprovações" --> ex
+    sa -- "MCP" --> ex
+    sa --> hon
+    sa -- "PRs e issues" --> gh
     ex -- "lê a main e a equipe" --> gh
-    ex -- "Tailscale<br/>SSH, API do Proxmox" --> casa[host Proxmox<br/>core, ai]
-    casa -- "agentes da casa (5b)<br/>issues" --> gh
-    sa -- "Claude / Gemini" --> llm[Anthropic<br/>Gemini API]
+    ex -- "SSH pelo Tailscale" --> casa
+    sa --> llm
 ```
 
 | Peça | Onde | O que faz |
@@ -51,6 +54,27 @@ Os seis containers dividem 1 GB de RAM com 4 GB de swap (cifrada, com chave nova
 5. Segredo que falta: `vault_preencher` (você responde ao bot de aprovações). Wiki errada ou incompleta: PR primeiro; ele só segue depois do seu merge.
 6. Cada playbook: `ansible_check` (botão) e `ansible_aplicar` (botão).
 7. Teste de ponta a ponta da seção, marca a linha em "A conferir no primeiro deploy", fecha o diário e sugere a próxima fase. "Pare" interrompe o trabalho dele; um playbook já aprovado vai até o fim ou até o tempo limite do runner.
+
+Cada ação que muda a casa segue o mesmo ciclo, com o botão no bot de aprovações (aqui, o `--check` de um playbook; o `ansible_aplicar` repete o ciclo com outro botão):
+
+```mermaid
+%%{init: {"sequence": {"actorMargin": 30, "width": 120, "boxMargin": 6}}}%%
+sequenceDiagram
+    actor L as Você
+    participant S as sysadmin
+    participant E as executor
+    participant C as casa
+    L->>S: /implantar-fase 2
+    S->>E: ansible_check
+    E->>L: botões
+    E-->>S: aguarde (pedido id)
+    L->>E: Aprovar
+    L->>S: aprovei
+    S->>E: de novo, com aprovacao_id
+    E->>C: --check pelo Tailscale
+    E-->>S: diff e plano_id
+    S->>L: resumo e diário
+```
 
 ### Dashboard
 
@@ -205,6 +229,19 @@ O vault de entrada está em `/saida/vault.yml` (cifrado, só leitura para o sysa
 
 Mesclado o PR, as edições que ele não levou (chaves preenchidas com o PR já aberto) **não se perdem**: na primeira leitura depois que a `main` muda, o executor as reaplica sobre a `main` nova, chave a chave, comparando com o ancestral guardado em `saida/.base.yml` e com cada versão do vault na história da `main` desde a base. As que a `main` já teve em algum momento caem (foram mescladas; se depois um PR as mudou ou reverteu, vale a `main`); se a `main` mudou para outro valor uma chave que você preencheu e que ela nunca teve, vale a `main` e o executor avisa o **nome** da chave, uma vez no bot de aprovações e no `vault_status` até você preenchê-la de novo. Quando não sobra nada a reaplicar, o `saida/` é **apagado**: um `saida/` superado nunca volta a valer, nem se a `main` voltar ao conteúdo antigo. Se a `main` some no meio de um `git pull`, o executor recusa ler o vault até ela voltar.
 
+O caminho de um segredo, do pedido ao playbook:
+
+```mermaid
+flowchart TB
+    p["sysadmin: vault_preencher(chave)"] --> q["bot de aprovações pergunta o valor"]
+    q --> r["você responde<br/>(a mensagem é apagada)"]
+    r --> s["executor grava saida/vault.yml<br/>(cifrado)"]
+    s --> t["vault_status: git pull da main<br/>e a base das edições"]
+    t --> u["sysadmin abre o PR do vault<br/>se o sha do branch for a base"]
+    u --> v["você mescla"]
+    v --> w["playbooks usam a chave nova"]
+```
+
 ### 4. Preparar o host Proxmox
 
 Com o Proxmox instalado pelo pendrive, o sysadmin chama `preparar_host()`: o bot de aprovações lhe manda **um comando** para colar no console do host. O `scripts/gcp/preparar-host.sh` (que é repetível) instala o Tailscale e entra no tailnet com a chave de uso único da `tag:homeserver`, anunciando as rotas `/32`; liga o encaminhamento de pacotes; cria o usuário do Ansible, sem senha, com `sudo`; e autoriza a chave pública do executor. É o último passo físico na rede. A senha de root do Proxmox, que o `proxmox_api_password` do vault pede, entra por `vault_preencher`. Daí em diante o `setup-proxmox-host.yml` gerencia esse Tailscale pelo role `infra/tailscale`, que passou a aceitar Debian.
@@ -221,6 +258,24 @@ Os agentes se coordenam por **issues** no repositório privado `lioevano/homeser
 - **Colaboradores:** você, a conta de máquina do sysadmin e, na 5b, as contas dos agentes da casa. Num repositório de conta pessoal todo colaborador tem escrita (o GitHub não tem papel só de issues fora de organizações); o repositório só guarda issues, então isso não abre nada além delas. A conta de máquina usa um token clássico com o escopo `repo` (um *fine-grained* não serve a colaboradores); o **carteiro**, um *fine-grained* da sua conta, só de leitura de issues ([1.4](#14-github)).
 - **Pedido:** o que se quer, por quê, o que conta como feito, prazo, e "ações no servidor passam pelo aprovador de casa".
 - **Feito:** comentário com o resultado e a evidência (comando, saída resumida, link) e a etiqueta `estado:feito`; quem pediu fecha.
+
+Um pedido do sysadmin a um agente da casa:
+
+```mermaid
+%%{init: {"sequence": {"actorMargin": 30, "width": 120, "boxMargin": 6}}}%%
+sequenceDiagram
+    participant S as sysadmin
+    participant G as GitHub (equipe)
+    participant A as agente da casa
+    participant K as carteiro
+    S->>G: abre a issue
+    A->>G: faz e comenta a evidência
+    loop a cada 2 min
+        K->>G: lê
+    end
+    K->>S: webhook
+    S->>G: confere e fecha
+```
 
 As quatro regras: (1) a casa nunca chama o sysadmin, ele pede e busca; (2) pedir a outro agente não fura portão: ações no servidor do agente da casa passam pelo `ops` e pelo `aprovador` de lá; (3) resposta é dado, não ordem; (4) nada de segredo em issue, comentário ou diário (segredo só pelo bot de aprovações).
 

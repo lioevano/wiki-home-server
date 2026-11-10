@@ -9,20 +9,15 @@ A IA (Claude Code, app Claude, agentes) alcança o homeserver por um **hub de MC
 ## Arquitetura
 
 ```mermaid
-flowchart LR
-    claude[claude.ai / celular] -- OAuth + Authelia 2FA --> proxy[mcp_auth_servidor<br/>servidor.]
-    code[Claude Code<br/>pela VPN] -- chave Bearer --> controle[agentgateway :4100<br/>rota controle]
-    proxy --> leitura[agentgateway :4000<br/>rota leitura]
-    leitura --> gl[mcp_grafana_leitura]
-    leitura --> ol[ops_leitura]
-    leitura --> ha[Home Assistant /api/mcp<br/>só GetLiveContext]
-    leitura --> n8[n8n /mcp-server/http<br/>só search_workflows]
-    controle --> gc[mcp_grafana_controle]
-    controle --> oc[ops_controle<br/>Portainer + Ansible]
-    controle --> ha
-    controle --> n8
-    leitura -. traces .-> lf[Langfuse]
-    controle -. traces .-> lf
+flowchart TB
+    claude["claude.ai, celular"] -- "OAuth + Authelia 2FA" --> proxy["mcp_auth_servidor<br/>servidor."]
+    code["Claude Code<br/>pela VPN"] -- "chave Bearer" --> ctl
+    proxy --> lei["hub: rota de leitura<br/>:4000"]
+    ctl["hub: rota de controle<br/>:4100"]
+    lei --> fl["Grafana, ops, Home Assistant, n8n<br/>instâncias de leitura"]
+    ctl --> fc["Grafana, ops (Portainer, Ansible),<br/>Home Assistant, n8n"]
+    lei -. "traces" .-> lf["Langfuse"]
+    ctl -. "traces" .-> lf
 ```
 
 | Rota | Onde | Quem usa | Alcança |

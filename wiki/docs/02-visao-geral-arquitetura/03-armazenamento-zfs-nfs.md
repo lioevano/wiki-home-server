@@ -53,28 +53,17 @@ Enquanto o ZFS gerencia o armazenamento no host Proxmox, precisamos de uma forma
 Este diagrama ilustra como um volume Docker persistente é gerenciado:
 
 ```mermaid
-graph TD
-    subgraph "Host Proxmox VE (IP: {{ proxmox_host_ip_var }})"
-        ZFS_Pool[ZFS Pool 'data' (HDDs RAID 1)] -->|Contém| ZFS_Dataset[Dataset 'data/docker-volumes']
-        ZFS_Dataset -->|Montado em| Host_Mount_Point[/data/docker-volumes]
-        Host_Mount_Point -->|Exportado via NFS| NFS_Server[Servidor NFS]
+flowchart TB
+    subgraph host["Host Proxmox (192.168.15.66)"]
+        pool[("pool ZFS data<br/>HDDs em espelho")] --> ds["dataset data/docker-volumes<br/>em /data/docker-volumes"]
+        ds --> nfs["servidor NFS"]
     end
-
-    subgraph "VM: core-services-vm (IP: {{ core_services_vm_ip_var }})"
-        NFS_Client[Cliente NFS] -->|Monta de {{ proxmox_host_ip_var }}:/data/docker-volumes| VM_Mount_Point[/mnt/pve_data_zfs/docker-volumes]
-        Docker_Engine[Docker Engine] -->|Usa como source para volume| Container_Volume
-        VM_Mount_Point --> Docker_Engine
+    subgraph vm["core-services-vm (192.168.15.67)"]
+        mnt["montagem NFS<br/>/mnt/pve_data_zfs/docker-volumes"]
+        ct["container, ex.: Home Assistant<br/>.../homeassistant/config em /config"]
     end
-
-    subgraph "Container Docker (e.g., Home Assistant)"
-        Container_Volume[Volume Docker: -v /mnt/pve_data_zfs/docker-volumes/homeassistant/config:/config] --> App_Config[/config dentro do container]
-        App_Config <--> HA_App[Aplicação Home Assistant]
-    end
-
-    NFS_Server <-->|Rede Local| NFS_Client
-
-    style ZFS_Pool fill:#e96900,color:#fff
-    style VM_Mount_Point fill:#2496ed,color:#fff
+    nfs -- "NFS pela LAN" --> mnt
+    mnt -- "volume do Docker" --> ct
 ```
 
 1.  O container Docker (e.g., Home Assistant) é configurado para usar um volume mapeado para um caminho na VM (e.g., `/mnt/pve_data_zfs/docker-volumes/homeassistant/config`).

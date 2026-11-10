@@ -9,16 +9,15 @@ O repositório tem integração contínua de verdade (dois workflows no GitHub A
 ## Fluxo de uma mudança
 
 ```mermaid
-flowchart LR
-    wiki[Editar a wiki] --> check[dev.py check]
-    check --> sync[dev.py sync --yes]
-    sync --> val[test, build, lint]
-    val --> commit[commit: wiki + server + INDEX]
-    commit --> push[push na main]
-    push --> ci[GitHub Actions: docs e server-lint]
-    push --> sim[ansible-playbook --check --diff]
-    sim --> apply[ansible-playbook]
-    apply --> portainer[Update the stack no Portainer]
+flowchart TB
+    wiki["1 · editar a wiki"] --> sync["dev.py check e sync --yes"]
+    sync --> val["2 · test, build e lint"]
+    val --> pr["3 · commit (wiki, server e INDEX)<br/>e PR para a main"]
+    pr --> merge["4 · você revisa e mescla"]
+    merge --> ci["GitHub Actions<br/>docs e server-lint"]
+    merge --> sim["5 · ansible-playbook --check --diff"]
+    sim --> apply["ansible-playbook"]
+    apply --> st["Update the stack no Portainer"]
 ```
 
 1. **Wiki primeiro.** A mudança começa na página que documenta o arquivo (`INDEX.md` diz qual). Bloco literal = conteúdo exato do arquivo; `python tools/dev.py sync --yes` grava no `server/`.
@@ -27,16 +26,17 @@ flowchart LR
     | Comando | O que faz |
     |---|---|
     | `python tools/dev.py setup` | cria o ambiente (`.venv/` ou `$HOMESERVER_VENV`) com `requirements-dev.txt` |
+    | `python tools/dev.py diagramas` | renderiza os diagramas da wiki com o Mermaid 11 e falha se algum quebrar ou ficar pequeno demais (precisa de Node e Chrome) |
     | `python tools/dev.py test` | testes do `wikisync` e dos templates, composes e playbooks (`tools/wikisync/tests/`); mostra o motivo de cada teste pulado |
     | `python tools/dev.py check` | coerência wiki ↔ server: blocos literais, caminhos citados, nav, vault criptografado, finais de linha |
     | `python tools/dev.py build` | `mkdocs build --strict`: qualquer aviso falha |
     | `python tools/dev.py lint` | yamllint, ansible-lint, `--syntax-check` de cada playbook e `docker compose config` de cada stack com as variáveis do `.env.template` |
 
     Alguns testes usam binários reais quando eles estão no `PATH` (`agentgateway`, `alloy`, `authelia`, `node`) e são pulados sem eles. O `test` mostra quais pularam.
-3. **Commit único** com a wiki, o `server/` e o `INDEX.md` (skill `update-index`), em português.
-4. **Push na `main`.** Dois workflows rodam sozinhos:
-    - `.github/workflows/server-lint.yml` (mudanças em `server/`, `tools/` ou no lint): `setup`, `lint` e `check`.
-    - `.github/workflows/docs.yml` (mudanças em `wiki/` ou `tools/`): `test` (com o FastMCP na versão do `ops_fastmcp_version`, para o teste do cabeçalho do hub rodar), `check`, `build` e publicação em `https://wiki.seudominio.com` (branch `gh-pages`).
+3. **Commit único** com a wiki, o `server/` e o `INDEX.md` (skill `update-index`), em português, num branch, e um **PR para a `main`**: o *ruleset* dela não aceita push direto de ninguém ([seção 2, passo 1.4](../01-manual-implementacao/02-sysadmin-gcp.md#14-github)). O sysadmin abre os dele pela conta de máquina.
+4. **Você revisa e mescla.** Dois workflows rodam sozinhos:
+    - `.github/workflows/server-lint.yml` (mudanças em `server/`, `tools/` ou no lint, já no PR): `setup`, `lint` e `check`.
+    - `.github/workflows/docs.yml` (mudanças em `wiki/` ou `tools/`, depois do merge): `test` (com o FastMCP na versão do `ops_fastmcp_version`, para o teste do cabeçalho do hub rodar), `check`, `build`, `diagramas` e publicação em `https://wiki.seudominio.com` (branch `gh-pages`).
 
     Acompanhe em *Actions* no GitHub (ou `gh run list`). Um vermelho na `main` se corrige antes de qualquer deploy.
 5. **Aplicar nos hosts**, a partir de `server/ansible` na máquina de controle, sempre simulando antes:
@@ -48,8 +48,8 @@ flowchart LR
 
     Se o playbook gerou um `.env` novo, abra a stack no Portainer, cole o `.env` novo em **Advanced mode** ([como](../01-manual-implementacao/09-deploy-apps.md#como-as-stacks-recebem-as-variáveis)) e clique em **Update the stack**.
 
-!!! tip "Branches"
-    Para mudanças grandes (um sub-projeto inteiro), trabalhe numa branch e abra um pull request: o `server-lint` roda também em PRs. Mudanças pequenas vão direto na `main`, já validadas localmente.
+!!! tip "Antes do ruleset"
+    Até a fase 0 criar o *ruleset* da `main`, um push direto ainda passa; a partir dele, toda mudança, pequena ou grande, entra por PR.
 
 ## Deploy assistido pela IA
 

@@ -1,0 +1,9 @@
+{
+  "name": "homeserver-diagramas",
+  "private": true,
+  "description": "Renderiza os diagramas mermaid da wiki com o Mermaid 11 (o que o Material for MkDocs carrega) e falha se algum quebrar ou ficar pequeno demais na largura do artigo.",
+  "dependencies": {
+    "mermaid": "11.17.2",
+    "puppeteer-core": "25.16.0"
+  }
+}

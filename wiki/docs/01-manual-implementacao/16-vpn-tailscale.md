@@ -7,14 +7,13 @@ description: "VPN com Tailscale na core-services-vm e no host Proxmox, com tags 
 O túnel da Cloudflare publica as aplicações na internet, mas recusa requisições acima de 100 MB e passa tudo pela Cloudflare. A **VPN** é o caminho privado: com o Tailscale ligado no PC ou no celular, os mesmos endereços `https://<app>.seudominio.com` vão direto ao Traefik de casa, cifrados pelo WireGuard e sem limite de tamanho. A rota de controle do hub de MCPs ([seção 15](15-agentes-base.md)) passa a existir **só** pela VPN.
 
 ```mermaid
-flowchart LR
-    cel[Celular / PC<br/>com Tailscale] -- WireGuard --> ts[tailscaled<br/>core-services-vm<br/>subnet router]
-    cel -. "DNS: *.seudominio.com" .-> dns[CoreDNS<br/>IP da core:53]
-    dns -. "IP da core" .-> cel
-    ts --> traefik[Traefik :443<br/>core-services-vm]
-    ts --> hub[hub :4100<br/>rota de controle]
-    ts --> ai[ai-desktop-vm<br/>Syncthing :22000]
-    traefik --> apps[todas as aplicações<br/>Authelia na frente]
+flowchart TB
+    cel["Celular ou PC<br/>com Tailscale"]
+    cel -- "WireGuard" --> ts["Tailscale na core e no host<br/>anunciam as rotas /32"]
+    cel -. "DNS de *.seudominio.com" .-> dns["CoreDNS na core"]
+    ts --> traefik["Traefik :443<br/>apps, com Authelia"]
+    ts --> hub["hub :4100<br/>rota de controle"]
+    ts --> ai["ai-desktop-vm<br/>Syncthing"]
 ```
 
 | Peça | Onde | O que faz |

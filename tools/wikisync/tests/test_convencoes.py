@@ -164,3 +164,20 @@ def test_diun_vigia_toda_tag_fixada():
             if not tag or not re.search(filtro, tag):
                 achados.append(f"{compose.parent.name}/{nome}: {tag!r} fora de {filtro}")
     assert achados == []
+
+
+def test_diagramas_verificados_com_o_mermaid_do_site():
+    """Os diagramas são verificados com a mesma versão principal do Mermaid que o Material carrega (mermaid@11), sem o
+    plugin mermaid2 (o Material renderiza sozinho), e o workflow docs roda a verificação."""
+    import json
+    pacote = json.loads((ROOT / "tools/diagramas/package.json").read_text(encoding="utf-8"))
+    assert pacote["dependencies"]["mermaid"].split(".")[0] == "11"
+    assert (ROOT / "tools/diagramas/package-lock.json").exists()          # npm ci no CI
+    assert "mermaid2" not in (ROOT / "wiki/mkdocs.yml").read_text(encoding="utf-8")
+    assert "mermaid2" not in (ROOT / "wiki/requirements.txt").read_text(encoding="utf-8")
+    assert "python tools/dev.py diagramas" in (ROOT / ".github/workflows/docs.yml").read_text(encoding="utf-8")
+    for pagina in DOCS.rglob("*.md"):
+        texto = pagina.read_text(encoding="utf-8")
+        for bloco in texto.split("```mermaid")[1:]:
+            corpo = bloco.split("```")[0]
+            assert "style " not in corpo and "{{" not in corpo, pagina.name   # cores fixas somem no modo escuro

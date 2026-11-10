@@ -49,6 +49,7 @@ Na wiki, um bloco de código com `title="<caminho relativo a server/>"` (iniciad
 | `sync` | `wikisync apply` em dry-run; `--yes` grava; `--path <arquivo>` restringe |
 | `test` | testes do `wikisync` |
 | `lint` | yamllint, ansible-lint, `--syntax-check` e `docker compose config` com as variáveis do `.env.template` (falha se o compose usar variável fora dele; Ansible só fora do Windows) |
+| `diagramas` | renderiza os diagramas `mermaid` da wiki com o Mermaid 11 (o do site) na largura do artigo e falha se algum quebrar ou ficar pequeno demais (precisa de Node e Chrome; `--png <pasta>` salva as imagens) |
 
 Códigos do `check`: `LIT-DIFF`, `LIT-MISSING`, `LIT-DUP`, `REF-MISSING`, `LINK`, `NAV`, `VAULT`, `EOL`
 são **erros**; `ORPHAN`, `UNMARKED`, `DESC`, `REF-PENDING` são avisos (`REF-PENDING` = arquivo listado em `pending_files`, como o `vault.yml`, que o usuário só cria após consolidar wiki e server — não é pendência sua). Configuração em `tools/wikisync/config.yml`.

@@ -9,18 +9,14 @@ O **posto** roda agentes Claude Code no servidor, em paralelo, cada tarefa num *
 Os agentes trabalham sem você olhando. Por isso, **toda ação deles no servidor** (reiniciar um container, redeployar uma stack, aplicar um playbook) vira um **pedido** que espera o seu "aprovar". Você decide por botões no Telegram ou na tela `https://aprovacoes.seudominio.com`. A mesma regra vale para o assistente do Telegram ([seção 19](19-assistente.md)).
 
 ```mermaid
-flowchart LR
-    voce[Você] -- kanban. --> vk[Vibe Kanban<br/>posto, ai-desktop-vm]
-    vk --> ag[Claude Code<br/>worktree por tarefa]
-    ag -- chave agentes --> llm[LiteLLM]
-    ag -- notas e escrita --> notas[MCPs das notas]
-    ag -- "rota autonomos :4200<br/>chave agentes" --> hub[agentgateway]
-    hub --> ops[ops_controle]
-    ops -- "pedido" --> apr[aprovador<br/>stack agents]
-    apr -- botões --> tg[Telegram]
-    apr -- aprovacoes. --> tela[Tela de aprovações]
-    tg -- Aprovar --> apr
-    ag -- "repete com aprovacao_id" --> hub
+flowchart TB
+    voce["Você"] -- "kanban." --> vk["Vibe Kanban<br/>ai-desktop-vm"]
+    vk --> ag["Claude Code<br/>worktree por tarefa"]
+    ag -- "chave agentes" --> llm["LiteLLM"]
+    ag -- "notas e escrita" --> notas["MCPs das notas"]
+    ag -- "rota autônomos :4200" --> hub["hub → ops_controle"]
+    hub -- "pedido" --> apr["aprovador<br/>stack agents"]
+    apr -- "botões" --> tg["Telegram e<br/>tela aprovacoes."]
 ```
 
 | Peça | Onde | O que faz |
@@ -71,6 +67,26 @@ Para tarefas de confiança, escolha o perfil `AUTONOMO` ao criar a tentativa: o 
 5. Você decide. A mensagem é atualizada com a decisão e quem decidiu.
 6. **Avise o agente** na tarefa (ou na conversa, no assistente): "aprovei, pode seguir". Ele não fica perguntando sozinho; a resposta do `ops` manda esperar o seu aviso.
 7. O agente chama de novo com `aprovacao_id: X`. O `ops` só executa se o pedido estiver aprovado, for **do mesmo cliente, ação, alvo e argumentos**, ainda **não tiver sido usado** e estiver **no prazo** (`aprovador_validade_min`, 30 min). Depois de usado, ele não vale de novo.
+
+O mesmo pedido, em sequência:
+
+```mermaid
+%%{init: {"sequence": {"actorMargin": 30, "width": 120, "boxMargin": 6}}}%%
+sequenceDiagram
+    participant A as agente
+    participant O as ops
+    participant P as aprovador
+    actor V as Você
+    A->>O: reiniciar jellyfin
+    O->>P: cria o pedido
+    P->>V: botões
+    O-->>A: aguarde (pedido id)
+    V->>P: Aprovar
+    V->>A: aprovei, pode seguir
+    A->>O: de novo, com aprovacao_id
+    O->>P: confere o pedido
+    O-->>A: resultado
+```
 
 ### Ansible: duas aprovações
 

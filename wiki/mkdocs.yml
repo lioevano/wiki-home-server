@@ -47,7 +47,6 @@ theme:
 plugins:
   - search
   - glightbox
-  - mermaid2
   - git-revision-date-localized:
       timezone: "America/Sao_Paulo"
       custom_format: "%d/%m/%Y"
@@ -87,6 +86,7 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.superfences:
       custom_fences:
+        # Diagramas: o próprio Material carrega o Mermaid 11 (sem plugin); python tools/dev.py diagramas confere.
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format

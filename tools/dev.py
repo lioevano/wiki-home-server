@@ -11,6 +11,7 @@ Tarefas:
   sync    wikisync apply   (dry-run; use --yes para gravar, --path para um arquivo)
   test    testes do wikisync
   lint    yamllint, ansible-lint, syntax-check e docker compose config (variáveis do .env.template)
+  diagramas  renderiza os diagramas mermaid da wiki com o Mermaid 11 (Node e Chrome; --png <pasta> salva as imagens)
 
 O ambiente fica em .venv/ na raiz; defina HOMESERVER_VENV para usar outro local.
 """
@@ -176,6 +177,21 @@ def task_lint(args: list[str]) -> int:
     return 1 if failures else 0
 
 
+def task_diagramas(args: list[str]) -> int:
+    """Diagramas mermaid da wiki: renderiza com o Mermaid 11 (o que o site carrega) numa coluna da largura do artigo e
+    falha se algum quebrar ou ficar pequeno demais. Precisa de Node (npm) e do Chrome (CHROME_PATH, se fora do lugar)."""
+    pasta = repo_root() / "tools" / "diagramas"
+    npm = shutil.which("npm")
+    node = shutil.which("node")
+    if not npm or not node:
+        sys.exit("diagramas: precisa do Node.js (node e npm) no PATH")
+    if not (pasta / "node_modules").exists():
+        rc = run([npm, "ci", "--no-audit", "--no-fund"], cwd=pasta)
+        if rc != 0:
+            return rc
+    return run([node, str(pasta / "verificar.js"), *args], cwd=repo_root())
+
+
 TASKS = {
     "setup": task_setup,
     "serve": task_serve,
@@ -184,6 +200,7 @@ TASKS = {
     "sync": task_sync,
     "test": task_test,
     "lint": task_lint,
+    "diagramas": task_diagramas,
 }
 
 

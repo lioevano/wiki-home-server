@@ -7,14 +7,13 @@ description: "Assistente sempre ligado: Hermes Agent no Telegram, que lê o serv
 O **assistente** é um agente que você chama pelo Telegram, de qualquer lugar: "como está o servidor?", "anota isso em estudos", "o que eu escrevi sobre o backup?", "o que eu pedi ontem sobre o backup?". Ele roda o [Hermes Agent](https://github.com/NousResearch/hermes-agent) (Nous Research) na `ai-desktop-vm`, em modo *gateway*, e conversa por um **bot próprio** do Telegram.
 
 ```mermaid
-flowchart LR
-    voce[Você no Telegram] -- bot do assistente --> h[Hermes<br/>stack assistente]
-    h -- chave assistente --> llm[LiteLLM]
-    h -- "rota autonomos :4200" --> hub[agentgateway]
-    hub --> ops[ops_controle]
-    ops -- ações --> apr[aprovador<br/>botões no bot de avisos]
-    h -- busca --> qmd[qmd]
-    h -- escrita --> esc[notes_escrita<br/>Trabalho e Estudos]
+flowchart TB
+    voce["Você no Telegram"] -- "bot do assistente" --> h["Hermes<br/>stack assistente"]
+    h -- "chave assistente" --> llm["LiteLLM"]
+    h -- "busca" --> qmd["qmd"]
+    h -- "escrita" --> esc["notes_escrita<br/>Trabalho e Estudos"]
+    h -- "rota autônomos :4200" --> hub["hub → ops_controle"]
+    hub -- "ações" --> apr["aprovador<br/>botões no bot de avisos"]
 ```
 
 | Peça | Onde | O que faz |

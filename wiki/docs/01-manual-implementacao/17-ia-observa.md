@@ -10,16 +10,14 @@ O **observador** é uma IA que acompanha o servidor sozinha e conta no Telegram 
 - **Toda manhã** (07:30), ela manda um boletim de saúde: alertas, discos, memória, containers reiniciando, erros que se repetem nos logs e as tarefas de backup.
 
 ```mermaid
-flowchart LR
-    graf[Grafana Alerting] -- alerta --> n8n[n8n<br/>/webhook/notificar]
-    graf -- "mesmo alerta<br/>Bearer OBSERVADOR_TOKEN" --> obs[observador<br/>stack agents]
-    relogio[07:30] --> obs
-    obs -- "MCP, chave própria<br/>(só leitura)" --> hub[agentgateway :4000<br/>rota de leitura]
-    hub --> ferr[grafana / ops / casa / n8n<br/>instâncias de leitura]
-    obs -- "chave observador" --> llm[LiteLLM<br/>ai-desktop-vm]
-    llm -.-> lf[Langfuse]
-    obs -- análise --> n8n
-    n8n --> tg[Telegram]
+flowchart TB
+    graf["Grafana Alerting"] -- "alerta" --> n8n["n8n<br/>/webhook/notificar"]
+    graf -- "o mesmo alerta" --> obs["observador<br/>stack agents"]
+    rel["todo dia, 07:30"] --> obs
+    obs -- "MCP, só leitura" --> hub["hub: rota de leitura"]
+    obs -- "chave observador" --> llm["LiteLLM"]
+    obs -- "análise" --> n8n
+    n8n --> tg["Telegram"]
 ```
 
 | Peça | Onde | O que faz |

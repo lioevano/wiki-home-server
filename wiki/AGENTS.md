@@ -36,6 +36,12 @@ A `description` vira meta description do site e alimenta o `INDEX.md`.
 
 - Links relativos entre páginas (`../03-guias-sustentacao/01-adicionando-novo-servico-docker.md`); âncoras permitidas.
 - Admonitions do Material (`!!! tip`, `!!! warning`, `!!! info`), diagramas em ```` ```mermaid ````.
+- **Diagramas legíveis:** o site encolhe o diagrama para a coluna do artigo (~690 px), então:
+    - `flowchart TB` (de cima para baixo), no máximo 3 ou 4 caixas lado a lado; um diagrama grande vira dois;
+    - rótulos curtos e entre aspas (`a["VM (opcional)"]`): parênteses e dois-pontos sem aspas quebram o Mermaid 11;
+    - sequência com até 4 participantes, nomes e mensagens curtos, e `%%{init: {"sequence": {"actorMargin": 30, "width": 120}}}%%` na primeira linha;
+    - sem `style` nem cores fixas (somem no modo escuro) e sem `{{ variáveis }}` (use os IPs de exemplo);
+    - `python tools/dev.py diagramas` renderiza todos e falha com diagrama quebrado ou com escala abaixo de 0,75 (o CI roda o mesmo).
 - Tom em português, direto, explicando o porquê das escolhas.
 
 ## Validar

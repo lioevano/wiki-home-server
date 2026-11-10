@@ -15,6 +15,26 @@ ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml --ask-va
 
 "Stack no Portainer" quer dizer: **Stacks → Add stack** (ou **Update the stack**, se ela já existe), no ambiente indicado, com o compose do repositório no *Web editor* e o `/opt/portainer_stack_envs/<stack>.env` colado em **Environment variables → Advanced mode** ([seção 9](09-deploy-apps.md#deploy-via-portainer)).
 
+As doze fases, em três blocos (a 0 é sua; da 1 em diante, o sysadmin conduz):
+
+```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 25, "rankSpacing": 40}}}%%
+flowchart LR
+    subgraph base["Contas e base"]
+        direction TB
+        f0["0 · contas (você)"] --> f1["1 · sysadmin e vault"] --> f2["2 · host e VMs"] --> f3["3 · rede e VPN"]
+    end
+    subgraph apps["Aplicações"]
+        direction TB
+        f4["4 · apps da core"] --> f5["5 · IA"] --> f6["6 · mídia"] --> f7["7 · fotos e arquivos"] --> f8["8 · segundo cérebro"]
+    end
+    subgraph agentes["Agentes"]
+        direction TB
+        f9["9 · base dos agentes"] --> f10["10 · posto e assistente"] --> f11["11 · painel e backup"]
+    end
+    base --> apps --> agentes
+```
+
 ## Fase 0 — Fora do servidor
 
 **Para criar o sysadmin**, nesta ordem (a ACL do Tailscale vem antes das chaves). O passo a passo, com telas e permissões, está em [Criar o sysadmin](02-sysadmin-gcp.md#1-o-que-você-leva-para-o-cloud-shell):

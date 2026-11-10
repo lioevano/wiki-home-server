@@ -22,6 +22,9 @@ site/
 server/docker/stacks/.env
 server/docker/stacks/*/.env
 
+# Dependências do verificador de diagramas (npm ci em tools/diagramas)
+node_modules/
+
 # Rascunho de execução do Claude (superpowers)
 .superpowers/
 

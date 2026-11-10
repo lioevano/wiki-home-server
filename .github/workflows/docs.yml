@@ -49,6 +49,11 @@ jobs:
       - name: Build estrito da wiki
         run: python tools/dev.py build
 
+      # Mermaid 11 (o que o Material carrega) numa coluna da largura do artigo: falha com diagrama quebrado ou pequeno
+      # demais. O runner já traz o Node e o Google Chrome.
+      - name: Diagramas
+        run: python tools/dev.py diagramas
+
       - name: Publicar no GitHub Pages (branch gh-pages)
         run: |
           git config user.name "github-actions[bot]"

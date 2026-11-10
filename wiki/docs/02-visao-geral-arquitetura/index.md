@@ -27,43 +27,22 @@ Esta seção é ideal para quem deseja entender o "porquê" das escolhas de arqu
 A arquitetura do nosso servidor doméstico é composta por várias camadas e tecnologias que trabalham em harmonia:
 
 ```mermaid
-graph LR
-    subgraph "Camada de Acesso Externo"
-        Internet[Internet / Usuário] --> CF[Cloudflare]
-        CF --> CFT[Cloudflare Tunnel]
+flowchart TB
+    voce["Você<br/>navegador, celular"]
+    sa["sysadmin no GCP<br/>máquina de controle"]
+    voce -- "HTTPS" --> cf["Cloudflare<br/>túnel"]
+    voce -- "VPN" --> ts["Tailscale"]
+    sa -- "Ansible e SSH" --> ts
+    subgraph casa["Casa"]
+        direction TB
+        host["host Proxmox<br/>ZFS, NFS, backup"]
+        core["core-services-vm<br/>Traefik, Authelia, apps"]
+        ai["ai-desktop-vm<br/>LiteLLM, notas, agentes"]
+        host --> core
+        host --> ai
     end
-
-    subgraph "Camada de Rede e Segurança Interna"
-        CFT --> Traefik[Traefik Proxy Reverso]
-        Traefik --> Authelia[Authelia 2FA]
-        Authelia --> Traefik
-    end
-
-    subgraph "Camada de Aplicações (Docker na core-services-vm)"
-        Traefik --> AppDocker[Serviços Docker: Nextcloud, Jellyfin, etc.]
-        AppDocker -- Dados Persistentes --> NFS_Mount_VM[Montagem NFS na VM]
-    end
-
-    subgraph "Camada de Virtualização e Host"
-        Proxmox[Host Proxmox VE] --> CoreVM[VM: core-services-vm]
-        Proxmox --> AiVM[VM: ai-desktop-vm (Opcional)]
-        NFS_Server_Host[Servidor NFS no Host Proxmox] --> NFS_Mount_VM
-        ZFS[Pool ZFS /data nos HDDs] --> NFS_Server_Host
-    end
-
-    subgraph "Camada de Gerenciamento e Automação"
-        Ansible[Máquina de Controle Ansible] -.-> Proxmox
-        Ansible -.-> CoreVM
-        Ansible -.-> AiVM
-        Portainer[Portainer na core-services-vm] -- Gerencia --> DockerHost[Docker Engine na VM]
-        DockerHost -- Executa --> AppDocker
-    end
-
-    style Internet fill:#cde,stroke:#333
-    style CF fill:#f90,stroke:#333
-    style Proxmox fill:#e96900,stroke:#333,color:#fff
-    style Ansible fill:#ee0000,stroke:#333,color:#fff
-    style AppDocker fill:#2496ed,stroke:#333,color:#fff
+    cf --> core
+    ts --> casa
 ```
 
 Navegue pelas subseções para um mergulho mais profundo em cada um desses aspectos da arquitetura.

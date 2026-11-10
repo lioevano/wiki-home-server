@@ -12,6 +12,25 @@ O backup é automático e segue a regra **3-2-1**: três cópias, em duas mídia
 | 2 | Disco externo no host Proxmox | `docker-volumes` (configs e dumps dos bancos), `photos`, `files`, `notes` e o `/etc` do host | restic, todo dia às 04:30 |
 | 3 | Nuvem compatível com S3 (ex.: Backblaze B2) | O mesmo, cifrado antes de sair de casa | restic, na mesma rodada |
 
+O caminho das cópias 2 e 3:
+
+```mermaid
+flowchart TB
+    subgraph vms["VMs"]
+        db["Postgres no disco local"] -- "dump diário" --> nfsd["docker-volumes no NFS"]
+    end
+    subgraph host["Host Proxmox"]
+        pool[("pool ZFS data<br/>docker-volumes, photos, files, notes")]
+        etc["/etc do host"]
+        restic["restic, todo dia às 04:30<br/>cifra antes de copiar"]
+    end
+    nfsd --> pool
+    pool --> restic
+    etc --> restic
+    restic --> disco["disco externo"]
+    restic --> b2["nuvem S3<br/>ex.: Backblaze B2"]
+```
+
 Além disso:
 
 - **`data/notes`:** snapshots automáticos para desfazer edições da IA ([seção 14](../01-manual-implementacao/14-segundo-cerebro.md#desfazer-uma-edição)).

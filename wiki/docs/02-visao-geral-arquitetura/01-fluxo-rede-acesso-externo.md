@@ -11,47 +11,12 @@ A capacidade de acessar seus serviços auto-hospedados de qualquer lugar, de for
 Este diagrama ilustra o caminho que uma requisição de um usuário externo percorre até alcançar um serviço Docker hospedado na sua `core-services-vm`.
 
 ```mermaid
-sequenceDiagram
-    participant U as Usuário Externo
-    participant CF_DNS as Cloudflare DNS
-    participant CF_Edge as Cloudflare Edge Network
-    participant CFT_Agent as Cloudflared Agent (Container na core-services-vm)
-    participant Traefik_Proxy as Traefik (Container na core-services-vm)
-    participant Authelia_Auth as Authelia (Container na core-services-vm)
-    participant App_Service as Serviço Docker (e.g., Nextcloud)
-
-    U->>CF_DNS: 1. Requisição DNS para app.seudominio.com
-    CF_DNS-->>U: 2. Resolve para IP da Cloudflare (associado ao Túnel)
-
-    U->>CF_Edge: 3. Conexão HTTPS para app.seudominio.com
-    CF_Edge->>CFT_Agent: 4. Tráfego encaminhado via Túnel Seguro (conexão de saída)
-    Note over CF_Edge, CFT_Agent: Seu IP doméstico NUNCA é exposto!
-
-    CFT_Agent->>Traefik_Proxy: 5. Encaminha a requisição para https://traefik:443 (rede Docker proxy)
-    Note over CFT_Agent, Traefik_Proxy: No TLS Verify: o nome interno traefik não bate com o certificado do domínio.
-
-    Traefik_Proxy->>Traefik_Proxy: 6. Roteamento baseado em Host (app.seudominio.com)
-    Traefik_Proxy->>Authelia_Auth: 7. Verifica Autenticação (Middleware Authelia)
-    alt Usuário Não Autenticado
-        Authelia_Auth-->>Traefik_Proxy: 8a. Redirecionar para Login
-        Traefik_Proxy-->>U: 9a. Redireciona para auth.seudominio.com
-        U->>Authelia_Auth: 10a. Usuário faz Login + 2FA
-        Authelia_Auth-->>U: 11a. Sessão Autenticada Estabelecida (cookie)
-        Note over U,Authelia_Auth: Usuário é redirecionado de volta para app.seudominio.com
-        U->>Traefik_Proxy: (Nova requisição para app.seudominio.com com cookie de sessão)
-        Traefik_Proxy->>Authelia_Auth: (Verifica Autenticação novamente)
-        Authelia_Auth-->>Traefik_Proxy: (Usuário Autenticado!)
-    else Usuário Autenticado
-        Authelia_Auth-->>Traefik_Proxy: 8b. Autenticação OK
-    end
-
-    Traefik_Proxy->>App_Service: 12. Roteia para o Container do Serviço (e.g., Nextcloud porta 80)
-    Note over Traefik_Proxy,App_Service: Traefik usa labels Docker para encontrar o serviço.
-
-    App_Service-->>Traefik_Proxy: 13. Resposta do Serviço
-    Traefik_Proxy-->>CFT_Agent: 14. Resposta via Traefik
-    CFT_Agent-->>CF_Edge: 15. Resposta via Túnel Seguro
-    CF_Edge-->>U: 16. Resposta final para o Usuário (HTTPS)
+flowchart TB
+    u["Navegador<br/>app.seudominio.com"] -- "HTTPS" --> cf["Cloudflare<br/>DNS, borda, WAF"]
+    cf -- "túnel: conexão de saída,<br/>nenhuma porta aberta em casa" --> cfd["cloudflared<br/>core-services-vm"]
+    cfd -- "https://traefik:443" --> tr["Traefik<br/>roteia pelo Host"]
+    tr -- "forward-auth" --> au["Authelia"]
+    tr -- "labels do Docker" --> app["serviço<br/>ex.: Nextcloud"]
 ```
 
 ## Componentes Chave e Suas Funções
@@ -101,6 +66,30 @@ Authelia adiciona uma camada crucial de segurança, exigindo autenticação (e o
 *   **Autenticação de Múltiplos Fatores (MFA):** Após fornecer credenciais válidas (usuário/senha), Authelia pode exigir um segundo fator (e.g., código TOTP de um app autenticador).
 *   **Políticas de Acesso:** Authelia permite definir políticas granulares em seu arquivo `configuration.yml` para determinar qual nível de autenticação é necessário para diferentes domínios ou redes.
 *   **Single Sign-On (SSO) Básico:** Uma vez que o usuário está logado no Authelia, ele pode acessar outros serviços protegidos pelo mesmo Authelia sem precisar logar novamente (dentro da validade da sessão Authelia).
+
+O login, quando o navegador ainda não tem a sessão do Authelia:
+
+```mermaid
+%%{init: {"sequence": {"actorMargin": 30, "width": 120, "boxMargin": 6}}}%%
+sequenceDiagram
+    participant N as Navegador
+    participant T as Traefik
+    participant A as Authelia
+    participant S as Serviço
+    N->>T: GET app.
+    T->>A: forward-auth
+    alt sem sessão
+        A-->>T: não autenticado
+        T-->>N: vai para auth.
+        N->>A: login + 2FA
+        A-->>N: cookie e volta
+        N->>T: GET app. (cookie)
+        T->>A: forward-auth
+    end
+    A-->>T: autenticado
+    T->>S: encaminha
+    S-->>N: resposta
+```
 
 ### 5. VPN (Tailscale): o caminho privado
 
