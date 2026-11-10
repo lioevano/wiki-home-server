@@ -431,7 +431,7 @@ def test_rede_e_bloqueios_do_sysadmin():
     m = _m()
     rede = ipaddress.ip_network(m["sysadmin_rede_subnet"])
     assert str(rede) == "172.30.10.0/24"
-    b = m["sysadmin_bloqueios"]
+    b = m["sysadmin_bloqueios_fixos"]
     for destino in ("100.64.0.0/10", "169.254.169.254/32", f"{next(rede.hosts())}/32",
                     "{{ ansible_facts.default_ipv4.address }}/32"):
         assert destino in b, destino
@@ -821,3 +821,80 @@ def test_regra_do_agents_md_e_pagina():
         assert f"`{arq}`" in p
     cat = (ROOT / "wiki/docs/02-visao-geral-arquitetura/09-catalogo-aplicacoes.md").read_text(encoding="utf-8")
     assert all(f"| `{n}` |" in cat for n in ("sysadmin", "executor", "honcho"))
+
+
+# --- Revisão final do 5a ---
+
+def _semear_vault(tmp_path, *, main: bool, saida: bool) -> bool:
+    """Roda o ExecStart do vault de entrada da unit com /opt/sysadmin em tmp_path e gcloud/chown falsos."""
+    import shlex
+    u = _unit("sysadmin-segredos.service.j2")
+    linha = next(l for l in u.splitlines() if l.startswith("ExecStart=-") and "entrada/vault.yml" in l)
+    argv = shlex.split(linha[len("ExecStart=-"):])
+    assert argv[:2] == ["/bin/sh", "-c"]
+    raiz = tmp_path / "opt"
+    script = argv[2].replace("$$", "$").replace("/opt/sysadmin", str(raiz))
+    falsos = tmp_path / "bin"
+    falsos.mkdir(parents=True)
+    (falsos / "gcloud").write_text('#!/bin/sh\nfor a; do d="$a"; done\necho entrada > "$d"\n', encoding="utf-8")
+    (falsos / "chown").write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    for b in falsos.iterdir():
+        b.chmod(0o755)
+    vault_main = raiz / "repo-executor/server/ansible/inventories/home/group_vars/all/vault.yml"
+    if main:
+        vault_main.parent.mkdir(parents=True)
+        vault_main.write_text("main", encoding="utf-8")
+    if saida:
+        (raiz / "saida").mkdir(parents=True)
+        (raiz / "saida/vault.yml").write_text("saida", encoding="utf-8")
+    import os
+    r = subprocess.run(["/bin/sh", "-c", script], capture_output=True, text=True,
+                       env={**os.environ, "PATH": f"{falsos}:{os.environ['PATH']}"})
+    assert r.returncode == 0, r.stderr
+    destino = raiz / "saida/vault.yml"
+    return destino.exists() and destino.read_text(encoding="utf-8").strip() == "entrada"
+
+
+def test_unit_so_semeia_o_vault_quando_a_main_nao_tem(tmp_path):
+    """R17: com vault.yml no clone da main do executor, o vault de entrada (da fase 1) não volta para saida/."""
+    assert _semear_vault(tmp_path / "a", main=False, saida=False) is True
+    assert _semear_vault(tmp_path / "b", main=True, saida=False) is False
+    assert _semear_vault(tmp_path / "c", main=False, saida=True) is False
+    u = _unit("sysadmin-segredos.service.j2")
+    assert "/opt/sysadmin/repo-executor/server/ansible/inventories/home/group_vars/all/vault.yml" in u
+
+
+def test_criar_sysadmin_em_reuso_a_main_manda_no_vault():
+    """R17: em reuso, com vault.yml no clone da main, nada de vault novo nem de entrada/ nova."""
+    s = SH.read_text(encoding="utf-8")
+    i_clone = s.index('git clone --quiet --depth 1 --branch main "$REPO_URL" "$TMP/repo"')
+    teste = ('if [ "$REUSAR" = 1 ] && [ -e "$TMP/repo/server/ansible/inventories/home/group_vars/all/vault.yml" ]; then')
+    assert teste in s
+    i = s.index(teste)
+    bloco = s[i:s.index("fi\n", i)]
+    assert "gerar_vault=0" in bloco and "a main manda" in bloco
+    assert i_clone < i < s.index('if [ "$gerar_vault" = 1 ]; then')
+    # a checagem do bucket só vale quando a main não tem vault (elif) e o envio só acontece com gerar_vault=1
+    assert 'elif [ "$REUSAR" = 1 ] && gcloud storage ls "gs://${BUCKET}/entrada/vault.yml"' in s
+    assert s.count('gcloud storage cp "$TMP/vault.yml" "gs://${BUCKET}/entrada/vault.yml"') == 1
+    assert s.index('if [ "$gerar_vault" = 1 ]; then') < s.index('gcloud storage cp "$TMP/vault.yml"')
+
+
+def test_bloqueios_do_sysadmin_cobrem_as_rotas():
+    """As três /32 de tailscale_rotas entram na lista, além da LAN literal (se a LAN mudar, as rotas seguem)."""
+    m = _m()
+    assert m["sysadmin_bloqueios"] == "{{ sysadmin_bloqueios_fixos + tailscale_rotas }}"
+    assert "192.168.15.0/24" in m["sysadmin_bloqueios_fixos"]
+    t = render("roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2", sysadmin_rede_subnet="172.30.10.0/24",
+               sysadmin_bloqueios=[b for b in m["sysadmin_bloqueios_fixos"] if "{{" not in b] + _rotas())
+    for rota in _rotas():
+        assert f"-i br-sysadmin -s 172.30.10.0/24 -d {rota} -j DROP" in t, rota
+
+
+def test_logs_da_stack_com_rotacao():
+    """O executor audita em stdout: sem rotação, o json-file encheria os 30 GB da VM."""
+    c = yaml.safe_load(COMPOSE.read_text(encoding="utf-8"))
+    for nome, svc in c["services"].items():
+        assert svc.get("logging") == {"driver": "json-file", "options": {"max-size": "10m", "max-file": "3"}}, nome
+
+

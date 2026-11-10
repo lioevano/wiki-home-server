@@ -9,6 +9,14 @@
 # leitura: o que a conversa ou o painel mudarem não vale; a wiki manda (setup-sysadmin.yml a cada ansible-pull).
 version: '3.9'
 
+# Logs com rotação (3 × 10 MB por container): a auditoria do executor vai para o stdout, e o json-file sem limite
+# encheria o disco de 30 GB da VM.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 networks:
   # Saída para a internet (Anthropic, Gemini, GitHub, Telegram). O firewall do host bloqueia desta sub-rede o tailnet,
   # a LAN de casa e o servidor de metadados da GCP (firewall-sysadmin.sh.j2).
@@ -40,6 +48,7 @@ services:
     image: localhost/homeserver/sysadmin:${SYSADMIN_IMAGE_TAG}
     container_name: sysadmin
     restart: unless-stopped
+    logging: *logging
     command: ["gateway", "run"]
     environment:
       HERMES_UID: "${DOCKER_PUID}"
@@ -70,6 +79,7 @@ services:
     image: localhost/homeserver/sysadmin:${SYSADMIN_IMAGE_TAG}
     container_name: sysadmin_painel
     restart: unless-stopped
+    logging: *logging
     command: ["dashboard", "--host", "0.0.0.0", "--port", "9119", "--no-open"]
     environment:
       HERMES_UID: "${DOCKER_PUID}"
@@ -101,6 +111,7 @@ services:
     image: localhost/homeserver/executor:${EXECUTOR_IMAGE_TAG}
     container_name: executor
     restart: unless-stopped
+    logging: *logging
     env_file:
       - path: /run/sysadmin/executor.env
         required: false
@@ -130,6 +141,7 @@ services:
     image: ghcr.io/plastic-labs/honcho:v3.6.0
     container_name: honcho_api
     restart: unless-stopped
+    logging: *logging
     entrypoint: ["sh", "docker/entrypoint.sh"]
     env_file:
       - path: /run/sysadmin/honcho.env
@@ -158,6 +170,7 @@ services:
     image: ghcr.io/plastic-labs/honcho:v3.6.0
     container_name: honcho_deriver
     restart: unless-stopped
+    logging: *logging
     entrypoint: ["/app/.venv/bin/python", "-m", "src.deriver"]
     env_file:
       - path: /run/sysadmin/honcho.env
@@ -179,6 +192,7 @@ services:
     image: pgvector/pgvector:0.8.7-pg17
     container_name: honcho_db
     restart: unless-stopped
+    logging: *logging
     command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=30"]
     env_file:
       - path: /run/sysadmin/honcho-db.env

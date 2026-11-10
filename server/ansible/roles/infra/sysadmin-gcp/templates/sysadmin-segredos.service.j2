@@ -1,9 +1,10 @@
 # ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2
 # Segredos do sysadmin (página 19): lê o JSON sysadmin-segredos do Secret Manager (conta de serviço da VM) e o separa
 # por container no tmpfs /run/sysadmin (separar_segredos.py; falha fechada, nada vai para o disco). O Docker exige
-# esta unit (drop-in 20-sysadmin.conf): sem segredos, a stack não sobe. Na primeira vez, traz também o vault.yml
-# cifrado que o criar-sysadmin.sh deixou no bucket. Para trocar os segredos: nova versão no Secret Manager e
-# `systemctl restart sysadmin-segredos` (o Docker, que a exige, reinicia junto e os containers voltam com os novos).
+# esta unit (drop-in 20-sysadmin.conf): sem segredos, a stack não sobe. Enquanto a main não tem vault.yml, traz
+# também o vault.yml cifrado que o criar-sysadmin.sh deixou no bucket. Para trocar os segredos: nova versão no
+# Secret Manager e `systemctl restart sysadmin-segredos` (o Docker, que a exige, reinicia junto e os containers
+# voltam com os novos).
 # Falhou (rede ou Secret Manager fora): tenta de novo a cada minuto, sem limite. RestartMode=direct (systemd >= 254)
 # faz cada nova tentativa pular o estado failed: a unit fica "activating", quem a exige (o Docker) não é avisado de
 # falha passageira e o job de início do Docker espera na fila, subindo assim que os segredos chegam. Sem ele
@@ -30,10 +31,11 @@ Environment=CLOUDSDK_CORE_DISABLE_FILE_LOGGING=1
 ExecStartPre=/bin/sh -c 'rm -rf /run/.sysadmin.*'
 # pipefail: se o gcloud falhar, a unit falha (e o Restart tenta de novo).
 ExecStart=/bin/bash -c 'set -o pipefail; gcloud secrets versions access latest --secret=sysadmin-segredos | python3 /usr/local/lib/sysadmin/separar_segredos.py --destino /run/sysadmin --uid-executor {{ sysadmin_executor_uid }} --uid-sysadmin {{ sysadmin_uid }}'
-# Só se o executor ainda não gravou um: o vault.yml de entrada (cifrado; sem ele, vale o do repositório). Baixa
-# num diretório do root (build/) e só renomeia para dentro de saida/ (do executor): o rename troca um symlink
-# plantado em vez de segui-lo. Falha aqui não derruba a unit.
-ExecStart=-/bin/sh -c 'set -e; test ! -e /opt/sysadmin/saida/vault.yml || exit 0; mkdir -p /opt/sysadmin/build /opt/sysadmin/saida; t=$$(mktemp -d /opt/sysadmin/build/.vault-entrada.XXXXXX); trap "rm -rf $$t" EXIT; gcloud storage cp gs://{{ sysadmin_bucket }}/entrada/vault.yml "$$t/vault.yml"; chown {{ sysadmin_executor_uid }}:{{ sysadmin_executor_uid }} "$$t/vault.yml"; chmod 0644 "$$t/vault.yml"; mv -T "$$t/vault.yml" /opt/sysadmin/saida/vault.yml'
+# Só se o executor ainda não gravou um e se o clone da main do executor não tem vault.yml (com ele, a main manda: a
+# cópia de entrada é a da fase 1 e, numa VM recriada, sobrescreveria o vault da main pelo PR seguinte): o vault.yml
+# de entrada (cifrado). Baixa num diretório do root (build/) e só renomeia para dentro de saida/ (do executor): o
+# rename troca um symlink plantado em vez de segui-lo. Falha aqui não derruba a unit.
+ExecStart=-/bin/sh -c 'set -e; test ! -e /opt/sysadmin/saida/vault.yml || exit 0; test ! -e /opt/sysadmin/repo-executor/server/ansible/inventories/home/group_vars/all/vault.yml || exit 0; mkdir -p /opt/sysadmin/build /opt/sysadmin/saida; t=$$(mktemp -d /opt/sysadmin/build/.vault-entrada.XXXXXX); trap "rm -rf $$t" EXIT; gcloud storage cp gs://{{ sysadmin_bucket }}/entrada/vault.yml "$$t/vault.yml"; chown {{ sysadmin_executor_uid }}:{{ sysadmin_executor_uid }} "$$t/vault.yml"; chmod 0644 "$$t/vault.yml"; mv -T "$$t/vault.yml" /opt/sysadmin/saida/vault.yml'
 TimeoutStartSec=5min
 
 [Install]

@@ -213,7 +213,7 @@ Este role Ansible contém todas as tarefas para configurar o host Proxmox. Os ar
 Este arquivo define as tarefas a serem executadas no host Proxmox.
 
 !!! info "Firewall do Proxmox"
-    As regras de entrada (SSH e Web UI da LAN, NFS v4 na porta 2049 das VMs, Alloy na porta 12345 da `core-services-vm`) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é `proxmox_node_name` (`group_vars/all/main.yml`), não o nome lógico `proxmox_main_host`. As tarefas específicas do Proxmox (repositórios e firewall) só rodam quando existe `/usr/bin/pveversion`: no Proxmox VE o fato `ansible_distribution` vale `Debian`, então ele não serve para reconhecer o host.
+    As regras de entrada (SSH e Web UI da LAN, NFS v4 na porta 2049 das VMs, Alloy na porta 12345 da `core-services-vm`, e SSH e Web UI pela interface `tailscale0` com origem `100.64.0.0/10`, o caminho do executor do [sysadmin](19-sysadmin-gcp.md) até o host) são criadas **antes** de ligar o firewall com política `DROP`, para não cortar o acesso ao host no meio da execução. Os módulos são `community.proxmox.proxmox_firewall` (regras no nível do nó, identificadas pela posição `pos`) e `community.proxmox.proxmox_cluster_firewall_options` (liga o firewall e define as políticas). A API é acessada pelo IP do inventário (`ansible_host`) e o nó é `proxmox_node_name` (`group_vars/all/main.yml`), não o nome lógico `proxmox_main_host`. As tarefas específicas do Proxmox (repositórios e firewall) só rodam quando existe `/usr/bin/pveversion`: no Proxmox VE o fato `ansible_distribution` vale `Debian`, então ele não serve para reconhecer o host.
 
 ```yaml title="ansible/roles/infra/proxmox-host-config/tasks/main.yml"
 # ansible/roles/infra/proxmox-host-config/tasks/main.yml
@@ -319,7 +319,9 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
     enabled: yes
 
 # Regras primeiro: ligar o firewall com DROP antes delas cortaria o acesso ao host.
-- name: "Permitir SSH, Web UI, NFS e Alloy no Firewall do Host Proxmox"
+# Pelo tailnet (pos 4 e 5): o executor do sysadmin chega ao host pela interface tailscale0 com origem 100.x (o host
+# anuncia a própria /32); sem estas regras, o DROP o trancaria fora (página 19).
+- name: "Permitir SSH, Web UI, NFS, Alloy e o tailnet no Firewall do Host Proxmox"
   community.proxmox.proxmox_firewall:
     level: node
     node: "{{ proxmox_node_name }}" # Nome do nó no Proxmox (group_vars), não o nome lógico do inventário
@@ -330,6 +332,8 @@ Este arquivo define as tarefas a serem executadas no host Proxmox.
       - { pos: 1, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ proxmox_web_ui_allowed_cidrs }}", dport: "8006", proto: tcp, comment: "Allow Proxmox WebUI from Local LAN" }
       - { pos: 2, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ vm_nfs_allowed_clients_cidr }}", dport: "2049", proto: tcp, comment: "NFS v4 das VMs" }
       - { pos: 3, type: in, action: ACCEPT, enable: true, iface: "{{ proxmox_default_bridge }}", source: "{{ core_services_vm_ip_var }}", dport: "12345", proto: tcp, comment: "Alloy: Prometheus da core-services-vm" }
+      - { pos: 4, type: in, action: ACCEPT, enable: true, iface: tailscale0, source: "100.64.0.0/10", dport: "22", proto: tcp, comment: "SSH pelo tailnet (executor do sysadmin)" }
+      - { pos: 5, type: in, action: ACCEPT, enable: true, iface: tailscale0, source: "100.64.0.0/10", dport: "8006", proto: tcp, comment: "WebUI e API pelo tailnet (executor do sysadmin)" }
     api_user: "{{ proxmox_api_user }}" # Do vault.yml
     api_password: "{{ proxmox_api_password }}" # Do vault.yml
     api_host: "{{ ansible_host }}" # IP do host Proxmox no inventário
@@ -537,7 +541,7 @@ Após a execução bem-sucedida deste playbook, seu host Proxmox VE estará com 
 * Sistema atualizado.
 * Pacotes essenciais instalados.
 * Fuso horário e NTP configurados.
-* Firewall PVE configurado e habilitado: entrada só para SSH e Web UI (LAN), NFS v4 (VMs) e Alloy (`core-services-vm`).
+* Firewall PVE configurado e habilitado: entrada só para SSH e Web UI (LAN e tailnet), NFS v4 (VMs) e Alloy (`core-services-vm`).
 * Configuração SSHd fortalecida.
 * Grafana Alloy instalado e enviando métricas (inclusive ZFS) e o journal do host para o Prometheus e o Loki.
 * Servidor NFS configurado e exportando os datasets ZFS.

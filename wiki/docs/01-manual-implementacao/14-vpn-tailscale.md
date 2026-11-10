@@ -138,6 +138,20 @@ $IPT -A "$CADEIA" -j RETURN
   failed_when: false
   check_mode: false # só lê
 
+# Fora da rede e sem chave, o 'tailscale up' (no_log) falharia sem dizer por quê. O caso típico é o host Proxmox
+# reinstalado (DR) ou configurado sem o sysadmin: a chave dele não fica no vault (ele entra pelo preparar-host.sh).
+- name: "Tailscale: há chave para entrar na rede"
+  ansible.builtin.assert:
+    that:
+      - (tailscale_auth_key | default('') | string | trim | length) > 0
+    fail_msg: >-
+      Este nó não está no tailnet e não há chave de uso único (tailscale_auth_key vazia). Host Proxmox: gere uma
+      chave nova com tag:homeserver e rode o scripts/gcp/preparar-host.sh (preparar_host do sysadmin, com a chave
+      nova no segredo do GCP) ou grave-a em tailscale_auth_key_host no vault. Core: tailscale_auth_key no vault.
+      VM do GCP: tailscale_chave_sysadmin no segredo sysadmin-segredos (página 14).
+    quiet: true
+  when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') != 'Running'
+
 # Só na primeira vez (ou depois de um logout): a auth key é de uso único. As tags (--advertise-tags) só entram
 # aqui: o 'tailscale set' não troca tags sem reautenticar; para mudá-las num nó já na rede, rode
 # 'tailscale up --force-reauth' à mão.
@@ -282,13 +296,8 @@ tailscale_ufw: true
 
 ## Primeira configuração
 
-1. **Conta Tailscale** (plano gratuito) em `login.tailscale.com`. Em *Settings → Keys → Generate auth key*, gere uma chave **não reutilizável** e **pré-aprovada**, marque a tag `tag:homeserver` e grave em `tailscale_auth_key` no vault (página 01). Ela só serve para o primeiro `tailscale up` da core. As tags só valem na primeira entrada (o `tailscale set` não as troca); para mudá-las num nó que já está na rede, rode `tailscale up --force-reauth` nele. **Core que já estava no tailnet sem tag** (rodou o `setup-vpn.yml` antigo): o role não refaz o `up` (o nó está `Running`), então ela continua sem tag, como aparelho do usuário, e a regra `autogroup:member` a deixaria alcançar `tag:sysadmin` (22 e 443); o `autoApprovers` também não aprovaria as rotas dela. Gere uma chave com `tag:homeserver` e reautentique uma vez, na core: `sudo tailscale up --force-reauth --auth-key=<chave tag:homeserver> --hostname=homeserver --advertise-tags=tag:homeserver --advertise-routes=<IP do host>/32,<IP da core>/32,<IP da ai>/32 --accept-dns=false`. O host Proxmox entra pelo `preparar-host.sh`; o vault só ganha `tailscale_auth_key_host` se o host sair do tailnet e precisar entrar de novo.
-2. **Na máquina de controle:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-vpn.yml --ask-vault-pass --check`, depois sem `--check`.
-3. **No painel do Tailscale → Machines → `homeserver`:**
-    - *Edit route settings*: aprove as três rotas (`<IP do host>/32`, `<IP da core>/32` e `<IP da ai>/32`). Com a ACL do passo 5 colada, o `autoApprovers` já as aprova e este passo vira só conferência. Repita no nó `pve`.
-    - *Disable key expiry*: o servidor não pode cair da VPN a cada 180 dias.
-4. **DNS (painel → DNS → Nameservers → Add nameserver → Custom):** o IP da `core-services-vm`, com **Restrict to domain** = `seudominio.com`. É o split DNS: só o seu domínio vai para o CoreDNS; o resto continua no DNS normal do aparelho.
-5. **ACL (painel → Access controls):** cole o conteúdo de `scripts/tailscale/acl.json` (bloco acima; JSON estrito, sem comentários, então a explicação fica aqui). Ele faz quatro coisas:
+1. **Conta Tailscale** (plano gratuito) em `login.tailscale.com`.
+2. **ACL primeiro (painel → Access controls):** cole o conteúdo de `scripts/tailscale/acl.json` (bloco acima; JSON estrito, sem comentários, então a explicação fica aqui). Ela vem **antes** das chaves: o painel só cria chave com uma tag que esteja nos `tagOwners`. Ela faz quatro coisas:
     - `tagOwners`: só os administradores da conta (`autogroup:admin`) criam nós com `tag:homeserver` (as máquinas da casa) e `tag:sysadmin` (a VM do sysadmin no GCP).
     - `hosts`: apelidos `pve`, `core` e `ai` para os três IPs da LAN, usados nas regras.
     - `acls`: o `tag:sysadmin` alcança só o necessário (SSH e a interface web no `pve`; SSH, HTTPS e DNS na `core`; SSH na `ai`). Os seus aparelhos (`autogroup:member`) alcançam o sysadmin só em SSH e HTTPS e tudo na casa. Não existe regra da casa para o sysadmin: se a máquina da casa for comprometida, ela não chega à VM do GCP. O teste `test_acl_casa_nao_alcanca_o_sysadmin` garante isso.
@@ -297,7 +306,18 @@ tailscale_ufw: true
     Com família na rede, acrescente grupos próprios à ACL em vez de usar `autogroup:member` para tudo.
 
     Esta ACL é **mais estreita que a antiga** ("todos alcançam todos"): um aparelho seu não alcança outro aparelho seu pelo Tailscale (celular para PC, por exemplo). Se quiser isso, acrescente em `acls` uma regra com `autogroup:member` na origem e `autogroup:member:*` no destino.
-6. **Aparelhos:** instale o Tailscale no PC e no celular e entre com a mesma conta. No Windows, as rotas anunciadas já valem; no Linux, use `tailscale up --accept-routes`.
+3. **Três chaves de uso único** (*Settings → Keys → Generate auth key*, **não reutilizável** e **pré-aprovada**, cada uma com a sua tag):
+    - **core**, `tag:homeserver`: em `tailscale_auth_key` no vault (página 01; com o sysadmin, pelo `vault_preencher`). Só serve para o primeiro `tailscale up` da core.
+    - **host Proxmox**, `tag:homeserver`: no segredo do GCP (`tailscale_chave_homeserver`, pedida pelo `criar-sysadmin.sh`); o `preparar-host.sh` entra com ela. Sem o sysadmin, ou se o host sair do tailnet e precisar entrar de novo, ela vai em `tailscale_auth_key_host` no vault e o `setup-proxmox-host.yml` faz a entrada.
+    - **VM do sysadmin no GCP**, `tag:sysadmin`: no segredo do GCP (`tailscale_chave_sysadmin`, pedida pelo `criar-sysadmin.sh`).
+
+    As tags só valem na primeira entrada (o `tailscale set` não as troca); para mudá-las num nó que já está na rede, rode `tailscale up --force-reauth` nele. **Core que já estava no tailnet sem tag** (rodou o `setup-vpn.yml` antigo): o role não refaz o `up` (o nó está `Running`), então ela continua sem tag, como aparelho do usuário, e a regra `autogroup:member` a deixaria alcançar `tag:sysadmin` (22 e 443); o `autoApprovers` também não aprovaria as rotas dela. Gere uma chave com `tag:homeserver` e reautentique uma vez, na core: `sudo tailscale up --force-reauth --auth-key=<chave tag:homeserver> --hostname=homeserver --advertise-tags=tag:homeserver --advertise-routes=<IP do host>/32,<IP da core>/32,<IP da ai>/32 --accept-dns=false`.
+4. **Na máquina de controle:** `ansible-playbook -i inventories/home/hosts.ini playbooks/setup-vpn.yml --ask-vault-pass --check`, depois sem `--check`.
+5. **No painel do Tailscale → Machines → `homeserver`:**
+    - *Edit route settings*: aprove as três rotas (`<IP do host>/32`, `<IP da core>/32` e `<IP da ai>/32`). Com a ACL do passo 2 colada, o `autoApprovers` já as aprova e este passo vira só conferência. Repita no nó `pve`.
+    - *Disable key expiry*: o servidor não pode cair da VPN a cada 180 dias.
+6. **DNS (painel → DNS → Nameservers → Add nameserver → Custom):** o IP da `core-services-vm`, com **Restrict to domain** = `seudominio.com`. É o split DNS: só o seu domínio vai para o CoreDNS; o resto continua no DNS normal do aparelho.
+7. **Aparelhos:** instale o Tailscale no PC e no celular e entre com a mesma conta. No Windows, as rotas anunciadas já valem; no Linux, use `tailscale up --accept-routes`.
 
 ## O que muda nas aplicações
 
@@ -314,7 +334,7 @@ tailscale_ufw: true
 | Falha | Comportamento | O que fazer |
 |---|---|---|
 | `core-services-vm` fora | O host Proxmox anuncia as mesmas rotas e assume | Se os dois estiverem fora, desligue o Tailscale e use a LAN |
-| Rota não aprovada no painel (ou core antiga sem `tag:homeserver`) | O aparelho entra na VPN mas não alcança as VMs | Painel → Machines → `homeserver` e `pve` → *Edit route settings* (ou confira a tag `tag:homeserver` e o `autoApprovers`; core sem tag: reautentique como no passo 1) |
+| Rota não aprovada no painel (ou core antiga sem `tag:homeserver`) | O aparelho entra na VPN mas não alcança as VMs | Painel → Machines → `homeserver` e `pve` → *Edit route settings* (ou confira a tag `tag:homeserver` e o `autoApprovers`; core sem tag: reautentique como no passo 3) |
 | Nome não resolve pela VPN | `fotos.seudominio.com` cai na Cloudflare (limite de 100 MB) | Confira o nameserver restrito ao domínio no painel e `docker logs coredns` |
 | Claude Code sem as ferramentas do hub | A 4100 só responde pela VPN | Ligue o Tailscale no PC |
 | Uma aplicação da LAN parou de alcançar a 9090, 3100, 3005, 4100, 4200 ou 9001 | Bloqueada pelo `firewall_docker_portas` | Acrescente a origem à lista (página 01) e rode o `setup-base-ubuntu.yml` |

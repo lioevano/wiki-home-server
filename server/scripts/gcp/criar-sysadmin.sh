@@ -235,9 +235,14 @@ CICLO
         "$TMP/repo/server/ansible/inventories/home/group_vars/all/main.yml" | head -n 1)
     [[ "$versao" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || erro "não achei ops_ansible_core_version no group_vars"
     echo "ansible-core $versao ($(python3 -V))"
-    # Com o segredo reaproveitado, o vault de entrada só é (re)feito se faltar no bucket.
+    # Com o segredo reaproveitado: se a main já tem vault.yml, a main manda (nada de vault novo nem de entrada/, que
+    # numa VM recriada voltaria ao saida/ e, pelo PR seguinte, sobrescreveria o da main); senão, o vault de entrada
+    # só é (re)feito se faltar no bucket.
     local gerar_vault=1
-    if [ "$REUSAR" = 1 ] && gcloud storage ls "gs://${BUCKET}/entrada/vault.yml" >/dev/null 2>&1; then
+    if [ "$REUSAR" = 1 ] && [ -e "$TMP/repo/server/ansible/inventories/home/group_vars/all/vault.yml" ]; then
+        gerar_vault=0
+        echo "a main já tem vault.yml: a main manda (não gero vault nem envio entrada/; o executor lê o da main)"
+    elif [ "$REUSAR" = 1 ] && gcloud storage ls "gs://${BUCKET}/entrada/vault.yml" >/dev/null 2>&1; then
         gerar_vault=0
         echo "gs://${BUCKET}/entrada/vault.yml já existe: mantido"
     fi

@@ -256,3 +256,18 @@ def test_docker_sem_containerd_snapshotter():
     i_cfg = tasks.index(t)
     i_pkg = next(i for i, x in enumerate(tasks) if "docker-ce" in str(x.get("ansible.builtin.apt", {})))
     assert i_cfg < i_pkg  # antes da instalação: o daemon já sobe sem o snapshotter e sem imagens a migrar
+
+
+def test_firewall_host_aceita_o_tailnet_em_tailscale0():
+    """R18: com o Tailscale em nftables, o DROP do PVE trancaria o executor fora do host (chega por tailscale0)."""
+    tasks = yaml.safe_load(PVE_TASKS.read_text(encoding="utf-8"))
+    regras = next(t for t in tasks if "community.proxmox.proxmox_firewall" in t)["community.proxmox.proxmox_firewall"]["rules"]
+    ts = {r["dport"]: r for r in regras if r.get("iface") == "tailscale0"}
+    assert set(ts) == {"22", "8006"}
+    for r in ts.values():
+        assert r["type"] == "in" and r["action"] == "ACCEPT" and r["enable"] is True and r["proto"] == "tcp"
+        assert r["source"] == "100.64.0.0/10"
+    assert len({r["pos"] for r in regras}) == len(regras)  # posições únicas (update: true casa por pos)
+    conferir = (ROOT / "wiki/docs/01-manual-implementacao/index.md").read_text(encoding="utf-8")
+    linha = next(l for l in conferir.splitlines() if "pve-firewall" in l)
+    assert "setup-proxmox-host.yml" in linha and "ansible_check" in linha and "systemctl status pve-firewall" in linha

@@ -206,3 +206,23 @@ def test_dns_da_vpn(tmp_path):
     finally:
         p.terminate()
         p.wait(timeout=5)
+
+
+def test_tailscale_up_exige_chave():
+    """Host em DR (ou caminho manual) sem chave: falha clara antes do `tailscale up`, não um `up` sem chave."""
+    import jinja2
+    t = yaml.safe_load((ANS / "roles/infra/tailscale/tasks/main.yml").read_text(encoding="utf-8"))
+    nomes = [x["name"] for x in t]
+    up = next(x for x in t if "tailscale up" in str(x.get("ansible.builtin.command", "")))
+    a = next(x for x in t if "ansible.builtin.assert" in x)
+    assert nomes.index(a["name"]) < nomes.index(up["name"])
+    assert a["when"] == up["when"]  # só quando o nó ainda não está na rede
+    msg = a["ansible.builtin.assert"]["fail_msg"]
+    assert "scripts/gcp/preparar-host.sh" in msg and "tailscale_auth_key_host" in msg and "vault" in msg
+    assert "no_log" not in a  # a mensagem precisa aparecer; o assert não mostra o valor
+    (cond,) = a["ansible.builtin.assert"]["that"]
+    env = jinja2.Environment()
+    avaliar = lambda **v: env.from_string("{{ " + cond + " }}").render(**v) == "True"
+    assert avaliar(tailscale_auth_key="tskey-auth-x") is True
+    for v in ({"tailscale_auth_key": ""}, {"tailscale_auth_key": "  "}, {}):
+        assert avaliar(**v) is False, v
