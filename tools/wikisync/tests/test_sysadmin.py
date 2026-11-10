@@ -705,7 +705,7 @@ def test_startup_script_repete_o_ansible_pull_da_unit():
         assert f"export {var}" in st
     assert "ANSIBLE_VARS_ENABLED=" in st
     # a unit roda de "/" (o -i relativo só existe depois do checkout)
-    assert re.search(r"^cd /$", st, re.M) and "WorkingDirectory=/\n" in unit
+    assert re.search(r"^\s*cd / \|\| return 1$", st, re.M) and "WorkingDirectory=/\n" in unit
     # coleções: mesmo destino da unit, a partir do requirements.yml do repositório
     assert "-p /usr/share/ansible/collections" in unit and "-p /usr/share/ansible/collections" in st
     assert "server/ansible/requirements.yml" in st
@@ -730,3 +730,38 @@ def test_criar_sysadmin_nomes_do_role():
     assert 'BUCKET="${PROJETO}-sysadmin"' in s  # sysadmin_bucket
     assert "sysadmin-vm" in s and "gs://${BUCKET}/entrada/vault.yml" in s  # lido pela unit sysadmin-segredos
     assert "--senha-vault-arquivo" in s and "ssh-keygen -t ed25519 -N" in s
+
+
+def test_criar_sysadmin_reaproveita_o_segredo_existente():
+    s = SH.read_text(encoding="utf-8")
+    assert "REUSAR=1" in s and 'if [ "${REGERAR:-0}" = 1 ]' in s  # padrão: reaproveita; REGERAR=1 pede confirmação
+    assert 'if [ "$REUSAR" = 1 ]; then\n        etapa "7/11 e 8/11' in s and "coletar_e_gravar\n" in s
+    assert 'gcloud storage ls "gs://${BUCKET}/entrada/vault.yml"' in s  # vault de entrada só se faltar
+    assert "gcloud secrets versions access latest --secret=$SEGREDO | python3 -c" in s  # onde ler as senhas
+    assert "o que já existe é mantido" not in s and "REAPROVEITADO" in s
+    # falha depois de o segredo existir: a saída diz que os valores estão no Secret Manager
+    assert "SEGREDO_FEITO=1" in s and "os valores estão lá" in s
+    # a senha do vault do segredo vai a um arquivo por redirecionamento, nunca por argumento
+    assert '>"$TMP/senha-vault"' in s
+
+
+def test_startup_script_espera_o_apt_e_repete():
+    st = _startup()
+    assert len(re.findall(r"apt-get\b", st)) == len(re.findall(r"apt-get -o DPkg::Lock::Timeout=600 ", st)) == 2
+    assert "for tentativa in 1 2 3" in st and "sleep 60" in st and "touch \"$MARCA\"" in st
+    assert st.index("touch \"$MARCA\"") > st.index("if primeiro_boot")  # a marca só depois do sucesso
+    assert 'log() { echo "sysadmin-boot:' in st  # progresso no console serial
+
+
+def test_criar_sysadmin_iap_de_emergencia_e_orcamento():
+    s = SH.read_text(encoding="utf-8")
+    i = s.index("gcloud compute firewall-rules create sysadmin-iap-emergencia")
+    bloco = s[i:i + 400]
+    for parte in ("--direction=INGRESS", "--priority=90", "--action=ALLOW", "--rules=tcp:22",
+                  "--source-ranges=35.235.240.0/20", "--disabled"):
+        assert parte in bloco
+    assert "firewall-rules update sysadmin-iap-emergencia --no-disabled" in s
+    assert "firewall-rules update sysadmin-iap-emergencia --disabled" in s
+    for cmd in ("gcloud billing budgets list", "gcloud billing budgets create"):
+        trecho = s[s.index(cmd):].split("\n")[0]
+        assert '--billing-project="$PROJETO"' in trecho
