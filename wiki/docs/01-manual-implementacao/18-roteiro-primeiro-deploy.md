@@ -6,7 +6,7 @@ description: "Roteiro do primeiro deploy: a ordem de contas, vault, playbooks e 
 
 As seções 0 a 17 explicam cada parte e trazem os arquivos. Esta página só põe tudo **na ordem da primeira subida**, com o vault gerado pelo `scripts/gerar_vault.py` ([seção 1](01-maquina-controle-ansible.md#caminho-recomendado-scriptsgerar_vaultpy)): como os segredos aleatórios já estão nele, os passos "gere o segredo X" das seções viram só "rode o playbook". Siga as fases em ordem; dentro de cada uma, os detalhes estão no link.
 
-Todos os comandos rodam na máquina de controle, a partir de `server/ansible`. Antes de cada playbook, rode-o com `--check`; depois, sem.
+**Quem conduz.** A fase 0 é sua. Da fase 1 em diante, quem conduz é o **sysadmin** ([seção 19](19-sysadmin-gcp.md)): você manda `/implantar-fase N` no Telegram, ele faz o que pode, entrega numa mensagem só o que é seu e pede o seu botão para cada `--check` e cada aplicação. Os comandos abaixo continuam sendo o que ele executa; se preferir fazer à mão, rode-os na [máquina de controle](01-maquina-controle-ansible.md), a partir de `server/ansible`. Antes de cada playbook, rode-o com `--check`; depois, sem.
 
 ```bash title="Exemplo: o padrão de cada playbook"
 ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml --ask-vault-pass --check
@@ -23,22 +23,28 @@ ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml --ask-va
 | Chaves dos provedores de LLM (Anthropic, OpenAI, Gemini, TypeSafe) | Console de cada um | [Seção 8](08-stack-ia.md#deploy) |
 | Bot de avisos no @BotFather e o id do seu chat; **outro** bot para o assistente | Telegram | [Seção 9](09-painel-notificacoes.md#bot-do-telegram-e-importação-do-workflow), [seção 17](17-assistente.md#primeira-configuração) |
 | Configuração WireGuard da ProtonVPN com NAT-PMP | account.protonvpn.com | [Seção 10](10-midia.md#primeira-configuração) |
-| Conta Tailscale e auth key de uso único, pré-aprovada | login.tailscale.com | [Seção 14](14-vpn-tailscale.md#primeira-configuração) |
+| Conta Tailscale (plano gratuito) e a auth key de uso único, pré-aprovada, da core (`tag:homeserver`, em `tailscale_auth_key`) | login.tailscale.com | [Seção 14](14-vpn-tailscale.md#primeira-configuração) |
 | Disco externo para o backup e bucket B2 com chave de aplicação | Host e Backblaze | [Backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md) |
-| Proteção da `main` do `wiki-home-server` (PR obrigatório, sem *force push*) e, para os agentes, um token do GitHub **sem** escrita neste repositório | GitHub → *Settings → Rules* | [Seção 16](16-posto-agentes.md#ansible-duas-aprovações) |
+| Chaves dos provedores do sysadmin: Anthropic (própria, com teto de gasto no console) e Gemini (AI Studio, plano pago) | Console de cada um | [Seção 19](19-sysadmin-gcp.md#1-o-que-você-leva-para-o-cloud-shell) |
+| **Projeto do GCP dedicado** ao sysadmin, com faturamento ligado e um orçamento (o script cria o alerta de US$ 2) | console.cloud.google.com | [Seção 19](19-sysadmin-gcp.md#rede-e-acl) |
+| **Quatro bots** no @BotFather: sysadmin, aprovações do sysadmin, avisos e assistente | Telegram | [Seção 19](19-sysadmin-gcp.md#1-o-que-você-leva-para-o-cloud-shell) |
+| Conta de máquina `lioevano-sysadmin` (colaboradora com escrita no `wiki-home-server`) e o *ruleset* da `main`: PR obrigatório, **1 aprovação**, aprovação do último push por outra pessoa, sem *force push* e **sem exceções (nem *bypass*)** | GitHub → *Settings → Rules* | [Seção 19](19-sysadmin-gcp.md#1-o-que-você-leva-para-o-cloud-shell) |
+| Repositório privado `lioevano/homeserver-equipe` com as etiquetas (`papel:*`, `estado:*`, `diario`) e dois tokens *fine-grained*: o da conta de máquina (PR neste repositório e issues no da equipe) e o do carteiro (só leitura de issues da equipe) | GitHub | [Seção 19](19-sysadmin-gcp.md#a-equipe) |
+| ACL de `scripts/tailscale/acl.json` colada, HTTPS do tailnet ligado e **duas chaves de uso único**, pré-aprovadas, com `tag:sysadmin` e `tag:homeserver` | login.tailscale.com | [Seção 14](14-vpn-tailscale.md#primeira-configuração) |
+| Para os agentes de casa (posto e assistente), um token do GitHub **sem** escrita neste repositório | GitHub → *Settings → Rules* | [Seção 16](16-posto-agentes.md#ansible-duas-aprovações) |
 
-## Fase 1 — Máquina de controle e vault
+## Fase 1 — Criar o sysadmin e mesclar o PR do vault
 
-1. `scripts/bootstrap.sh` e a chave SSH da máquina de controle ([seção 1](01-maquina-controle-ansible.md#11-instalação-do-ambiente-de-controle-scriptsbootstrapsh)).
-2. Ajuste o `group_vars/all/main.yml` **pela wiki** ([seção 1](01-maquina-controle-ansible.md#variáveis-globais-não-sensíveis-ansibleinventorieshomegroup_varsallmainyml)): IPs, gateway, CIDRs, discos. O `notes_nextcloud_usuario` fica para a fase 8.
-3. `python3 scripts/gerar_vault.py` (na pasta `server/`). Anote o que ele mostra no gerenciador de senhas, principalmente a senha do vault e a do **restic**.
-4. `ansible-vault edit inventories/home/group_vars/all/vault.yml` e preencha o que a fase 0 trouxe: Cloudflare, `base_domain`, `letsencrypt_email`, chaves de LLM, `telegram_bot_token`, `telegram_chat_id`, `hermes_telegram_bot_token`, ProtonVPN, `tailscale_auth_key`, B2 e a senha do root do Proxmox. Os tokens criados nas telas (Grafana, Portainer, Home Assistant, n8n, widgets) ficam para depois.
-5. Commit do `vault.yml` **criptografado** (o `python tools/dev.py check` acusa se não estiver): o runner do `ops` clona o repositório e precisa dele.
+1. No Cloud Shell, `gcloud config set project <projeto>` e rode o `criar-sysadmin.sh` ([seção 19](19-sysadmin-gcp.md#2-criar-a-vm-cloud-shell)). Ele pede as chaves e os tokens da fase 0, gera o `vault.yml` cifrado com todos os segredos aleatórios e cria a VM. **Anote** o que ele mostra no gerenciador de senhas: a senha do vault, a do painel do Hermes e, do `gerar_vault.py`, a do **restic** (sem ela nenhum backup se restaura).
+2. Espere a VM se configurar (20 a 40 minutos), o nó `sysadmin` aparecer no Tailscale e o bot responder. Faça o [teste de ponta a ponta da seção 19](19-sysadmin-gcp.md#teste-de-ponta-a-ponta).
+3. Peça "abra o PR do vault" e **mescle** o PR do sysadmin com o `vault.yml` criptografado ([seção 19](19-sysadmin-gcp.md#3-o-pr-do-vault)); o `python tools/dev.py check` acusa se não estiver cifrado. O runner do `ops` e o executor leem o vault da `main`.
+4. Ajuste o `group_vars/all/main.yml` **pela wiki** ([seção 1](01-maquina-controle-ansible.md#variáveis-globais-não-sensíveis-ansibleinventorieshomegroup_varsallmainyml)): IPs, gateway, CIDRs, discos, por PR do sysadmin. O `notes_nextcloud_usuario` fica para a fase 8.
+5. O sysadmin pede, uma a uma, pelo `vault_preencher`, as chaves que vêm de fora e que a fase 0 trouxe: Cloudflare, `base_domain`, `letsencrypt_email`, chaves de LLM, `telegram_bot_token`, `telegram_chat_id`, `hermes_telegram_bot_token`, ProtonVPN, `tailscale_auth_key`, B2. Você responde ao **bot de aprovações**, nunca na conversa. Os tokens criados nas telas (Grafana, Portainer, Home Assistant, n8n, widgets) ficam para depois. Ao fim, mescle o novo PR do vault.
 
 ## Fase 2 — Host e VMs
 
 1. Instale o Proxmox VE e crie o pool ZFS e os datasets, incluindo o `data/notes` da [seção 12](12-segundo-cerebro.md#deploy) ([seção 2](02-proxmox-ve-host.md)).
-2. Usuário Ansible no host ([ações manuais prévias](02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible)) e `setup-proxmox-host.yml` (NFS, Alloy, restic).
+2. **Cole no console do host o comando do `preparar_host`** que o sysadmin lhe manda pelo bot de aprovações ([seção 19](19-sysadmin-gcp.md#4-preparar-o-host-proxmox)): Tailscale, usuário Ansible com `sudo` e a chave SSH do sysadmin. A senha de root do Proxmox (`proxmox_api_password`) entra pelo `vault_preencher`. Isso substitui as [ações manuais prévias](02-proxmox-ve-host.md#ações-manuais-prévias-no-host-proxmox-essencial-para-ansible) (que só valem para quem não usa o sysadmin). Depois, `setup-proxmox-host.yml` (NFS, Alloy, restic).
 3. Template Cloud-Init ([seção 3.1](03-provisionamento-vms.md#31-criação-de-template-de-vm-base-ubuntu-server-cloud-init)) e `vm-deploy.yml`.
 4. `setup-base-ubuntu.yml` (Docker, UFW, firewall das portas do Docker, Alloy, Portainer na core e o agente na VM de IA) ([seção 4](04-configuracao-base-vms-ubuntu.md)).
 5. A chave pública do runner que o `gerar_vault.py` mostrou vai para o `~/.ssh/authorized_keys` do usuário Ansible das **duas VMs** (não no host) ([seção 13](13-agentes-base.md#tokens-e-chaves)).
@@ -47,7 +53,7 @@ ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml --ask-va
 
 1. `setup-core-networking.yml`: sobe a stack `core` (Traefik, Cloudflared, Authelia) ([seção 6](06-deploy-core.md)).
 2. Public Hostnames do túnel ([seção 5.5](05-rede-segura.md#55-configuração-de-dns-na-cloudflare)); abra `auth.` e registre o 2FA. A senha do admin do Authelia é a que o `gerar_vault.py` mostrou.
-3. `setup-vpn.yml` e, no painel do Tailscale, rotas, expiração da chave, DNS e ACL ([seção 14](14-vpn-tailscale.md#primeira-configuração)).
+3. `setup-vpn.yml` e, no painel do Tailscale, conferir as rotas (o `autoApprovers` da ACL da fase 0 já as aprova), desligar a expiração da chave e configurar o DNS ([seção 14](14-vpn-tailscale.md#primeira-configuração)). A core passa a anunciar as mesmas rotas do host (failover).
 4. **Portainer, nos primeiros 5 minutos:** administrador, ambiente `local` e o agente `ai-desktop-vm`; crie o token de API e grave em `portainer_api_key` ([seção 7](07-deploy-apps.md#primeiro-acesso-ao-portainer)).
 
 ## Fase 4 — Apps da core

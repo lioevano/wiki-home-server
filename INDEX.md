@@ -38,12 +38,14 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `coredns` | ansible:infra/tailscale / core-services-vm | logs, documentacao, notificacoes | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `diun` | apps / core-services-vm; ai / ai-desktop-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
 | `docker-socket-proxy` | apps / core-services-vm; ai / ai-desktop-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
+| `executor` | sysadmin / gcp | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `flaresolverr` | media / core-services-vm | logs, variaveis, documentacao, notificacoes | `01-manual-implementacao/10-midia.md` |
 | `gluetun` | media / core-services-vm | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/10-midia.md` |
 | `grafana` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
 | `hermes` | assistente / ai-desktop-vm | logs, dados, variaveis, llm, documentacao, notificacoes | `01-manual-implementacao/17-assistente.md` |
 | `homeassistant` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/07-deploy-apps.md` |
 | `homepage` | apps / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/09-painel-notificacoes.md` |
+| `honcho` | sysadmin / gcp | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `immich` | photos / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `jellyfin` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `langfuse` | langfuse / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/13-agentes-base.md` |
@@ -66,6 +68,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `seerr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `sonarr` | media / core-services-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/10-midia.md` |
 | `syncthing` | notes / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/12-segundo-cerebro.md` |
+| `sysadmin` | sysadmin / gcp | logs, dados, variaveis, documentacao, notificacoes | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `tailscale` | ansible:infra/tailscale / core-services-vm | logs, documentacao, notificacoes | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `traefik` | core / core-services-vm | autenticacao, acesso-externo, logs, dados, variaveis, documentacao, notificacoes, painel | `01-manual-implementacao/05-rede-segura.md` |
 | `vibe-kanban` | posto / ai-desktop-vm | roteamento, autenticacao, acesso-externo, logs, dados, variaveis, llm, documentacao, notificacoes, painel | `01-manual-implementacao/16-posto-agentes.md` |
@@ -110,6 +113,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `01-manual-implementacao/16-posto-agentes.md` | Seção 16: Posto de agentes e aprovação humana | Posto de agentes: Claude Code em paralelo pelo Vibe Kanban na ai-desktop-vm, e cada ação no servidor esperando a sua aprovação no Telegram ou na tela. |
 | `01-manual-implementacao/17-assistente.md` | Seção 17: Assistente sempre ligado (Hermes Agent) | Assistente sempre ligado: Hermes Agent no Telegram, que lê o servidor, busca e escreve nas notas e guarda memória, sem terminal e com ações aprovadas. |
 | `01-manual-implementacao/18-roteiro-primeiro-deploy.md` | Roteiro do primeiro deploy | Roteiro do primeiro deploy: a ordem de contas, vault, playbooks e stacks do Portainer, do servidor vazio até os agentes, com o link de cada passo. |
+| `01-manual-implementacao/19-sysadmin-gcp.md` | Seção 19: Sysadmin no GCP | Sysadmin no GCP: Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub. |
 | `01-manual-implementacao/index.md` | Manual de Implementação | Roteiro do manual de implementação: a ordem dos passos para construir o servidor doméstico do zero. |
 | `02-visao-geral-arquitetura/01-fluxo-rede-acesso-externo.md` | Fluxo de Rede e Acesso Externo Seguro | Como uma requisição externa chega aos serviços: Cloudflare Tunnel, Traefik e Authelia, com diagrama do fluxo. |
 | `02-visao-geral-arquitetura/02-virtualizacao-proxmox.md` | Virtualização com Proxmox VE | Por que Proxmox VE e como a virtualização organiza VMs, recursos e isolamento na arquitetura. |
@@ -168,6 +172,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/playbooks/setup-posto-volumes.yml` | playbook | `01-manual-implementacao/16-posto-agentes.md` |
 | `ansible/playbooks/setup-productivity-automation-volumes.yml` | playbook | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/setup-proxmox-host.yml` | playbook | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
+| `ansible/playbooks/setup-sysadmin.yml` | playbook | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/playbooks/setup-vpn.yml` | playbook | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/playbooks/tasks/apps-env.yml` | outro | `01-manual-implementacao/07-deploy-apps.md` |
 | `ansible/playbooks/tasks/dump-postgres.yml` | outro | `01-manual-implementacao/05-rede-segura.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
@@ -198,6 +203,18 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/proxmox-vm/tasks/main.yml` | role-tasks | `01-manual-implementacao/03-provisionamento-vms.md` |
 | `ansible/roles/infra/restic/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/roles/infra/restic/templates/backup-restic.sh.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
+| `ansible/roles/infra/sysadmin-gcp/defaults/main.yml` | role-defaults | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/tasks/main.yml` | role-tasks | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/tasks/segredos.yml` | role-tasks | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.service.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.service.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.sh.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.timer.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.service.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-pull.timer.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin.env.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/tailscale/defaults/main.yml` | role-defaults | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/tailscale/tasks/main.yml` | role-tasks | `01-manual-implementacao/14-vpn-tailscale.md` |
 | `ansible/roles/infra/tailscale/templates/Corefile.j2` | role-template | `01-manual-implementacao/14-vpn-tailscale.md` |
@@ -239,6 +256,10 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/templates/posto/profiles.json.j2` | template | `01-manual-implementacao/16-posto-agentes.md` |
 | `ansible/templates/prometheus.yml.j2` | template | `01-manual-implementacao/07-deploy-apps.md`, `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `ansible/templates/recyclarr.yml.j2` | template | `01-manual-implementacao/10-midia.md` |
+| `ansible/templates/sysadmin/SOUL.md.j2` | template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/templates/sysadmin/config.yaml.j2` | template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/templates/sysadmin/honcho-config.toml.j2` | template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/templates/sysadmin/honcho.json.j2` | template | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `docker/images/aprovador/.dockerignore` | outro | `01-manual-implementacao/16-posto-agentes.md` |
 | `docker/images/aprovador/Dockerfile` | outro | `01-manual-implementacao/16-posto-agentes.md` |
 | `docker/images/aprovador/aprovador/__init__.py` | script | `01-manual-implementacao/16-posto-agentes.md` |
@@ -247,6 +268,19 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `docker/images/aprovador/aprovador/pedidos.py` | script | `01-manual-implementacao/16-posto-agentes.md` |
 | `docker/images/aprovador/aprovador/servidor.py` | script | `01-manual-implementacao/16-posto-agentes.md` |
 | `docker/images/aprovador/aprovador/telegram.py` | script | `01-manual-implementacao/16-posto-agentes.md` |
+| `docker/images/executor/.dockerignore` | outro | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/Dockerfile` | outro | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/__init__.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/__main__.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/carteiro.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/config.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/ferramentas.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/leitor.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/portao.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/remoto.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/segredos.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/servidor.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `docker/images/executor/executor/vault.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `docker/images/observador/.dockerignore` | outro | `01-manual-implementacao/15-ia-observa.md` |
 | `docker/images/observador/Dockerfile` | outro | `01-manual-implementacao/15-ia-observa.md` |
 | `docker/images/observador/observador/__init__.py` | script | `01-manual-implementacao/15-ia-observa.md` |
@@ -271,6 +305,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `docker/images/ops/ops/runner.py` | script | `01-manual-implementacao/13-agentes-base.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md` |
 | `docker/images/ops/ops/server.py` | script | `01-manual-implementacao/13-agentes-base.md` |
 | `docker/images/posto/Dockerfile` | outro | `01-manual-implementacao/16-posto-agentes.md` |
+| `docker/images/sysadmin/Dockerfile` | outro | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `docker/stacks/agents/docker-compose.yml` | stack | `01-manual-implementacao/13-agentes-base.md`, `01-manual-implementacao/15-ia-observa.md`, `01-manual-implementacao/16-posto-agentes.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/08-stack-ia.md` |
@@ -283,11 +318,15 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `docker/stacks/notes/docker-compose.yml` | stack | `01-manual-implementacao/12-segundo-cerebro.md` |
 | `docker/stacks/photos/docker-compose.yml` | stack | `01-manual-implementacao/11-fotos-arquivos.md` |
 | `docker/stacks/posto/docker-compose.yml` | stack | `01-manual-implementacao/16-posto-agentes.md` |
+| `docker/stacks/sysadmin/docker-compose.yml` | stack | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `scripts/bootstrap.sh` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/18-roteiro-primeiro-deploy.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md` |
+| `scripts/gcp/criar-sysadmin.sh` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `scripts/gcp/preparar-host.sh` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `scripts/gcp/separar_segredos.py` | script | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `scripts/gerar_vault.py` | script | `01-manual-implementacao/01-maquina-controle-ansible.md`, `01-manual-implementacao/05-rede-segura.md`, `01-manual-implementacao/13-agentes-base.md`, `01-manual-implementacao/18-roteiro-primeiro-deploy.md`, `01-manual-implementacao/index.md` |
 | `scripts/notify.sh` | script | `01-manual-implementacao/09-painel-notificacoes.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `04-manutencao-recuperacao/01-rotinas-manutencao.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `scripts/restore.sh` | script | `04-manutencao-recuperacao/03-cicd-basico-ansible.md`, `04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md`, `04-manutencao-recuperacao/05-migrando-hardware-rede.md` |
-| `scripts/tailscale/acl.json` | outro | `01-manual-implementacao/14-vpn-tailscale.md` |
+| `scripts/tailscale/acl.json` | outro | `01-manual-implementacao/14-vpn-tailscale.md`, `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `scripts/validation/check_nfs_permissions.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |
 | `scripts/validation/check_yaml_integrity.py` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |
 | `scripts/validation/validate_infrastructure.sh` | script | `04-manutencao-recuperacao/01-rotinas-manutencao.md` |

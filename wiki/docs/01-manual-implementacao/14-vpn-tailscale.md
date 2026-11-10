@@ -295,6 +295,8 @@ tailscale_ufw: true
     - `autoApprovers`: as três rotas `/32` são aprovadas sozinhas quando anunciadas por um nó com `tag:homeserver`.
 
     Com família na rede, acrescente grupos próprios à ACL em vez de usar `autogroup:member` para tudo.
+
+    Esta ACL é **mais estreita que a antiga** ("todos alcançam todos"): um aparelho seu não alcança outro aparelho seu pelo Tailscale (celular para PC, por exemplo). Se quiser isso, acrescente em `acls` uma regra com `autogroup:member` na origem e `autogroup:member:*` no destino.
 6. **Aparelhos:** instale o Tailscale no PC e no celular e entre com a mesma conta. No Windows, as rotas anunciadas já valem; no Linux, use `tailscale up --accept-routes`.
 
 ## O que muda nas aplicações

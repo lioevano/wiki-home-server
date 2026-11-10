@@ -12,6 +12,12 @@ A máquina de controle Ansible é o seu "cockpit" para automação. É a partir 
 *   Acesso à Internet para baixar pacotes e coleções Ansible.
 *   O repositório `homeserver` clonado do seu repositório Git, ou com a estrutura de diretórios criada conforme a [Seção 0.2: Estrutura do Repositório Git](00-preparacao-planejamento.md#02-estrutura-do-repositório-git-do-projeto-homeserver).
 
+## O sysadmin como caminho recomendado
+
+Você não precisa ter esta máquina de controle: o **sysadmin** ([seção 19](19-sysadmin-gcp.md)) é uma máquina de controle do Ansible pronta, num agente Hermes numa VM do Google Cloud, que você comanda pelo Telegram. O `gerar_vault.py` roda no Cloud Shell, na criação, e dali em diante o sysadmin preenche o vault, roda `ansible-playbook` e `ssh` pelo **executor**, com o seu botão em cada ação que muda a casa, e conduz o [roteiro do primeiro deploy](18-roteiro-primeiro-deploy.md). Este é o caminho recomendado.
+
+O resto desta seção continua valendo quando você quiser (ou precisar) rodar o Ansible à mão: numa máquina sua, com o `bootstrap.sh`, a chave SSH e o vault abaixo. As duas formas usam os mesmos playbooks e o mesmo `vault.yml`.
+
 ## 1.1. Instalação do Ambiente de Controle (`scripts/bootstrap.sh`)
 
 Para simplificar e padronizar a configuração da sua máquina de controle, utilizaremos o script `bootstrap.sh` fornecido no projeto.

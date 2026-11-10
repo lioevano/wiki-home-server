@@ -807,3 +807,17 @@ def test_skills_do_sysadmin_sem_comandos_inexistentes():
     assert "terminal" in st and "Peça ao Léo que rode" not in st
     for n in ("implantar-fase", "equipe"):
         assert "ansible-playbook" in (ROOT / f".agents/skills/{n}/SKILL.md").read_text(encoding="utf-8")
+
+
+# --- Task 14: regra do AGENTS.md, página 19 e catálogo ---
+
+def test_regra_do_agents_md_e_pagina():
+    a = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    assert "botão do executor" in a and "página 19" in a and "push na `main`" in a
+    p = (ROOT / "wiki/docs/01-manual-implementacao/19-sysadmin-gcp.md").read_text(encoding="utf-8")
+    for arq in ("scripts/gcp/criar-sysadmin.sh", "scripts/gcp/preparar-host.sh", "scripts/gcp/separar_segredos.py",
+                "scripts/tailscale/acl.json", "docker/stacks/sysadmin/docker-compose.yml", "ansible/playbooks/setup-sysadmin.yml",
+                "docker/images/executor/executor/carteiro.py", "docker/images/sysadmin/Dockerfile"):
+        assert f"`{arq}`" in p
+    cat = (ROOT / "wiki/docs/02-visao-geral-arquitetura/09-catalogo-aplicacoes.md").read_text(encoding="utf-8")
+    assert all(f"| `{n}` |" in cat for n in ("sysadmin", "executor", "honcho"))

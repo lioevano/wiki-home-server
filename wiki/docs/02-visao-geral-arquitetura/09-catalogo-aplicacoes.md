@@ -20,7 +20,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 |---|---|
 | Aplicação | id único em kebab-case |
 | Categoria | `infra` · `produtividade` · `mídia` · `monitoramento` · `automação` · `ia` |
-| Stack / VM | `<stack>` / `<vm>` — stack = pasta em `docker/stacks/` ou `ansible:<role>`; aplicação presente em mais de uma VM lista cada par separado por `;` |
+| Stack / VM | `<stack>` / `<vm>` — stack = pasta em `docker/stacks/` ou `ansible:<role>`; aplicação presente em mais de uma VM lista cada par separado por `;`; `gcp` é a VM do sysadmin fora de casa ([página 19](../01-manual-implementacao/19-sysadmin-gcp.md)) |
 | Serviços | nomes exatos no compose; o primeiro é o principal |
 | Exposição | `publica` (internet, sem login) · `protegida` (internet, com Authelia) · `interna` (só rede local/Docker) |
 | Subdomínio | subdomínio em `<sub>.seudominio.com`, ou `—` se `interna` |
@@ -45,12 +45,14 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `coredns` | infra | ansible:infra/tailscale / core-services-vm | `coredns` | interna | — | nenhum | não | — | — | [VPN (Tailscale)](../01-manual-implementacao/14-vpn-tailscale.md) |
 | `diun` | monitoramento | apps / core-services-vm; ai / ai-desktop-vm | `diun`, `diun_ai` | interna | — | nfs | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
 | `docker-socket-proxy` | infra | apps / core-services-vm; ai / ai-desktop-vm | `docker-socket-proxy`, `docker-socket-proxy-ai` | interna | — | nenhum | não | — | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
+| `executor` | ia | sysadmin / gcp | `executor` | interna | — | local | não | — | — | [Sysadmin no GCP](../01-manual-implementacao/19-sysadmin-gcp.md) |
 | `flaresolverr` | mídia | media / core-services-vm | `flaresolverr` | interna | — | nenhum | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `gluetun` | mídia | media / core-services-vm | `gluetun` | interna | — | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `grafana` | monitoramento | apps / core-services-vm | `grafana`, `grafana_db` | protegida | `grafana` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `hermes` | ia | assistente / ai-desktop-vm | `assistente` | interna | — | local | não | — | `+llm` | [Assistente (Hermes)](../01-manual-implementacao/17-assistente.md) |
 | `homeassistant` | automação | apps / core-services-vm | `homeassistant` | protegida | `hass` | nfs | não | — | — | [Deploy de apps](../01-manual-implementacao/07-deploy-apps.md) |
 | `homepage` | infra | apps / core-services-vm | `homepage` | protegida | `home` | nfs | não | `painel` | — | [Painel e notificações](../01-manual-implementacao/09-painel-notificacoes.md) |
+| `honcho` | ia | sysadmin / gcp | `honcho_api`, `honcho_deriver`, `honcho_db` | interna | — | local | não | — | — | [Sysadmin no GCP](../01-manual-implementacao/19-sysadmin-gcp.md) |
 | `immich` | produtividade | photos / core-services-vm | `immich_server`, `immich_ml`, `immich_redis`, `immich_db` | publica | `fotos` | nfs | não | — | — | [Fotos e arquivos](../01-manual-implementacao/11-fotos-arquivos.md) |
 | `jellyfin` | mídia | media / core-services-vm | `jellyfin` | publica | `jellyfin` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `langfuse` | ia | langfuse / ai-desktop-vm | `langfuse_web`, `langfuse_worker`, `langfuse_db`, `langfuse_clickhouse`, `langfuse_redis`, `langfuse_minio` | protegida | `langfuse` | local | não | — | — | [Agentes: base](../01-manual-implementacao/13-agentes-base.md) |
@@ -73,6 +75,7 @@ Este catálogo declara **o que cada aplicação é** — os fatos que decidem qu
 | `seerr` | mídia | media / core-services-vm | `seerr` | publica | `pedidos` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `sonarr` | mídia | media / core-services-vm | `sonarr` | protegida | `sonarr` | nfs | não | — | — | [Mídia](../01-manual-implementacao/10-midia.md) |
 | `syncthing` | produtividade | notes / ai-desktop-vm | `syncthing` | protegida | `sync` | nfs | não | — | — | [Segundo cérebro](../01-manual-implementacao/12-segundo-cerebro.md) |
+| `sysadmin` | ia | sysadmin / gcp | `sysadmin`, `sysadmin_painel` | interna | — | local | não | — | — | [Sysadmin no GCP](../01-manual-implementacao/19-sysadmin-gcp.md) |
 | `tailscale` | infra | ansible:infra/tailscale / core-services-vm | `tailscaled` | interna | — | nenhum | não | — | — | [VPN (Tailscale)](../01-manual-implementacao/14-vpn-tailscale.md) |
 | `traefik` | infra | core / core-services-vm | `traefik` | protegida | `traefik` | nfs | não | `roteamento` | — | [Rede segura](../01-manual-implementacao/05-rede-segura.md) |
 | `vibe-kanban` | ia | posto / ai-desktop-vm | `posto` | protegida | `kanban` | local | não | — | `+llm` | [Posto de agentes](../01-manual-implementacao/16-posto-agentes.md) |

@@ -123,6 +123,8 @@ Nenhuma aplicação fica acessível pela internet; tratar como remoção de `ace
 
 Métricas de host e por container não dependem desta integração: o Alloy de cada host as envia por `remote_write` (`node_*` e, nas VMs, `container_*` do cAdvisor), para qualquer aplicação, sem regra por consumidor. MET-1 vale para as aplicações com `/metrics` próprio.
 
+Exceção da VM `gcp`: o sysadmin ([página 19](../01-manual-implementacao/19-sysadmin-gcp.md)) não roda Alloy, e portanto não envia métricas de host nem de container. Veja a exceção em [logs](#logs).
+
 ### Ao adicionar (por consumidor)
 1. Confirmar na documentação oficial a porta/caminho de métricas; adicionar o job em `prometheus.yml.j2` (template estrutural) e citar na página da aplicação.
 
@@ -157,6 +159,10 @@ Nada a fazer.
 
 ### Ao remover o provedor
 Remover `loki` e `loki-local-config.yaml.j2` e os blocos `loki.*` do `config.alloy.j2` (via wiki); avisar que os logs deixam de ser centralizados; revisar datasources do `grafana` e a regra `authelia-logins-falhos`.
+
+### Exceção: VM `gcp` (sysadmin)
+
+As aplicações com VM `gcp` (`sysadmin`, `executor` e `honcho`, [página 19](../01-manual-implementacao/19-sysadmin-gcp.md)) ficam **fora de LOG-2 e de `metricas`**: a e2-micro tem 1 GB de RAM e o Alloy não cabe, e a VM não está em `ubuntu_vms` nem alcança o Loki e o Prometheus de casa (o sysadmin não pode ter rota para o tailnet). Os logs ficam no `journalctl` e no `docker logs` da própria VM, e o estado do sysadmin aparece no `/status` do Hermes e no painel dele. LOG-1 continua valendo (nenhum serviço sobrescreve `logging:`). Pelo mesmo motivo, NTF-2 (Diun) não se aplica: as imagens são fixadas no `group_vars` e atualizadas por PR de versão.
 
 ---
 
