@@ -10,7 +10,7 @@ import time
 from typing import Callable
 
 from .config import Config
-from .politica import Recusado, limpar_saida
+from .politica import Recusado, checar_limite, limpar_saida
 
 Executar = Callable[[list[str], str, int], "tuple[int, str]"]
 TEMPO_CHECK_S = 900
@@ -78,9 +78,18 @@ class Runner:
             raise Recusado("outra execução em andamento; tente de novo quando ela terminar")
         return self._trava
 
+    def atualizar(self) -> str:
+        """Só o `git pull --ff-only` da main (nada do repositório roda), sob a mesma trava das execuções."""
+        trava = self._exclusivo()
+        try:
+            return self._atualizar_repo()
+        finally:
+            trava.release()
+
     def check(self, playbook: str, limite: str | None = None) -> dict:
         if playbook not in self.cfg.playbooks:
             raise Recusado(f"{playbook} não está em ops_playbooks_permitidos")
+        checar_limite(limite)
         trava = self._exclusivo()
         try:
             commit = self._atualizar_repo()

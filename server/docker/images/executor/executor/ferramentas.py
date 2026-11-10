@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import re
 import shlex
 import unicodedata
 from datetime import datetime, timezone
@@ -10,7 +9,7 @@ from pathlib import Path
 from typing import Callable
 
 from ops.ferramentas import Ferramenta
-from ops.politica import Recusado
+from ops.politica import Recusado, checar_limite
 
 from .config import Config
 from .portao import Portao
@@ -21,9 +20,6 @@ MAX_COMANDO = 250  # o pedido no Telegram corta os argumentos em 300 caracteres:
 MAX_JSON = 300  # quanto do JSON dos argumentos o texto do pedido mostra
 JINJA = ("{{", "{%", "{#")
 CONFIRMACAO = "comando enviado ao Léo pelo bot de aprovações"
-# Padrão de hosts do Ansible (nomes, grupos, `,`, `:`, `!`, `&`, `*`). Fora dele, nada: `@arquivo` faria o Ansible ler
-# um arquivo do executor (a senha do vault, por exemplo) como lista de hosts e devolver as linhas ao modelo.
-LIMITE = re.compile(r"[A-Za-z0-9_.:,!&*-]{1,200}")
 
 
 def _entre_aspas(valor: str) -> str:
@@ -88,9 +84,7 @@ def ferramentas(cfg: Config, portao: Portao, remoto: Remoto, runner, canal,
         core*:!ai), só com letras, números e _ . - , : ! & *."""
         if playbook not in cfg.playbooks:
             raise Recusado(f"{playbook} não está na lista de playbooks permitidos")
-        if limite is not None and not (isinstance(limite, str) and LIMITE.fullmatch(limite)):
-            raise Recusado("limite inválido: use só nomes de host ou grupo do inventário com , : ! & * "
-                           "(letras, números, _ . -; até 200 caracteres)")
+        checar_limite(limite)
 
         def fazer() -> str:
             r = _runner().check(playbook, limite)
@@ -122,20 +116,43 @@ def ferramentas(cfg: Config, portao: Portao, remoto: Remoto, runner, canal,
         return canal.pedir(chave)
 
     def vault_status() -> str:
-        """Situação dos pedidos de segredo (pendentes e gravados), quando o saida/vault.yml foi atualizado e se ele
-        ainda tem edições pendentes sobre a main (só então ele vira PR) ou já foi superado por ela."""
+        """Atualiza a main do executor (git pull) e diz a situação dos pedidos de segredo (pendentes e gravados), quando
+        o saida/vault.yml foi atualizado, se ele tem edições pendentes sobre a main (só então ele vira PR, e só se o
+        vault.yml na base do branch do PR tiver o sha256 da base informada) e as chaves que o Léo preencheu mas a main
+        também mudou (não reaplicadas: peça de novo as que ainda valem)."""
         arquivo = Path(cfg.saida_dir) / "vault.yml"
+        atualizada = False
+        if runner is None:
+            main = "main do executor não atualizada (sem runner)"
+        else:
+            try:                                        # a main de agora: senão um PR já mesclado passaria por pendente
+                main = f"main do executor atualizada ({runner.atualizar()[:8]})"
+                atualizada = True
+            except Exception as erro:  # noqa: BLE001 — Recusado (ocupado, git) ou falha ao rodar o git
+                motivo = str(erro) if isinstance(erro, Recusado) else type(erro).__name__
+                main = f"não atualizei a main do executor ({motivo}); este status pode estar atrasado"
         try:
-            quando = datetime.fromtimestamp(arquivo.stat().st_mtime, timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
-            rodape = f"saida/vault.yml atualizado em {quando}"
-            if Vault(cfg).origem() == arquivo:
-                rodape += "; edições pendentes sobre a main: abra o PR do vault com ele"
+            origem, conflitos = Vault(cfg).situacao()   # pode reaplicar edições sobre a main nova ou encerrar o saida/
+            if origem == arquivo:
+                quando = datetime.fromtimestamp(arquivo.stat().st_mtime, timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
+                try:
+                    base = (Path(cfg.saida_dir) / ".base").read_text(encoding="utf-8").splitlines()[0].strip()
+                except (OSError, IndexError):
+                    base = "ausente"                    # a entrada do bucket, ainda sem edição
+                rodape = f"saida/vault.yml atualizado em {quando}; edições pendentes sobre a main (base {base})"
+                if atualizada:
+                    rodape += ("; abra o PR do vault com ele, num branch cujo vault.yml tenha esse sha256 "
+                               "(\"ausente\": sem vault.yml), e não abra se não tiver")
+                else:
+                    rodape += "; não abra o PR do vault agora: tente o vault_status de novo"
             else:
-                rodape += ("; superado pela main (PR já mesclado, ou cópia velha da entrada): vale o vault da main, "
-                           "não abra PR com ele")
-        except OSError:
-            rodape = "ainda não há saida/vault.yml (vale o vault do repositório)"
-        return f"{canal.status()}\n{rodape}"
+                rodape = "nenhuma edição pendente: vale o vault da main (não há PR do vault a abrir)"
+            if conflitos:
+                rodape += ("\na main também mudou estas chaves preenchidas pelo Léo (vale a main; peça de novo as que "
+                           "ainda valem): " + ", ".join(conflitos))
+        except Exception as erro:  # noqa: BLE001 — só o tipo do erro
+            rodape = f"não consegui ler o vault ({type(erro).__name__}); não abra o PR do vault agora"
+        return f"{canal.status()}\n{main}\n{rodape}"
 
     def preparar_host() -> str:
         """Envia ao Léo, pelo bot de aprovações, o comando único que ele cola no console do host Proxmox (instala o

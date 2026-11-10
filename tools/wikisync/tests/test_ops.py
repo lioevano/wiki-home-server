@@ -516,3 +516,31 @@ def test_dockerignore_sem_cache_dos_testes():
     """#8: os testes importam o pacote e criam __pycache__; ele não entra na imagem."""
     ignorados = (IMG / ".dockerignore").read_text(encoding="utf-8").split()
     assert "**/__pycache__" in ignorados and "**/*.pyc" in ignorados
+
+
+@pytest.mark.parametrize("limite", ["@/segredos/vault_senha", "-e@/x", "core services", "core\nai", "", "x" * 201, 5])
+def test_runner_recusa_limite_fora_do_padrao(limite):
+    """O `limite` vai a `-l` do ansible-playbook: `@arquivo` leria um arquivo do container como lista de hosts."""
+    cmd = Comandos()
+    with pytest.raises(Recusado, match="limite inválido"):
+        _runner(cmd).check("setup-media-stack-volumes.yml", limite)
+    assert cmd.argvs == []
+
+
+def test_runner_atualizar_so_puxa_a_main():
+    cmd = Comandos()
+    assert _runner(cmd).atualizar() == COMMIT_A
+    assert [a[0][0] for a in cmd.argvs] == ["git", "git"] and cmd.ansible() == []
+
+
+def test_ferramenta_ansible_check_recusa_limite_antes_de_pedir():
+    """Agente autônomo: o limite inválido é recusado antes de virar pedido ao Léo; o Claude Code cai no runner."""
+    cfg = _cfg()
+    avisos = []
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), _runner(), avisos.append, cliente=lambda: "agentes")
+    with pytest.raises(Recusado, match="limite inválido"):
+        fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml", limite="@/segredos/vault_senha")
+    assert not [a for a in avisos if "Aguardando" in str(a)]
+    fs = ferramentas(cfg, Portainer(cfg, PortainerFalso()), _runner(), avisos.append, cliente=lambda: "claude_code")
+    with pytest.raises(Recusado, match="limite inválido"):
+        fs["ansible_check"].funcao(playbook="setup-media-stack-volumes.yml", limite="-e@x")

@@ -4,6 +4,8 @@
 Description=Backup diário do sysadmin no GCS (página 19)
 Wants=network-online.target
 After=network-online.target docker.service
+# Falhou: aviso no bot de aprovações.
+OnFailure=sysadmin-alerta@%n.service
 
 [Service]
 Type=oneshot

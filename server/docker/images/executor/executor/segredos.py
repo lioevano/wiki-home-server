@@ -13,7 +13,7 @@ from typing import Callable
 from ops.politica import Recusado
 
 from .config import Config
-from .vault import chaves_do_modelo, definir
+from .vault import chaves_do_modelo
 
 
 class CanalDeSegredos:
@@ -91,7 +91,7 @@ class CanalDeSegredos:
                 return
             chave = pedido[0]
             try:
-                self.vault.gravar(definir(self.vault.ler(), chave, valor))
+                conflitos = self.vault.editar(chave, valor)  # lê, troca e grava sob a trava do vault
             except KeyError:                                 # a chave sumiu do vault: repetir não adianta
                 del self._pendentes[resposta_a]
                 self._dizer(f"⚠️ `{chave}` não existe no vault atual; não gravei nada. Avise o sysadmin.",
@@ -105,6 +105,10 @@ class CanalDeSegredos:
             if chave not in self._gravadas:
                 self._gravadas.append(chave)
         self._dizer(f"✅ `{chave}` gravada; o sysadmin abre o PR", parse_mode="Markdown")
+        if conflitos:
+            self._dizer("⚠️ A main mudou também estas chaves que você tinha preenchido, e vale a main: "
+                        + ", ".join(f"`{c}`" for c in conflitos) + ". Peça de novo ao sysadmin as que ainda valem.",
+                        parse_mode="Markdown")
 
     def status(self) -> str:
         with self._trava:

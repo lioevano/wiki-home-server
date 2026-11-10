@@ -1,0 +1,16 @@
+#!/bin/sh
+# Gerado pelo role infra/sysadmin-gcp (página 19). Antes de cada ansible-pull (nunca durante): o ansible-core do venv
+# /opt/ansible segue a ops_ansible_core_version do clone da main da execução anterior. O primeiro boot instala a
+# versão da criação; uma versão nova, mesclada por PR, vale a partir do ansible-pull do dia seguinte.
+set -eu
+main=/opt/sysadmin/pull/server/ansible/inventories/home/group_vars/all/main.yml
+[ -f "$main" ] || exit 0
+v=$(sed -n 's/^ops_ansible_core_version: *"\([0-9][0-9.]*\)".*/\1/p' "$main" | head -n 1)
+if ! printf '%s\n' "$v" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+    echo "sem ops_ansible_core_version válida em $main: ansible-core mantido" >&2
+    exit 0
+fi
+atual=$(/opt/ansible/bin/python -c 'import ansible.release as r; print(r.__version__)' 2>/dev/null || true)
+[ "$atual" != "$v" ] || exit 0
+echo "ansible-core ${atual:-?} -> $v"
+/opt/ansible/bin/pip install --quiet "ansible-core==$v"

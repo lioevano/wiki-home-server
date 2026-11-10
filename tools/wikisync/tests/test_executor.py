@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import threading
@@ -263,6 +264,7 @@ def test_comentario_com_aspas_no_valor_antigo():
 def _cfg_vault(tmp_path):
     (tmp_path / "senha").write_text("s3nha\n", encoding="utf-8")
     (tmp_path / "saida").mkdir()
+    (tmp_path / ".git").mkdir(exist_ok=True)          # um clone (o git falha nele: histórico desconhecido)
     return replace(Config.do_ambiente(AMB), saida_dir=str(tmp_path / "saida"),
                    senha_vault_arquivo=str(tmp_path / "senha"), repo_dir=str(tmp_path))
 
@@ -308,9 +310,23 @@ def _msg(texto, de="4242", chat="4242", resposta_a=None, mid=7):
     return {"update_id": 1, "message": m}
 
 
+class VaultFalso:
+    """Vault de mentira com a interface do canal (ler e editar); `texto` pode ser trocado no meio do teste."""
+
+    def __init__(self, texto, gravados):
+        self.texto, self.gravados = texto, gravados
+
+    def ler(self):
+        return self.texto
+
+    def editar(self, chave, valor):
+        self.gravados["t"] = definir(self.texto, chave, valor)
+        return []
+
+
 def test_canal_de_segredos(tmp_path):
     gravados = {}
-    vault = type("V", (), {"ler": lambda s: MODELO, "gravar": lambda s, t: gravados.update(t=t)})()
+    vault = VaultFalso(MODELO, gravados)
     bot, rel = BotFalso(), Relogio()
     canal = CanalDeSegredos(bot, Config.do_ambiente(AMB), vault, chaves_do_modelo(MODELO), rel)
     with pytest.raises(Recusado):
@@ -338,7 +354,7 @@ def test_canal_segredo_nunca_vaza(tmp_path, capsys):
     """O valor só existe no vault: nem no retorno ao modelo, nem em log, nem em mensagem (só é apagado)."""
     segredo = "S3GREDO-NUNCA-VAZA"
     gravados = {}
-    vault = type("V", (), {"ler": lambda s: MODELO, "gravar": lambda s, t: gravados.update(t=t)})()
+    vault = VaultFalso(MODELO, gravados)
     bot, rel = BotFalso(), Relogio()
     cfg = Config.do_ambiente(AMB)
     canal = CanalDeSegredos(bot, cfg, vault, chaves_do_modelo(MODELO), rel)
@@ -374,10 +390,12 @@ def test_canal_falha_ao_gravar_nao_vaza_e_mantem_o_pedido(capsys):
         def ler(self):
             return MODELO
 
-        def gravar(self, texto):
+        def editar(self, chave, valor):
+            texto = definir(MODELO, chave, valor)
             if self.quebrar:
                 raise RuntimeError(f"falhou com {texto}")
             self.ok = texto
+            return []
 
     vault, bot = Quebrado(), BotFalso()
     canal = CanalDeSegredos(bot, Config.do_ambiente(AMB), vault, chaves_do_modelo(MODELO), Relogio())
@@ -399,7 +417,7 @@ def test_canal_pedir_sem_telegram_recusa():
         def chamar(self, metodo, params, timeout=15):
             raise OSError("Telegram sendMessage: HTTP 500")
 
-    vault = SimpleNamespace(ler=lambda: MODELO, gravar=lambda t: None)
+    vault = VaultFalso(MODELO, {})
     canal = CanalDeSegredos(BotQuebrado(), Config.do_ambiente(AMB), vault, {"a"}, Relogio())
     with pytest.raises(Recusado):
         canal.pedir("a")
@@ -485,7 +503,7 @@ def test_vault_gravado_legivel_pelo_sysadmin(tmp_path):
 def test_chave_so_no_modelo_recusa_no_pedido_e_descarta_na_resposta():
     vault_atual = 'a: "X"\n'                       # sem grupo.filho nem chave_ssh
     gravados = {}
-    vault = SimpleNamespace(ler=lambda: vault_atual, gravar=lambda t: gravados.update(t=t))
+    vault = VaultFalso(vault_atual, gravados)
     bot = BotFalso()
     canal = CanalDeSegredos(bot, Config.do_ambiente(AMB), vault, chaves_do_modelo(MODELO), Relogio())
     with pytest.raises(Recusado, match="vault atual"):
@@ -493,7 +511,7 @@ def test_chave_so_no_modelo_recusa_no_pedido_e_descarta_na_resposta():
     assert bot.chamadas == []                         # Léo nem chega a ver o pedido
     canal.pedir("a")
     pedido = bot.n
-    vault_atual = ""                                  # a chave some entre o pedido e a resposta
+    vault.texto = ""                                  # a chave some entre o pedido e a resposta
     canal.receber(_msg("VALOR", resposta_a=pedido, mid=9))
     assert gravados == {} and "a: pendente" not in canal.status()
     ultimo = bot.chamadas[-1][1]["text"]
@@ -678,6 +696,7 @@ def _ferr(tmp_path, executar=lambda a, c, t: (0, "ok"), runner=None, canal=None)
     chamadas = []
     remoto = type("R", (), {"hosts": lambda s: {"core-services-vm"},
                             "rodar": lambda s, h, c, shell, become: chamadas.append((h, c, shell, become)) or executar(c, h, 0)})()
+    (tmp_path / ".git").mkdir(exist_ok=True)
     f = ferramentas(cfg, portao, remoto, runner, canal, ao_leo.append)
     f["_chamadas"] = chamadas
     f["_cfg"] = cfg
@@ -902,7 +921,7 @@ def test_inventario_real_sem_host_local_no_executor():
 # --- Revisão final do 5a ---
 
 @pytest.mark.parametrize("limite", ["@/segredos/vault_senha", "core services", "core\nai", "core‮ia",
-                                    "", "x" * 201, 5])
+                                    "", "x" * 201, 5, "-e@/segredos/vault_senha", "--help", ",core", ":core"])
 def test_ansible_check_recusa_limite_fora_do_padrao_antes_de_pedir(tmp_path, limite):
     """R19: `@arquivo` faria o Ansible ler um arquivo do executor como lista de hosts e devolver as linhas."""
     runner = RunnerFalso()
@@ -933,7 +952,7 @@ def _vault_main(tmp_path, texto: str):
 def test_vault_base_ausente_quando_a_main_nao_tem_vault(tmp_path):
     v = Vault(_cfg_vault(tmp_path))
     v.gravar(v_texto := "k: 1\n")
-    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").strip() == "ausente"
+    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").split()[0] == "ausente"
     assert v.origem() == tmp_path / "saida/vault.yml" and v.ler() == v_texto
 
 
@@ -944,10 +963,10 @@ def test_vault_edicao_pendente_vale_enquanto_a_main_nao_muda(tmp_path):
     v = Vault(cfg)
     assert v.origem() == main and v.ler() == "k: main\n"
     v.gravar(definir(v.ler(), "k", "editado"))
-    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").strip() == sha
+    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").split()[0] == sha
     assert v.origem() == tmp_path / "saida/vault.yml" and v.ler() == 'k: "editado"\n'
     v.gravar(definir(v.ler(), "k", "de novo"))       # 2ª edição em cima da 1ª: a base continua a mesma main
-    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").strip() == sha and v.ler() == 'k: "de novo"\n'
+    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").split()[0] == sha and v.ler() == 'k: "de novo"\n'
 
 
 def test_vault_main_mudou_volta_para_a_main(tmp_path):
@@ -973,13 +992,28 @@ def test_vault_sem_base_usa_a_main_se_existir(tmp_path):
     assert v.origem() == main and v.ler() == "k: main\n"
 
 
-def test_vault_main_que_sumiu_depois_da_base_volta_ao_saida_so_se_base_ausente(tmp_path):
+def test_vault_main_que_sumiu_depois_da_base_nao_promove_o_saida(tmp_path):
+    """A main some no meio de um git pull (ou o clone estragou): um saida/ baseado nela não pode virar "pendente"."""
+    from executor.vault import VaultIndisponivel
     cfg = _cfg_vault(tmp_path)
     main, _ = _vault_main(tmp_path, "k: main\n")
     v = Vault(cfg)
-    v.gravar(definir(v.ler(), "k", "editado"))
-    main.unlink()                                       # main sem vault: não há o que sobrescrever
-    assert v.origem() == tmp_path / "saida/vault.yml"
+    v.editar("k", "editado")
+    main.unlink()
+    for chamada in (v.situacao, v.ler, lambda: v.editar("k", "outro")):
+        with pytest.raises(VaultIndisponivel):
+            chamada()
+    _vault_main(tmp_path, "k: main\n")                 # o pull terminou: tudo volta ao normal
+    assert v.origem().parent.name == "saida" and yaml.safe_load(v.ler()) == {"k": "editado"}
+
+
+def test_vault_sem_main_e_sem_clone_nao_vale(tmp_path):
+    from executor.vault import VaultIndisponivel
+    cfg = _cfg_vault(tmp_path)
+    Vault(cfg).gravar('k: "entrada"\n')
+    (tmp_path / ".git").rmdir()                        # clone ausente: a falta de vault.yml não quer dizer nada
+    with pytest.raises(VaultIndisponivel):
+        Vault(cfg).situacao()
 
 
 def test_vault_status_diz_se_o_saida_esta_superado_pela_main(tmp_path):
@@ -988,11 +1022,226 @@ def test_vault_status_diz_se_o_saida_esta_superado_pela_main(tmp_path):
     f, *_ = _ferr(tmp_path, canal=canal)
     (tmp_path / "saida").mkdir()
     (tmp_path / "saida/vault.yml").write_text("x", encoding="utf-8")
-    assert "pendente" in f["vault_status"].funcao()                  # main sem vault: o saida é o que vale
+    r = f["vault_status"].funcao()                                    # main sem vault: o saida é o que vale
+    assert "pendentes sobre a main (base ausente)" in r and "não abra o PR do vault agora" in r   # sem runner
     _vault_main(tmp_path, "k: main\n")
-    r = f["vault_status"].funcao()                                    # sem .base: superado
-    assert "superado" in r and "não abra PR" in r
-    from executor.vault import Vault as V
-    sha = __import__("hashlib").sha256(V(f["_cfg"]).origem().read_bytes()).hexdigest()
-    (tmp_path / "saida/.base").write_text(sha + "\n", encoding="utf-8")
-    assert "pendente" in f["vault_status"].funcao() and "superado" not in f["vault_status"].funcao()
+    r = f["vault_status"].funcao()                                    # entrada sem .base: superada e encerrada
+    assert "nenhuma edição pendente" in r and not (tmp_path / "saida/vault.yml").exists()
+
+
+def test_vault_reaplica_edicoes_feitas_depois_do_pr(tmp_path):
+    """O PR do vault levou `a`; `b` foi preenchida depois de aberto o PR, antes do executor ver a main nova: não se perde."""
+    cfg = _cfg_vault(tmp_path)
+    _vault_main(tmp_path, 'a: "x"\nb: "y"\nc: "z"\n')
+    v = Vault(cfg)
+    assert v.editar("a", "A") == []                   # vai no PR
+    assert v.editar("b", "B") == []                   # preenchida com o PR já aberto
+    _vault_main(tmp_path, 'a: "A"\nb: "y"\nc: "z"\n')  # PR mesclado só com `a`
+    assert v.situacao() == (tmp_path / "saida/vault.yml", [])
+    assert yaml.safe_load(v.ler()) == {"a": "A", "b": "B", "c": "z"}
+    main = tmp_path / "server/ansible/inventories/home/group_vars/all/vault.yml"
+    sha = __import__("hashlib").sha256(main.read_bytes()).hexdigest()
+    assert (tmp_path / "saida/.base").read_text(encoding="utf-8").split()[0] == sha   # gravado sobre a main nova
+    _vault_main(tmp_path, 'a: "A"\nb: "B"\nc: "z"\n')  # 2º PR mesclado: nada pendente
+    assert v.situacao() == (main, [])
+
+
+def test_vault_conflito_quando_a_main_tambem_mudou_a_chave(tmp_path):
+    cfg = _cfg_vault(tmp_path)
+    _vault_main(tmp_path, 'a: "x"\nb: "y"\n')
+    v = Vault(cfg)
+    v.editar("a", "LEO")
+    v.editar("b", "B")
+    main, _ = _vault_main(tmp_path, 'a: "OUTRA"\nb: "y"\n')   # outro caminho mudou `a`
+    arquivo, conflitos = v.situacao()
+    assert conflitos == ["a"] and arquivo.parent.name == "saida"
+    assert yaml.safe_load(v.ler()) == {"a": "OUTRA", "b": "B"}  # vale a main em `a`; `b` reaplicada
+    assert (tmp_path / "saida/.conflitos").read_text(encoding="utf-8").split() == ["a"]
+    assert "LEO" not in (tmp_path / "saida/.conflitos").read_text(encoding="utf-8")
+    assert v.editar("b", "B2") == ["a"]              # o Léo é avisado na próxima gravação, uma vez só
+    assert v.editar("b", "B3") == [] and v.situacao()[1] == ["a"]    # o vault_status continua mostrando
+    assert v.editar("a", "LEO2") == [] and v.situacao()[1] == []     # preenchida de novo: deixa de ser conflito
+
+
+def test_vault_da_entrada_ate_o_primeiro_pr(tmp_path):
+    """Fase 1: o saida/ é a entrada do bucket (sem .base); o 1º PR leva `a`, `b` vem depois e é reaplicada."""
+    cfg = _cfg_vault(tmp_path)
+    Vault(cfg).gravar('a: "x"\nb: "y"\n')
+    for nome in (".base", ".base.yml"):
+        (tmp_path / "saida" / nome).unlink(missing_ok=True)   # como o semeado do bucket
+    v = Vault(cfg)
+    v.editar("a", "A")
+    v.editar("b", "B")
+    _vault_main(tmp_path, 'a: "A"\nb: "y"\n')
+    assert yaml.safe_load(v.ler()) == {"a": "A", "b": "B"} and v.origem().parent.name == "saida"
+
+
+def test_vault_entrada_velha_sem_edicoes_nao_sobrescreve_a_main(tmp_path):
+    cfg = _cfg_vault(tmp_path)
+    Vault(cfg).gravar('a: "entrada"\n')
+    for nome in (".base", ".base.yml"):
+        (tmp_path / "saida" / nome).unlink(missing_ok=True)
+    main, _ = _vault_main(tmp_path, 'a: "main"\n')
+    assert Vault(cfg).situacao() == (main, []) and Vault(cfg).ler() == 'a: "main"\n'
+
+
+def test_vault_base_antiga_de_uma_linha_volta_para_a_main(tmp_path):
+    cfg = _cfg_vault(tmp_path)
+    _vault_main(tmp_path, 'a: "x"\n')
+    v = Vault(cfg)
+    v.editar("a", "A")
+    base = (tmp_path / "saida/.base").read_text(encoding="utf-8").split()[0]
+    (tmp_path / "saida/.base").write_text(base + "\n", encoding="utf-8")   # formato anterior, sem ancestral
+    main, _ = _vault_main(tmp_path, 'a: "y"\n')
+    assert v.situacao() == (main, [])
+
+
+def test_vault_ancestral_adulterado_nao_vale(tmp_path):
+    cfg = _cfg_vault(tmp_path)
+    _vault_main(tmp_path, 'a: "x"\nb: "y"\n')
+    v = Vault(cfg)
+    v.editar("b", "B")
+    (tmp_path / "saida/.base.yml").write_bytes(b"outro")
+    main, _ = _vault_main(tmp_path, 'a: "x2"\nb: "y"\n')
+    assert v.situacao() == (main, [])
+
+
+def test_vault_editar_grava_a_base_do_texto_lido(tmp_path):
+    """A corrida antiga: a base gravada é sempre a do texto editado, sob a mesma trava, mesmo com leituras em paralelo."""
+    import threading
+    cfg = _cfg_vault(tmp_path)
+    _vault_main(tmp_path, 'a: "x"\nb: "y"\n')
+    v = Vault(cfg)
+    fios = [threading.Thread(target=v.ler) for _ in range(8)] + [threading.Thread(target=v.editar, args=("a", "A"))]
+    for f in fios:
+        f.start()
+    for f in fios:
+        f.join()
+    leitura = v.ler_com_base()
+    linhas = (tmp_path / "saida/.base").read_text(encoding="utf-8").split()
+    assert linhas[0] == leitura.base and yaml.safe_load(leitura.texto)["a"] == "A"
+    assert linhas[1] == __import__("hashlib").sha256((tmp_path / "saida/.base.yml").read_bytes()).hexdigest()
+
+
+def test_canal_avisa_os_conflitos_sem_valores():
+    class ComConflito(VaultFalso):
+        def editar(self, chave, valor):
+            super().editar(chave, valor)
+            return ["grupo.filho"]
+
+    bot = BotFalso()
+    canal = CanalDeSegredos(bot, Config.do_ambiente(AMB), ComConflito(MODELO, {}), chaves_do_modelo(MODELO), Relogio())
+    canal.pedir("a")
+    canal.receber(_msg("VALOR", resposta_a=bot.n, mid=9))
+    avisos = [p["text"] for m, p in bot.chamadas if m == "sendMessage"]
+    assert "grupo.filho" in avisos[-1] and "vale a main" in avisos[-1] and all("VALOR" not in a for a in avisos)
+
+
+def test_vault_status_atualiza_a_main_antes(tmp_path):
+    ordem = []
+
+    class R:
+        def atualizar(self):
+            ordem.append("pull")
+            return "abcdef0123"
+
+    canal = type("C", (), {"pedir": lambda s, c: "", "status": lambda s: ordem.append("status") or "nada"})()
+    f, *_ = _ferr(tmp_path, runner=R(), canal=canal)
+    r = f["vault_status"].funcao()
+    assert ordem[0] == "pull" and "atualizada (abcdef01)" in r
+
+    class Ocupado:
+        def atualizar(self):
+            raise Recusado("outra execução em andamento; tente de novo quando ela terminar")
+
+    f, *_ = _ferr(tmp_path, runner=Ocupado(), canal=canal)
+    (tmp_path / "saida").mkdir(exist_ok=True)
+    (tmp_path / "saida/vault.yml").write_text("x", encoding="utf-8")   # pendente (main sem vault)
+    r = f["vault_status"].funcao()
+    assert "pode estar atrasado" in r and "não abra o PR do vault agora" in r and "abra o PR do vault com" not in r
+
+    class Quebrado:
+        def atualizar(self):
+            raise OSError("git ausente")
+
+    f, *_ = _ferr(tmp_path, runner=Quebrado(), canal=canal)
+    assert "OSError" in f["vault_status"].funcao()
+
+
+# --- Revisão das pendências: histórico do vault na main (git de verdade) ---
+
+def _git_main(tmp_path):
+    """Clone de verdade: cada _vault_main seguido de commit, como um PR mesclado e puxado pelo executor."""
+    import subprocess
+    if shutil.which("git") is None:
+        pytest.skip("git ausente")
+    cfg = _cfg_vault(tmp_path)
+    (tmp_path / ".git").rmdir()
+    subprocess.run(["git", "-C", str(tmp_path), "init", "-q", "-b", "main"], check=True)
+
+    def commit(texto, msg):
+        _vault_main(tmp_path, texto)
+        subprocess.run(["git", "-C", str(tmp_path), "add", "server"], check=True)
+        subprocess.run(["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q",
+                        "-m", msg], check=True)
+    return cfg, commit
+
+
+def test_vault_revert_do_pr_nao_ressuscita_o_saida(tmp_path):
+    """ABA: o PR levou `a`, o executor não leu a main do merge, e a main voltou `a` ao valor antigo (revert):
+    o saida/ não pode voltar a ser "pendente" (o PR seguinte desfaria o revert)."""
+    cfg, commit = _git_main(tmp_path)
+    commit('a: "x"\nb: "y"\n', "vault")
+    v = Vault(cfg)
+    v.editar("a", "A")
+    commit('a: "A"\nb: "y"\n', "PR do vault")       # mesclado e puxado, sem leitura do executor no meio
+    commit('a: "x"\nb: "y"\n', "revert")            # mesmo conteúdo da base, byte a byte não importa
+    main = tmp_path / "server/ansible/inventories/home/group_vars/all/vault.yml"
+    assert v.situacao() == (main, []) and not (tmp_path / "saida/vault.yml").exists()
+
+
+def test_vault_rotacao_depois_do_merge_nao_e_conflito(tmp_path):
+    cfg, commit = _git_main(tmp_path)
+    commit('a: "x"\nb: "y"\n', "vault")
+    v = Vault(cfg)
+    v.editar("a", "A")
+    v.editar("b", "B")                                 # preenchida com o PR (só de `a`) já aberto
+    commit('a: "A"\nb: "y"\n', "PR do vault")
+    commit('a: "A2"\nb: "y"\n', "rotação de a")
+    arquivo, conflitos = v.situacao()
+    assert conflitos == [] and arquivo.parent.name == "saida"           # `a` já foi mesclada: vale a main
+    assert yaml.safe_load(v.ler()) == {"a": "A2", "b": "B"}
+
+
+def test_vault_mesmo_conteudo_com_historia_nova_reaplica_pelo_historico(tmp_path):
+    cfg, commit = _git_main(tmp_path)
+    commit('a: "x"\nb: "y"\n', "vault")
+    v = Vault(cfg)
+    v.editar("b", "B")
+    commit('a: "z"\nb: "y"\n', "outro PR")
+    commit('a: "x"\nb: "y"\n', "volta")             # bytes iguais aos da base, mas outra história
+    arquivo, _ = v.situacao()
+    assert arquivo.parent.name == "saida" and yaml.safe_load(v.ler()) == {"a": "x", "b": "B"}
+
+
+def test_vault_edicao_igual_a_main_nao_fica_pendente(tmp_path):
+    cfg = _cfg_vault(tmp_path)
+    main, _ = _vault_main(tmp_path, 'a: "x"\n')
+    v = Vault(cfg)
+    v.editar("a", "x")
+    assert v.situacao() == (main, []) and not (tmp_path / "saida/vault.yml").exists()
+
+
+def test_vault_fase_1_o_base_vai_antes_do_vault(tmp_path, monkeypatch):
+    """Sem main, uma queda entre os dois arquivos não pode deixar o vault.yml editado sem .base (ele viraria o
+    ancestral e a edição deixaria de ser "nossa")."""
+    cfg = _cfg_vault(tmp_path)
+    Vault(cfg).gravar('a: "x"\n')
+    for nome in (".base", ".base.yml"):
+        (tmp_path / "saida" / nome).unlink(missing_ok=True)
+    v = Vault(cfg)
+    ordem = []
+    original = v._gravar_atomico
+    monkeypatch.setattr(v, "_gravar_atomico", lambda d, b: ordem.append(d.name) or original(d, b))
+    v.editar("a", "A")
+    assert ordem.index(".base") < ordem.index("vault.yml")

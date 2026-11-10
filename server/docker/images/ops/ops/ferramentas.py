@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Callable
 from . import auditoria
 from .aprovacao import Aprovador
 from .config import Config
-from .politica import Recusado, checar_container, checar_stack, limpar_saida
+from .politica import Recusado, checar_container, checar_limite, checar_stack, limpar_saida
 from .portainer import Portainer
 
 if TYPE_CHECKING:
@@ -134,7 +134,8 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
         def ansible_check(playbook: str, limite: str | None = None, aprovacao_id: str | None = None) -> str:
             """Simula um playbook (--check --diff) no commit atual do repositório e devolve o diff e um plano_id.
             Agentes autônomos também pedem aprovação aqui: mesmo em --check, o Ansible roda lookups, templates e
-            tarefas com check_mode: false do commit que estiver no repositório, com a senha do vault."""
+            tarefas com check_mode: false do commit que estiver no repositório, com a senha do vault. limite é um
+            padrão de hosts do inventário (core-services-vm, core*:!ai), só com letras, números e _ . - , : ! & *."""
             def fazer() -> str:
                 r = _runner().check(playbook, limite)
                 texto = (f"plano_id: {r['plano_id']}\ncommit: {r['commit']} ({r.get('autor_assunto', '')})\n"
@@ -144,6 +145,7 @@ def ferramentas(cfg: Config, portainer: Portainer, runner: "Runner | None",
             def checar() -> None:
                 if playbook not in cfg.playbooks:
                     raise Recusado(f"{playbook} não está em ops_playbooks_permitidos")
+                checar_limite(limite)
             return aprovada("ansible_check", playbook, {"playbook": playbook, "limite": limite}, aprovacao_id,
                             f"simular o playbook {playbook}" + (f" (limite {limite})" if limite else "")
                             + " no commit mais novo da main (o --check também roda código do repositório)",

@@ -74,10 +74,10 @@
   ansible.builtin.include_tasks: segredos.yml
   no_log: true
 
-# Pacotes do host que os módulos usam: o community.docker fala com o Docker pelo requests.
+# Pacotes do host que os módulos usam: o community.docker fala com o Docker pelo requests; o curl é do alerta.
 - name: Pacotes do host
   ansible.builtin.apt:
-    name: [python3-requests, git]
+    name: [python3-requests, git, curl]
     state: present
     update_cache: true
     cache_valid_time: 3600
@@ -282,11 +282,19 @@
         mode: '0644'
       register: sysadmin_carimbo
 
+    - name: "Sysadmin: arquivos que saíram do repositório"
+      ansible.builtin.include_tasks: contexto-limpo.yml
+      vars:
+        contexto_destino: /opt/sysadmin/build/sysadmin
+        contexto_fontes:
+          - { src: "{{ sysadmin_fonte }}/server/docker/images/sysadmin", dest: "" }
+        contexto_gerados: [requirements-dev.txt, wiki/requirements.txt, requirements.yml, .versoes, .construido]
+
     - name: "Sysadmin: contexto novo pede build novo"
       ansible.builtin.file:
         path: /opt/sysadmin/build/sysadmin/.construido
         state: absent
-      when: sysadmin_contexto.changed or sysadmin_carimbo.changed
+      when: sysadmin_contexto.changed or sysadmin_carimbo.changed or contexto_limpeza.changed
 
     - name: "Sysadmin: último build bem-sucedido"
       ansible.builtin.stat:
@@ -363,6 +371,16 @@
         mode: '0644'
       register: sysadmin_executor_carimbo
 
+    - name: "Executor: arquivos que saíram do repositório"
+      ansible.builtin.include_tasks: contexto-limpo.yml
+      vars:
+        contexto_destino: /opt/sysadmin/build/executor
+        contexto_fontes:
+          - { src: "{{ sysadmin_fonte }}/server/docker/images/executor", dest: "" }
+          - { src: "{{ sysadmin_fonte }}/server/docker/images/ops/ops", dest: ops }
+          - { src: "{{ sysadmin_fonte }}/server/docker/images/aprovador/aprovador", dest: aprovador }
+        contexto_gerados: [requirements.yml, requirements.txt, .versoes, .construido]
+
     - name: "Executor: contexto novo pede build novo"
       ansible.builtin.file:
         path: /opt/sysadmin/build/executor/.construido
@@ -370,6 +388,7 @@
       when: >-
         sysadmin_executor_codigo.changed or sysadmin_executor_colecoes.changed
         or sysadmin_executor_requirements.changed or sysadmin_executor_carimbo.changed
+        or contexto_limpeza.changed
 
     - name: "Executor: último build bem-sucedido"
       ansible.builtin.stat:
@@ -459,6 +478,26 @@
   ignore_errors: true # noqa: ignore-errors
 
 # --- Timers (em UTC) ---
+# Aviso de falha: o backup e o ansible-pull rodam sozinhos; OnFailure= chama esta unit, que avisa no Telegram.
+- name: Aviso de falha das units
+  block:
+    - name: "Aviso: scripts do alerta e do ansible-core"
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/usr/local/sbin/{{ item }}"
+        owner: root
+        group: root
+        mode: '0750'
+      loop: [sysadmin-alerta.sh, sysadmin-ansible-core.sh]
+
+    - name: "Aviso: unit sysadmin-alerta@"
+      ansible.builtin.template:
+        src: sysadmin-alerta.service.j2
+        dest: /etc/systemd/system/sysadmin-alerta@.service
+        owner: root
+        group: root
+        mode: '0644'
+
 - name: Atualização diária (ansible-pull)
   block:
     - name: "ansible-pull: service e timer"

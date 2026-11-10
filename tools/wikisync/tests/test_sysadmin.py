@@ -873,11 +873,23 @@ def test_criar_sysadmin_em_reuso_a_main_manda_no_vault():
     i = s.index(teste)
     bloco = s[i:s.index("fi\n", i)]
     assert "gerar_vault=0" in bloco and "a main manda" in bloco
+    assert 'gcloud storage rm "gs://${BUCKET}/entrada/vault.yml"' in bloco   # a VM recriada não semeia a entrada velha
     assert i_clone < i < s.index('if [ "$gerar_vault" = 1 ]; then')
     # a checagem do bucket só vale quando a main não tem vault (elif) e o envio só acontece com gerar_vault=1
     assert 'elif [ "$REUSAR" = 1 ] && gcloud storage ls "gs://${BUCKET}/entrada/vault.yml"' in s
     assert s.count('gcloud storage cp "$TMP/vault.yml" "gs://${BUCKET}/entrada/vault.yml"') == 1
     assert s.index('if [ "$gerar_vault" = 1 ]; then') < s.index('gcloud storage cp "$TMP/vault.yml"')
+
+
+def test_criar_sysadmin_regerar_avisa_do_vault_na_main():
+    """REGERAR=1 com vault na main: a senha nova deixa o executor sem ler o vault da main; o aviso vem antes da pergunta."""
+    s = SH.read_text(encoding="utf-8")
+    i = s.index('if [ "${REGERAR:-0}" = 1 ]; then')
+    bloco = s[i:s.index("else", i)]
+    assert 'git clone --quiet --depth 1 --branch main "$REPO_URL" "$TMP/repo"' in bloco
+    assert "remova antes o vault.yml da" in bloco and "gcloud compute instances delete" in bloco
+    assert bloco.index("remova antes") < bloco.index("read -r -p")
+    assert '[ -d "$TMP/repo" ] || git clone' in s                       # a etapa 9 não clona de novo
 
 
 def test_bloqueios_do_sysadmin_cobrem_as_rotas():
@@ -926,3 +938,74 @@ def test_docs_da_revisao_final():
     assert "**Só depois da fase 2" in p19
     dr = (ROOT / "wiki/docs/04-manutencao-recuperacao/04-reconstruindo-infraestrutura.md").read_text(encoding="utf-8")
     assert "novo `preparar_host`" in dr and "`tailscale_auth_key_host`" in dr and "`tailscale_chave_homeserver`" in dr
+
+
+# --- Pendências da 5a: alerta, ansible-core e contextos de build ---
+
+def _bloco(nome: str) -> list[dict]:
+    return next(t for t in _tarefas_sa() if t.get("name") == nome)["block"]
+
+
+def test_units_que_rodam_sozinhas_avisam_a_falha():
+    for unit in ("sysadmin-backup.service.j2", "sysadmin-pull.service.j2"):
+        u = (ROLE_SA / "templates" / unit).read_text(encoding="utf-8")
+        unidade = u.split("[Service]")[0]
+        assert "OnFailure=sysadmin-alerta@%n.service" in unidade, unit
+    a = (ROLE_SA / "templates/sysadmin-alerta.service.j2").read_text(encoding="utf-8")
+    assert "ExecStart=/usr/local/sbin/sysadmin-alerta.sh %i" in a
+    tarefas = _bloco("Aviso de falha das units")
+    scripts = tarefas[0]
+    assert scripts["loop"] == ["sysadmin-alerta.sh", "sysadmin-ansible-core.sh"]
+    assert scripts["ansible.builtin.template"]["mode"] == "0750"
+    assert tarefas[1]["ansible.builtin.template"]["dest"] == "/etc/systemd/system/sysadmin-alerta@.service"
+
+
+def test_alerta_nao_poe_o_token_na_linha_de_comando_nem_le_o_journal():
+    s = (ROLE_SA / "templates/sysadmin-alerta.sh.j2").read_text(encoding="utf-8")
+    assert "/run/sysadmin/host/alerta.env" in s and "--config -" in s
+    assert "journalctl -u $unidade." in s and "journalctl -u \"$unidade\"" not in s   # só sugere o comando
+    linha_curl = next(l for l in s.splitlines() if "curl " in l)
+    assert "$token" not in linha_curl
+
+
+def test_separar_entrega_ao_host_so_o_bot_de_aprovacoes(tmp_path):
+    separar(DADOS, tmp_path / "d", 1001, 1000)
+    alerta = tmp_path / "d/host/alerta.env"
+    assert _env(alerta.read_text()) == {"TELEGRAM_BOT_TOKEN": "v-telegram_bot_aprovacoes",
+                                        "TELEGRAM_CHAT_ID": "v-telegram_chat_id"}
+    assert alerta.stat().st_mode & 0o777 == 0o400
+
+
+def test_ansible_core_da_vm_segue_o_group_vars_antes_do_pull(tmp_path):
+    u = (ROLE_SA / "templates/sysadmin-pull.service.j2").read_text(encoding="utf-8")
+    pre = [l for l in u.splitlines() if l.startswith("ExecStartPre=")]
+    assert pre[0] == "ExecStartPre=-/usr/local/sbin/sysadmin-ansible-core.sh"   # antes das coleções
+    s = (ROLE_SA / "templates/sysadmin-ansible-core.sh.j2").read_text(encoding="utf-8")
+    assert "/opt/sysadmin/pull/server/ansible/inventories/home/group_vars/all/main.yml" in s
+    # a mesma extração de versão do criar-sysadmin.sh, sobre o main.yml real
+    m = re.search(r"sed -n '([^']+)' \"\$main\"", s)
+    assert m
+    r = subprocess.run(["sed", "-n", m.group(1), str(ANS / "inventories/home/group_vars/all/main.yml")],
+                       capture_output=True, text=True)
+    assert r.stdout.strip() == _m()["ops_ansible_core_version"]
+
+
+def test_contexto_de_build_apaga_o_que_saiu_do_repositorio():
+    for bloco, ctx, quando in (("Imagem do sysadmin", "/opt/sysadmin/build/sysadmin", "sysadmin_contexto.changed"),
+                               ("Imagem do executor", "/opt/sysadmin/build/executor", "sysadmin_executor_codigo.changed")):
+        t = _bloco(bloco)
+        i = next(i for i, x in enumerate(t) if x.get("ansible.builtin.include_tasks") == "contexto-limpo.yml")
+        assert t[i]["vars"]["contexto_destino"] == ctx
+        assert {".versoes", ".construido"} <= set(t[i]["vars"]["contexto_gerados"])
+        j = next(j for j, x in enumerate(t) if (x.get("ansible.builtin.file") or {}).get("path") == f"{ctx}/.construido")
+        assert i < j and "contexto_limpeza.changed" in t[j]["when"] and quando in t[j]["when"]
+    limpo = _tarefas_sa("contexto-limpo.yml")
+    assert limpo[-1]["register"] == "contexto_limpeza" and limpo[-1]["ansible.builtin.file"]["state"] == "absent"
+
+
+def test_scripts_do_host_passam_no_shellcheck(tmp_path):
+    if shutil.which("shellcheck") is None:
+        pytest.skip("shellcheck ausente")
+    for nome in ("sysadmin-alerta.sh.j2", "sysadmin-ansible-core.sh.j2"):
+        r = subprocess.run(["shellcheck", "-s", "sh", str(ROLE_SA / "templates" / nome)], capture_output=True, text=True)
+        assert r.returncode == 0, nome + r.stdout

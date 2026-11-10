@@ -204,10 +204,14 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `ansible/roles/infra/restic/tasks/main.yml` | role-tasks | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/roles/infra/restic/templates/backup-restic.sh.j2` | role-template | `01-manual-implementacao/02-proxmox-ve-host.md`, `04-manutencao-recuperacao/02-backup-restore-estrategia.md` |
 | `ansible/roles/infra/sysadmin-gcp/defaults/main.yml` | role-defaults | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/tasks/contexto-limpo.yml` | role-tasks | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/sysadmin-gcp/tasks/main.yml` | role-tasks | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/sysadmin-gcp/tasks/segredos.yml` | role-tasks | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.service.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-alerta.service.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-alerta.sh.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
+| `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-ansible-core.sh.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.service.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.sh.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |
 | `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.timer.j2` | role-template | `01-manual-implementacao/19-sysadmin-gcp.md` |

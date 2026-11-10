@@ -226,3 +226,22 @@ def test_tailscale_up_exige_chave():
     assert avaliar(tailscale_auth_key="tskey-auth-x") is True
     for v in ({"tailscale_auth_key": ""}, {"tailscale_auth_key": "  "}, {}):
         assert avaliar(**v) is False, v
+
+
+@pytest.mark.parametrize("estado, entra, religa", [
+    ("NeedsLogin", True, False), ("NoState", True, False), (None, True, False),
+    ("Stopped", False, True), ("Running", False, False), ("Starting", False, False)])
+def test_tailscale_desligado_religa_sem_chave(estado, entra, religa):
+    """Um nó só desligado (`tailscale down`) não pede chave: o assert e o `up` com chave são para quem não tem login."""
+    import json as _json
+    import jinja2
+    t = yaml.safe_load((ANS / "roles/infra/tailscale/tasks/main.yml").read_text(encoding="utf-8"))
+    env = jinja2.Environment()
+    env.filters["from_json"] = _json.loads
+    saida = "" if estado is None else _json.dumps({"BackendState": estado})
+    vale = lambda x: env.from_string("{{ " + x["when"] + " }}").render(tailscale_status={"stdout": saida}) == "True"
+    a = next(x for x in t if "ansible.builtin.assert" in x)
+    up = next(x for x in t if "--auth-key" in str(x.get("ansible.builtin.command", "")))
+    rel = next(x for x in t if x["name"] == "Tailscale: religar (estava desligado)")
+    assert (vale(a), vale(up), vale(rel)) == (entra, entra, religa)
+    assert "--auth-key" not in rel["ansible.builtin.command"] and "no_log" not in rel

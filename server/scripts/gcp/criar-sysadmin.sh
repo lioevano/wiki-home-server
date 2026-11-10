@@ -85,6 +85,15 @@ main() {
         if [ "${REGERAR:-0}" = 1 ]; then
             local resp
             echo "ATENÇÃO: REGERAR=1 troca a senha do vault, o vault de casa, a chave SSH e todos os tokens."
+            git clone --quiet --depth 1 --branch main "$REPO_URL" "$TMP/repo"
+            if [ -e "$TMP/repo/server/ansible/inventories/home/group_vars/all/vault.yml" ]; then
+                # O vault da main foi cifrado com a senha atual e continua valendo sobre o de entrada (que não tem
+                # .base): com a senha nova, o executor não o lê e nenhum playbook roda.
+                echo "ATENÇÃO: a main já tem vault.yml, cifrado com a senha atual. Com a senha nova, o executor deixa de" >&2
+                echo "  ler o vault da main e nenhum playbook roda. Para recomeçar do zero: remova antes o vault.yml da" >&2
+                echo "  main por PR e apague a VM (gcloud compute instances delete $VM --zone=$ZONA). Para só recriar" >&2
+                echo "  uma VM perdida, rode sem REGERAR." >&2
+            fi
             read -r -p "Gerar o segredo $SEGREDO de novo? [s/N] " resp </dev/tty
             [ "$resp" = "s" ] || erro "nada alterado"
         else
@@ -229,19 +238,20 @@ CICLO
     fi
     # ---------------------------------------------------------------- 9/11
     etapa "9/11 Repositório e vault cifrado (gerar_vault.py, aqui no Cloud Shell)"
-    git clone --quiet --depth 1 --branch main "$REPO_URL" "$TMP/repo"
+    [ -d "$TMP/repo" ] || git clone --quiet --depth 1 --branch main "$REPO_URL" "$TMP/repo"
     # Uma fonte só para a versão: o group_vars do repositório (ops_ansible_core_version). O startup-script usa a mesma.
     versao=$(sed -n 's/^ops_ansible_core_version: *"\([0-9][0-9.]*\)".*/\1/p' \
         "$TMP/repo/server/ansible/inventories/home/group_vars/all/main.yml" | head -n 1)
     [[ "$versao" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || erro "não achei ops_ansible_core_version no group_vars"
     echo "ansible-core $versao ($(python3 -V))"
-    # Com o segredo reaproveitado: se a main já tem vault.yml, a main manda (nada de vault novo nem de entrada/, que
-    # numa VM recriada voltaria ao saida/ e, pelo PR seguinte, sobrescreveria o da main); senão, o vault de entrada
-    # só é (re)feito se faltar no bucket.
+    # Com o segredo reaproveitado: se a main já tem vault.yml, a main manda: nada de vault novo, e o entrada/ que
+    # sobrou da fase 1 é apagado (a VM recriada o semearia no saida/; sem .base ele não valeria sobre a main, mas não
+    # fica por lá para virar PR por engano). Senão, o vault de entrada só é (re)feito se faltar no bucket.
     local gerar_vault=1
     if [ "$REUSAR" = 1 ] && [ -e "$TMP/repo/server/ansible/inventories/home/group_vars/all/vault.yml" ]; then
         gerar_vault=0
-        echo "a main já tem vault.yml: a main manda (não gero vault nem envio entrada/; o executor lê o da main)"
+        gcloud storage rm "gs://${BUCKET}/entrada/vault.yml" >/dev/null 2>&1 || true
+        echo "a main já tem vault.yml: a main manda (não gero vault e apaguei o entrada/; o executor lê o da main)"
     elif [ "$REUSAR" = 1 ] && gcloud storage ls "gs://${BUCKET}/entrada/vault.yml" >/dev/null 2>&1; then
         gerar_vault=0
         echo "gs://${BUCKET}/entrada/vault.yml já existe: mantido"

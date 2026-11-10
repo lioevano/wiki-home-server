@@ -6,11 +6,14 @@
 #   ANSIBLE_CONFIG          o ansible.cfg do repositório (roles_path e inventário, relativos a ele).
 #   ANSIBLE_VARS_ENABLED=   sem group_vars automáticos: o vault.yml cifrado de casa não abre aqui (a VM não tem a
 #                           senha); o setup-sysadmin.yml carrega só o main.yml, por vars_files.
-# As coleções do Ansible vêm do requirements.yml do clone anterior (o primeiro boot as instala antes).
+# O ansible-core e as coleções seguem o group_vars e o requirements.yml do clone anterior (o primeiro boot os instala
+# antes): uma versão nova vale a partir da execução seguinte, nunca no meio de uma.
 [Unit]
 Description=Atualização diária do sysadmin: ansible-pull da main (página 19)
 Wants=network-online.target
 After=network-online.target docker.service
+# Falhou: aviso no bot de aprovações.
+OnFailure=sysadmin-alerta@%n.service
 
 [Service]
 Type=oneshot
@@ -18,6 +21,7 @@ WorkingDirectory=/
 Environment=PATH=/snap/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Environment=ANSIBLE_CONFIG=/opt/sysadmin/pull/server/ansible/ansible.cfg
 Environment=ANSIBLE_VARS_ENABLED=
+ExecStartPre=-/usr/local/sbin/sysadmin-ansible-core.sh
 ExecStartPre=-/bin/sh -c 'test ! -f /opt/sysadmin/pull/server/ansible/requirements.yml || ansible-galaxy collection install -r /opt/sysadmin/pull/server/ansible/requirements.yml -p /usr/share/ansible/collections'
 ExecStart=ansible-pull -U https://github.com/lioevano/wiki-home-server.git -C main -d /opt/sysadmin/pull -i server/ansible/inventories/home/hosts.ini -l sysadmin-gcp server/ansible/playbooks/setup-sysadmin.yml
 # As imagens são construídas na e2-micro: pode demorar.

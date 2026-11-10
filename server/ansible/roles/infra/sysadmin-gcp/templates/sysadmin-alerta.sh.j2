@@ -1,0 +1,15 @@
+#!/bin/sh
+# Gerado pelo role infra/sysadmin-gcp (página 19). Chamado pelo sysadmin-alerta@.service (OnFailure= das units do
+# sysadmin): avisa no bot de aprovações que uma unit falhou. Só o nome da unit e a hora, nada do journal (que poderia
+# trazer o que não deve sair da VM). O token vem do tmpfs e vai ao curl pelo stdin (--config -), não pela linha de
+# comando.
+set -eu
+unidade="${1:?uso: sysadmin-alerta.sh <unit>}"
+env=/run/sysadmin/host/alerta.env
+token=$(sed -n 's/^TELEGRAM_BOT_TOKEN=//p' "$env")
+chat=$(sed -n 's/^TELEGRAM_CHAT_ID=//p' "$env")
+[ -n "$token" ] && [ -n "$chat" ] || { echo "sem token ou chat em $env" >&2; exit 1; }
+quando=$(date -u '+%Y-%m-%d %H:%M UTC')
+texto="⚠️ sysadmin-gcp: a unit $unidade falhou em $quando. Na VM (pelo Tailscale ou pelo IAP de emergência): systemctl status $unidade e journalctl -u $unidade."
+printf 'url = "https://api.telegram.org/bot%s/sendMessage"\n' "$token" \
+    | curl -fsS -m 30 --retry 3 --config - --data-urlencode "chat_id=$chat" --data-urlencode "text=$texto" -o /dev/null

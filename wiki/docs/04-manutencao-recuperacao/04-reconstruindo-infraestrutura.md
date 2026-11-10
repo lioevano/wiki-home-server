@@ -87,6 +87,8 @@ Siga estes passos metodicamente:
         *   Na sua máquina de controle Ansible, copie sua chave SSH pública (`~/.ssh/id_ed25519_homelab.pub`) para este novo usuário no host Proxmox usando `ssh-copy-id`.
         *   Teste a conexão SSH e a capacidade de `sudo` sem senha.
     2.  **Executar o Playbook `full-deploy.yml` (ou o script `restore.sh`):**
+        *   **Antes, a chave nova da core.** A `core-services-vm` recriada (passo 4) também perdeu o login no tailnet, e a `tailscale_auth_key` do vault era de uso único. No painel do Tailscale, remova o nó `core` antigo e gere outra chave de uso único, pré-aprovada, com `tag:homeserver`; grave-a em `tailscale_auth_key` no vault, pelo `vault_preencher` do sysadmin (com o PR do vault mesclado antes do playbook, [seção 19](../01-manual-implementacao/19-sysadmin-gcp.md#3-o-pr-do-vault)) ou pelo `ansible-vault edit` na máquina de controle. Sem ela, o `setup-vpn.yml` (dentro do `full-deploy.yml`) para antes do `tailscale up`, com uma mensagem que diz isso. Enquanto a core não volta, o host segue alcançável pelo Tailscale (ele também anuncia as três rotas `/32`). Uma VM que só foi desligada, ou um `tailscale down`, não precisa de chave: o role religa o nó.
+
         Na raiz do repositório, na máquina de controle Ansible (o `restore.sh` entra sozinho em `server/ansible`):
         ```bash
         bash server/scripts/restore.sh # Este script executa o full-deploy.yml e lida com a senha do vault

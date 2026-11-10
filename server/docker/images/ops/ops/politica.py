@@ -15,8 +15,20 @@ PEM_FIM = re.compile(r"-----END [A-Z ]*PRIVATE KEY-----")
 MASCARA = "[linha omitida: possível segredo]"
 
 
+# Padrão de hosts do Ansible (nomes, grupos, `,`, `:`, `!`, `&`, `*`), sem começar por `-`. Fora dele, nada: `@arquivo`
+# faria o Ansible ler um arquivo do container (a senha do vault, por exemplo) como lista de hosts e devolver as linhas.
+LIMITE = re.compile(r"[A-Za-z0-9_.!&*][A-Za-z0-9_.:,!&*-]{0,199}")
+
+
 class Recusado(Exception):
     """Ação recusada pela política (container protegido, plano vencido, playbook fora da lista…)."""
+
+
+def checar_limite(limite) -> None:
+    """Recusa um `limite` do ansible-playbook fora do padrão de hosts (`None` é sem limite)."""
+    if limite is not None and not (isinstance(limite, str) and LIMITE.fullmatch(limite)):
+        raise Recusado("limite inválido: use só nomes de host ou grupo do inventário com , : ! & * "
+                       "(letras, números, _ . -; sem começar por -; até 200 caracteres)")
 
 
 def limpar_saida(texto: str, limite: int) -> str:

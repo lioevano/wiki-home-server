@@ -46,8 +46,10 @@
   failed_when: false
   check_mode: false # só lê
 
-# Fora da rede e sem chave, o 'tailscale up' (no_log) falharia sem dizer por quê. O caso típico é o host Proxmox
-# reinstalado (DR) ou configurado sem o sysadmin: a chave dele não fica no vault (ele entra pelo preparar-host.sh).
+# Fora da rede (sem login: NeedsLogin ou sem estado) e sem chave, o 'tailscale up' (no_log) falharia sem dizer por quê;
+# um nó só desligado ('tailscale down') não precisa de chave. Os casos típicos são o DR (host Proxmox reinstalado ou
+# core recriada: as chaves eram de uso único) e o host configurado sem o sysadmin: a chave dele não fica no vault
+# (ele entra pelo preparar-host.sh).
 - name: "Tailscale: há chave para entrar na rede"
   ansible.builtin.assert:
     that:
@@ -55,10 +57,10 @@
     fail_msg: >-
       Este nó não está no tailnet e não há chave de uso único (tailscale_auth_key vazia). Host Proxmox: gere uma
       chave nova com tag:homeserver e rode o scripts/gcp/preparar-host.sh (preparar_host do sysadmin, com a chave
-      nova no segredo do GCP) ou grave-a em tailscale_auth_key_host no vault. Core: tailscale_auth_key no vault.
-      VM do GCP: tailscale_chave_sysadmin no segredo sysadmin-segredos (página 14).
+      nova no segredo do GCP) ou grave-a em tailscale_auth_key_host no vault. Core: a chave anterior era de uso
+      único; gere outra com tag:homeserver e grave-a em tailscale_auth_key no vault (vault_preencher). VM do GCP: tailscale_chave_sysadmin no segredo sysadmin-segredos (página 14).
     quiet: true
-  when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') != 'Running'
+  when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') not in ['Running', 'Starting', 'Stopped']
 
 # Só na primeira vez (ou depois de um logout): a auth key é de uso único. As tags (--advertise-tags) só entram
 # aqui: o 'tailscale set' não troca tags sem reautenticar; para mudá-las num nó já na rede, rode
@@ -68,9 +70,20 @@
     tailscale up --auth-key={{ tailscale_auth_key }} --hostname={{ tailscale_hostname }}
     --advertise-routes={{ tailscale_rotas | join(',') }} --advertise-tags={{ tailscale_tags | join(',') }}
     --accept-routes={{ tailscale_aceitar_rotas | bool | lower }} --accept-dns=false
-  when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') != 'Running'
+  when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') not in ['Running', 'Starting', 'Stopped']
   changed_when: true
   no_log: true # a auth key
+
+# Já autenticado, mas desligado ('tailscale down', BackendState Stopped): religa sem chave, com as mesmas opções. Se o
+# login tiver caído (máquina removida do painel, chave expirada), o 'up' sem chave esperaria o login interativo: o
+# --timeout faz ele falhar em 60 s em vez de prender o playbook.
+- name: "Tailscale: religar (estava desligado)"
+  ansible.builtin.command: >-
+    tailscale up --timeout=60s --hostname={{ tailscale_hostname }}
+    --advertise-routes={{ tailscale_rotas | join(',') }} --advertise-tags={{ tailscale_tags | join(',') }}
+    --accept-routes={{ tailscale_aceitar_rotas | bool | lower }} --accept-dns=false
+  when: (((tailscale_status.stdout | default('')) or '{}') | from_json).BackendState | default('') == 'Stopped'
+  changed_when: true
 
 - name: "Tailscale: preferências atuais"
   ansible.builtin.command: tailscale debug prefs

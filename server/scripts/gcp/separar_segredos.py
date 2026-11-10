@@ -122,6 +122,10 @@ def separar(dados: dict, destino: Path, uid_executor: int, uid_sysadmin: int) ->
         _escrever(tmp / "executor/id_ed25519.pub", v["ssh_chave_publica"] + "\n", 0o400, dono_ex)
         # do host (lido pelo root da VM para subir o Tailscale do próprio sysadmin).
         _escrever(tmp / "host/tailscale_chave", v["tailscale_chave_sysadmin"] + "\n", 0o400, None)
+        # do host: o alerta de falha das units (sysadmin-alerta.sh) fala pelo bot de aprovações.
+        _escrever(tmp / "host/alerta.env", _env({
+            "TELEGRAM_BOT_TOKEN": v["telegram_bot_aprovacoes"], "TELEGRAM_CHAT_ID": v["telegram_chat_id"],
+        }), 0o400, None)
         if dono_ex is not None:
             os.chown(tmp / "executor", dono_ex, dono_ex)
 

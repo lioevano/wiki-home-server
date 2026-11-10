@@ -1,0 +1,44 @@
+---
+# Apaga do contexto de build os arquivos que saíram do repositório (o copy só acrescenta e sobrescreve). Chamado
+# depois das cópias de cada imagem, com:
+#   contexto_destino  diretório do contexto (/opt/sysadmin/build/<imagem>)
+#   contexto_fontes   diretórios copiados: [{src: caminho absoluto na fonte, dest: subdiretório no contexto ('' = raiz)}]
+#   contexto_gerados  arquivos do contexto que não vêm de um desses diretórios (cópias de um arquivo só, templates,
+#                     .versoes, .construido), relativos ao contexto
+# Registra `contexto_limpeza` (changed se algo foi apagado): o bloco da imagem o usa para pedir build novo.
+- name: "Contexto {{ contexto_destino | basename }}: arquivos da fonte"
+  ansible.builtin.find:
+    paths: "{{ item.src }}"
+    recurse: true
+    hidden: true
+  loop: "{{ contexto_fontes }}"
+  register: contexto_fonte
+
+- name: "Contexto {{ contexto_destino | basename }}: arquivos esperados"
+  ansible.builtin.set_fact:
+    contexto_esperados: >-
+      {%- set lista = [] -%}
+      {%- for gerado in contexto_gerados -%}
+        {%- set _ = lista.append(contexto_destino ~ '/' ~ gerado) -%}
+      {%- endfor -%}
+      {%- for r in contexto_fonte.results -%}
+        {%- for f in r.files -%}
+          {%- set rel = f.path | relpath(r.item.src) -%}
+          {%- set _ = lista.append(contexto_destino ~ '/' ~ ((r.item.dest ~ '/' ~ rel) if r.item.dest else rel)) -%}
+        {%- endfor -%}
+      {%- endfor -%}
+      {{ lista }}
+
+- name: "Contexto {{ contexto_destino | basename }}: arquivos atuais"
+  ansible.builtin.find:
+    paths: "{{ contexto_destino }}"
+    recurse: true
+    hidden: true
+  register: contexto_atual
+
+- name: "Contexto {{ contexto_destino | basename }}: apagar o que saiu do repositório"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ contexto_atual.files | map(attribute='path') | reject('in', contexto_esperados) | list }}"
+  register: contexto_limpeza
