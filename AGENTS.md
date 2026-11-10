@@ -94,3 +94,6 @@ Cada skill é um `SKILL.md` em `.agents/skills/<nome>/` (formato Agent Skills). 
 | `add-integration` | criar uma integração e ligá-la em todos os consumidores | `.agents/skills/add-integration/SKILL.md` |
 | `remove-integration` | desligar uma integração de todos e remover o provedor | `.agents/skills/remove-integration/SKILL.md` |
 | `fix-integrations` | corrigir achados da auditoria e gerar variáveis que faltam | `.agents/skills/fix-integrations/SKILL.md` |
+| `implantar-fase` | conduzir uma fase do roteiro do primeiro deploy (`/fase N`) | `.agents/skills/implantar-fase/SKILL.md` |
+| `status-implantacao` | dizer em que pé está a implantação (`/status`) | `.agents/skills/status-implantacao/SKILL.md` |
+| `equipe` | abrir, acompanhar ou fechar pedidos no `homeserver-equipe` | `.agents/skills/equipe/SKILL.md` |

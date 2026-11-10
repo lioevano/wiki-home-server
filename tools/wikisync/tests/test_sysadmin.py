@@ -765,3 +765,33 @@ def test_criar_sysadmin_iap_de_emergencia_e_orcamento():
     for cmd in ("gcloud billing budgets list", "gcloud billing budgets create"):
         trecho = s[s.index(cmd):].split("\n")[0]
         assert '--billing-project="$PROJETO"' in trecho
+
+
+def test_skills_do_sysadmin():
+    for nome in ("implantar-fase", "status-implantacao", "equipe"):
+        canon = (ROOT / f".agents/skills/{nome}/SKILL.md").read_text(encoding="utf-8")
+        inv = (ROOT / f".claude/skills/{nome}/SKILL.md").read_text(encoding="utf-8")
+        fm = lambda t: yaml.safe_load(t.split("---")[1])
+        assert fm(canon)["name"] == fm(inv)["name"] == nome and fm(canon)["description"] == fm(inv)["description"]
+        assert f".agents/skills/{nome}/SKILL.md" in (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+    eq = (ROOT / ".agents/skills/equipe/SKILL.md").read_text(encoding="utf-8")
+    for etiqueta in ("papel:sysadmin", "papel:metricas", "papel:apps", "papel:variaveis", "papel:atualizacoes",
+                     "papel:backup", "papel:assistente", "estado:aberto", "estado:em-andamento", "estado:feito",
+                     "estado:bloqueado", "diario"):
+        assert etiqueta in eq
+    assert "nunca" in eq.lower() and "segredo" in eq.lower()
+
+
+def test_skills_do_sysadmin_citam_as_ferramentas_reais():
+    ferr = (ROOT / "server/docker/images/executor/executor/ferramentas.py").read_text(encoding="utf-8")
+    nomes = set(re.findall(r"^\s+def (\w+)\(", ferr, re.M)) - {"fazer", "_runner"}
+    texto = {n: (ROOT / f".agents/skills/{n}/SKILL.md").read_text(encoding="utf-8")
+             for n in ("implantar-fase", "status-implantacao", "equipe")}
+    for t in ("diagnostico", "ansible_check", "ansible_aplicar", "vault_preencher", "preparar_host", "aprovacao_id"):
+        assert t in texto["implantar-fase"], t
+    assert "vault_status" in texto["status-implantacao"] and "free -m" in texto["status-implantacao"]
+    for n, t in texto.items():
+        for citado in re.findall(r"`(\w+)\(", t):          # só chamadas `ferramenta(`
+            assert citado in nomes, f"{n}: ferramenta inexistente {citado}"
+    assert "lioevano/homeserver-equipe" in texto["equipe"] and "equipe_repo" in texto["implantar-fase"]
+    assert "gh issue create -R lioevano/homeserver-equipe --label papel:" in texto["equipe"]

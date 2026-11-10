@@ -11,9 +11,12 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `add-app` | adicionar uma aplicação | `.agents/skills/add-app/SKILL.md` |
 | `add-integration` | criar uma integração e ligá-la em todos os consumidores | `.agents/skills/add-integration/SKILL.md` |
 | `audit-integrations` | verificar integrações (catálogo × índice × arquivos) | `.agents/skills/audit-integrations/SKILL.md` |
+| `equipe` | abrir, acompanhar ou fechar pedidos no `homeserver-equipe` | `.agents/skills/equipe/SKILL.md` |
 | `fix-integrations` | corrigir achados da auditoria e gerar variáveis que faltam | `.agents/skills/fix-integrations/SKILL.md` |
+| `implantar-fase` | conduzir uma fase do roteiro do primeiro deploy (`/fase N`) | `.agents/skills/implantar-fase/SKILL.md` |
 | `remove-app` | remover uma aplicação | `.agents/skills/remove-app/SKILL.md` |
 | `remove-integration` | desligar uma integração de todos e remover o provedor | `.agents/skills/remove-integration/SKILL.md` |
+| `status-implantacao` | dizer em que pé está a implantação (`/status`) | `.agents/skills/status-implantacao/SKILL.md` |
 | `sync-wiki-server` | `dev.py check` com erros ou avisos | `.agents/skills/sync-wiki-server/SKILL.md` |
 | `update-index` | manter o `INDEX.md` em dia (fim de toda mudança) | `.agents/skills/update-index/SKILL.md` |
 | `validate-infra` | antes de commitar ou entregar mudanças | `.agents/skills/validate-infra/SKILL.md` |
