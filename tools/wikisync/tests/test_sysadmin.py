@@ -100,6 +100,11 @@ def test_imagem_sysadmin():
     assert linhas[:2] == ["ARG HERMES_VERSION", "FROM nousresearch/hermes-agent:${HERMES_VERSION}"]
     for trecho in ("ansible-core==${ANSIBLE_CORE_VERSION}", "honcho-ai==${HONCHO_AI_VERSION}", "gh", "requirements-dev.txt"):
         assert trecho in d
+    # O pm do Hermes recusa installed_package("uv") ("uv is internal PM tooling"): o uv sai do uv_launcher,
+    # a função pública de leitura, e o build para se ele não vier.
+    assert 'installed_package("uv")' not in d
+    assert 'from pm import uv_launcher; print(uv_launcher("uv") or "")' in d
+    assert 'test -x "$uv"' in d
 
 
 def test_variaveis_do_sysadmin():

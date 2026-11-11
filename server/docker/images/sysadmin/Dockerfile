@@ -34,14 +34,16 @@ RUN apt-get -o Acquire::Retries=3 update \
 
 # honcho-ai no Python do Hermes (o plugin do Honcho importa o SDK); ansible-core num ambiente à parte em /opt/ansible,
 # para não mexer nas dependências do Hermes, com os comandos no PATH; e o ambiente do dev.py em /opt/dev
-# (HOMESERVER_VENV=/opt/dev). O uv é o do pm, o mesmo que montou o /opt/hermes/.venv. As coleções do Ansible
+# (HOMESERVER_VENV=/opt/dev). O uv é o do pm, o mesmo que montou o /opt/hermes/.venv, lido pelo uv_launcher: o
+# installed_package recusa o uv ("internal PM tooling", Hermes v0.22.5) e o build para se ele não vier. As coleções do Ansible
 # entram na construção, em /usr/share/ansible/collections (caminho padrão dos dois ansible-core da imagem): o
 # `dev.py lint` e o syntax-check as acham sem baixar nada na partida.
 COPY requirements-dev.txt /tmp/dev/requirements-dev.txt
 COPY wiki/requirements.txt /tmp/dev/wiki/requirements.txt
 COPY requirements.yml /tmp/dev/requirements.yml
 RUN set -eu; \
-    uv="$(cd /opt/hermes && python3 -c 'from pm import installed_package; print(installed_package("uv").binary)')"; \
+    uv="$(cd /opt/hermes && python3 -c 'from pm import uv_launcher; print(uv_launcher("uv") or "")')"; \
+    test -x "$uv"; \
     "$uv" pip install --no-cache --python /opt/hermes/.venv/bin/python "honcho-ai==${HONCHO_AI_VERSION}"; \
     /opt/hermes/.venv/bin/python -c "import honcho"; \
     "$uv" venv --python /usr/local/bin/python3 /opt/ansible; \
