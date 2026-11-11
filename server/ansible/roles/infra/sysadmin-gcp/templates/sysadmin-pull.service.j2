@@ -24,6 +24,6 @@ Environment=ANSIBLE_VARS_ENABLED=
 ExecStartPre=-/usr/local/sbin/sysadmin-ansible-core.sh
 ExecStartPre=-/bin/sh -c 'test ! -f /opt/sysadmin/pull/server/ansible/requirements.yml || ansible-galaxy collection install -r /opt/sysadmin/pull/server/ansible/requirements.yml -p /usr/share/ansible/collections'
 ExecStart=ansible-pull -U https://github.com/lioevano/wiki-home-server.git -C main -d /opt/sysadmin/pull -i server/ansible/inventories/home/hosts.ini -l sysadmin-gcp server/ansible/playbooks/setup-sysadmin.yml
-# As imagens são construídas na e2-micro: pode demorar.
+# As imagens são construídas na própria VM: pode demorar.
 TimeoutStartSec=3h
 Nice=10

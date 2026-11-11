@@ -10,7 +10,7 @@ Guia passo a passo para implementar o servidor doméstico. A primeira subida seg
 
 - **[0. Preparação e Planejamento](00-preparacao-planejamento.md):** Requisitos e estrutura do projeto.
 - **[1. Roteiro do primeiro deploy](01-roteiro-primeiro-deploy.md):** a ordem da primeira subida, das contas ao último agente, com o link de cada passo. **Comece por aqui.**
-- **[2. Sysadmin no GCP](02-sysadmin-gcp.md):** a máquina de controle, criada antes do servidor: Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub.
+- **[2. Sysadmin no GCP](02-sysadmin-gcp.md):** a máquina de controle, criada antes do servidor: Hermes com memória Honcho numa e2-small temporária (desligada na fase 12), executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub.
 - **[3. Máquina de Controle](03-maquina-controle-ansible.md):** vault, inventário e variáveis globais, que o sysadmin usa; e, como alternativa, a máquina de controle local na LAN.
 - **[4. Proxmox VE Host](04-proxmox-ve-host.md):** Hypervisor, ZFS e NFS.
 - **[5. Provisionamento de VMs](05-provisionamento-vms.md):** VMs `core-services-vm` e `ai-desktop-vm`.
@@ -37,8 +37,8 @@ Estes pontos foram desenhados e testados no repositório, mas só dá para confi
 
 | Seção | O que conferir | Como |
 |---|---|---|
-| [2](02-sysadmin-gcp.md) | Memória real da e2-micro com os seis containers e um playbook rodando (decida `gcp_tipo_maquina: e2-small` com números); `hermes memory status` mostra o Honcho e o `honcho-ai` do venv selado do Hermes carrega o plugin | `free -m` e `docker stats --no-stream` na VM durante um `ansible_aplicar`; `docker exec sysadmin hermes memory status` |
-| [2](02-sysadmin-gcp.md) | Primeira compilação das imagens `sysadmin` e `executor` na e2-micro (tempo e swap); o ambiente de testes não tem daemon Docker | `gcloud compute instances get-serial-port-output`; `docker images` na VM |
+| [2](02-sysadmin-gcp.md) | Memória real da e2-small com os seis containers e um playbook rodando (a e2-micro travou na swap no primeiro boot; se a e2-small também apertar, `gcp_tipo_maquina: e2-medium`); `hermes memory status` mostra o Honcho e o `honcho-ai` do venv selado do Hermes carrega o plugin | `free -m` e `docker stats --no-stream` na VM durante um `ansible_aplicar`; `docker exec sysadmin hermes memory status` |
+| [2](02-sysadmin-gcp.md) | Primeira compilação das imagens `sysadmin` e `executor` na VM (tempo e swap; as duas já foram construídas fora dela, com o Hermes v0.22.5) | `gcloud compute instances get-serial-port-output`; `docker images` na VM |
 | [2](02-sysadmin-gcp.md) | `gcloud` no PATH das units (`/snap/bin`); `tailscale serve` com o HTTPS do tailnet desligado; swap cifrada em arquivo; o Docker esperando a unit de segredos | `systemctl status sysadmin-segredos`; `swapon --show` (deve mostrar `/dev/mapper/cryptswap`); `systemctl list-jobs` durante uma falha passageira; `tailscale serve status` |
 | [2](02-sysadmin-gcp.md), [4](04-proxmox-ve-host.md) | Firewall do PVE com o Tailscale em nftables: logo após o primeiro `setup-proxmox-host.yml` (que liga a política `DROP`), o executor ainda entra no host pelo tailnet (regras de `tailscale0` para 22 e 8006, origem `100.64.0.0/10`) | `diagnostico("proxmox_main_host", "systemctl status pve-firewall")` e um novo `ansible_check` de qualquer playbook do host precisam funcionar; se não, entre pelo console do host e `pve-firewall stop` |
 | [2](02-sysadmin-gcp.md), [16](16-vpn-tailscale.md) | Rotas com failover: host e core anunciam as três `/32` | Desligue a core e alcance o host (`ssh` ao `pve` pelo tailnet) |

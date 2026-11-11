@@ -43,9 +43,9 @@ Para esta implementação, estou utilizando o seguinte setup:
 
 ### Máquina de Controle Ansible
 
-A máquina de controle é o **sysadmin** ([seção 2](02-sysadmin-gcp.md)): uma VM `e2-micro` do Google Cloud, no nível gratuito, criada pelo Cloud Shell no navegador **antes** do servidor. Não há hardware a comprar; você precisa de:
+A máquina de controle é o **sysadmin** ([seção 2](02-sysadmin-gcp.md)): uma VM `e2-small` do Google Cloud (cerca de US$ 13 a 17 por mês), criada pelo Cloud Shell no navegador **antes** do servidor e desligada quando a casa assume, na fase 12. Não há hardware a comprar; você precisa de:
 
-*   Um projeto do Google Cloud com faturamento ligado (cartão cadastrado; o orçamento de alerta é de US$ 2).
+*   Um projeto do Google Cloud com faturamento ligado (cartão cadastrado; o orçamento de alerta é de US$ 20).
 *   O Telegram no celular (é por onde você conversa com o sysadmin e aprova cada ação).
 *   Um gerenciador de senhas: as chaves, os tokens e as senhas que a criação mostra uma vez vão para ele.
 

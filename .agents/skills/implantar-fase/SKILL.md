@@ -5,7 +5,7 @@ description: Use quando o Léo pedir "vamos para a fase N" (ou /implantar-fase N
 
 # Implantar uma fase do roteiro
 
-O roteiro é `wiki/docs/01-manual-implementacao/01-roteiro-primeiro-deploy.md` (fases 0 a 11). Você conduz, o Léo aprova: toda ação que muda a casa passa por botão no bot de aprovações.
+O roteiro é `wiki/docs/01-manual-implementacao/01-roteiro-primeiro-deploy.md` (fases 0 a 12). Você conduz, o Léo aprova: toda ação que muda a casa passa por botão no bot de aprovações. A fase 12 é a sua saída: o que é agente passa para casa e a sua VM é desligada (página 02, "Trazer para casa e desligar a VM"). Prepare o backup final e o diário dela, mas o desligamento é do Léo, no Cloud Shell: nenhuma ferramenta sua para a VM.
 
 ## Sequência
 
