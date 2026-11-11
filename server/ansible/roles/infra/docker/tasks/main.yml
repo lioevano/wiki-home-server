@@ -1,19 +1,30 @@
 # ansible/roles/infra/docker/tasks/main.yml
 # Instala Docker Engine em todas as VMs Ubuntu; Portainer CE na core-services-vm e Portainer Agent nas demais.
 
+# A chave vem em texto (ASCII armor): o apt só a lê num arquivo .asc. Num .gpg ele espera o formato binário e
+# recusa o repositório (NO_PUBKEY 7EA0A9C3F273FCD8).
 - name: "Adicionar chave GPG oficial do Docker"
   ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
-    dest: /etc/apt/keyrings/docker.gpg # Novo caminho recomendado para chaves GPG
+    dest: /etc/apt/keyrings/docker.asc
     mode: '0644'
     force: true # Sobrescreve se já existir, para garantir a chave mais recente
 
+# O arquivo inteiro, e não uma linha acrescentada: assim uma entrada antiga (a da chave .gpg) não sobra nele.
 - name: "Adicionar repositório Docker"
-  ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-    state: present
-    filename: docker # Nome do arquivo .list em /etc/apt/sources.list.d/
-    update_cache: yes # Atualiza o cache após adicionar o repo
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.list
+    content: |
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_facts.distribution_release }} stable
+    owner: root
+    group: root
+    mode: '0644'
+  register: docker_repositorio
+
+- name: "Atualizar o cache do apt com o repositório Docker"
+  ansible.builtin.apt:
+    update_cache: true
+  when: docker_repositorio.changed # noqa: no-handler
 
 # Antes da instalação: o daemon já sobe assim, sem imagens a migrar. Com o image store do containerd
 # (padrão no Docker 29) o cAdvisor do Alloy não encontra os containers (seção 6.4).
