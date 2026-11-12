@@ -250,6 +250,13 @@
 # Reconstrução: o carimbo .versoes (argumentos de build e versão da imagem) entra no contexto; contexto ou carimbo
 # novo apaga o .construido; o build é forçado quando o .construido falta ou difere do .versoes, e o .construido só
 # é gravado depois de um build bem-sucedido. Versão nova reconstrói, e um build que falhou é refeito na próxima.
+# Memória: construir com os seis containers rodando travou a e2-small na swap do disco padrão. Antes de cada build que
+# vai rodar, a stack para (o bot fica mudo durante a construção); a tarefa "Stack do sysadmin" a sobe de novo.
+- name: Compose do sysadmin já instalado
+  ansible.builtin.stat:
+    path: /opt/sysadmin/stack/docker-compose.yml
+  register: sysadmin_compose_existe
+
 - name: Imagem do sysadmin
   block:
     - name: "Sysadmin: diretórios do contexto de build"
@@ -300,6 +307,14 @@
       ansible.builtin.stat:
         path: /opt/sysadmin/build/sysadmin/.construido
       register: sysadmin_construido
+
+    - name: "Sysadmin: parar a stack para construir (memória)"
+      community.docker.docker_compose_v2:
+        project_src: /opt/sysadmin/stack
+        state: stopped
+      when: >-
+        not ansible_check_mode and sysadmin_compose_existe.stat.exists
+        and (not sysadmin_construido.stat.exists or sysadmin_construido.stat.checksum != sysadmin_carimbo.checksum)
 
     - name: "Sysadmin: construir localhost/homeserver/sysadmin"
       community.docker.docker_image:
@@ -394,6 +409,14 @@
       ansible.builtin.stat:
         path: /opt/sysadmin/build/executor/.construido
       register: sysadmin_executor_construido
+
+    - name: "Executor: parar a stack para construir (memória)"
+      community.docker.docker_compose_v2:
+        project_src: /opt/sysadmin/stack
+        state: stopped
+      when: >-
+        not ansible_check_mode and sysadmin_compose_existe.stat.exists
+        and (not sysadmin_executor_construido.stat.exists or sysadmin_executor_construido.stat.checksum != sysadmin_executor_carimbo.checksum)
 
     # UID/GID do build = --uid-executor do separar_segredos.py (dono dos arquivos de /run/sysadmin/executor).
     - name: "Executor: construir localhost/homeserver/executor"
