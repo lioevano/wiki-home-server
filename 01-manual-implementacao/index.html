@@ -2209,7 +2209,7 @@
 <ul>
 <li><strong><a href="00-preparacao-planejamento/">0. Preparação e Planejamento</a>:</strong> Requisitos e estrutura do projeto.</li>
 <li><strong><a href="01-roteiro-primeiro-deploy/">1. Roteiro do primeiro deploy</a>:</strong> a ordem da primeira subida, das contas ao último agente, com o link de cada passo. <strong>Comece por aqui.</strong></li>
-<li><strong><a href="02-sysadmin-gcp/">2. Sysadmin no GCP</a>:</strong> a máquina de controle, criada antes do servidor: Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub.</li>
+<li><strong><a href="02-sysadmin-gcp/">2. Sysadmin no GCP</a>:</strong> a máquina de controle, criada antes do servidor: Hermes com memória Honcho numa e2-small temporária (desligada na fase 12), executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub.</li>
 <li><strong><a href="03-maquina-controle-ansible/">3. Máquina de Controle</a>:</strong> vault, inventário e variáveis globais, que o sysadmin usa; e, como alternativa, a máquina de controle local na LAN.</li>
 <li><strong><a href="04-proxmox-ve-host/">4. Proxmox VE Host</a>:</strong> Hypervisor, ZFS e NFS.</li>
 <li><strong><a href="05-provisionamento-vms/">5. Provisionamento de VMs</a>:</strong> VMs <code>core-services-vm</code> e <code>ai-desktop-vm</code>.</li>
@@ -2242,12 +2242,12 @@
 <tbody>
 <tr>
 <td><a href="02-sysadmin-gcp/">2</a></td>
-<td>Memória real da e2-micro com os seis containers e um playbook rodando (decida <code>gcp_tipo_maquina: e2-small</code> com números); <code>hermes memory status</code> mostra o Honcho e o <code>honcho-ai</code> do venv selado do Hermes carrega o plugin</td>
+<td>Memória real da e2-small com os seis containers e um playbook rodando (a e2-micro travou na swap no primeiro boot; se a e2-small também apertar, <code>gcp_tipo_maquina: e2-medium</code>); <code>hermes memory status</code> mostra o Honcho e o <code>honcho-ai</code> do venv selado do Hermes carrega o plugin</td>
 <td><code>free -m</code> e <code>docker stats --no-stream</code> na VM durante um <code>ansible_aplicar</code>; <code>docker exec sysadmin hermes memory status</code></td>
 </tr>
 <tr>
 <td><a href="02-sysadmin-gcp/">2</a></td>
-<td>Primeira compilação das imagens <code>sysadmin</code> e <code>executor</code> na e2-micro (tempo e swap); o ambiente de testes não tem daemon Docker</td>
+<td>Primeira compilação das imagens <code>sysadmin</code> e <code>executor</code> na VM (tempo e swap; as duas já foram construídas fora dela, com o Hermes v0.22.5)</td>
 <td><code>gcloud compute instances get-serial-port-output</code>; <code>docker images</code> na VM</td>
 </tr>
 <tr>
@@ -2387,7 +2387,7 @@
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="10 de novembro de 2026 02:27:45 -03">10 de novembro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="11 de novembro de 2026 20:43:01 -03">11 de novembro de 2026</span>
   </span>
 
     

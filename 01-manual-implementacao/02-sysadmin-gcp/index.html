@@ -3,7 +3,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Sysadmin no GCP: Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub.">
+        <meta name="description" content="Sysadmin no GCP: Hermes com memória Honcho numa e2-small temporária, executor com vault e SSH atrás de botões no Telegram, e a equipe pelo GitHub.">
       
       
         <meta name="author" content="Léo Ivan">
@@ -768,6 +768,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trazer-para-casa-e-desligar-a-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trazer para casa e desligar a VM
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2472,6 +2483,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#trazer-para-casa-e-desligar-a-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trazer para casa e desligar a VM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#a-equipe" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2537,11 +2559,11 @@
 
 <h1 id="seção-2-sysadmin-no-gcp">Seção 2: Sysadmin no GCP<a class="headerlink" href="#seção-2-sysadmin-no-gcp" title="Permanent link">¶</a></h1>
 <h2 id="como-funciona">Como funciona<a class="headerlink" href="#como-funciona" title="Permanent link">¶</a></h2>
-<p>O <strong>sysadmin</strong> é um agente que existe <strong>antes</strong> do servidor. Ele roda numa VM <code>e2-micro</code> do Google Cloud (nível gratuito, <code>us-east1</code>), você o comanda pelo Telegram, e ele conduz o <a href="../01-roteiro-primeiro-deploy/">roteiro do primeiro deploy</a> fase a fase: lê a wiki, confere o estado real da casa, monta os pedidos e <strong>espera o seu botão</strong> para tudo que muda o servidor. Depois do deploy, continua como o coordenador da equipe de agentes da casa. É também o jeito recomendado de ter a <a href="../03-maquina-controle-ansible/">máquina de controle do Ansible</a>.</p>
+<p>O <strong>sysadmin</strong> é um agente que existe <strong>antes</strong> do servidor. Ele roda numa VM <code>e2-small</code> do Google Cloud (<code>us-east1</code>), você o comanda pelo Telegram, e ele conduz o <a href="../01-roteiro-primeiro-deploy/">roteiro do primeiro deploy</a> fase a fase: lê a wiki, confere o estado real da casa, monta os pedidos e <strong>espera o seu botão</strong> para tudo que muda o servidor. A VM é <strong>temporária</strong>: quando a casa estiver de pé, o que é agente (o coordenador da equipe, a memória no Honcho e a máquina de controle) passa para o servidor e a VM é desligada, na <a href="../01-roteiro-primeiro-deploy/#fase-12--sysadmin-em-casa-e-vm-desligada">fase 12</a> (<a href="#trazer-para-casa-e-desligar-a-vm">Trazer para casa</a>). Até lá, é também o jeito recomendado de ter a <a href="../03-maquina-controle-ansible/">máquina de controle do Ansible</a>.</p>
 <p>O agente é o <a href="../19-assistente/">Hermes</a> (v0.22.5) com memória no <a href="https://github.com/plastic-labs/honcho">Honcho</a> (v3.6.0) próprio. O <strong>modelo</strong> é o Claude da Anthropic (Sonnet por padrão, Haiku para resumos), com o Gemini (AI Studio) de reserva. Ele <strong>não usa o LiteLLM de casa</strong>: o sysadmin existe antes dela e é quem a conserta.</p>
 <pre class="mermaid"><code>flowchart TB
     leo(["Você&lt;br/&gt;Telegram e Tailscale"])
-    subgraph gcp["VM e2-micro no GCP"]
+    subgraph gcp["VM e2-small no GCP"]
         sa["sysadmin&lt;br/&gt;Hermes"]
         ex["executor&lt;br/&gt;vault, SSH, carteiro"]
         hon["Honcho&lt;br/&gt;memória"]
@@ -2613,7 +2635,7 @@
 </tr>
 </tbody>
 </table>
-<p>Os seis containers dividem 1 GB de RAM com 4 GB de swap (cifrada, com chave nova a cada boot). Se ficar lento, a saída é <code>gcp_tipo_maquina: e2-small</code> (cerca de US$ 13 por mês) por PR; a medição real está em <a href="../#a-conferir-no-primeiro-deploy">A conferir no primeiro deploy</a>.</p>
+<p>Os seis containers dividem 2 GB de RAM com 4 GB de swap (cifrada, com chave nova a cada boot). A swap é só reserva: o disco padrão faz poucas dezenas de operações por segundo, e na <code>e2-micro</code> (1 GB, gratuita) a VM travou esperando por ela no primeiro boot. Por isso o padrão (<code>gcp_tipo_maquina</code>) é a <code>e2-small</code>, paga e temporária; a medição real está em <a href="../#a-conferir-no-primeiro-deploy">A conferir no primeiro deploy</a>.</p>
 <h3 id="como-uma-fase-corre">Como uma fase corre<a class="headerlink" href="#como-uma-fase-corre" title="Permanent link">¶</a></h3>
 <ol>
 <li>Você manda <code>/implantar-fase 3</code> (ou "vamos para a fase 3"). Os comandos do Telegram são os <strong>nomes das skills</strong>: <code>/implantar-fase N</code>, <code>/status-implantacao</code> e <code>/equipe</code>; <code>/status</code> é o comando nativo do Hermes. Linguagem natural também serve.</li>
@@ -2653,7 +2675,11 @@ sequenceDiagram
 </thead>
 <tbody>
 <tr>
-<td>VM <code>e2-micro</code>, 30 GB de disco padrão, IP externo</td>
+<td>VM <code>e2-small</code> e IP externo</td>
+<td>Cerca de US$ 13 a 17 por mês, só enquanto ela estiver ligada (até a fase 12)</td>
+</tr>
+<tr>
+<td>30 GB de disco padrão</td>
 <td>US$ 0 (nível gratuito, <code>us-east1</code>)</td>
 </tr>
 <tr>
@@ -2674,7 +2700,7 @@ sequenceDiagram
 </tr>
 </tbody>
 </table>
-<p>O alerta de orçamento do GCP fica em <strong>US$ 2</strong>.</p>
+<p>O alerta de orçamento do GCP fica em <strong>US$ 20</strong> (<code>sysadmin-20usd</code>). Um projeto criado antes desta mudança tem o <code>sysadmin-2usd</code>: edite o valor em <em>Faturamento → Orçamentos e alertas</em>; o script não cria um segundo.</p>
 <h2 id="o-que-ele-pode-e-o-que-não-pode">O que ele pode e o que não pode<a class="headerlink" href="#o-que-ele-pode-e-o-que-não-pode" title="Permanent link">¶</a></h2>
 <table>
 <thead>
@@ -2762,7 +2788,7 @@ sequenceDiagram
 <h4 id="11-projeto-do-google-cloud">1.1. Projeto do Google Cloud<a class="headerlink" href="#11-projeto-do-google-cloud" title="Permanent link">¶</a></h4>
 <ol>
 <li>Em <a href="https://console.cloud.google.com/">console.cloud.google.com</a>, crie um <strong>projeto novo, só para o sysadmin</strong> (seletor de projetos → <em>New project</em>). Um projeto próprio é obrigatório: a regra que recusa toda entrada vale para a rede inteira do projeto (<a href="#rede-e-acl">Rede e ACL</a>).</li>
-<li>Vincule uma <strong>conta de faturamento</strong> ao projeto (<em>Billing</em>). A <code>e2-micro</code> em <code>us-east1</code>, <code>us-central1</code> ou <code>us-west1</code> está no nível gratuito, mas o GCP exige o cartão cadastrado; o script recusa outras regiões e cria o alerta de orçamento de US$ 2.</li>
+<li>Vincule uma <strong>conta de faturamento</strong> ao projeto (<em>Billing</em>). A <code>e2-small</code> é paga (a <code>e2-micro</code>, a única gratuita, não aguenta os seis containers); o disco de 30 GB fica no nível gratuito em <code>us-east1</code>, <code>us-central1</code> ou <code>us-west1</code>. O script recusa outras regiões e cria o alerta de orçamento de US$ 20.</li>
 <li>Conta nova começa no <strong>período de teste</strong> (<em>Free Trial</em>): ative a <strong>conta completa</strong> (<em>Activate full account</em>, ou <em>Upgrade</em> em <em>Billing</em>). Sem isso, quando o teste acaba o GCP para tudo o que foi criado nele, e o sysadmin para junto. O nível gratuito continua valendo depois da ativação.</li>
 <li>Anote o <strong>id do projeto</strong> (não o nome). APIs, conta de serviço, bucket, firewall e a VM ficam com o script.</li>
 </ol>
@@ -2827,7 +2853,7 @@ sequenceDiagram
 <p class="admonition-title"><code>REGERAR=1</code> com o vault já na <code>main</code></p>
 <p>A senha do vault muda, e o <code>vault.yml</code> da <code>main</code> continua cifrado com a antiga e valendo sobre o de entrada: o executor não o lê e nenhum playbook roda. O script avisa antes de perguntar. Para recomeçar do zero, primeiro remova o <code>vault.yml</code> da <code>main</code> por PR e apague a VM (<code>gcloud compute instances delete sysadmin --zone=us-east1-b</code>), e só então rode com <code>REGERAR=1</code>: o vault de entrada novo vira o PR do vault. Para recriar uma VM perdida, rode <strong>sem</strong> <code>REGERAR</code>.</p>
 </div>
-<p>A VM leva de <strong>20 a 40 minutos</strong> para se configurar (as imagens <code>sysadmin</code> e <code>executor</code> são compiladas na e2-micro). Acompanhe com <code>gcloud compute instances get-serial-port-output sysadmin --zone=us-east1-b | tail -n 30</code>. Quando o nó <code>sysadmin</code> aparecer no Tailscale e o bot do sysadmin responder, está de pé. A partir daí, toda a configuração da VM vem de <code>ansible/playbooks/setup-sysadmin.yml</code>, que a própria VM puxa da <code>main</code> no primeiro boot e num timer diário (05:17 UTC), configurando Docker, Tailscale e o role <code>infra/sysadmin-gcp</code>. Ele fica <strong>fora</strong> do <code>full-deploy.yml</code>, e só o <code>main.yml</code> entra nele, nunca o vault.</p>
+<p>A VM leva de <strong>20 a 40 minutos</strong> para se configurar (as imagens <code>sysadmin</code> e <code>executor</code> são compiladas na própria VM). Acompanhe com <code>gcloud compute instances get-serial-port-output sysadmin --zone=us-east1-b | tail -n 30</code>. Quando o nó <code>sysadmin</code> aparecer no Tailscale e o bot do sysadmin responder, está de pé. A partir daí, toda a configuração da VM vem de <code>ansible/playbooks/setup-sysadmin.yml</code>, que a própria VM puxa da <code>main</code> no primeiro boot e num timer diário (05:17 UTC), configurando Docker, Tailscale e o role <code>infra/sysadmin-gcp</code>. Ele fica <strong>fora</strong> do <code>full-deploy.yml</code>, e só o <code>main.yml</code> entra nele, nunca o vault.</p>
 <h3 id="3-o-pr-do-vault">3. O PR do vault<a class="headerlink" href="#3-o-pr-do-vault" title="Permanent link">¶</a></h3>
 <p>O vault de entrada está em <code>/saida/vault.yml</code> (cifrado, só leitura para o sysadmin, que não o decifra). Peça: "abra o PR do vault". O sysadmin copia o arquivo para <code>server/ansible/inventories/home/group_vars/all/vault.yml</code>, roda o <code>python tools/dev.py check</code> e abre o PR; você revisa (é um arquivo cifrado: confira que começa com <code>$ANSIBLE_VAULT;</code> e mescle). As chaves que vêm de fora (Cloudflare, domínio, provedores de LLM, ProtonVPN, B2 e a senha do root do Proxmox) ficam com o texto do modelo: o sysadmin as pede <strong>uma a uma</strong> pelo <code>vault_preencher</code> quando a fase chegar nelas, e cada preenchimento regrava o <code>saida/vault.yml</code>. Os playbooks rodam com o vault da <code>main</code>: o PR do vault com as chaves novas é mesclado <strong>antes</strong> de qualquer playbook que as use, não ao fim da fase. Logo antes de abrir o PR, o sysadmin chama o <code>vault_status</code>: ele faz o <code>git pull</code> da <code>main</code> do executor e diz se o <code>saida/vault.yml</code> tem edições pendentes sobre ela e qual é a <strong>base</strong> (o sha256 do vault da <code>main</code> em que elas se apoiam). O sysadmin cria o branch da <code>main</code> mais nova e só copia o arquivo se o <code>sha256sum</code> do <code>vault.yml</code> do branch for essa base: se outro PR mudou o vault no meio, ele chama o <code>vault_status</code> de novo em vez de abrir um PR que desfaria essa mudança (você não teria como notar: o arquivo é cifrado). Sem a <code>main</code> atualizada (git fora, outra execução em andamento), o <code>vault_status</code> diz para não abrir o PR.</p>
 <p>Mesclado o PR, as edições que ele não levou (chaves preenchidas com o PR já aberto) <strong>não se perdem</strong>: na primeira leitura depois que a <code>main</code> muda, o executor as reaplica sobre a <code>main</code> nova, chave a chave, comparando com o ancestral guardado em <code>saida/.base.yml</code> e com cada versão do vault na história da <code>main</code> desde a base. As que a <code>main</code> já teve em algum momento caem (foram mescladas; se depois um PR as mudou ou reverteu, vale a <code>main</code>); se a <code>main</code> mudou para outro valor uma chave que você preencheu e que ela nunca teve, vale a <code>main</code> e o executor avisa o <strong>nome</strong> da chave, uma vez no bot de aprovações e no <code>vault_status</code> até você preenchê-la de novo. Quando não sobra nada a reaplicar, o <code>saida/</code> é <strong>apagado</strong>: um <code>saida/</code> superado nunca volta a valer, nem se a <code>main</code> voltar ao conteúdo antigo. Se a <code>main</code> some no meio de um <code>git pull</code>, o executor recusa ler o vault até ela voltar.</p>
@@ -2844,6 +2870,21 @@ sequenceDiagram
 <p>Com o Proxmox instalado pelo pendrive, o sysadmin chama <code>preparar_host()</code>: o bot de aprovações lhe manda <strong>um comando</strong> para colar no console do host. O <code>scripts/gcp/preparar-host.sh</code> (que é repetível) instala o Tailscale e entra no tailnet com a chave de uso único da <code>tag:homeserver</code>, anunciando as rotas <code>/32</code>; liga o encaminhamento de pacotes; cria o usuário do Ansible, sem senha, com <code>sudo</code>; e autoriza a chave pública do executor. É o último passo físico na rede. A senha de root do Proxmox, que o <code>proxmox_api_password</code> do vault pede, entra por <code>vault_preencher</code>. Daí em diante o <code>setup-proxmox-host.yml</code> gerencia esse Tailscale pelo role <code>infra/tailscale</code>, que passou a aceitar Debian.</p>
 <h3 id="5-daqui-em-diante">5. Daqui em diante<a class="headerlink" href="#5-daqui-em-diante" title="Permanent link">¶</a></h3>
 <p>Mande <code>/status-implantacao</code> para ver a fase atual, as pendências suas, os pedidos abertos, o gasto do mês e a memória da VM, e <code>/implantar-fase 1</code> para começar. Os segredos ficam em <code>/run/sysadmin</code> (um <code>tmpfs</code>, 0600), separados por container pelo <code>scripts/gcp/separar_segredos.py</code>: o sysadmin recebe só o que é dele e <strong>falha fechado</strong> se faltar um campo. O backup roda todo dia às 06:07 UTC (o <code>pg_dump</code> do Honcho e o diretório do Hermes, sem <code>.env</code> nem <code>auth.json</code>) em <code>gs://&lt;projeto&gt;-sysadmin/backup/&lt;data&gt;/</code>. O <code>ansible-pull</code> das 05:17 UTC mantém a VM igual à <code>main</code>; a atualização do próprio Hermes, do Honcho e das imagens acontece por PR de versão no <code>group_vars</code>. O <code>ansible-core</code> da VM e as coleções seguem o <code>group_vars</code> e o <code>requirements.yml</code> com um dia de atraso: são atualizados <strong>antes</strong> de cada <code>ansible-pull</code>, a partir do clone da execução anterior, nunca no meio de uma. Se o backup ou o <code>ansible-pull</code> falhar, o bot de aprovações avisa.</p>
+<h2 id="trazer-para-casa-e-desligar-a-vm">Trazer para casa e desligar a VM<a class="headerlink" href="#trazer-para-casa-e-desligar-a-vm" title="Permanent link">¶</a></h2>
+<p>O sysadmin no GCP existe para a implantação: a casa ainda não tem onde rodar um agente, e alguém precisa conduzir as fases. Na <a href="../01-roteiro-primeiro-deploy/#fase-12--sysadmin-em-casa-e-vm-desligada">fase 12</a>, com o servidor de pé, o que é agente muda para casa e a VM é desligada, o que encerra o custo dela. O lado de casa (onde o coordenador da equipe passa a rodar, o Honcho da casa e o executor com o vault e a chave SSH) é a <strong>5b</strong>, em spec própria; esta seção diz o que sai da VM e como desligá-la.</p>
+<ol>
+<li><strong>O que muda para casa.</strong> O papel de coordenador da <a href="#a-equipe">equipe</a> passa a um agente da casa; a memória do <em>workspace</em> <code>sysadmin</code> vai para o Honcho da casa; a máquina de controle passa a ser a de casa (a <a href="../03-maquina-controle-ansible/#a-máquina-de-controle-local">local</a> serve até a 5b). Os bots do Telegram, a conta de máquina e o <code>homeserver-equipe</code> podem ser reaproveitados por quem assume.</li>
+<li><strong>Backup final.</strong> Pelo Tailscale, <code>sudo systemctl start sysadmin-backup</code> na VM: o dump do Honcho e o diretório do Hermes vão para <code>gs://&lt;projeto&gt;-sysadmin/backup/&lt;data&gt;/</code>. Copie essa pasta para fora do bucket antes de 30 dias, porque o ciclo de vida apaga o que está em <code>backup/</code>.</li>
+<li><strong>Importar em casa</strong> o dump e o diretório (5b) e confirmar que o agente de casa responde e lembra do histórico.</li>
+<li>
+<p><strong>Desligar a VM:</strong></p>
+<div class="language-bash highlight"><span class="filename">Exemplo: desligar o sysadmin (Cloud Shell)</span><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>gcloud<span class="w"> </span>compute<span class="w"> </span>instances<span class="w"> </span>stop<span class="w"> </span>sysadmin<span class="w"> </span>--zone<span class="o">=</span>us-east1-b
+</span></code></pre></div>
+<p>Parada, a VM não cobra processamento nem IP externo; o disco de 30 GB continua no nível gratuito. Para religar (uma emergência), <code>gcloud compute instances start</code>: na partida, os segredos e os containers sobem sozinhos.
+5. <strong>Revogar o que só a VM usava:</strong> a chave <code>sysadmin-gcp</code> da Anthropic (ou o <em>workspace</em> inteiro), a chave do Gemini se ninguém mais a usa, e o nó <code>sysadmin</code> no painel do Tailscale. A chave do Tailscale <code>tag:sysadmin</code> já foi consumida.
+6. <strong>Apagar de vez</strong>, quando a casa já tiver rodado algumas semanas sem ela: <code>gcloud compute instances delete sysadmin --zone=us-east1-b</code>, o segredo <code>sysadmin-segredos</code>, o bucket e o orçamento. O projeto pode ficar vazio ou ser encerrado.</p>
+</li>
+</ol>
 <h2 id="a-equipe">A equipe<a class="headerlink" href="#a-equipe" title="Permanent link">¶</a></h2>
 <p>Os agentes se coordenam por <strong>issues</strong> no repositório privado <code>lioevano/homeserver-equipe</code> (<code>equipe_repo</code>). Não há porta nova em lugar nenhum (todos só saem para o GitHub), não há custo, há histórico, e você acompanha e intervém pelo app do GitHub. O protocolo completo é a skill <code>equipe</code> (<code>.agents/skills/equipe/SKILL.md</code>); este é o resumo.</p>
 <ul>
@@ -2947,8 +2988,8 @@ sequenceDiagram
 </tr>
 <tr>
 <td>Falta de memória</td>
-<td>Swap e <code>restart: unless-stopped</code></td>
-<td>Se repetir, <code>gcp_tipo_maquina: e2-small</code> por PR</td>
+<td>Swap e <code>restart: unless-stopped</code>; o console serial mostra <code>blocked for more than 120 seconds</code> e o bot para</td>
+<td><code>gcloud compute instances stop</code>, <code>set-machine-type --machine-type=e2-medium</code> e <code>start</code>, e o mesmo valor em <code>gcp_tipo_maquina</code> por PR</td>
 </tr>
 <tr>
 <td>Anthropic fora ou teto atingido</td>
@@ -3062,7 +3103,7 @@ sequenceDiagram
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="10 de novembro de 2026 03:19:46 -03">10 de novembro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="11 de novembro de 2026 20:43:01 -03">11 de novembro de 2026</span>
   </span>
 
     
