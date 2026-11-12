@@ -41,8 +41,8 @@ flowchart LR
 
 | Passo | Onde | Detalhe |
 |---|---|---|
-| **Projeto do GCP dedicado**, com faturamento ligado (o script cria o alerta de US$ 2) | console.cloud.google.com | [Seção 2, passo 1.1](02-sysadmin-gcp.md#11-projeto-do-google-cloud) |
-| Chaves do sysadmin: Anthropic (própria, com teto de gasto no console) e Gemini (AI Studio, plano pago) | Console de cada um | [Seção 2, passo 1.2](02-sysadmin-gcp.md#12-chaves-dos-modelos) |
+| **Projeto do GCP dedicado**, com faturamento ligado (o script cria o alerta de US$ 20) | console.cloud.google.com | [Seção 2, passo 1.1](02-sysadmin-gcp.md#11-projeto-do-google-cloud) |
+| Chaves do sysadmin: Anthropic (própria, com teto de gasto no console) e Gemini (AI Studio), as duas **com créditos comprados** (pré-pagas) | Console de cada um | [Seção 2, passo 1.2](02-sysadmin-gcp.md#12-chaves-dos-modelos) |
 | **Quatro bots** no @BotFather (sysadmin, aprovações do sysadmin, avisos e assistente) e o id do seu chat | Telegram | [Seção 2, passo 1.3](02-sysadmin-gcp.md#13-bots-do-telegram) |
 | Conta de máquina `lioevano-sysadmin` (2FA, colaboradora do `wiki-home-server` e do `homeserver-equipe`); *ruleset* da `main` (PR obrigatório, **1 aprovação**, aprovação do último push, sem *force push*; exceção só para você, e só por PR); `homeserver-equipe` privado com as etiquetas; o token **clássico** (`repo`) da conta de máquina e o *fine-grained* do carteiro, na sua conta | GitHub | [Seção 2, passo 1.4](02-sysadmin-gcp.md#14-github) |
 | **Primeiro** a ACL de `scripts/tailscale/acl.json` e o HTTPS do tailnet; **depois** as **três chaves de uso único**, pré-aprovadas: `tag:sysadmin` (VM do GCP) e `tag:homeserver` (host), para o `criar-sysadmin.sh`, e `tag:homeserver` (core), para o vault na fase 1 | login.tailscale.com | [Seção 2, passo 1.5](02-sysadmin-gcp.md#15-tailscale), [seção 16](16-vpn-tailscale.md#primeira-configuração) |

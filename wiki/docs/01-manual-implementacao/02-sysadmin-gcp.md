@@ -156,8 +156,11 @@ Tudo isso é seu (você nunca pede a ninguém para criar). Guarde cada chave e t
 
 #### 1.2. Chaves dos modelos
 
-1. **Anthropic** ([console.anthropic.com](https://console.anthropic.com/)): um *workspace* `sysadmin`, com **limite de gasto próprio**, e nele a chave de API do sysadmin, separada das de casa. O limite do *workspace* segura o custo se algo sair do controle sem cortar as chaves da casa (um teto só na organização valeria para todas).
-2. **Gemini** ([aistudio.google.com](https://aistudio.google.com/)): uma chave de API **no projeto do sysadmin** (o do 1.1, com faturamento: **plano pago**), para o gasto entrar no alerta de US$ 2. Ela serve ao deriver e aos *embeddings* do Honcho e é a reserva do Hermes.
+1. **Anthropic** ([console.anthropic.com](https://console.anthropic.com/)): um *workspace* `sysadmin`, com **limite de gasto próprio**, e nele a chave de API do sysadmin, separada das de casa. O limite do *workspace* segura o custo se algo sair do controle sem cortar as chaves da casa (um teto só na organização valeria para todas). A API é **pré-paga**: em *Settings → Billing → Buy credits*, compre créditos (uns US$ 20 para começar); sem saldo, toda chamada falha.
+2. **Gemini** ([aistudio.google.com](https://aistudio.google.com/)): uma chave de API **no projeto do sysadmin** (o do 1.1, com faturamento). Ela serve ao deriver e aos *embeddings* do Honcho e é a reserva do Hermes. Contas novas também são **pré-pagas**: na página *Billing* do AI Studio, *Buy credits* (mínimo de US$ 5; os créditos vencem em 12 meses). A recarga automática é opcional; se ligar, ponha o limite mensal (*Manage auto-reload → Monthly Limit*).
+
+!!! warning "Sem crédito nos dois, o sysadmin não trabalha"
+    O Hermes cai para o Gemini quando a Anthropic recusa e, sem saldo nos dois, responde com o erro de cobrança do provedor (*Billing or credits exhausted*, HTTP 402 do Gemini). O Honcho depende do Gemini mesmo com o Claude funcionando: sem crédito nele, o sysadmin conversa, mas não guarda memória.
 
 #### 1.3. Bots do Telegram
 
@@ -209,7 +212,7 @@ O `scripts/gcp/criar-sysadmin.sh`:
 
 1. liga as APIs e cria a conta de serviço `sysadmin-vm` (`secretAccessor` só no segredo, `objectAdmin` só no bucket, nenhum papel no projeto);
 2. cria o bucket `<projeto>-sysadmin` (os backups são apagados em 30 dias) e as regras de firewall: a que recusa toda entrada e a `sysadmin-iap-emergencia`, **desligada**;
-3. cria o alerta de orçamento de US$ 2;
+3. cria o alerta de orçamento de US$ 20;
 4. pede, **sem eco**, as chaves e os tokens da seção anterior, gera o resto (tokens internos, senha do Honcho, senha do painel, **senha do vault**, chave SSH do executor) e grava tudo no segredo `sysadmin-segredos`;
 5. roda o `gerar_vault.py` no próprio Cloud Shell, mostra o bloco "anote" e envia o `vault.yml` **cifrado** para `gs://<projeto>-sysadmin/entrada/vault.yml`;
 6. cria a VM, cujo *startup-script* instala o `ansible-core` fixado e faz o primeiro `ansible-pull` da `main`.
@@ -343,7 +346,7 @@ Arquivos desta seção (cada task acrescenta o seu):
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.service.j2` — unit do backup; falhou, avisa.
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin-backup.timer.j2` — backup diário às 06:07 UTC.
 - `ansible/roles/infra/sysadmin-gcp/templates/sysadmin.env.j2` — `.env` da stack, só com valores não secretos: versões, caminhos, a sub-rede do sysadmin, os playbooks e as rotas do executor.
-- `scripts/gcp/criar-sysadmin.sh` — roda uma vez no Cloud Shell: liga as APIs, cria a conta de serviço `sysadmin-vm` (`secretAccessor` só no segredo, `objectAdmin` só no bucket), o bucket `<projeto>-sysadmin` (backups apagados em 30 dias), a regra que recusa toda entrada, o alerta de orçamento de US$ 2, o segredo `sysadmin-segredos` (chaves digitadas sem eco, o resto gerado), o `vault.yml` cifrado em `entrada/` e a VM, cujo startup-script instala o `ansible-core` fixado e faz o primeiro `ansible-pull`, igual ao do timer diário. Repetido, reaproveita o segredo existente (só `REGERAR=1` gera tudo de novo, avisando se a `main` já tem `vault.yml`, e o startup-script espera o lock do apt) e, se a `main` já tem `vault.yml`, não gera vault e apaga o `entrada/`; deixa pronta, desligada, a regra `sysadmin-iap-emergencia` (SSH pelo IAP).
+- `scripts/gcp/criar-sysadmin.sh` — roda uma vez no Cloud Shell: liga as APIs, cria a conta de serviço `sysadmin-vm` (`secretAccessor` só no segredo, `objectAdmin` só no bucket), o bucket `<projeto>-sysadmin` (backups apagados em 30 dias), a regra que recusa toda entrada, o alerta de orçamento de US$ 20, o segredo `sysadmin-segredos` (chaves digitadas sem eco, o resto gerado), o `vault.yml` cifrado em `entrada/` e a VM, cujo startup-script instala o `ansible-core` fixado e faz o primeiro `ansible-pull`, igual ao do timer diário. Repetido, reaproveita o segredo existente (só `REGERAR=1` gera tudo de novo, avisando se a `main` já tem `vault.yml`, e o startup-script espera o lock do apt) e, se a `main` já tem `vault.yml`, não gera vault e apaga o `entrada/`; deixa pronta, desligada, a regra `sysadmin-iap-emergencia` (SSH pelo IAP).
 
 ## Teste de ponta a ponta
 
@@ -366,7 +369,7 @@ Faça depois que o nó `sysadmin` aparecer no Tailscale e o bot responder:
 | VM parada (manutenção, cobrança) | Bot mudo | `gcloud compute instances start sysadmin --zone=us-east1-b`; na partida, os segredos e os containers sobem sozinhos |
 | VM perdida | Perdem-se a memória e as sessões | Rode o `criar-sysadmin.sh` de novo (reaproveita o segredo; `REGERAR=1` só se quiser trocar tudo) e restaure o dump e o diretório do Hermes do GCS |
 | Falta de memória | Swap e `restart: unless-stopped`; o console serial mostra `blocked for more than 120 seconds` e o bot para | `gcloud compute instances stop`, `set-machine-type --machine-type=e2-medium` e `start`, e o mesmo valor em `gcp_tipo_maquina` por PR |
-| Anthropic fora ou teto atingido | Reserva no Gemini; se as duas falharem, **não há aviso automático**: o bot do sysadmin fica mudo | Veja pelo dashboard ou por `docker logs sysadmin` (com o Tailscale ou, sem ele, pelo IAP de emergência); confira o teto no console da Anthropic e a chave e a cota do Gemini |
+| Anthropic fora, sem crédito ou teto atingido | Reserva no Gemini; sem crédito nos dois, o bot responde com o erro de cobrança (*Billing or credits exhausted*); com o provedor fora, **não há aviso automático**: o bot fica mudo | Compre créditos (Anthropic: *Settings → Billing*; Gemini: *Billing* do AI Studio) e confira o teto do *workspace*; o Hermes volta ao Claude sozinho cerca de um minuto depois. Mudo: veja pelo dashboard ou por `docker logs sysadmin` |
 | Casa fora ou tailnet caído | `diagnostico` falha; nada destrutivo é possível | O sysadmin relata e espera; com a core fora, o host segue alcançável pelo Tailscale |
 | Playbook falha no meio | Código de saída e o final do log no diário | Correção por PR e `ansible_check` de novo |
 | Aprovação vencida | O executor recusa | Peça de novo (vale 30 minutos) |
