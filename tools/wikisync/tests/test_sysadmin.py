@@ -514,6 +514,25 @@ def test_imagens_locais_do_sysadmin():
     assert "COPY requirements.yml" in d and "ansible-galaxy collection install -r" in d  # coleções no build
 
 
+def test_construir_com_a_stack_parada():
+    """Na e2-small (2 GB), construir uma imagem com os seis containers rodando travou a VM na swap do disco padrão.
+    Antes de cada build que vai rodar, a stack para; a tarefa "Stack do sysadmin" a sobe de novo."""
+    t = list(_todas(_tarefas_sa()))
+    nomes = [x.get("name") for x in t]
+    for img, construido, carimbo in (("Sysadmin", "sysadmin_construido", "sysadmin_carimbo"),
+                                     ("Executor", "sysadmin_executor_construido", "sysadmin_executor_carimbo")):
+        parar = next(x for x in t if x.get("name") == f"{img}: parar a stack para construir (memória)")
+        dc = parar["community.docker.docker_compose_v2"]
+        assert dc == {"project_src": "/opt/sysadmin/stack", "state": "stopped"}
+        cond = parar["when"]
+        assert f"not {construido}.stat.exists" in cond and f"{carimbo}.checksum" in cond
+        assert "sysadmin_compose_existe.stat.exists" in cond and "not ansible_check_mode" in cond
+        assert nomes.index(f"{img}: último build bem-sucedido") < nomes.index(parar["name"])
+        assert nomes.index(parar["name"]) < nomes.index(next(n for n in nomes if n and n.startswith(f"{img}: construir")))
+    assert nomes.index("Compose do sysadmin já instalado") < nomes.index("Sysadmin: parar a stack para construir (memória)")
+    assert nomes.index("Executor: construir localhost/homeserver/executor") < nomes.index("Stack do sysadmin")
+
+
 def test_clones_e_honcho():
     t = {x["name"]: x for x in _todas(_tarefas_sa())}
     trab = t["Clone de trabalho do sysadmin"]["ansible.builtin.git"]
