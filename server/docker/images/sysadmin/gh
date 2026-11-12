@@ -1,0 +1,9 @@
+#!/bin/sh
+# gh do sysadmin (página 02): o Hermes tira GH_TOKEN e GITHUB_TOKEN de todo comando do agente, e o env_passthrough
+# da configuração não os libera. O token da conta de máquina chega como SYSADMIN_GITHUB_TOKEN (separar_segredos.py)
+# e vira GH_TOKEN só para o gh. O git usa este gh como credential helper (Dockerfile).
+if [ -z "${GH_TOKEN:-}" ] && [ -n "${SYSADMIN_GITHUB_TOKEN:-}" ]; then
+    GH_TOKEN="$SYSADMIN_GITHUB_TOKEN"
+    export GH_TOKEN
+fi
+exec /usr/bin/gh "$@"

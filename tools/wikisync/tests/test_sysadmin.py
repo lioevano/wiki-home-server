@@ -105,6 +105,14 @@ def test_imagem_sysadmin():
     assert 'installed_package("uv")' not in d
     assert 'from pm import uv_launcher; print(uv_launcher("uv") or "")' in d
     assert 'test -x "$uv"' in d
+    # gh e git push com o token da conta de máquina: o gh da imagem lê o SYSADMIN_GITHUB_TOKEN, e o git usa o gh
+    # como credential helper, com a identidade da conta.
+    assert "COPY gh /usr/local/bin/gh" in d
+    assert "credential.https://github.com.helper '!/usr/local/bin/gh auth git-credential'" in d
+    assert "user.name lioevano-sysadmin" in d
+    gh = (ROOT / "server/docker/images/sysadmin/gh").read_text(encoding="utf-8")
+    assert gh.startswith("#!/bin/sh\n")
+    assert 'GH_TOKEN="$SYSADMIN_GITHUB_TOKEN"' in gh and 'exec /usr/bin/gh "$@"' in gh
 
 
 def test_variaveis_do_sysadmin():
@@ -139,9 +147,11 @@ def test_separar_isola_o_executor(tmp_path):
     separar(DADOS, tmp_path, 1001, 1000)
     sa = (tmp_path / "sysadmin.env").read_text()
     assert "v-vault_senha" not in sa and "OPENSSH" not in sa and "v-tailscale_chave_homeserver" not in sa
-    assert "TELEGRAM_BOT_TOKEN=v-telegram_bot_sysadmin" in sa and "GH_TOKEN=v-github_token_sysadmin" in sa
+    # O Hermes tira GH_TOKEN e GITHUB_TOKEN de todo comando do agente (e o env_passthrough não os libera): o token
+    # vai com um nome próprio, que o /usr/local/bin/gh da imagem traduz.
+    assert "TELEGRAM_BOT_TOKEN=v-telegram_bot_sysadmin" in sa and "SYSADMIN_GITHUB_TOKEN=v-github_token_sysadmin" in sa
     assert set(_env(sa)) == {"ANTHROPIC_API_KEY", "GEMINI_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_USERS",
-        "TELEGRAM_HOME_CHANNEL", "GH_TOKEN", "EXECUTOR_TOKEN", "WEBHOOK_SEGREDO",
+        "TELEGRAM_HOME_CHANNEL", "SYSADMIN_GITHUB_TOKEN", "EXECUTOR_TOKEN", "WEBHOOK_SEGREDO",
         "HERMES_DASHBOARD_BASIC_AUTH_USERNAME", "HERMES_DASHBOARD_BASIC_AUTH_PASSWORD",
         "HERMES_DASHBOARD_BASIC_AUTH_SECRET"}
     assert _env(sa)["TELEGRAM_HOME_CHANNEL"] == _env(sa)["TELEGRAM_ALLOWED_USERS"] == "v-telegram_chat_id"
@@ -394,6 +404,19 @@ def test_segredos_antes_do_tailscale_e_sem_vault():
     usadas = {v for t in textos for v in re.findall(r"\b([a-z_][a-z0-9_]*)\b", t)}
     # tailscale_auth_key: o nome é o do role; o valor vem do tmpfs (lookup acima), não do vault de casa
     assert not (usadas & vault) - {"tailscale_auth_key"}, usadas & vault
+
+
+def test_separador_novo_refaz_os_segredos():
+    """O ansible-pull copia um separar_segredos.py novo (ou uma unit nova): sem reiniciar a unit, o /run/sysadmin
+    ficaria no formato antigo até o próximo boot. Reiniciá-la reinicia o Docker, e os containers voltam com ele."""
+    seg = _tarefas_sa("segredos.yml")
+    copia = next(t for t in seg if t["name"] == "Separador de segredos (separar_segredos.py)")
+    unit = next(t for t in seg if t["name"] == "Unit dos segredos (sysadmin-segredos.service)")
+    assert copia["register"] == "sysadmin_separador" and unit["register"] == "sysadmin_unit_segredos"
+    rodar = next(t for t in seg if t["name"] == "Separar os segredos agora e em todo boot")
+    estado = rodar["ansible.builtin.systemd_service"]["state"]
+    assert "restarted" in estado and "sysadmin_separador.changed" in estado and "sysadmin_unit_segredos.changed" in estado
+    assert rodar["no_log"] is True
 
 
 def test_projeto_do_servidor_de_metadados():

@@ -95,7 +95,9 @@ def separar(dados: dict, destino: Path, uid_executor: int, uid_sysadmin: int) ->
         _escrever(tmp / "sysadmin.env", _env({
             "ANTHROPIC_API_KEY": v["anthropic_api_key"], "GEMINI_API_KEY": v["gemini_api_key"],
             "TELEGRAM_BOT_TOKEN": v["telegram_bot_sysadmin"], "TELEGRAM_ALLOWED_USERS": v["telegram_chat_id"],
-            "TELEGRAM_HOME_CHANNEL": v["telegram_chat_id"], "GH_TOKEN": v["github_token_sysadmin"],
+            # SYSADMIN_GITHUB_TOKEN, não GH_TOKEN: o Hermes tira GH_TOKEN/GITHUB_TOKEN dos comandos do agente; o gh da
+            # imagem (docker/images/sysadmin/gh) o traduz.
+            "TELEGRAM_HOME_CHANNEL": v["telegram_chat_id"], "SYSADMIN_GITHUB_TOKEN": v["github_token_sysadmin"],
             "EXECUTOR_TOKEN": v["executor_token"], "WEBHOOK_SEGREDO": v["webhook_segredo"],
             "HERMES_DASHBOARD_BASIC_AUTH_USERNAME": v["dashboard_usuario"],
             "HERMES_DASHBOARD_BASIC_AUTH_PASSWORD": v["dashboard_senha"],

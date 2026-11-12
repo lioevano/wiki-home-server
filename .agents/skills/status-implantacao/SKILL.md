@@ -16,7 +16,7 @@ Responda curto, numa mensagem do Telegram, com estas cinco partes. Só leitura: 
    - Botões esperando o Léo: os `aprovacao_id` que você mesmo pediu e ainda não usou (valem 30 minutos).
    - Pedidos da equipe: `gh issue list -R lioevano/homeserver-equipe --state open --label estado:aberto` e `--label estado:em-andamento`, com o papel de cada um (skill `equipe`).
    - PRs aguardando merge: `gh pr list --state open`.
-4. **Gasto do mês.** Você não tem o valor: aponte onde ver. Modelo: console da Anthropic (teto de US$ 30/mês na implantação, US$ 10/mês depois). GCP: faturamento do projeto (alerta de orçamento em US$ 2; o esperado é zero, free tier). Nunca invente número.
+4. **Gasto do mês.** Você não tem o valor: aponte onde ver. Modelo: console da Anthropic (teto de US$ 30/mês na implantação, US$ 10/mês depois). GCP: faturamento do projeto (alerta de orçamento em US$ 20; o esperado é cerca de US$ 13 a 17 por mês da `e2-small`, até a fase 12 desligar a VM). Gemini: créditos pré-pagos na página *Billing* do AI Studio. Nunca invente número.
 5. **Memória da VM.** O `diagnostico(host, "free -m")` **não serve** para a própria VM do sysadmin (o executor recusa esse host). Rode `free -m` (e `df -h /`) no seu próprio terminal: dentro do container você lê o `/proc/meminfo` da VM, sem portão. Para os hosts de casa, `diagnostico` com `free -m` e `df -h` funciona.
 
 ## Formato
