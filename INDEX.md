@@ -310,6 +310,7 @@ Mapa do repositório. Caminhos de arquivos do server são relativos a `server/`;
 | `docker/images/ops/ops/server.py` | script | `01-manual-implementacao/15-agentes-base.md` |
 | `docker/images/posto/Dockerfile` | outro | `01-manual-implementacao/18-posto-agentes.md` |
 | `docker/images/sysadmin/Dockerfile` | outro | `01-manual-implementacao/02-sysadmin-gcp.md` |
+| `docker/images/sysadmin/gh` | script | `01-manual-implementacao/02-sysadmin-gcp.md` |
 | `docker/stacks/.env.template` | env-template | `01-manual-implementacao/00-preparacao-planejamento.md`, `02-visao-geral-arquitetura/10-indice-integracoes.md`, `03-guias-sustentacao/01-adicionando-novo-servico-docker.md` |
 | `docker/stacks/agents/docker-compose.yml` | stack | `01-manual-implementacao/15-agentes-base.md`, `01-manual-implementacao/17-ia-observa.md`, `01-manual-implementacao/18-posto-agentes.md` |
 | `docker/stacks/ai/docker-compose.yml` | stack | `01-manual-implementacao/10-stack-ia.md` |

@@ -58,4 +58,14 @@ RUN set -eu; \
     rm -rf /tmp/dev
 ENV HOMESERVER_VENV=/opt/dev
 
+# gh e git push com a conta de máquina: o Hermes tira GH_TOKEN e GITHUB_TOKEN de todo comando do agente, então o
+# token chega como SYSADMIN_GITHUB_TOKEN e o /usr/local/bin/gh (à frente do /usr/bin/gh no PATH) o traduz. O git
+# autentica no GitHub por esse gh e assina os commits como a conta de máquina.
+COPY gh /usr/local/bin/gh
+RUN chmod 755 /usr/local/bin/gh \
+    && git config --system credential.https://github.com.helper '' \
+    && git config --system --add credential.https://github.com.helper '!/usr/local/bin/gh auth git-credential' \
+    && git config --system user.name lioevano-sysadmin \
+    && git config --system user.email lioevano-sysadmin@users.noreply.github.com
+
 # Mantém o ENTRYPOINT e o CMD da imagem do Hermes (despachante do s6).
