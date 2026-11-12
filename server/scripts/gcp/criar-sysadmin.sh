@@ -3,8 +3,8 @@
 # (gcloud config set project <projeto>) e o faturamento ligado:
 #   curl -fsSL https://raw.githubusercontent.com/lioevano/wiki-home-server/main/server/scripts/gcp/criar-sysadmin.sh | bash
 # Cria as APIs, a conta de serviço sysadmin-vm (papéis mínimos), o bucket, a regra que recusa toda entrada, o alerta
-# de orçamento de US$ 2, o segredo sysadmin-segredos, o vault cifrado e a VM e2-micro, que se configura sozinha no
-# primeiro boot (ansible-pull). Pode ser repetido: APIs, conta, bucket, regras, orçamento e VM que já existem são
+# de orçamento de US$ 20, o segredo sysadmin-segredos, o vault cifrado e a VM e2-small, que se configura sozinha no
+# primeiro boot (ansible-pull). A VM é temporária: conduz a implantação e é desligada na fase 12 (página 02). Pode ser repetido: APIs, conta, bucket, regras, orçamento e VM que já existem são
 # mantidos, e se o segredo sysadmin-segredos já existe ele é REAPROVEITADO (nada de novo senha, chave SSH ou vault: o
 # home já usa esses valores); isso também recria uma VM perdida. Só REGERAR=1 (com confirmação) gera tudo de novo.
 # Variáveis opcionais: REGIAO, ZONA, TIPO, PROJETO, REPO_URL, REGERAR. Os valores digitados não aparecem na tela
@@ -16,7 +16,7 @@ set -euo pipefail
 main() {
     local REGIAO="${REGIAO:-us-east1}"
     local ZONA="${ZONA:-${REGIAO}-b}"
-    local TIPO="${TIPO:-e2-micro}"
+    local TIPO="${TIPO:-e2-small}"
     local REPO_URL="${REPO_URL:-https://github.com/lioevano/wiki-home-server.git}"
     local VM="sysadmin" SEGREDO="sysadmin-segredos"
     local PROJETO="${PROJETO:-}" CONTA BUCKET TMP REUSAR=0 versao
@@ -72,7 +72,8 @@ main() {
         "$REGIAO"-[a-f]) ;;
         *) erro "a zona '$ZONA' não pertence à região '$REGIAO'" ;;
     esac
-    [ "$TIPO" = "e2-micro" ] || echo "AVISO: o tipo '$TIPO' não é o e2-micro gratuito: a VM será cobrada." >&2
+    # A e2-micro (gratuita) não aguenta os seis containers: com 1 GB a VM trava na swap do disco padrão.
+    [ "$TIPO" != "e2-micro" ] || echo "AVISO: a e2-micro tem 1 GB e trava com os seis containers; use a e2-small." >&2
     { : </dev/tty; } 2>/dev/null || erro "preciso de um terminal para pedir os segredos"
     CONTA="sysadmin-vm@${PROJETO}.iam.gserviceaccount.com"
     BUCKET="${PROJETO}-sysadmin"
@@ -147,21 +148,21 @@ CICLO
     fi
 
     # ---------------------------------------------------------------- 6/11
-    etapa "6/11 Alerta de orçamento de US\$ 2"
+    etapa "6/11 Alerta de orçamento de US\$ 20"
     local faturamento numero
     faturamento=$(gcloud billing projects describe "$PROJETO" --format='value(billingAccountName)' 2>/dev/null || true)
     faturamento="${faturamento#billingAccounts/}"
     numero=$(gcloud projects describe "$PROJETO" --format='value(projectNumber)')
     if [ -z "$faturamento" ]; then
-        echo "AVISO: projeto sem conta de faturamento: crie o alerta de US\$ 2 à mão (Faturamento > Orçamentos)." >&2
+        echo "AVISO: projeto sem conta de faturamento: crie o alerta de US\$ 20 à mão (Faturamento > Orçamentos)." >&2
     elif [ -n "$(gcloud billing budgets list --billing-account="$faturamento" --billing-project="$PROJETO" \
-            --filter="displayName=sysadmin-2usd" --format='value(name)' 2>/dev/null)" ]; then
-        echo "orçamento sysadmin-2usd já existe"
+            --filter="displayName ~ ^sysadmin-" --format='value(name)' 2>/dev/null)" ]; then
+        echo "orçamento do sysadmin já existe (ajuste o valor no console, se for o antigo de US\$ 2)"
     elif ! gcloud billing budgets create --billing-account="$faturamento" --billing-project="$PROJETO" \
-            --display-name=sysadmin-2usd \
-            --budget-amount=2USD --filter-projects="projects/${numero}" \
+            --display-name=sysadmin-20usd \
+            --budget-amount=20USD --filter-projects="projects/${numero}" \
             --threshold-rule=percent=0.5 --threshold-rule=percent=1.0; then
-        echo "AVISO: não consegui criar o orçamento: crie o alerta de US\$ 2 à mão (Faturamento > Orçamentos)." >&2
+        echo "AVISO: não consegui criar o orçamento: crie o alerta de US\$ 20 à mão (Faturamento > Orçamentos)." >&2
     fi
 
     # Etapas 7 e 8 só quando o segredo ainda não existe (ou com REGERAR=1).
@@ -363,7 +364,7 @@ STARTUP
     echo "  gcloud compute ssh $VM --zone=$ZONA --tunnel-through-iap"
     echo "e depois desligue:  gcloud compute firewall-rules update sysadmin-iap-emergencia --disabled"
     echo
-    echo "A VM se configura sozinha (de 20 a 40 min: as imagens são construídas na e2-micro). Acompanhe com:"
+    echo "A VM se configura sozinha (de 20 a 40 min: as imagens são construídas na própria VM). Acompanhe com:"
     echo "  gcloud compute instances get-serial-port-output $VM --zone=$ZONA | tail -n 30"
     echo "Quando o nó 'sysadmin' aparecer no Tailscale, siga a página 02 (teste de ponta a ponta)."
     # Os temporários (chave SSH, senha do vault, clone) são apagados pelo trap ao sair.

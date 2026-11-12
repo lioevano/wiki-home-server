@@ -659,13 +659,16 @@ SH = ROOT / "server/scripts/gcp/criar-sysadmin.sh"
 def test_criar_sysadmin_barato_e_fechado():
     s = SH.read_text(encoding="utf-8")
     assert s.startswith("#!/bin/bash") and "set -euo pipefail" in s
-    assert 'REGIAO="${REGIAO:-us-east1}"' in s and 'TIPO="${TIPO:-e2-micro}"' in s
+    # e2-small (2 GB): a e2-micro travou na swap com os seis containers. A VM é temporária: a fase 12 a desliga.
+    assert 'REGIAO="${REGIAO:-us-east1}"' in s and 'TIPO="${TIPO:-e2-small}"' in s
     assert "us-west1|us-central1|us-east1" in s  # recusa região fora do free tier
     assert "--boot-disk-type=pd-standard" in s and "--boot-disk-size=30GB" in s
     assert "gcloud compute firewall-rules create sysadmin-recusa-entrada" in s and "--priority=100" in s
     assert "--action=DENY" in s and "--rules=all" in s
     assert "secretmanager.secretAccessor" in s and "roles/owner" not in s and "roles/editor" not in s
-    assert "gcloud billing budgets create" in s and "--budget-amount=2USD" in s
+    assert "gcloud billing budgets create" in s and "--budget-amount=20USD" in s
+    assert "--display-name=sysadmin-20usd" in s
+    assert "displayName ~ ^sysadmin-" in s  # um orçamento antigo (sysadmin-2usd) não ganha um segundo
     assert "read -rs" in s and "gcloud secrets create sysadmin-segredos --data-file=-" in s  # o JSON vai pelo stdin
     for campo in CAMPOS:
         assert campo in s

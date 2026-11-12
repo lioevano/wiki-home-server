@@ -1109,8 +1109,9 @@ sysadmin_modelo: "claude-sonnet-5-5"
 sysadmin_modelo_auxiliar: "claude-haiku-5-5"
 sysadmin_modelo_reserva: "gemini-3.8-flash"
 sysadmin_honcho_modelo: "gemini-3.8-flash"
-# Máquina na GCP (nível gratuito: e2-micro em us-east1, us-west1 ou us-central1).
-gcp_tipo_maquina: "e2-micro"
+# Máquina na GCP: e2-small (2 GB, paga; a e2-micro gratuita trava com os seis containers), temporária até a fase 12.
+# Região numa das três do nível gratuito (us-east1, us-west1 ou us-central1), que ainda cobre o disco de 30 GB.
+gcp_tipo_maquina: "e2-small"
 gcp_regiao: "us-east1"
 gcp_zona: "us-east1-b"
 # Rede Docker do container do sysadmin (bridge br-sysadmin; o compose recebe o mesmo valor pelo .env) e os destinos

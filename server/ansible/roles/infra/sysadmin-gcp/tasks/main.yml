@@ -4,7 +4,7 @@
 # Honcho, configurações do Hermes e do Honcho, as duas imagens locais, a stack, o painel pelo Tailscale Serve e os
 # timers de atualização e de backup. Não usa o vault de casa: os segredos vêm do Secret Manager para /run/sysadmin.
 
-# --- Memória: a e2-micro tem 1 GB; as construções das imagens e o Honcho precisam de folga ---
+# --- Memória: a e2-small tem 2 GB (gcp_tipo_maquina); as construções das imagens e o Honcho precisam de folga ---
 # Swap cifrada com chave aleatória nova a cada boot (/dev/urandom): o que o kernel joga na swap, inclusive páginas
 # com segredos do tmpfs /run/sysadmin, nunca fica legível no disco, nem depois de desligar. O crypttab aceita um
 # arquivo comum: o gerador do systemd (systemd-cryptsetup-generator, no pacote systemd do Ubuntu 24.04) espera a

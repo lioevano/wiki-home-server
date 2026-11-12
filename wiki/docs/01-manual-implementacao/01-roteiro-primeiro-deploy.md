@@ -15,7 +15,7 @@ ansible-playbook -i inventories/home/hosts.ini playbooks/<playbook>.yml --ask-va
 
 "Stack no Portainer" quer dizer: **Stacks → Add stack** (ou **Update the stack**, se ela já existe), no ambiente indicado, com o compose do repositório no *Web editor* e o `/opt/portainer_stack_envs/<stack>.env` colado em **Environment variables → Advanced mode** ([seção 9](09-deploy-apps.md#deploy-via-portainer)).
 
-As doze fases, em três blocos (a 0 é sua; da 1 em diante, o sysadmin conduz):
+As treze fases, em três blocos (a 0 é sua; da 1 em diante, o sysadmin conduz, e a 12 o traz para casa):
 
 ```mermaid
 %%{init: {"flowchart": {"nodeSpacing": 25, "rankSpacing": 40}}}%%
@@ -30,7 +30,7 @@ flowchart LR
     end
     subgraph agentes["Agentes"]
         direction TB
-        f9["9 · base dos agentes"] --> f10["10 · posto e assistente"] --> f11["11 · painel e backup"]
+        f9["9 · base dos agentes"] --> f10["10 · posto e assistente"] --> f11["11 · painel e backup"] --> f12["12 · sysadmin em casa"]
     end
     base --> apps --> agentes
 ```
@@ -127,6 +127,14 @@ flowchart LR
 
 1. Chaves dos widgets nas telas de cada aplicação, gravadas em `homepage_widget_keys`; `setup-monitoring-stack-volumes.yml` e **Update the stack** da `apps` ([seção 11](11-painel-notificacoes.md#chaves-de-api-dos-widgets)).
 2. Rode um backup e **teste uma restauração** ([backup](../04-manutencao-recuperacao/02-backup-restore-estrategia.md)).
+
+## Fase 12 — Sysadmin em casa e VM desligada
+
+A VM do GCP é paga (`e2-small`) e só existe para conduzir a implantação. Com a casa de pé, o que é agente passa para o servidor ([seção 2](02-sysadmin-gcp.md#trazer-para-casa-e-desligar-a-vm)); o lado de casa é a 5b.
+
+1. O coordenador da equipe, a memória do Honcho e a máquina de controle assumem em casa (5b).
+2. Backup final do sysadmin e importação em casa; confira que o agente de casa responde e lembra do histórico.
+3. `gcloud compute instances stop sysadmin --zone=us-east1-b` e a revogação das chaves que só a VM usava; apagar de vez fica para algumas semanas depois.
 
 ## Depois de cada fase
 

@@ -1,19 +1,19 @@
 ---
-description: "Sysadmin no GCP: Hermes com memória Honcho numa e2-micro, executor com vault e SSH atrás de botões no Telegram, e a equipe de agentes pelo GitHub."
+description: "Sysadmin no GCP: Hermes com memória Honcho numa e2-small temporária, executor com vault e SSH atrás de botões no Telegram, e a equipe pelo GitHub."
 ---
 
 # Seção 2: Sysadmin no GCP
 
 ## Como funciona
 
-O **sysadmin** é um agente que existe **antes** do servidor. Ele roda numa VM `e2-micro` do Google Cloud (nível gratuito, `us-east1`), você o comanda pelo Telegram, e ele conduz o [roteiro do primeiro deploy](01-roteiro-primeiro-deploy.md) fase a fase: lê a wiki, confere o estado real da casa, monta os pedidos e **espera o seu botão** para tudo que muda o servidor. Depois do deploy, continua como o coordenador da equipe de agentes da casa. É também o jeito recomendado de ter a [máquina de controle do Ansible](03-maquina-controle-ansible.md).
+O **sysadmin** é um agente que existe **antes** do servidor. Ele roda numa VM `e2-small` do Google Cloud (`us-east1`), você o comanda pelo Telegram, e ele conduz o [roteiro do primeiro deploy](01-roteiro-primeiro-deploy.md) fase a fase: lê a wiki, confere o estado real da casa, monta os pedidos e **espera o seu botão** para tudo que muda o servidor. A VM é **temporária**: quando a casa estiver de pé, o que é agente (o coordenador da equipe, a memória no Honcho e a máquina de controle) passa para o servidor e a VM é desligada, na [fase 12](01-roteiro-primeiro-deploy.md#fase-12--sysadmin-em-casa-e-vm-desligada) ([Trazer para casa](#trazer-para-casa-e-desligar-a-vm)). Até lá, é também o jeito recomendado de ter a [máquina de controle do Ansible](03-maquina-controle-ansible.md).
 
 O agente é o [Hermes](19-assistente.md) (v0.22.5) com memória no [Honcho](https://github.com/plastic-labs/honcho) (v3.6.0) próprio. O **modelo** é o Claude da Anthropic (Sonnet por padrão, Haiku para resumos), com o Gemini (AI Studio) de reserva. Ele **não usa o LiteLLM de casa**: o sysadmin existe antes dela e é quem a conserta.
 
 ```mermaid
 flowchart TB
     leo(["Você<br/>Telegram e Tailscale"])
-    subgraph gcp["VM e2-micro no GCP"]
+    subgraph gcp["VM e2-small no GCP"]
         sa["sysadmin<br/>Hermes"]
         ex["executor<br/>vault, SSH, carteiro"]
         hon["Honcho<br/>memória"]
@@ -43,7 +43,7 @@ flowchart TB
 | `homeserver-equipe` | repositório privado | Pedidos entre agentes ([A equipe](#a-equipe)) |
 | Secret Manager e bucket | `sysadmin-segredos` e `gs://<projeto>-sysadmin` | Um único segredo JSON, lido na partida para o `tmpfs` `/run/sysadmin`; o bucket guarda o vault de entrada e os backups |
 
-Os seis containers dividem 1 GB de RAM com 4 GB de swap (cifrada, com chave nova a cada boot). Se ficar lento, a saída é `gcp_tipo_maquina: e2-small` (cerca de US$ 13 por mês) por PR; a medição real está em [A conferir no primeiro deploy](index.md#a-conferir-no-primeiro-deploy).
+Os seis containers dividem 2 GB de RAM com 4 GB de swap (cifrada, com chave nova a cada boot). A swap é só reserva: o disco padrão faz poucas dezenas de operações por segundo, e na `e2-micro` (1 GB, gratuita) a VM travou esperando por ela no primeiro boot. Por isso o padrão (`gcp_tipo_maquina`) é a `e2-small`, paga e temporária; a medição real está em [A conferir no primeiro deploy](index.md#a-conferir-no-primeiro-deploy).
 
 ### Como uma fase corre
 
@@ -84,13 +84,14 @@ O dashboard oficial do Hermes (visualização e controle) escuta em `127.0.0.1:9
 
 | Item | Custo |
 |---|---|
-| VM `e2-micro`, 30 GB de disco padrão, IP externo | US$ 0 (nível gratuito, `us-east1`) |
+| VM `e2-small` e IP externo | Cerca de US$ 13 a 17 por mês, só enquanto ela estiver ligada (até a fase 12) |
+| 30 GB de disco padrão | US$ 0 (nível gratuito, `us-east1`) |
 | Secret Manager (um segredo) e bucket (< 5 GB, região dos EUA) | US$ 0 |
 | Saída de rede | 1 GB por mês grátis; acima, cerca de US$ 0,12 por GB |
 | Tailscale (plano pessoal) | US$ 0 |
 | Modelo | Teto no console da Anthropic (sugerido: US$ 30 por mês na implantação e US$ 10 depois) mais o Gemini do deriver, dos *embeddings* e da reserva (centavos) |
 
-O alerta de orçamento do GCP fica em **US$ 2**.
+O alerta de orçamento do GCP fica em **US$ 20** (`sysadmin-20usd`). Um projeto criado antes desta mudança tem o `sysadmin-2usd`: edite o valor em *Faturamento → Orçamentos e alertas*; o script não cria um segundo.
 
 ## O que ele pode e o que não pode
 
@@ -149,7 +150,7 @@ Tudo isso é seu (você nunca pede a ninguém para criar). Guarde cada chave e t
 #### 1.1. Projeto do Google Cloud
 
 1. Em [console.cloud.google.com](https://console.cloud.google.com/), crie um **projeto novo, só para o sysadmin** (seletor de projetos → *New project*). Um projeto próprio é obrigatório: a regra que recusa toda entrada vale para a rede inteira do projeto ([Rede e ACL](#rede-e-acl)).
-2. Vincule uma **conta de faturamento** ao projeto (*Billing*). A `e2-micro` em `us-east1`, `us-central1` ou `us-west1` está no nível gratuito, mas o GCP exige o cartão cadastrado; o script recusa outras regiões e cria o alerta de orçamento de US$ 2.
+2. Vincule uma **conta de faturamento** ao projeto (*Billing*). A `e2-small` é paga (a `e2-micro`, a única gratuita, não aguenta os seis containers); o disco de 30 GB fica no nível gratuito em `us-east1`, `us-central1` ou `us-west1`. O script recusa outras regiões e cria o alerta de orçamento de US$ 20.
 3. Conta nova começa no **período de teste** (*Free Trial*): ative a **conta completa** (*Activate full account*, ou *Upgrade* em *Billing*). Sem isso, quando o teste acaba o GCP para tudo o que foi criado nele, e o sysadmin para junto. O nível gratuito continua valendo depois da ativação.
 4. Anote o **id do projeto** (não o nome). APIs, conta de serviço, bucket, firewall e a VM ficam com o script.
 
@@ -221,7 +222,7 @@ Repetir o script é seguro: ele reaproveita o segredo existente (nada de senha, 
 !!! warning "`REGERAR=1` com o vault já na `main`"
     A senha do vault muda, e o `vault.yml` da `main` continua cifrado com a antiga e valendo sobre o de entrada: o executor não o lê e nenhum playbook roda. O script avisa antes de perguntar. Para recomeçar do zero, primeiro remova o `vault.yml` da `main` por PR e apague a VM (`gcloud compute instances delete sysadmin --zone=us-east1-b`), e só então rode com `REGERAR=1`: o vault de entrada novo vira o PR do vault. Para recriar uma VM perdida, rode **sem** `REGERAR`.
 
-A VM leva de **20 a 40 minutos** para se configurar (as imagens `sysadmin` e `executor` são compiladas na e2-micro). Acompanhe com `gcloud compute instances get-serial-port-output sysadmin --zone=us-east1-b | tail -n 30`. Quando o nó `sysadmin` aparecer no Tailscale e o bot do sysadmin responder, está de pé. A partir daí, toda a configuração da VM vem de `ansible/playbooks/setup-sysadmin.yml`, que a própria VM puxa da `main` no primeiro boot e num timer diário (05:17 UTC), configurando Docker, Tailscale e o role `infra/sysadmin-gcp`. Ele fica **fora** do `full-deploy.yml`, e só o `main.yml` entra nele, nunca o vault.
+A VM leva de **20 a 40 minutos** para se configurar (as imagens `sysadmin` e `executor` são compiladas na própria VM). Acompanhe com `gcloud compute instances get-serial-port-output sysadmin --zone=us-east1-b | tail -n 30`. Quando o nó `sysadmin` aparecer no Tailscale e o bot do sysadmin responder, está de pé. A partir daí, toda a configuração da VM vem de `ansible/playbooks/setup-sysadmin.yml`, que a própria VM puxa da `main` no primeiro boot e num timer diário (05:17 UTC), configurando Docker, Tailscale e o role `infra/sysadmin-gcp`. Ele fica **fora** do `full-deploy.yml`, e só o `main.yml` entra nele, nunca o vault.
 
 ### 3. O PR do vault
 
@@ -249,6 +250,23 @@ Com o Proxmox instalado pelo pendrive, o sysadmin chama `preparar_host()`: o bot
 ### 5. Daqui em diante
 
 Mande `/status-implantacao` para ver a fase atual, as pendências suas, os pedidos abertos, o gasto do mês e a memória da VM, e `/implantar-fase 1` para começar. Os segredos ficam em `/run/sysadmin` (um `tmpfs`, 0600), separados por container pelo `scripts/gcp/separar_segredos.py`: o sysadmin recebe só o que é dele e **falha fechado** se faltar um campo. O backup roda todo dia às 06:07 UTC (o `pg_dump` do Honcho e o diretório do Hermes, sem `.env` nem `auth.json`) em `gs://<projeto>-sysadmin/backup/<data>/`. O `ansible-pull` das 05:17 UTC mantém a VM igual à `main`; a atualização do próprio Hermes, do Honcho e das imagens acontece por PR de versão no `group_vars`. O `ansible-core` da VM e as coleções seguem o `group_vars` e o `requirements.yml` com um dia de atraso: são atualizados **antes** de cada `ansible-pull`, a partir do clone da execução anterior, nunca no meio de uma. Se o backup ou o `ansible-pull` falhar, o bot de aprovações avisa.
+
+## Trazer para casa e desligar a VM
+
+O sysadmin no GCP existe para a implantação: a casa ainda não tem onde rodar um agente, e alguém precisa conduzir as fases. Na [fase 12](01-roteiro-primeiro-deploy.md#fase-12--sysadmin-em-casa-e-vm-desligada), com o servidor de pé, o que é agente muda para casa e a VM é desligada, o que encerra o custo dela. O lado de casa (onde o coordenador da equipe passa a rodar, o Honcho da casa e o executor com o vault e a chave SSH) é a **5b**, em spec própria; esta seção diz o que sai da VM e como desligá-la.
+
+1. **O que muda para casa.** O papel de coordenador da [equipe](#a-equipe) passa a um agente da casa; a memória do *workspace* `sysadmin` vai para o Honcho da casa; a máquina de controle passa a ser a de casa (a [local](03-maquina-controle-ansible.md#a-máquina-de-controle-local) serve até a 5b). Os bots do Telegram, a conta de máquina e o `homeserver-equipe` podem ser reaproveitados por quem assume.
+2. **Backup final.** Pelo Tailscale, `sudo systemctl start sysadmin-backup` na VM: o dump do Honcho e o diretório do Hermes vão para `gs://<projeto>-sysadmin/backup/<data>/`. Copie essa pasta para fora do bucket antes de 30 dias, porque o ciclo de vida apaga o que está em `backup/`.
+3. **Importar em casa** o dump e o diretório (5b) e confirmar que o agente de casa responde e lembra do histórico.
+4. **Desligar a VM:**
+
+    ```bash title="Exemplo: desligar o sysadmin (Cloud Shell)"
+    gcloud compute instances stop sysadmin --zone=us-east1-b
+    ```
+
+    Parada, a VM não cobra processamento nem IP externo; o disco de 30 GB continua no nível gratuito. Para religar (uma emergência), `gcloud compute instances start`: na partida, os segredos e os containers sobem sozinhos.
+5. **Revogar o que só a VM usava:** a chave `sysadmin-gcp` da Anthropic (ou o *workspace* inteiro), a chave do Gemini se ninguém mais a usa, e o nó `sysadmin` no painel do Tailscale. A chave do Tailscale `tag:sysadmin` já foi consumida.
+6. **Apagar de vez**, quando a casa já tiver rodado algumas semanas sem ela: `gcloud compute instances delete sysadmin --zone=us-east1-b`, o segredo `sysadmin-segredos`, o bucket e o orçamento. O projeto pode ficar vazio ou ser encerrado.
 
 ## A equipe
 
@@ -347,7 +365,7 @@ Faça depois que o nó `sysadmin` aparecer no Tailscale e o bot responder:
 |---|---|---|
 | VM parada (manutenção, cobrança) | Bot mudo | `gcloud compute instances start sysadmin --zone=us-east1-b`; na partida, os segredos e os containers sobem sozinhos |
 | VM perdida | Perdem-se a memória e as sessões | Rode o `criar-sysadmin.sh` de novo (reaproveita o segredo; `REGERAR=1` só se quiser trocar tudo) e restaure o dump e o diretório do Hermes do GCS |
-| Falta de memória | Swap e `restart: unless-stopped` | Se repetir, `gcp_tipo_maquina: e2-small` por PR |
+| Falta de memória | Swap e `restart: unless-stopped`; o console serial mostra `blocked for more than 120 seconds` e o bot para | `gcloud compute instances stop`, `set-machine-type --machine-type=e2-medium` e `start`, e o mesmo valor em `gcp_tipo_maquina` por PR |
 | Anthropic fora ou teto atingido | Reserva no Gemini; se as duas falharem, **não há aviso automático**: o bot do sysadmin fica mudo | Veja pelo dashboard ou por `docker logs sysadmin` (com o Tailscale ou, sem ele, pelo IAP de emergência); confira o teto no console da Anthropic e a chave e a cota do Gemini |
 | Casa fora ou tailnet caído | `diagnostico` falha; nada destrutivo é possível | O sysadmin relata e espera; com a core fora, o host segue alcançável pelo Tailscale |
 | Playbook falha no meio | Código de saída e o final do log no diário | Correção por PR e `ansible_check` de novo |
