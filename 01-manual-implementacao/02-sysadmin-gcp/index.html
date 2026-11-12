@@ -2942,7 +2942,7 @@ sequenceDiagram
 <li><code>ansible/roles/infra/sysadmin-gcp/templates/firewall-sysadmin.sh.j2</code> — firewall da rede do sysadmin (cadeia <code>SYSADMIN</code> na tabela <code>raw</code> PREROUTING, pela bridge <code>br-sysadmin</code>): bloqueia o tailnet, a LAN de casa e o servidor de metadados da GCP.</li>
 <li><code>ansible/playbooks/setup-sysadmin.yml</code> — configura a VM do sysadmin a partir dela mesma (<code>ansible-pull</code> da <code>main</code>, no primeiro boot e no timer diário): Docker sem Portainer, Tailscale com <code>tag:sysadmin</code> e o role <code>infra/sysadmin-gcp</code>; só o <code>main.yml</code> entra (por <code>vars_files</code>), nunca o vault, e fica fora do <code>full-deploy.yml</code>.</li>
 <li><code>ansible/roles/infra/sysadmin-gcp/defaults/main.yml</code> — padrões do role: bucket (<code>&lt;projeto&gt;-sysadmin</code>), UIDs do Hermes e do executor, endereços do repositório e do Honcho, fuso dos containers.</li>
-<li><code>ansible/roles/infra/sysadmin-gcp/tasks/main.yml</code> — swap de 4 GB cifrada (chave aleatória a cada boot), firewall, diretórios em <code>/opt/sysadmin</code> (o root não escreve nem roda git onde um container escreve: as configurações e o plugin ficam em <code>config/</code>, só leitura, e os clones são criados uma vez e entregues ao dono), as imagens <code>sysadmin</code> e <code>executor</code> (reconstruídas quando a versão ou o contexto muda, ou quando o último build falhou), a stack, o painel pelo <code>tailscale serve</code>, o aviso de falha e os timers.</li>
+<li><code>ansible/roles/infra/sysadmin-gcp/tasks/main.yml</code> — swap de 4 GB cifrada (chave aleatória a cada boot), firewall, diretórios em <code>/opt/sysadmin</code> (o root não escreve nem roda git onde um container escreve: as configurações e o plugin ficam em <code>config/</code>, só leitura, e os clones são criados uma vez e entregues ao dono), as imagens <code>sysadmin</code> e <code>executor</code> (reconstruídas quando a versão ou o contexto muda, ou quando o último build falhou; antes de cada build a stack para, porque construir com os seis containers rodando travou a <code>e2-small</code> na swap, e o bot fica mudo até ela voltar), a stack, o painel pelo <code>tailscale serve</code>, o aviso de falha e os timers.</li>
 <li><code>ansible/roles/infra/sysadmin-gcp/tasks/contexto-limpo.yml</code> — apaga do contexto de build de cada imagem os arquivos que saíram do repositório (o <code>copy</code> só acrescenta), e um arquivo apagado também pede build novo.</li>
 <li><code>ansible/roles/infra/sysadmin-gcp/tasks/segredos.yml</code> — projeto da GCP pelo servidor de metadados, o <code>separar_segredos.py</code> em <code>/usr/local/lib/sysadmin/</code> e a unit dos segredos, executada na hora (o playbook a roda antes do Tailscale, que lê a chave do tmpfs) e reiniciada quando o separador ou a unit mudam: o <code>/run/sysadmin</code> passa ao formato novo sem esperar um boot, e o Docker reinicia junto.</li>
 <li><code>ansible/roles/infra/sysadmin-gcp/templates/sysadmin-segredos.service.j2</code> — unit que, antes do Docker, lê o <code>sysadmin-segredos</code> do Secret Manager e o separa em <code>/run/sysadmin</code>, tentando de novo a cada minuto se falhar (e traz o <code>vault.yml</code> de entrada do bucket, se ainda não houver um em <code>saida/</code> e o clone da <code>main</code> do executor ainda não tiver <code>vault.yml</code>); o <code>gcloud</code> não grava log em disco.</li>
@@ -2993,8 +2993,8 @@ sequenceDiagram
 </tr>
 <tr>
 <td>Falta de memória</td>
-<td>Swap e <code>restart: unless-stopped</code>; o console serial mostra <code>blocked for more than 120 seconds</code> e o bot para</td>
-<td><code>gcloud compute instances stop</code>, <code>set-machine-type --machine-type=e2-medium</code> e <code>start</code>, e o mesmo valor em <code>gcp_tipo_maquina</code> por PR</td>
+<td>Swap e <code>restart: unless-stopped</code>; a stack para durante a construção das imagens. Travada, o console serial mostra <code>blocked for more than 120 seconds</code> e o bot para</td>
+<td><code>gcloud compute instances reset</code> destrava; se repetir fora das construções, <code>gcloud compute instances stop</code>, <code>set-machine-type --machine-type=e2-medium</code> e <code>start</code>, e o mesmo valor em <code>gcp_tipo_maquina</code> por PR</td>
 </tr>
 <tr>
 <td>Anthropic fora, sem crédito ou teto atingido</td>
@@ -3108,7 +3108,7 @@ sequenceDiagram
     <span class="md-icon" title="Última atualização">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"></path></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="12 de novembro de 2026 06:28:17 -03">12 de novembro de 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="12 de novembro de 2026 07:47:10 -03">12 de novembro de 2026</span>
   </span>
 
     
