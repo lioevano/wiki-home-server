@@ -406,6 +406,19 @@ def test_segredos_antes_do_tailscale_e_sem_vault():
     assert not (usadas & vault) - {"tailscale_auth_key"}, usadas & vault
 
 
+def test_separador_novo_refaz_os_segredos():
+    """O ansible-pull copia um separar_segredos.py novo (ou uma unit nova): sem reiniciar a unit, o /run/sysadmin
+    ficaria no formato antigo até o próximo boot. Reiniciá-la reinicia o Docker, e os containers voltam com ele."""
+    seg = _tarefas_sa("segredos.yml")
+    copia = next(t for t in seg if t["name"] == "Separador de segredos (separar_segredos.py)")
+    unit = next(t for t in seg if t["name"] == "Unit dos segredos (sysadmin-segredos.service)")
+    assert copia["register"] == "sysadmin_separador" and unit["register"] == "sysadmin_unit_segredos"
+    rodar = next(t for t in seg if t["name"] == "Separar os segredos agora e em todo boot")
+    estado = rodar["ansible.builtin.systemd_service"]["state"]
+    assert "restarted" in estado and "sysadmin_separador.changed" in estado and "sysadmin_unit_segredos.changed" in estado
+    assert rodar["no_log"] is True
+
+
 def test_projeto_do_servidor_de_metadados():
     seg = _tarefas_sa("segredos.yml")
     uri = next(t for t in seg if "ansible.builtin.uri" in t)["ansible.builtin.uri"]

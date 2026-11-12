@@ -35,6 +35,7 @@
     owner: root
     group: root
     mode: '0755'
+  register: sysadmin_separador
   no_log: true
 
 - name: Unit dos segredos (sysadmin-segredos.service)
@@ -44,18 +45,20 @@
     owner: root
     group: root
     mode: '0644'
+  register: sysadmin_unit_segredos
   no_log: true
 
 # Execução imediata (no primeiro boot, antes do Tailscale e da stack); nas próximas, a unit já está ativa. Se o
 # Secret Manager falhar, a unit tenta de novo a cada minuto (Restart=on-failure com RestartMode=direct: o job de
 # início segue "activating" entre as tentativas, então o systemctl start espera em vez de falhar na primeira). O
 # timeout de 15 min faz o play desistir com erro em vez de ficar preso; a unit segue tentando sozinha (veja
-# `journalctl -u sysadmin-segredos`).
+# `journalctl -u sysadmin-segredos`). Separador ou unit novos (um ansible-pull que mudou o formato do /run/sysadmin):
+# reinicia a unit, e o Docker, que a exige, reinicia junto; os containers voltam lendo os arquivos novos.
 - name: Separar os segredos agora e em todo boot
   ansible.builtin.systemd_service:
     name: sysadmin-segredos.service
     enabled: true
-    state: started
+    state: "{{ 'restarted' if (sysadmin_separador.changed or sysadmin_unit_segredos.changed) else 'started' }}"
     daemon_reload: true
   when: not ansible_check_mode
   timeout: 900
